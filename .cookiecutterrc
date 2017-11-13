@@ -1,0 +1,53 @@
+# This file exists so you can easily regenerate your project.
+#
+# `cookiepatcher` is a convenient shim around `cookiecutter`
+# for regenerating projects (it will generate a .cookiecutterrc
+# automatically for any template). To use it:
+#
+#    pip install cookiepatcher
+#    cookiepatcher gh:ionelmc/cookiecutter-pylibrary project-path
+#
+# See:
+#    https://pypi.python.org/pypi/cookiepatcher
+#
+# Alternatively, you can run:
+#
+#    cookiecutter --overwrite-if-exists --config-file=project-path/.cookiecutterrc gh:ionelmc/cookiecutter-pylibrary
+
+default_context:
+
+    _template:                 'https://github.com/ionelmc/cookiecutter-pylibrary'
+    appveyor:                  'yes'
+    c_extension_function:      'longest'
+    c_extension_module:        '_bluewhalecore'
+    c_extension_optional:      'no'
+    c_extension_support:       'no'
+    codacy:                    'no'
+    codeclimate:               'no'
+    codecov:                   'yes'
+    command_line_interface:    'argparse'
+    command_line_interface_bin_name: 'bluewhalecore'
+    coveralls:                 'no'
+    distribution_name:         'bluewhalecore'
+    email:                     'wolfgang.kopp@mdc-berlin.de'
+    full_name:                 'Wolfgang Kopp'
+    github_username:           'wkopp'
+    landscape:                 'no'
+    license:                   'BSD 3-Clause License'
+    linter:                    'pylama'
+    package_name:              'bluewhalecore'
+    project_name:              'BlueWhaleCore'
+    project_short_description: 'Code infrastructure for deep learning to make modelling reproducible and maintainable'
+    release_date:              'today'
+    repo_name:                 'bluewhalecore'
+    requiresio:                'yes'
+    scrutinizer:               'no'
+    sphinx_doctest:            'no'
+    sphinx_theme:              'sphinx-rtd-theme'
+    test_matrix_configurator:  'no'
+    test_matrix_separate_coverage: 'no'
+    test_runner:               'pytest'
+    travis:                    'yes'
+    version:                   '0.1.0'
+    website:                   'wkopp.github.io'
+    year:                      '2017'
