@@ -1,4 +1,3 @@
-
 from bluewhalecore.cli import main
 
 

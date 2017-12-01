@@ -3,7 +3,7 @@ Module that contains the command line app.
 
 Why does this file exist, and why not put this in __main__?
 
-  You might be tempted to import things from __main__ later, but that will cause
+  You may be tempted to import things from __main__ later, but that will cause
   problems: the code will get executed twice:
 
   - When you run `python -mbluewhalecore` python will execute

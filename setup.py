@@ -36,6 +36,8 @@ setup(
     url='https://github.com/wkopp/bluewhalecore',
     packages=find_packages('src'),
     package_dir={'': 'src'},
+    package_data={'bluewhalecore': ['bluewhalecore/resources/genome.fa',
+                                    'bluewhalecore/resources/regions.bed']},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     include_package_data=True,
     zip_safe=False,
@@ -66,7 +68,10 @@ setup(
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
+        'numpy',
+        'pandas',
+        'Biopython'
+        #'genomeutils>=0.1.0'
     ],
     extras_require={
         # eg:

@@ -36,13 +36,13 @@ Overview
     :alt: Coverage Status
     :target: https://codecov.io/github/wkopp/bluewhalecore
 
-.. |version| image:: https://img.shields.io/pypi/v/bluewhalecore.svg
-    :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/bluewhalecore
-
 .. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/bluewhalecore/v0.1.0.svg
     :alt: Commits since latest release
     :target: https://github.com/wkopp/bluewhalecore/compare/v0.1.0...master
+
+.. |version| image:: https://img.shields.io/pypi/v/bluewhalecore.svg
+    :alt: PyPI Package latest release
+    :target: https://pypi.python.org/pypi/bluewhalecore
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/bluewhalecore.svg
     :alt: PyPI Wheel
