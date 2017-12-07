@@ -26,9 +26,11 @@ setup(
     name='bluewhalecore',
     version='0.1.0',
     license='BSD 3-Clause License',
-    description='Code infrastructure for deep learning to make modelling reproducible and maintainable',
+    description='Code infrastructure for deep learning to make modelling '
+                + 'reproducible and maintainable',
     long_description='%s\n%s' % (
-        re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
+        re.compile('^.. start-badges.*^.. end-badges',
+                   re.M | re.S).sub('', read('README.rst')),
         re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
     ),
     author='Wolfgang Kopp',
@@ -42,7 +44,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
+        # complete list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
@@ -70,8 +72,11 @@ setup(
     install_requires=[
         'numpy',
         'pandas',
-        'Biopython'
-        #'genomeutils>=0.1.0'
+        'Biopython',
+        'pymongo',
+        'keras',
+        'tensorflow',
+        # 'genomeutils>=0.1.0'
     ],
     extras_require={
         # eg:
