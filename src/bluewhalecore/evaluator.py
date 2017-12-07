@@ -1,5 +1,6 @@
-from pymongo import MongoClient
 import datetime
+
+from pymongo import MongoClient
 
 
 class Evaluator(object):
