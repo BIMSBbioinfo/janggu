@@ -7,7 +7,6 @@ source =
 branch = true
 source =
     bluewhalecore
-    tests
 parallel = true
 
 [report]
