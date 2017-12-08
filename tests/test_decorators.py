@@ -1,10 +1,10 @@
 import numpy as np
-
 from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 
-from bluewhalecore.decorators import toplayer, bottomlayer
+from bluewhalecore.decorators import bottomlayer
+from bluewhalecore.decorators import toplayer
 
 
 # ==========================================================
