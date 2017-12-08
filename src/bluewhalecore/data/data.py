@@ -38,11 +38,13 @@ class BwDataset(object):
 
 
 def inputShape(bwdata):
+    """Extracts the shape of a provided BwDataset."""
     return {bwdata.name: {'shape': bwdata.shape}}
 
 
 def outputShape(bwdata, loss='binary_crossentropy',
                 loss_weight=1., activation='sigmoid'):
+    """Extracts the shape and specifies learning objectives."""
     return {bwdata.name: {'shape': bwdata.shape,
                           'loss': loss,
                           'loss_weight': loss_weight,

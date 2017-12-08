@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 from data import BwDataset
 
@@ -36,12 +37,13 @@ class TabBwDataset(BwDataset):
         data = []
         for f in self.filename:
             data.append(pd.read_csv(f, header=self.header,
-                                    sep=self.sep)).values
+                                    sep=self.sep))
 
-        data = pd.concat(data, axis=1, ignore_index=True).values
+        self.data = pd.concat(data, axis=1, ignore_index=True).values
 
     def __repr__(self):
-        return 'TabBwDataset("{}", {}})'.format(self.name, self.filename)
+        return 'TabBwDataset("{}", "{}", sep="{}")'\
+                .format(self.name, self.filename, self.sep)
 
     def __len__(self):
         return len(self.data)
@@ -58,7 +60,7 @@ class TabBwDataset(BwDataset):
 
         def fset(self, value):
             if isinstance(value, str):
-                value = list(value)
+                value = [value]
             for el in value:
                 if not os.path.exists(el):
                     raise Exception('File does not exist \

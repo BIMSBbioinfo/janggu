@@ -1,63 +1,26 @@
 import os
 
 import numpy as np
-from pandas import DataFrame
-
 from data import BwDataset
+from genomeutils.regions import readBed
 from genomeutils.sequences import dna2ind
 from genomeutils.sequences import sequencesForRegions
-from genomeutils.bed import readBed
+from genomeutils.sequences import sequencesFromFasta
+from pandas import DataFrame
 
 
 class DnaBwDataset(BwDataset):
 
-    def __init__(self, name, refgenome, regions, stride=50, reglen=200,
+    def __init__(self, name, seqs, iregion, inregionidx, stride=50, reglen=200,
                  flank=150, order=1, cachefile=None):
 
-        self.refgenome = refgenome
-        self.regions = regions
+        # self.seqs = seqs
+        self.iregion = iregion
+        self.inregionidx = inregionidx
         self.stride = stride
         self.reglen = reglen
         self.flank = flank
         self.order = order
-
-        if isinstance(cachefile, str):
-            self.cachefile = cachefile
-
-        self.rcmatrix = self._rcpermmatrix(order)
-
-        BwDataset.__init__(self, 'DNA_{}'.format(name))
-
-    def load(self):
-        # fill up int8 rep of DNA
-        # load dna, region index, and within region index
-
-        regions = self.regions.copy()
-        regions.start -= self.flank
-        regions.end += self.flank
-
-        reglen = self.reglen + 2*self.flank
-
-        # Load sequences from refgenome
-
-        print('Load sequences from ref genome')
-        seqs = sequencesForRegions(regions, self.refgenome)
-
-        # Create iregion index
-        reglens = ((regions.end - regions.start -
-                    reglen + self.stride) // self.stride).values
-
-        iregions = []
-        for i in range(len(reglens)):
-            iregions += [i] * reglens[i]
-
-        # create index lists
-        self.iregion = iregions
-
-        # create inregionidx
-        self.inregionidx = []
-        for i in range(len(reglens)):
-            self.inregionidx += range(reglens[i])
 
         # Convert sequences to index array
         print('Convert sequences to index array')
@@ -72,11 +35,82 @@ class DnaBwDataset(BwDataset):
 
         self.idna = idna
 
+        if isinstance(cachefile, str):
+            self.cachefile = cachefile
+
+        BwDataset.__init__(self, '{}'.format(name))
+
+    @classmethod
+    def extractRegionsFromRefGenome(cls, name, refgenome, regions,
+                                    stride=50, reglen=200,
+                                    flank=150, order=1, cachefile=None):
+        # fill up int8 rep of DNA
+        # load dna, region index, and within region index
+        if isinstance(regions, str) and os.path.exists(regions):
+            regions_ = readBed(regions)
+        elif isinstance(regions, DataFrame):
+            regions_ = regions.copy()
+        else:
+            raise Exception('regions must be a bed-filename \
+                            or a pandas.DataFrame \
+                            containing the content of a bed-file')
+
+        regions_.start -= flank
+        regions_.end += flank
+
+        # reglen = reglen + 2*flank
+
+        # Load sequences from refgenome
+
+        print('Load sequences from ref genome')
+        seqs = sequencesForRegions(regions_, refgenome)
+
+        # Create iregion index
+        reglens = ((regions_.end - regions_.start -
+                    reglen - 2*flank + stride) // stride).values
+
+        iregions = []
+        for i in range(len(reglens)):
+            iregions += [i] * reglens[i]
+
+        # create index lists
+        # self.iregion = iregions
+
+        # create inregionidx
+        inregionidx = []
+        for i in range(len(reglens)):
+            inregionidx += range(reglens[i])
+
+        return cls(name, seqs, iregions, inregionidx,
+                   stride, reglen, flank, order)
+
+    @classmethod
+    def fromFasta(cls, name, fastafile, order=1, cachefile=None):
+        seqs = sequencesFromFasta(fastafile)
+
+        reglen = len(seqs[0])
+        flank = 0
+        stride = 1
+
+        lens = [len(seq) for seq in seqs]
+        assert lens == [len(seqs[0])] * len(seqs), "Input sequences must " + \
+            "be of equal length."
+
+        iregion = np.arange(len(seqs))
+        inregionidx = [1] * len(seqs)
+
+        return cls(name, seqs, iregion, inregionidx, stride,
+                   reglen, flank, order)
+
+    def load(self):
+        # fill up int8 rep of DNA
+        # load dna, region index, and within region index
+        pass
+
     def __repr__(self):
-        return 'DnaBwDataset("{}", "{}", <regs>, \
+        return 'DnaBwDataset("{}", <seqs>, <iregion>, <inregionidx>, \
                 stride={}, reglen={}, flank={})'\
-                .format(self.name, self.refgenome, self.stride,
-                        self.reglen, self.flank)
+                .format(self.name, self.stride, self.reglen, self.flank)
 
     def idna4idx(self, idxs):
         # for each index read use the adaptor indices to retrieve the seq.
@@ -93,41 +127,14 @@ class DnaBwDataset(BwDataset):
         return idna
 
     def as_onehot(self, idna):
-        onehot = np.zeros((len(idna), 1,
+        onehot = np.zeros((len(idna),
                            pow(4, self.order),
-                           idna.shape[1]), dtype='int8')
+                           idna.shape[1], 1), dtype='int8')
         for nuc in np.arange(pow(4, self.order)):
             Ilist = np.where(idna == nuc)
-            onehot[Ilist[0], 0, nuc, Ilist[1]] = 1
+            onehot[Ilist[0], nuc, Ilist[1], 0] = 1
 
         return onehot
-
-    def _rcindex(self, idx, order):
-        x = np.arange(4)[::-1]
-        irc = 0
-        for o in range(order):
-            nuc = idx % 4
-            idx = idx // 4
-            irc += x[nuc] * pow(4, order - o - 1)
-
-        return irc
-
-    def _rcpermmatrix(self, order):
-        P = np.zeros((pow(4, order), pow(4, order)))
-        for idx in range(pow(4, order)):
-            jdx = self._rcindex(idx, order)
-            P[jdx, idx] = 1
-
-        return P
-
-    def as_revcomp(self, data):
-        # compute the reverse complement of the original sequence
-        # This is facilitated by, using rcmatrix (a permutation matrix),
-        # which computes the complementary base for a given nucletide
-        # Additionally, the sequences is reversed by ::-1
-        rcdata = np.empty(data.shape)
-        rcdata[:, 0, :, :] = np.matmul(self.rcmatrix, data[:, 0, :, ::-1])
-        return rcdata
 
     def getData(self, idxs):
 
@@ -143,49 +150,8 @@ class DnaBwDataset(BwDataset):
 
     @property
     def shape(self):
-        return (1, pow(4, self.order), self.reglen +
-                2*self.flank - self.order + 1)
-
-    def regions():
-        doc = "The regions property."
-
-        def fget(self):
-            return self._regions
-
-        def fset(self, value):
-            if isinstance(value, str) and os.path.exists(value):
-                bed = readBed(value)
-            elif isinstance(value, DataFrame):
-                bed = value
-            else:
-                raise Exception('regions must be a bed-filename \
-                                or a pandas.DataFrame \
-                                containing the content of a bed-file')
-            self._regions = bed
-
-        def fdel(self):
-            del self._regions
-        return locals()
-
-    regions = property(**regions())
-
-    def refgenome():
-        doc = "The refgenome property."
-
-        def fget(self):
-            return self._refgenome
-
-        def fset(self, value):
-            if not isinstance(value, str) or not os.path.exists(value):
-                raise Exception('RefGenome-file does \
-                                not exists: {}'.format(value))
-            self._refgenome = value
-
-        def fdel(self):
-            del self._refgenome
-        return locals()
-
-    refgenome = property(**refgenome())
+        return (pow(4, self.order), self.reglen +
+                2*self.flank - self.order + 1, 1)
 
     def order():
         doc = "The order property."
@@ -254,3 +220,66 @@ class DnaBwDataset(BwDataset):
         return locals()
 
     flank = property(**flank())
+
+
+class RevCompDnaBwDataset(BwDataset):
+    """Reverse complement DNA of a provided DnaBwDataset object."""
+
+    def __init__(self, name, dnadata):
+        self.dna = dnadata
+        self.order = self.dna.order
+
+        self.rcmatrix = self._rcpermmatrix(self.order)
+
+        BwDataset.__init__(self, '{}'.format(name))
+
+    def load(self):
+        pass
+
+    def __repr__(self):
+        return 'RevDnaBwDataset("{}", <DnaBwDataset>)'.format(self.name)
+
+    def _rcindex(self, idx, order):
+        x = np.arange(4)[::-1]
+        irc = 0
+        for o in range(order):
+            nuc = idx % 4
+            idx = idx // 4
+            irc += x[nuc] * pow(4, order - o - 1)
+
+        return irc
+
+    def _rcpermmatrix(self, order):
+        P = np.zeros((pow(4, order), pow(4, order)))
+        for idx in range(pow(4, order)):
+            jdx = self._rcindex(idx, order)
+            P[jdx, idx] = 1
+
+        return P
+
+    def as_revcomp(self, data):
+        # compute the reverse complement of the original sequence
+        # This is facilitated by, using rcmatrix (a permutation matrix),
+        # which computes the complementary base for a given nucletide
+        # Additionally, the sequences is reversed by ::-1
+        rcdata = np.empty(data.shape)
+        rcdata[:, :, :, 0] = np.matmul(self.rcmatrix, data[:, :, ::-1, 0])
+        return rcdata
+
+    def getData(self, idxs):
+
+        data = self.dna.getData(idxs)
+        # self.as_onehot(self.idna4idx(idxs))
+        data = self.as_revcomp(data)
+
+        for tr in self.transformations:
+            data = tr(data)
+
+        return data
+
+    def __len__(self):
+        return len(self.dna)
+
+    @property
+    def shape(self):
+        return self.dna.shape
