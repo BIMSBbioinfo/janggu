@@ -23,4 +23,6 @@ parser.add_argument('names', metavar='NAME', nargs=argparse.ZERO_OR_MORE,
 
 def main(args=None):
     args = parser.parse_args(args=args)
+    print('Welcome to bluewhalecore (GPL-v2). Copyright (C) 2017 '
+          + 'Wolfgang Kopp.')
     print(args.names)
