@@ -11,16 +11,36 @@ from pandas import DataFrame
 
 class DnaBwDataset(BwDataset):
 
-    def __init__(self, name, seqs, iregion, inregionidx, stride=50, reglen=200,
+    def __init__(self, name, seqs, stride=50, reglen=200,
                  flank=150, order=1, cachefile=None):
 
         # self.seqs = seqs
-        self.iregion = iregion
-        self.inregionidx = inregionidx
+
         self.stride = stride
         self.reglen = reglen
         self.flank = flank
         self.order = order
+
+        # Create iregion index
+        reglens = np.asarray([(len(seq) - reglen -
+                               2*flank + stride) // stride for seq in seqs])
+        # reglens = ((regions_.end - regions_.start -
+        #            reglen - 2*flank + stride) // stride).values
+
+        iregions = []
+        for i in range(len(reglens)):
+            iregions += [i] * reglens[i]
+
+        # create index lists
+        # self.iregion = iregions
+
+        # create inregionidx
+        inregionidx = []
+        for i in range(len(reglens)):
+            inregionidx += range(reglens[i])
+
+        self.iregion = iregions
+        self.inregionidx = inregionidx
 
         # Convert sequences to index array
         print('Convert sequences to index array')
@@ -65,24 +85,8 @@ class DnaBwDataset(BwDataset):
         print('Load sequences from ref genome')
         seqs = sequencesForRegions(regions_, refgenome)
 
-        # Create iregion index
-        reglens = ((regions_.end - regions_.start -
-                    reglen - 2*flank + stride) // stride).values
 
-        iregions = []
-        for i in range(len(reglens)):
-            iregions += [i] * reglens[i]
-
-        # create index lists
-        # self.iregion = iregions
-
-        # create inregionidx
-        inregionidx = []
-        for i in range(len(reglens)):
-            inregionidx += range(reglens[i])
-
-        return cls(name, seqs, iregions, inregionidx,
-                   stride, reglen, flank, order)
+        return cls(name, seqs, stride, reglen, flank, order)
 
     @classmethod
     def fromFasta(cls, name, fastafile, order=1, cachefile=None):
@@ -96,11 +100,7 @@ class DnaBwDataset(BwDataset):
         assert lens == [len(seqs[0])] * len(seqs), "Input sequences must " + \
             "be of equal length."
 
-        iregion = np.arange(len(seqs))
-        inregionidx = [1] * len(seqs)
-
-        return cls(name, seqs, iregion, inregionidx, stride,
-                   reglen, flank, order)
+        return cls(name, seqs, stride, reglen, flank, order)
 
     def load(self):
         # fill up int8 rep of DNA
