@@ -2,6 +2,7 @@ import logging
 import os
 
 import tensorflow as tf
+from data.data import BwDataset
 from generators import generate_fit_data
 from generators import generate_predict_data
 from keras import backend as K
@@ -45,14 +46,14 @@ class BlueWhale(object):
 
         self.name = name
 
-        self.batchsize = 100
-
         self.outputdir = outputdir
 
         if not os.path.exists(os.path.dirname(outputdir)):
             os.makedirs(os.path.dirname(outputdir))
 
-        os.makedirs(os.path.join(outputdir, 'logs'))
+        if not os.path.exists(os.path.join(outputdir, 'logs')):
+            os.makedirs(os.path.join(outputdir, 'logs'))
+
         logfile = os.path.join(outputdir, 'logs', 'bluewhale.log')
 
         self.logger = logging.getLogger(self.name)
@@ -74,7 +75,8 @@ class BlueWhale(object):
 
     @classmethod
     def fromShape(cls, name, inputdict, outputdict, modeldef,
-                  outputdir='bluewhale_results/', evals=[]):
+                  outputdir='bluewhale_results/', optimizer='adadelta',
+                  metrics=['accuracy']):
         """Instantiate BlueWhale through supplying a model template
         and the shapes of the dataset.
         From this the correct keras model will be constructed.
@@ -95,6 +97,10 @@ class BlueWhale(object):
         outputdir : str
             Directory in which logging output, trained models etc.
             will be stored
+        optimizer : str or keras.optimizer
+            Optimizer used with keras. Default: 'adadelta'
+        metrics : list
+            List of metrics. Default: metrics = ['accuracy']
         """
 
         print('create BlueWhale from shape.')
@@ -103,7 +109,7 @@ class BlueWhale(object):
 
         K.clear_session()
 
-        inputs, output = modelfct(inputdict, outputdict, modelparams)
+        inputs, output = modelfct(None, inputdict, outputdict, modelparams)
 
         kerasmodel = Model(inputs=inputs, outputs=output)
 
@@ -113,12 +119,19 @@ class BlueWhale(object):
             losses[k] = outputdict[k]['loss']
             loss_weights[k] = outputdict[k]['loss_weight']
 
-        kerasmodel.compile(loss=losses, optimizer='adadelta',
-                           loss_weights=loss_weights, metrics=['accuracy'])
+        kerasmodel.compile(loss=losses, optimizer=optimizer,
+                           loss_weights=loss_weights, metrics=metrics)
 
         return cls(name, kerasmodel, outputdir)
 
-    def fit(self, X, y, epochs, train_idxs=None, val_idxs=None):
+    def fit(self, X, y, epochs, batch_size=32,
+            train_idxs=None, val_idxs=None,
+            fitgen=generate_fit_data,
+            sample_weights=None,
+            shuffle=True,
+            use_multiprocessing=True,
+            workers=4,
+            verbose=1):
         """Fit the model.
 
         Parameters
@@ -129,6 +142,8 @@ class BlueWhale(object):
             Output BWDataset or list of BWDatasets
         epochs : int
             Number of epochs to train
+        batch_size : int
+            Batch size
         train_idxs : list of int
             Optional list of training indices
         val_idxs : list of int
@@ -136,17 +151,25 @@ class BlueWhale(object):
         """
         self.logger.info("Start training ...")
 
-        bs = self.batchsize
+        if isinstance(X, BwDataset):
+            X = [X]
 
-        self.logger.info('Training-dataset: {}'.format(self.name))
-        self.logger.info("Model-Input dimensions:")
+        if isinstance(y, BwDataset):
+            y = [y]
+
+        self.logger.info('Training: {}'.format(self.name))
+        self.logger.info("batch_size: {}".format(batch_size))
+        self.logger.info("shuffle: {}".format(shuffle))
+        self.logger.info("use_multiprocessing: {}".format(use_multiprocessing))
+        self.logger.info("workers: {}".format(workers))
+        self.logger.info("Input:")
         for el in X:
-            self.logger.info("\t{}: {}x{}".format(el.name,
+            self.logger.info("\t{}: {} x {}".format(el.name,
                              len(el), el.shape))
 
-        self.logger.info("Model-Output dimensions:")
+        self.logger.info("Output:")
         for el in y:
-            self.logger.info("\t{}: {}x{}".format(el.name,
+            self.logger.info("\t{}: {} x {}".format(el.name,
                              len(el), el.shape))
 
         # tensorboard_logdir = \
@@ -157,7 +180,7 @@ class BlueWhale(object):
         # self.logger.info('TensorBoard output: {}'
         # .format(tensorboard_logdir))
         # tb_cbl = TensorBoard(log_dir=tensorboard_logdir,
-        #                      histogram_freq=0, batch_size=bs,
+        #                      histogram_freq=0, batch_size=batch_size,
         #                      write_graph=True, write_grads=False,
         #                      write_images=False, embeddings_freq=0,
         #                      embeddings_layer_names=None,
@@ -165,23 +188,33 @@ class BlueWhale(object):
 
         # need to get the indices for training and test
         if train_idxs is None:
-            train_idxs = range(len(X))
+            train_idxs = range(len(X[0]))
 
         if val_idxs is None:
-            val_idxs = range(len(X))
+            val_idxs = range(len(X[0]))
 
-        self.model.fit_generator(
-            generate_fit_data(X, y, train_idxs, bs),
-            steps_per_epoch=len(train_idxs)//bs + (1 if len(train_idxs)
-                                                   % bs > 0 else 0),
-            epochs=800,
-            validation_data=self.fit_data_gen(X, y, val_idxs, bs),
-            validation_steps=len(val_idxs)//bs + (1 if len(val_idxs)
-                                                  % bs > 0 else 0),
-            use_multiprocessing=True, workers=4)
-        # callbacks=[tb_cbl])
+        h = self.model.fit_generator(
+            fitgen(X, y, train_idxs, batch_size, sample_weights=sample_weights,
+                   shuffle=shuffle),
+            steps_per_epoch=len(train_idxs)//batch_size + (1 if len(train_idxs)
+                                                           % batch_size > 0
+                                                           else 0),
+            epochs=epochs,
+            validation_data=fitgen(X, y, val_idxs, batch_size),
+            validation_steps=len(val_idxs)//batch_size + (1 if len(val_idxs)
+                                                          % batch_size > 0
+                                                          else 0),
+            use_multiprocessing=use_multiprocessing,
+            workers=workers,
+            verbose=verbose)
+
+        self.logger.info('#' * 40)
+        for k in h.history:
+            self.logger.info('{}: {}'.format(k, h.history[k][-1]))
+        self.logger.info('#' * 40)
 
         self.logger.info("Finished training ...")
+        return h
 
     def evaluate(self, X, y, indices=None):
         """Evaluate the model performance"""
@@ -225,7 +258,8 @@ class BlueWhale(object):
         self.logger.info("Load model {}".format(filename))
         self.model = load_model(filename)
 
-    def predict(self, X, indices=None):
+    def predict(self, X, indices=None,
+                predictgen=generate_predict_data):
         """Perform predictions for a set of indices"""
 
         self.logger.info('Evaluation-dataset: {}'.format(self.name))
