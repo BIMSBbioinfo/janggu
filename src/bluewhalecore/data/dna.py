@@ -12,7 +12,7 @@ from pandas import DataFrame
 class DnaBwDataset(BwDataset):
 
     def __init__(self, name, seqs, stride=50, reglen=200,
-                 flank=150, order=1, cachefile=None):
+                 flank=150, order=1, cachedir=None):
 
         # self.seqs = seqs
 
@@ -24,15 +24,10 @@ class DnaBwDataset(BwDataset):
         # Create iregion index
         reglens = np.asarray([(len(seq) - reglen -
                                2*flank + stride) // stride for seq in seqs])
-        # reglens = ((regions_.end - regions_.start -
-        #            reglen - 2*flank + stride) // stride).values
 
         iregions = []
         for i in range(len(reglens)):
             iregions += [i] * reglens[i]
-
-        # create index lists
-        # self.iregion = iregions
 
         # create inregionidx
         inregionidx = []
@@ -55,15 +50,15 @@ class DnaBwDataset(BwDataset):
 
         self.idna = idna
 
-        if isinstance(cachefile, str):
-            self.cachefile = cachefile
+        if isinstance(cachedir, str):
+            self.cachedir = cachedir
 
         BwDataset.__init__(self, '{}'.format(name))
 
     @classmethod
     def extractRegionsFromRefGenome(cls, name, refgenome, regions,
                                     stride=50, reglen=200,
-                                    flank=150, order=1, cachefile=None):
+                                    flank=150, order=1, cachedir=None):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
         if isinstance(regions, str) and os.path.exists(regions):
@@ -78,18 +73,15 @@ class DnaBwDataset(BwDataset):
         regions_.start -= flank
         regions_.end += flank
 
-        # reglen = reglen + 2*flank
-
         # Load sequences from refgenome
 
         print('Load sequences from ref genome')
         seqs = sequencesForRegions(regions_, refgenome)
 
-
         return cls(name, seqs, stride, reglen, flank, order)
 
     @classmethod
-    def fromFasta(cls, name, fastafile, order=1, cachefile=None):
+    def fromFasta(cls, name, fastafile, order=1, cachedir=None):
         seqs = sequencesFromFasta(fastafile)
 
         reglen = len(seqs[0])
