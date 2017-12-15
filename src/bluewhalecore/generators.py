@@ -29,10 +29,12 @@ def threadsafe_generator(gen):
 
 @threadsafe_generator
 def generate_fit_data(inputdata, outputdata, indices, batchsize,
-                      sample_weights=None):
+                      sample_weights=None, shuffle=False):
+
     while 1:
         ib = 0
-        np.random.shuffle(indices)
+        if shuffle:
+            np.random.shuffle(indices)
 
         if len(indices) == 0:
             raise Exception("index list is empty")
@@ -45,22 +47,61 @@ def generate_fit_data(inputdata, outputdata, indices, batchsize,
 
             for data in inputdata:
                 input[data.name] = data.getData(
-                    indices[ib*batchsize:(ib+1)*batchsize]).copy()
+                    indices[ib*batchsize:(ib+1)*batchsize])
 
             output = {}
             for data in outputdata:
                 output[data.name] = data.getData(
-                    indices[ib*batchsize:(ib+1)*batchsize]).copy()
+                    indices[ib*batchsize:(ib+1)*batchsize])
 
-            if isinstance(sample_weights, type(None)):
-                sw = None
-            else:
+            if sample_weights:
                 sw = sample_weights[
-                    indices[ib*batchsize:(ib+1)*batchsize]].copy()
+                    indices[ib*batchsize:(ib+1)*batchsize]]
+                yield input, output, sw
+            else:
+                yield input, output
 
             ib += 1
 
-            yield input, output, sw
+
+def generate_fit_data_directthreading(inputdata, outputdata, indices,
+                                      batchsize,
+                                      sample_weights=None, shuffle=False):
+
+    lock = threading.Lock()
+    while 1:
+        ib = 0
+        if shuffle:
+            np.random.shuffle(indices)
+
+        if len(indices) == 0:
+            raise Exception("index list is empty")
+
+        while ib < \
+                (len(indices)//batchsize +
+                    (1 if len(indices) % batchsize > 0 else 0)):
+
+            with lock:
+                tmpib = ib
+                ib += 1
+
+            input = {}
+
+            for data in inputdata:
+                input[data.name] = data.getData(
+                    indices[tmpib*batchsize:(tmpib+1)*batchsize])
+
+            output = {}
+            for data in outputdata:
+                output[data.name] = data.getData(
+                    indices[tmpib*batchsize:(tmpib+1)*batchsize])
+
+            if sample_weights:
+                sw = sample_weights[
+                    indices[tmpib*batchsize:(tmpib+1)*batchsize]]
+                yield input, output, sw
+            else:
+                yield input, output
 
 
 @threadsafe_generator
