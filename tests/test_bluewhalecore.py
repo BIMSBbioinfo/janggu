@@ -28,13 +28,14 @@ def test_bluewhale_instance(tmpdir):
 
     @bottomlayer
     @toplayer
-    def cnn_model(input, oup, params):
+    def cnn_model(input, inp, oup, params):
         layer = Flatten()(input)
         output = Dense(params[0])(layer)
         return input, output
 
     bwm = BlueWhale.fromShape('dna_train_ctcf_HepG2.cnn',
-                              inputShape(dna), outputShape(ctcf),
+                              inputShape(dna),
+                              outputShape(ctcf, 'binary_crossentropy'),
                               (cnn_model, (2,)),
                               outputdir=tmpdir.strpath)
 
