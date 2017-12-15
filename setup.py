@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import os
 import io
 import re
 from glob import glob
@@ -10,9 +11,31 @@ from os.path import basename
 from os.path import dirname
 from os.path import join
 from os.path import splitext
+from os.path import relpath
 
+from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
+
+
+try:
+    import Cython
+    from Cython.Build import cythonize
+except ImportError:
+    Cython = None
+
+if Cython:
+    cythonized = cythonize([
+        Extension(
+            splitext(relpath(path, 'src').replace(os.sep, '.'))[0],
+            sources=[path],
+            include_dirs=[dirname(path)]
+        )
+        for root, _, _ in os.walk('src')
+        for path in glob(join(root, '*.pyx' if Cython else '*.c'))
+    ])
+else:
+    cythonized = None
 
 
 def read(*names, **kwargs):
@@ -76,6 +99,7 @@ setup(
         'pymongo',
         'keras',
         'tensorflow',
+        'htseq'
         # 'genomeutils>=0.1.0'
     ],
     extras_require={
@@ -83,9 +107,13 @@ setup(
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],
     },
+    setup_requires=[
+        'cython',
+    ] if Cython else [],
     entry_points={
         'console_scripts': [
             'bluewhalecore = bluewhalecore.cli:main',
         ]
     },
+    ext_modules=cythonized,
 )
