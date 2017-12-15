@@ -3,16 +3,14 @@ from data import BwDataset
 
 class NumpyBwDataset(BwDataset):
 
-    def __init__(self, name, array, cachefile=None):
+    def __init__(self, name, array, cachedir=None):
 
         self.data = array
 
-        if isinstance(cachefile, str):
-            self.cachefile = cachefile
+        if isinstance(cachedir, str):
+            self.cachedir = cachedir
 
-        self.sanityChecks()
-
-        BwDataset.__init__(self, 'NP_{}'.format(name))
+        BwDataset.__init__(self, '{}'.format(name))
 
     def load(self):
         pass
@@ -25,4 +23,7 @@ class NumpyBwDataset(BwDataset):
 
     @property
     def shape(self):
-        return self.data.shape[1:]
+        if len(self.data.shape) > 1:
+            return self.data.shape[1:]
+        else:
+            return (1, )
