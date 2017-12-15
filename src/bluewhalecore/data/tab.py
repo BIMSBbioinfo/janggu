@@ -21,14 +21,14 @@ class TabBwDataset(BwDataset):
         Item separator. Default: sep=','
     """
 
-    def __init__(self, name, filename, cachefile=None, sep=','):
+    def __init__(self, name, filename, cachedir=None, sep=','):
 
         self.filename = filename
         self.sep = sep
         self.header = None
 
-        if isinstance(cachefile, str):
-            self.cachefile = cachefile
+        if isinstance(cachedir, str):
+            self.cachedir = cachedir
 
         BwDataset.__init__(self, name)
 
@@ -50,7 +50,10 @@ class TabBwDataset(BwDataset):
 
     @property
     def shape(self):
-        return self.data.shape[1:]
+        if len(self.data.shape) > 1:
+            return self.data.shape[1:]
+        else:
+            return (1,)
 
     def filename():
         doc = "The filename property."
