@@ -128,7 +128,7 @@ class DnaBwDataset(BwDataset):
 
         return onehot
 
-    def getData(self, idxs):
+    def __getitem__(self, idxs):
 
         data = self.as_onehot(self.idna4idx(idxs))
 
@@ -258,9 +258,9 @@ class RevCompDnaBwDataset(BwDataset):
         rcdata[:, :, :, 0] = np.matmul(self.rcmatrix, data[:, :, ::-1, 0])
         return rcdata
 
-    def getData(self, idxs):
+    def __getitem__(self, idxs):
 
-        data = self.dna.getData(idxs)
+        data = self.dna[idxs]
         # self.as_onehot(self.idna4idx(idxs))
         data = self.as_revcomp(data)
 

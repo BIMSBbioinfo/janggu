@@ -113,7 +113,7 @@ class CoverageBwDataset(BwDataset):
                 .format(self.name, self.resolution, self.flank, self.stranded,
                         self.cachedir)
 
-    def getData(self, idxs):
+    def __getitem__(self, idxs):
         data = self.extractCoverage(idxs)
 
         for tr in self.transformations:

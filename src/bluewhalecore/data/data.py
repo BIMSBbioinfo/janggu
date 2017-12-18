@@ -20,7 +20,7 @@ class BwDataset(object):
     def load(self):
         raise NotImplemented('load data must be implemented')
 
-    def getData(self, idxs):
+    def __getitem__(self, idxs):
 
         data = self.data[idxs]
 

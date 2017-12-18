@@ -46,17 +46,14 @@ def generate_fit_data(inputdata, outputdata, indices, batchsize,
             input = {}
 
             for data in inputdata:
-                input[data.name] = data.getData(
-                    indices[ib*batchsize:(ib+1)*batchsize])
+                input[data.name] = data[indices[ib*batchsize:(ib+1)*batchsize]]
 
             output = {}
             for data in outputdata:
-                output[data.name] = data.getData(
-                    indices[ib*batchsize:(ib+1)*batchsize])
+                output[data.name] = data[indices[ib*batchsize:(ib+1)*batchsize]]
 
             if sample_weights:
-                sw = sample_weights[
-                    indices[ib*batchsize:(ib+1)*batchsize]]
+                sw = sample_weights[indices[ib*batchsize:(ib+1)*batchsize]]
                 yield input, output, sw
             else:
                 yield input, output
@@ -88,17 +85,14 @@ def generate_fit_data_directthreading(inputdata, outputdata, indices,
             input = {}
 
             for data in inputdata:
-                input[data.name] = data.getData(
-                    indices[tmpib*batchsize:(tmpib+1)*batchsize])
+                input[data.name] = data[indices[tmpib*batchsize:(tmpib+1)*batchsize]]
 
             output = {}
             for data in outputdata:
-                output[data.name] = data.getData(
-                    indices[tmpib*batchsize:(tmpib+1)*batchsize])
+                output[data.name] = data[indices[tmpib*batchsize:(tmpib+1)*batchsize]]
 
             if sample_weights:
-                sw = sample_weights[
-                    indices[tmpib*batchsize:(tmpib+1)*batchsize]]
+                sw = sample_weights[indices[tmpib*batchsize:(tmpib+1)*batchsize]]
                 yield input, output, sw
             else:
                 yield input, output
@@ -117,8 +111,7 @@ def generate_predict_data(inputdata, outputdata, indices, batchsize):
             input = {}
 
             for data in inputdata:
-                input[data.name] = data.getData(
-                    indices[ib*batchsize:(ib+1)*batchsize]).copy()
+                input[data.name] = data[indices[ib*batchsize:(ib+1)*batchsize]]
 
             ib += 1
 

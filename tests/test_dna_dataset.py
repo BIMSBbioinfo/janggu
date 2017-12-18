@@ -41,7 +41,7 @@ def dna_templ(order):
                             reglen + 2*flank - order + 1))
 
     # actual shape of DNA
-    dna = data.getData(indices)
+    dna = data[indices]
     # this is the actual numpy array
     np.testing.assert_equal(dna.shape, (len(indices), pow(4, order),
                                         reglen + 2*flank - order + 1, 1))
@@ -55,7 +55,7 @@ def dna_templ(order):
 
     # test if the two arrays (one is read from a merged bed and one
     # from individual bed regions) are the same
-    np.testing.assert_equal(data.getData(indices), idata.getData(indices))
+    np.testing.assert_equal(data[indices], idata[indices])
     np.testing.assert_equal(len(data), len(idata))
 
 
@@ -81,7 +81,7 @@ def test_read_ranges_from_file():
                             reglen + 2*flank - order + 1))
 
     # actual shape of DNA
-    dna = data.getData(indices)
+    dna = data[indices]
     np.testing.assert_equal(dna.shape, (len(indices), pow(4, order),
                                         reglen + 2*flank - order + 1, 1))
 
@@ -116,8 +116,8 @@ def revcomp(order):
     indices = [600, 500, 400]
 
     # actual shape of DNA
-    dna = data.getData(indices)
-    rcrcdna = rcrcdata.getData(indices)
+    dna = data[indices]
+    rcrcdna = rcrcdata[indices]
 
     np.testing.assert_equal(dna, rcrcdna)
 
