@@ -75,4 +75,5 @@ class BwGenomicArray(GenomicArray):
             self.chrom_vectors[chrom] = {
                 strand_nostrand:
                     BwChromVector.create(iv, self.typecode, self.storage,
-                                         overwrite=self.overwrite)}
+                                         overwrite=self.overwrite,
+                                         memmap_dir=self.memmap_dir)}
