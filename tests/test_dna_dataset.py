@@ -1,7 +1,9 @@
+import os
+import pkg_resources
+
 import numpy as np
 import pytest
 from genomeutils.regions import readBed
-
 from bluewhalecore.data.dna import DnaBwDataset
 from bluewhalecore.data.dna import RevCompDnaBwDataset
 
@@ -16,10 +18,12 @@ def datalen(regions):
 
 
 def dna_templ(order):
-    regions = readBed('resources/regions.bed')
-    indiv_reg = readBed('resources/indiv_regions.bed')
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    refgenome = 'resources/genome.fa'
+    regions = readBed(os.path.join(data_path, 'regions.bed'))
+    indiv_reg = readBed(os.path.join(data_path, 'indiv_regions.bed'))
+
+    refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaBwDataset.extractRegionsFromRefGenome('train',
                                                     refgenome=refgenome,
@@ -61,8 +65,9 @@ def test_read_ranges_from_file():
     flank = 150
     order = 1
 
-    refgenome = 'resources/genome.fa'
-    regions = 'resources/regions.bed'
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    refgenome = os.path.join(data_path, 'genome.fa')
+    regions = os.path.join(data_path, 'regions.bed')
 
     data = DnaBwDataset.extractRegionsFromRefGenome('train',
                                                     refgenome=refgenome,
@@ -95,9 +100,11 @@ def test_dna_dims_order_2():
 
 
 def revcomp(order):
-    regions = readBed('resources/regions.bed')
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    refgenome = 'resources/genome.fa'
+    regions = readBed(os.path.join(data_path, 'regions.bed'))
+
+    refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaBwDataset.extractRegionsFromRefGenome('train',
                                                     refgenome=refgenome,
@@ -124,9 +131,11 @@ def test_revcomp_order_2():
 
 
 def test_revcomp_rcmatrix():
-    regions = readBed('resources/regions.bed')
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    refgenome = 'resources/genome.fa'
+    regions = readBed(os.path.join(data_path, 'regions.bed'))
+
+    refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaBwDataset.extractRegionsFromRefGenome('train',
                                                     refgenome=refgenome,
@@ -170,10 +179,11 @@ def test_revcomp_rcmatrix():
 
 
 def test_rcmatrix_identity():
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
     for order in range(1, 4):
-        regions = readBed('resources/regions.bed')
-        refgenome = 'resources/genome.fa'
+        regions = readBed(os.path.join(data_path, 'regions.bed'))
+        refgenome = os.path.join(data_path, 'genome.fa')
 
         data = DnaBwDataset.extractRegionsFromRefGenome('train',
                                                         refgenome=refgenome,
@@ -186,9 +196,10 @@ def test_rcmatrix_identity():
 
 
 def test_dna_dataset_sanity():
-    regions = readBed('resources/regions.bed')
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    regions = readBed(os.path.join(data_path, 'regions.bed'))
 
-    refgenome = 'resources/genome.fa'
+    refgenome = os.path.join(data_path, 'genome.fa')
 
     with pytest.raises(Exception):
         DnaBwDataset.extractRegionsFromRefGenome('train', refgenome='',
@@ -214,9 +225,10 @@ def test_dna_dataset_sanity():
 
 
 def test_read_dna_from_fasta():
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
     order = 1
-    filename = 'resources/oct4.fa'
+    filename = os.path.join(data_path, 'oct4.fa')
     data = DnaBwDataset.fromFasta('train', fastafile=filename, order=1)
 
     np.testing.assert_equal(len(data), 3997)
