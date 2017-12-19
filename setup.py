@@ -100,7 +100,9 @@ setup(
         'pymongo',
         'keras',
         'tensorflow',
-        'htseq'
+        'htseq',
+        'sklearn',
+        'h5py',
         # 'genomeutils>=0.1.0'
     ],
     extras_require={
