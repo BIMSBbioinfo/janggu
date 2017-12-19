@@ -10,6 +10,7 @@ from keras.backend.tensorflow_backend import set_session
 # from keras.callbacks import TensorBoard
 from keras.models import Model
 from keras.models import load_model
+from keras.callbacks import ModelCheckpoint
 
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.3
@@ -69,9 +70,34 @@ class BlueWhale(object):
         self.model.summary(print_fn=self.logger.info)
 
     @classmethod
-    def fromFile(filename):
+    def fromName(cls, name, outputdir='bluewhale_results/'):
         """Fetches a pretrained model from filename."""
-        raise NotImplemented('BlueWhale.fromFile not yet available')
+        path = cls.storagePath(name, outputdir)
+
+        model = load_model(path)
+        return cls(name, model, outputdir)
+
+    @staticmethod
+    def storagePath(name, outputdir):
+        """modelStorage returns the path to the model storage file."""
+        if not os.path.exists(os.path.join(outputdir, "models")):
+            os.mkdir(os.path.join(outputdir, "models"))
+        filename = os.path.join(outputdir, 'models', '{}.h5'.format(name))
+        return filename
+
+    def saveKerasModel(self):
+        """Stores the model"""
+        filename = self.storagePath(self.name, self.outputdir)
+
+        self.logger.info("Save model {}".format(filename))
+        self.model.save(filename)
+
+#    def loadKerasModel(self):
+#        """Loads a pretrained model"""
+#        filename = self.storagePath(self.name, self.outputdir)
+#
+#        self.logger.info("Load model {}".format(filename))
+#        self.model = load_model(filename)
 
     @classmethod
     def fromShape(cls, name, inputdict, outputdict, modeldef,
@@ -172,6 +198,8 @@ class BlueWhale(object):
             self.logger.info("\t{}: {} x {}".format(el.name,
                              len(el), el.shape))
 
+        checkpoint = ModelCheckpoint(self.storagePath(self.name,
+                                                      self.outputdir))
         # tensorboard_logdir = \
         #     os.path.join(self.dataroot, "tensorboard",
         #                  (os.path.splitext(
@@ -193,6 +221,8 @@ class BlueWhale(object):
         if val_idxs is None:
             val_idxs = range(len(X[0]))
 
+        callbacks = [checkpoint]
+
         h = self.model.fit_generator(
             fitgen(X, y, train_idxs, batch_size, sample_weights=sample_weights,
                    shuffle=shuffle),
@@ -206,7 +236,8 @@ class BlueWhale(object):
                                                           else 0),
             use_multiprocessing=use_multiprocessing,
             workers=workers,
-            verbose=verbose)
+            verbose=verbose,
+            callbacks=callbacks)
 
         self.logger.info('#' * 40)
         for k in h.history:
@@ -216,64 +247,29 @@ class BlueWhale(object):
         self.logger.info("Finished training ...")
         return h
 
-    def evaluate(self, X, y, indices=None):
-        """Evaluate the model performance"""
-
-        self.logger.info('Evaluation-dataset: {}'.format(self.name))
-        self.logger.info("Model-Input dimensions:")
-        for el in X:
-            self.logger.info("\t{}: {}x{}".format(el.name, len(el), el.shape))
-
-        self.logger.info("Model-Output dimensions:")
-        for el in y:
-            self.logger.info("\t{}: {}x{}".format(el.name, len(el), el.shape))
-
-        if indices is None:
-            indices = range(len(X))
-
-        ytrue = y[indices]
-        ypred = self.predict(X[indices])
-        scores = {}
-        for ev in self.evals:
-            scores[self.ev.__name__] = self.ev(ytrue, ypred)
-        return scores
-
-    def modelStorage(self):
-        """modelStorage returns the path to the model storage file."""
-        if not os.path.exists(os.path.join(self.outputdir, "models")):
-            os.mkdir(os.path.join(self.outputdir, "models"))
-        filename = os.path.join(self.outputdir, 'models',
-                                '{}.h5'.format(self.name))
-        return filename
-
-    def saveKerasModel(self):
-        """Stores the model"""
-        filename = self.modelStorage()
-        self.logger.info("Save model {}".format(filename))
-        self.model.save(filename)
-
-    def loadKerasModel(self):
-        """Loads a pretrained model"""
-        filename = self.modelStorage()
-        self.logger.info("Load model {}".format(filename))
-        self.model = load_model(filename)
-
     def predict(self, X, indices=None,
-                predictgen=generate_predict_data):
+                predictgen=generate_predict_data, batch_size=32,
+                verbose=0):
         """Perform predictions for a set of indices"""
 
-        self.logger.info('Evaluation-dataset: {}'.format(self.name))
-        self.logger.info("Model-Input dimensions:")
+        self.logger.info('Prediction: {}'.format(self.name))
+        self.logger.info("Input:")
+
+        if isinstance(X, BwDataset):
+            X = [X]
+
         for el in X:
             self.logger.info("\t{}: {}x{}".format(el.name, len(el), el.shape))
 
         if indices is None:
-            indices = range(len(X))
+            indices = range(len(X[0]))
 
         # Check performance on training set
-        return self.dnn.predict_generator(generate_predict_data(X,
-                                          indices, self.batchsize, False),
-                                          steps=len(indices)//self.batchsize
-                                          + (1 if
-                                             len(indices)//self.batchsize > 0
-                                             else 0))
+        return self.model.predict_generator(generate_predict_data(X,
+                                            indices, batch_size),
+                                            steps=len(indices)//batch_size
+                                            + (1 if
+                                               len(indices) % batch_size > 0
+                                               else 0),
+                                            use_multiprocessing=False,
+                                            verbose=verbose)
