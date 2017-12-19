@@ -8,30 +8,31 @@ class Evaluator(object):
     the model performance.
     """
 
-    def __init__(self, name="bluewhale-results"):
+    def __init__(self, bluewhale, dbname="bluewhale", modeltags=None):
+        self.bluewhale = bluewhale
         client = MongoClient()
-        self.db = client[name]
+        self.db = client[dbname]
+        self.measure = {}
+        self.modeltags = modeltags
 
-    def insertResult(self, bluewhale, setname, indices):
-        parts = bluewhale.name.split(".")
-        dparts = parts[0].split('_')
-        mparts = parts[1].split("_")
-        result = {}
+    def addMeasure(self, measure, name=None):
+        if name is None:
+            self.measure[measure.__name__] = measure
 
-        # extract dataset name
-        result['dataset'] = dparts[0]
-        # extract model name
-        result['model'] = mparts[0]
-        if len(dparts) > 1:
-            result['dtags'] = list(dparts[1:])
-        if len(mparts) > 1:
-            result['mtags'] = list(mparts[1:])
+    def evaluate(self, X, y, indices=None, datatags=None):
+        ypred = self.bluewhale.predict(X, indices)
+        ytrue = y[indices]
 
-        # training or test set
-        result['setname'] = setname
-        result["date"] = datetime.datetime.utcnow()
-        result.update(self.bluewhale.evalute(indices))
+        self.record(ypred, ytrue, datatags)
 
-        iid = self.db.insert_one(result).inserted_id
-        print('Inserted item: {}'.format(iid))
-        bluewhale.logger.info('Inserted item: {}'.format(iid))
+    def record(self, ypred, ytrue, datatags=None):
+        for key, func in self.measure.iteritems():
+            item = {'date': datetime.datetime.utcnow(),
+                    'modelname': self.bluewhale.name,
+                    'measureKey': key,
+                    'measureValue': func(ypred, ytrue),
+                    'datatags': datatags,
+                    'modeltags': self.modeltags}
+
+            iid = self.db.results.insert_one(item).insert_id
+            self.bluewhale.logger.info("Recorded {}".format(iid))
