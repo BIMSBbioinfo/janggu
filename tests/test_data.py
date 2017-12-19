@@ -4,11 +4,11 @@ import pkg_resources
 import pytest
 from genomeutils.regions import readBed
 
+from bluewhalecore.data.data import inputShape
+from bluewhalecore.data.data import outputShape
 from bluewhalecore.data.dna import DnaBwDataset
 from bluewhalecore.data.dna import RevCompDnaBwDataset
 from bluewhalecore.data.tab import TabBwDataset
-from bluewhalecore.data.data import inputShape
-from bluewhalecore.data.data import outputShape
 
 
 def test_inshape():
@@ -27,6 +27,7 @@ def test_inshape():
 
     with pytest.raises(Exception):
         inputShape((0,))
+
 
 def test_outshape():
     data_path = pkg_resources.resource_filename('bluewhalecore',
