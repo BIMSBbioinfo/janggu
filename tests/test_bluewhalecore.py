@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import pkg_resources
-import pytest
 from genomeutils.regions import readBed
 from keras.layers import Dense
 from keras.layers import Flatten
@@ -74,14 +73,10 @@ def test_bluewhale_train_predict(tmpdir):
     storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
-    with pytest.warns(UserWarning):
-        bwm.fit(X, y, epochs=1)
+    bwm.fit(X, y, epochs=2, batch_size=32, use_multiprocessing=False)
 
     assert os.path.exists(storage)
 
     pred = bwm.predict(X)
-    print(pred.shape)
-    print(pred)
-    print(pred[0])
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
     np.testing.assert_equal(pred.shape[1:], y.shape)

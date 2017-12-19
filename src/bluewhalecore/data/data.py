@@ -61,7 +61,10 @@ def outputShape(bwdata, loss, activation='sigmoid',
     elif isinstance(bwdata, list):
         x = {}
         for el in bwdata:
-            x[el.name] = {'shape': bwdata.shape,
+            x[el.name] = {'shape': el.shape,
                           'loss': loss,
                           'loss_weight': loss_weight,
                           'activation': activation}
+        return x
+    else:
+        raise Exception('outputSpace wrong argument: {}'.format(bwdata))
