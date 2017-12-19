@@ -1,5 +1,7 @@
 import os
 import pkg_resources
+import numpy as np
+import pytest
 from bluewhalecore.cli import main
 
 from keras.layers import Flatten
@@ -9,6 +11,7 @@ from bluewhalecore.data.data import inputShape
 from bluewhalecore.data.data import outputShape
 from bluewhalecore.data.dna import DnaBwDataset
 from bluewhalecore.data.tab import TabBwDataset
+from bluewhalecore.data.nparr import NumpyBwDataset
 from genomeutils.regions import readBed
 from bluewhalecore.decorators import toplayer
 from bluewhalecore.decorators import bottomlayer
@@ -43,4 +46,41 @@ def test_bluewhale_instance(tmpdir):
                               (cnn_model, (2,)),
                               outputdir=tmpdir.strpath)
 
-    print(bwm)
+    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+
+    bwm.saveKerasModel()
+
+    assert os.path.exists(storage)
+
+    BlueWhale.fromName('dna_train_ctcf_HepG2.cnn', outputdir=tmpdir.strpath)
+
+
+def test_bluewhale_train_predict(tmpdir):
+    X = NumpyBwDataset("X", np.random.random((1000, 100)))
+    y = NumpyBwDataset('y', np.random.randint(2, size=(1000, 1)))
+
+    @bottomlayer
+    @toplayer
+    def test_model(input, inp, oup, params):
+        return input, input[0]
+
+    bwm = BlueWhale.fromShape('nptest',
+                              inputShape(X),
+                              outputShape(y, 'binary_crossentropy'),
+                              (test_model, None),
+                              outputdir=tmpdir.strpath)
+
+    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    with pytest.warns(UserWarning):
+        bwm.fit(X, y, epochs=1)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(X)
+    print(pred.shape)
+    print(pred)
+    print(pred[0])
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
+    np.testing.assert_equal(pred.shape[1:], y.shape)
