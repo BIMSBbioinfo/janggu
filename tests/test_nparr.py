@@ -1,5 +1,7 @@
 import numpy as np
+
 from bluewhalecore.data.nparr import NumpyBwDataset
+
 
 def test_nparr(tmpdir):
     X = NumpyBwDataset("X", np.random.random((1000, 100)))

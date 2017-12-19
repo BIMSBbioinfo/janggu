@@ -1,11 +1,10 @@
-import os
 import itertools
+import os
 
-import numpy as np
-from HTSeq import BAM_Reader
-from htseq_extension import BwGenomicArray
 from data import BwDataset
 from genomeutils.regions import readBed
+from HTSeq import BAM_Reader
+from htseq_extension import BwGenomicArray
 from pandas import DataFrame
 
 
@@ -24,11 +23,11 @@ class CoverageBwDataset(BwDataset):
         BwDataset.__init__(self, '{}'.format(name))
 
     @classmethod
-    def coverageFromBam(cls, name, bam, regions, genomesize,
-                        resolution=50,
-                        flank=4, stranded=True, storage='memmap',
-                        overwrite=False,
-                        cachedir=None):
+    def fromBam(cls, name, bam, regions, genomesize,
+                resolution=50,
+                flank=4, stranded=True, storage='memmap',
+                overwrite=False,
+                cachedir=None):
 
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
@@ -52,7 +51,8 @@ class CoverageBwDataset(BwDataset):
 
 #        offsets = []
 #        for ireg in xrange(len(reglens)):
-#            offsets += [regions_.start[ireg] + (i - flank)*resolution for i in xrange(reglens[ireg])]
+#            offsets += [regions_.start[ireg] + (
+#                i - flank)*resolution for i in xrange(reglens[ireg])]
 
 #        offsets = np.asarray([regions_.start - (flank + idx)*resolution
 #                              for reglen in reglens for idx in range(reglen)])
@@ -63,19 +63,17 @@ class CoverageBwDataset(BwDataset):
         covers = []
         for sample_file in bam:
 
-            memmap_dir = os.path.join(cachedir, name, os.path.basename(sample_file))
+            memmap_dir = os.path.join(cachedir, name,
+                                      os.path.basename(sample_file))
             if not os.path.exists(memmap_dir):
                 os.makedirs(memmap_dir)
 
-            ps = [os.path.join(memmap_dir,
-                                                '{}{}.nmm'
-                                                .format(x[0], x[1]))
-                        for x in itertools.product(genomesize.keys(),
-                                                   ['-', '+'] if stranded
-                                                   else ['.'])]
+            ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
+                  for x in itertools.product(genomesize.keys(),
+                                             ['-', '+'] if stranded
+                                             else ['.'])]
             print(ps)
             nmms = [os.path.exists(p) for p in ps]
-
 
             cover = BwGenomicArray(genomesize, stranded=stranded,
                                    storage=storage, memmap_dir=memmap_dir,
@@ -93,12 +91,13 @@ class CoverageBwDataset(BwDataset):
                         cover[aln.iv.start_d_as_pos] += 1
 
             covers.append(cover)
+            offsets = None
 
         return cls(name, covers, offsets, resolution, flank,
                    stranded, cachedir)
 
     @classmethod
-    def coverageFromBigWig(cls, name, fastafile, order=1, cachedir=None):
+    def fromBigWig(cls, name, fastafile, order=1, cachedir=None):
         raise NotImplementedError('coverageFromBigWig')
 
     def load(self):

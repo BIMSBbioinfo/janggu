@@ -1,7 +1,8 @@
 import os
+
 import numpy as np
-from HTSeq import GenomicInterval
 from HTSeq import GenomicArray
+from HTSeq import GenomicInterval
 
 from bluewhalecore.data import BwChromVector
 from bluewhalecore.data import BwGenomicArray

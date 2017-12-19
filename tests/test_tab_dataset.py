@@ -1,6 +1,7 @@
 import os
-import pkg_resources
+
 import numpy as np
+import pkg_resources
 import pytest
 
 from bluewhalecore.data.tab import TabBwDataset

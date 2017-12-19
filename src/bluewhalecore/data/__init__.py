@@ -1,9 +1,9 @@
-from .htseq_extension import BwChromVector
-from .htseq_extension import BwGenomicArray
-from .dna import DnaBwDataset
-from .data import BwDataset
-from .tab import TabBwDataset
-from .nparr import NumpyBwDataset
-from .coverage import CoverageBwDataset
-from .data import inputShape
-from .data import outputShape
+from .coverage import CoverageBwDataset  # noqa
+from .data import BwDataset  # noqa
+from .data import inputShape  # noqa
+from .data import outputShape  # noqa
+from .dna import DnaBwDataset  # noqa
+from .htseq_extension import BwChromVector  # noqa
+from .htseq_extension import BwGenomicArray  # noqa
+from .nparr import NumpyBwDataset  # noqa
+from .tab import TabBwDataset  # noqa

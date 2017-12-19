@@ -1,20 +1,21 @@
 import os
-import pkg_resources
-import numpy as np
-import pytest
-from bluewhalecore.cli import main
 
-from keras.layers import Flatten
+import numpy as np
+import pkg_resources
+import pytest
+from genomeutils.regions import readBed
 from keras.layers import Dense
+from keras.layers import Flatten
+
 from bluewhalecore.bluewhale import BlueWhale
+from bluewhalecore.cli import main
 from bluewhalecore.data.data import inputShape
 from bluewhalecore.data.data import outputShape
 from bluewhalecore.data.dna import DnaBwDataset
-from bluewhalecore.data.tab import TabBwDataset
 from bluewhalecore.data.nparr import NumpyBwDataset
-from genomeutils.regions import readBed
-from bluewhalecore.decorators import toplayer
+from bluewhalecore.data.tab import TabBwDataset
 from bluewhalecore.decorators import bottomlayer
+from bluewhalecore.decorators import toplayer
 
 
 def test_main():
