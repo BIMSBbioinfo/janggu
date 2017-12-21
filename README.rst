@@ -36,9 +36,9 @@ Overview
     :alt: Coverage Status
     :target: https://codecov.io/github/wkopp/bluewhalecore
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/bluewhalecore/v0.1.0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/bluewhalecore/v0.2.0.svg
     :alt: Commits since latest release
-    :target: https://github.com/wkopp/bluewhalecore/compare/v0.1.0...master
+    :target: https://github.com/wkopp/bluewhalecore/compare/v0.2.0...master
 
 .. |version| image:: https://img.shields.io/pypi/v/bluewhalecore.svg
     :alt: PyPI Package latest release

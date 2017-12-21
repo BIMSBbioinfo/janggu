@@ -26,7 +26,7 @@ project = u'BlueWhaleCore'
 year = u'2017'
 author = u'Wolfgang Kopp'
 copyright = '{0}, {1}'.format(year, author)
-version = release = u'0.1.0'
+version = release = u'version = release = '0.2.0''
 
 pygments_style = 'trac'
 templates_path = ['.']
