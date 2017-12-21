@@ -16,29 +16,48 @@ class BwChromVector(ChromVector):
     @classmethod
     def create(cls, iv, typecode, storage,
                memmap_dir="", overwrite=False):
-        if storage == "memmap" and overwrite == False:
-            ncv = cls()
-            ncv.iv = iv
-            f = os.path.join(memmap_dir, iv.chrom + iv.strand + ".nmm")
-            print('creating {}'.format(f))
 
-            if os.path.exists(f):
-                ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
-                                         filename=f,
-                                         mode='r+')
-            else:
-                ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
-                                         filename=f,
-                                         mode='w+')
-            ncv._storage = storage
-            # TODO: Test whether offset works properly
-            ncv.offset = iv.start
-            ncv.is_vector_of_sets = False
+        ncv = cls()
+        ncv.iv = iv
+        ncv._storage = storage
+        # TODO: Test whether offset works properly
+        ncv.offset = iv.start
+        ncv.is_vector_of_sets = False
+
+        f = os.path.join(memmap_dir, iv.chrom + iv.strand + ".nmm")
+
+        if storage == "memmap" and overwrite == False and os.path.exists(f):
+            ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
+                                     filename=f,
+                                     mode='r+')
         else:
-            ncv = ChromVector.create(iv, typecode,
-                                     storage, memmap_dir="")
+            #ncv = cls()
+            ncv_ = ChromVector.create(iv, typecode,
+                                     storage, memmap_dir=memmap_dir)
+
+            ncv.array = ncv_.array
+
         return ncv
 
+    def __getitem__(self, index):
+        ret = ChromVector.__getitem__(self, index)
+
+        if isinstance(ret, ChromVector):
+            v = BwChromVector()
+            v.iv = ret.iv
+            v.array = ret.array
+            v.offset = ret.offset
+            v.is_vector_of_sets = ret.is_vector_of_sets
+            v._storage = ret._storage
+            return v
+        else:
+            return ret
+
+    def aggregate(self):
+        res = 0.0
+        for iv, value in self.steps():
+            res += value *(iv.end-iv.start)
+        return res
 
 class BwGenomicArray(GenomicArray):
 
@@ -46,7 +65,6 @@ class BwGenomicArray(GenomicArray):
                  storage='step', memmap_dir="", overwrite=False):
 
         self.overwrite = overwrite
-        print('stranded={}'.format(stranded))
 
         GenomicArray.__init__(self, chroms, stranded=stranded,
                               typecode=typecode, storage=storage,
@@ -63,13 +81,13 @@ class BwGenomicArray(GenomicArray):
             iv.strand = "+"
             self.chrom_vectors[chrom][strand_plus] = \
                 BwChromVector.create(iv, self.typecode,
-                                     self.storage, self.memmap_dir,
+                                     self.storage, memmap_dir=self.memmap_dir,
                                      overwrite=self.overwrite)
             iv = iv.copy()
             iv.strand = "-"
             self.chrom_vectors[chrom][strand_minus] = \
                 BwChromVector.create(iv, self.typecode,
-                                     self.storage, self.memmap_dir,
+                                     self.storage, memmap_dir=self.memmap_dir,
                                      overwrite=self.overwrite)
         else:
             self.chrom_vectors[chrom] = {
