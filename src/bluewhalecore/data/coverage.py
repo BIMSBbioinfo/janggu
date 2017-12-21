@@ -1,61 +1,38 @@
 import itertools
 import os
 
+import numpy as np
 from data import BwDataset
-from genomeutils.regions import readBed
 from HTSeq import BAM_Reader
 from htseq_extension import BwGenomicArray
-from pandas import DataFrame
+from genomic_indexer import BwGenomicIndexer
+import pyBigWig
 
 
 class CoverageBwDataset(BwDataset):
 
-    def __init__(self, name, BwGenomicArray,
-                 offsets,  # indices of pointing to region start
-                 resolution,  # bp resolution
+    def __init__(self, name, covers,
+                 gindexer,  # indices of pointing to region start
                  flank=4,  # flanking region to consider
                  stranded=True,  # strandedness to consider
                  cachedir=None):
 
-        if isinstance(cachedir, str):
-            self.cachedir = cachedir
+        self.covers = covers
+        self.gindexer = gindexer
+        self.flank = flank
+        self.stranded = stranded
+        self.cachedir = cachedir
 
         BwDataset.__init__(self, '{}'.format(name))
 
     @classmethod
     def fromBam(cls, name, bam, regions, genomesize,
-                resolution=50,
+                resolution=50, stride=50,
                 flank=4, stranded=True, storage='memmap',
                 overwrite=False,
                 cachedir=None):
 
-        # fill up int8 rep of DNA
-        # load dna, region index, and within region index
-        if isinstance(regions, str) and os.path.exists(regions):
-            regions_ = readBed(regions)
-        elif isinstance(regions, DataFrame):
-            regions_ = regions.copy()
-        else:
-            raise Exception('regions must be a bed-filename \
-                            or a pandas.DataFrame \
-                            containing the content of a bed-file')
-
-        # Create iregion index
-        reglens = ((regions_.end - regions_.start) //
-                   resolution + 2*flank).values
-
-        chrs = []
-        for i in range(len(reglens)):
-            chrs += [i] * reglens[i]
-
-
-#        offsets = []
-#        for ireg in xrange(len(reglens)):
-#            offsets += [regions_.start[ireg] + (
-#                i - flank)*resolution for i in xrange(reglens[ireg])]
-
-#        offsets = np.asarray([regions_.start - (flank + idx)*resolution
-#                              for reglen in reglens for idx in range(reglen)])
+        gindexer = BwGenomicIndexer(regions, resolution, stride)
 
         if isinstance(bam, str):
             bam = [bam]
@@ -63,23 +40,26 @@ class CoverageBwDataset(BwDataset):
         covers = []
         for sample_file in bam:
 
-            memmap_dir = os.path.join(cachedir, name,
-                                      os.path.basename(sample_file))
-            if not os.path.exists(memmap_dir):
-                os.makedirs(memmap_dir)
+            if storage == 'memmap':
+                memmap_dir = os.path.join(cachedir, name,
+                                          os.path.basename(sample_file))
+                if not os.path.exists(memmap_dir):
+                    os.makedirs(memmap_dir)
 
-            ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
-                  for x in itertools.product(genomesize.keys(),
-                                             ['-', '+'] if stranded
-                                             else ['.'])]
-            print(ps)
-            nmms = [os.path.exists(p) for p in ps]
+                ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
+                      for x in
+                      itertools.product(genomesize.keys(),
+                                        ['-', '+'] if stranded
+                                        else ['.'])]
+                nmms = [os.path.exists(p) for p in ps]
+            else:
+                nmms = [False]
+                memmap_dir = ''
 
             cover = BwGenomicArray(genomesize, stranded=stranded,
                                    storage=storage, memmap_dir=memmap_dir,
                                    overwrite=overwrite)
 
-            print('nmms={}, overwrite={}'.format(all(nmms), overwrite))
             if all(nmms) and not overwrite:
                 print('Reload BwGenomicArray from {}'.format(memmap_dir))
             else:
@@ -91,29 +71,112 @@ class CoverageBwDataset(BwDataset):
                         cover[aln.iv.start_d_as_pos] += 1
 
             covers.append(cover)
-            offsets = None
 
-        return cls(name, covers, offsets, resolution, flank,
+        return cls(name, covers, gindexer, flank,
                    stranded, cachedir)
 
     @classmethod
-    def fromBigWig(cls, name, fastafile, order=1, cachedir=None):
-        raise NotImplementedError('coverageFromBigWig')
+    def fromBigWig(cls, name, bigwigfiles, regions, genomesize,
+                   resolution=50, stride=50,
+                   flank=4, stranded=True, storage='memmap',
+                   overwrite=False,
+                   cachedir=None):
 
-    def load(self):
-        # fill up int8 rep of DNA
-        # load dna, region index, and within region index
-        pass
+        gindexer = BwGenomicIndexer(regions, resolution, stride)
+
+        if isinstance(bigwigfiles, str):
+            bigwigfiles = [bigwigfiles]
+
+        covers = []
+        for sample_file in bigwigfiles:
+
+            if storage == 'memmap':
+                memmap_dir = os.path.join(cachedir, name,
+                                          os.path.basename(sample_file))
+                if not os.path.exists(memmap_dir):
+                    os.makedirs(memmap_dir)
+
+                ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
+                      for x in
+                      itertools.product(genomesize.keys(),
+                                        ['-', '+'] if stranded
+                                        else ['.'])]
+                nmms = [os.path.exists(p) for p in ps]
+            else:
+                nmms = False
+                memmap_dir = ''
+
+            # At the moment, we treat the information contained
+            # in each bw-file as unstranded
+            cover = BwGenomicArray(genomesize, stranded=False,
+                                   storage=storage, memmap_dir=memmap_dir,
+                                   overwrite=overwrite)
+
+            if all(nmms) and not overwrite:
+                print('Reload BwGenomicArray from {}'.format(memmap_dir))
+            else:
+                print('Scoring from {}'.format(sample_file))
+                bw = pyBigWig(sample_file)
+
+                for i in range(len(gindexer)):
+                    iv = gindexer[i]
+                    cover[iv.start_as_pos] += bw.values(iv.chrom,
+                                                        int(iv.start),
+                                                        int(iv.end))
+
+            covers.append(cover)
+
+        return cls(name, covers, gindexer, flank,
+                   stranded, cachedir)
 
     def __repr__(self):
-        return 'CoverageBwDataset("{}", <BwGenomicArray>, <offsets>, \
-                resolution={}, flank={}, stranded={}, \
+        return 'CoverageBwDataset("{}", <BwGenomicArray>, <BwGenomicIndexer>, \
+                flank={}, stranded={}, \
                 cachedir={})'\
-                .format(self.name, self.resolution, self.flank, self.stranded,
+                .format(self.name, self.flank, self.stranded,
                         self.cachedir)
 
     def __getitem__(self, idxs):
-        data = self.extractCoverage(idxs)
+        if isinstance(idxs, int):
+            idxs = [idxs]
+        if not isinstance(idxs, list):
+            raise IndexError('CoverageBwDataset.__getitem__ '
+                             + 'requires "int" or "list"')
+
+        data = np.empty((len(idxs), 2 if self.stranded else 1,
+                         1 + 2*self.flank, len(self.covers)))
+
+        if self.stranded:
+            for i in idxs:
+                iv = self.gindexer[i]
+                for b in range(-self.flank, self.flank + 1):
+                    piv = iv.copy()
+                    piv.start = iv.start + b * self.gindexer.stride
+                    piv.end = iv.end + b * self.gindexer.stride
+                    piv.strand = '+'
+                    miv = piv.copy()
+                    miv.strand = '-'
+                    for c in range(len(self.covers)):
+                        try:
+                            data[i, 0, b+self.flank, c] = \
+                                self.covers[c][piv].aggregate()
+                            data[i, 1, b+self.flank, c] = \
+                                self.covers[c][miv].aggregate()
+                        except IndexError:
+                            data[i, :, b+self.flank, c] = 0
+        else:
+            for i in idxs:
+                iv = self.gindexer[i]
+                for b in range(-self.flank, self.flank + 1):
+                    tiv = iv.copy()
+                    tiv.start = iv.start + b * self.gindexer.stride
+                    tiv.end = iv.end + b * self.gindexer.stride
+                    for c in range(len(self.covers)):
+                        try:
+                            data[i, 0, b+self.flank, c] = \
+                                self.covers[c][tiv].aggregate()
+                        except IndexError:
+                            data[i, :, b+self.flank, c] = 0
 
         for tr in self.transformations:
             data = tr(data)
@@ -121,11 +184,12 @@ class CoverageBwDataset(BwDataset):
         return data
 
     def __len__(self):
-        return len(self.offsets)
+        return len(self.gindexer)
 
     @property
     def shape(self):
-        return (self.nstrands, 2*self.flank + 1, self.nsamples)
+        return (2 if self.stranded else 1,
+                2*self.flank + 1, len(self.covers))
 
     def flank():
         doc = "The flank property."

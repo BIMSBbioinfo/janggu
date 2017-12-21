@@ -3,6 +3,7 @@ from .data import BwDataset  # noqa
 from .data import inputShape  # noqa
 from .data import outputShape  # noqa
 from .dna import DnaBwDataset  # noqa
+from .genomic_indexer import BwGenomicIndexer  # noqa
 from .htseq_extension import BwChromVector  # noqa
 from .htseq_extension import BwGenomicArray  # noqa
 from .nparr import NumpyBwDataset  # noqa

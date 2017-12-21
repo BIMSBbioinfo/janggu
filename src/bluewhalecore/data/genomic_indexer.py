@@ -44,7 +44,8 @@ class BwGenomicIndexer:
 
     def __repr__(self):
         return "BwGenomicIndexer(<regions>, " \
-            + "resolution={})".format(self.resolution)
+            + "resolution={}, stride={})".format(self.resolution,
+                                                 self.stride)
 
     def __getitem__(self, index):
         if isinstance(index, int):
