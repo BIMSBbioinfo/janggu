@@ -102,6 +102,7 @@ setup(
         'htseq',
         'sklearn',
         'h5py',
+        'pyBigWig'
         # 'genomeutils>=0.1.0'
     ],
     extras_require={
