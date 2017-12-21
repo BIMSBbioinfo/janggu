@@ -38,7 +38,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
                                 (civ.chrom, civ.start, civ.end))
 
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
-        np.testing.assert_equal(cvdata.covers[0][iv].aggregate(), 2)
+        np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
     for store in ['step', 'memmap', 'ndarray']:
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
@@ -54,7 +54,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         np.testing.assert_equal(cvdata.shape, (2, 2*flank + 1, 1))
 
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
-        np.testing.assert_equal(cvdata.covers[0][iv].aggregate(), 2)
+        np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
         civ = cvdata.gindexer[0]
         np.testing.assert_equal((iv.chrom, iv.start, iv.end),
@@ -96,7 +96,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
                                 (civ.chrom, civ.start, civ.end, civ.strand))
 
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
-        np.testing.assert_equal(cvdata.covers[0][iv].aggregate(), 2)
+        np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
     for store in ['step', 'memmap', 'ndarray']:
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
@@ -112,7 +112,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         np.testing.assert_equal(cvdata.shape, (1, 2*flank + 1, 1))
 
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
-        np.testing.assert_equal(cvdata.covers[0][iv].aggregate(), 2)
+        np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
         civ = cvdata.gindexer[0]
         np.testing.assert_equal((iv.chrom, iv.start, iv.end, iv.strand),

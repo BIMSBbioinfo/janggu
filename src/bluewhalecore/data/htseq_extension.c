@@ -1024,6 +1024,7 @@ static const char __pyx_k_ncv[] = "ncv";
 static const char __pyx_k_nmm[] = ".nmm";
 static const char __pyx_k_res[] = "res";
 static const char __pyx_k_ret[] = "ret";
+static const char __pyx_k_sum[] = "sum";
 static const char __pyx_k_sys[] = "sys";
 static const char __pyx_k_copy[] = "copy";
 static const char __pyx_k_init[] = "__init__";
@@ -1063,7 +1064,6 @@ static const char __pyx_k_qualname[] = "__qualname__";
 static const char __pyx_k_stranded[] = "stranded";
 static const char __pyx_k_typecode[] = "typecode";
 static const char __pyx_k_add_chrom[] = "add_chrom";
-static const char __pyx_k_aggregate[] = "aggregate";
 static const char __pyx_k_metaclass[] = "__metaclass__";
 static const char __pyx_k_overwrite[] = "overwrite";
 static const char __pyx_k_storage_2[] = "_storage";
@@ -1078,20 +1078,20 @@ static const char __pyx_k_chrom_vectors[] = "chrom_vectors";
 static const char __pyx_k_BwGenomicArray[] = "BwGenomicArray";
 static const char __pyx_k_GenomicInterval[] = "GenomicInterval";
 static const char __pyx_k_strand_nostrand[] = "strand_nostrand";
+static const char __pyx_k_BwChromVector_sum[] = "BwChromVector.sum";
 static const char __pyx_k_is_vector_of_sets[] = "is_vector_of_sets";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_BwChromVector_create[] = "BwChromVector.create";
 static const char __pyx_k_BwGenomicArray___init[] = "BwGenomicArray.__init__";
 static const char __pyx_k_BwChromVector___getitem[] = "BwChromVector.__getitem__";
-static const char __pyx_k_BwChromVector_aggregate[] = "BwChromVector.aggregate";
 static const char __pyx_k_BwGenomicArray_add_chrom[] = "BwGenomicArray.add_chrom";
 static const char __pyx_k_bluewhalecore_data_htseq_extensi[] = "bluewhalecore.data.htseq_extension";
 static const char __pyx_k_src_bluewhalecore_data_htseq_ext[] = "src/bluewhalecore/data/htseq_extension.pyx";
 static PyObject *__pyx_kp_s_;
 static PyObject *__pyx_n_s_BwChromVector;
 static PyObject *__pyx_n_s_BwChromVector___getitem;
-static PyObject *__pyx_n_s_BwChromVector_aggregate;
 static PyObject *__pyx_n_s_BwChromVector_create;
+static PyObject *__pyx_n_s_BwChromVector_sum;
 static PyObject *__pyx_n_s_BwGenomicArray;
 static PyObject *__pyx_n_s_BwGenomicArray___init;
 static PyObject *__pyx_n_s_BwGenomicArray_add_chrom;
@@ -1103,7 +1103,6 @@ static PyObject *__pyx_kp_s__2;
 static PyObject *__pyx_kp_s__3;
 static PyObject *__pyx_kp_s__4;
 static PyObject *__pyx_n_s_add_chrom;
-static PyObject *__pyx_n_s_aggregate;
 static PyObject *__pyx_n_s_array;
 static PyObject *__pyx_n_s_bluewhalecore_data_htseq_extensi;
 static PyObject *__pyx_n_s_chrom;
@@ -1162,6 +1161,7 @@ static PyObject *__pyx_n_s_strand_minus;
 static PyObject *__pyx_n_s_strand_nostrand;
 static PyObject *__pyx_n_s_strand_plus;
 static PyObject *__pyx_n_s_stranded;
+static PyObject *__pyx_n_s_sum;
 static PyObject *__pyx_n_s_sys;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_typecode;
@@ -1169,7 +1169,7 @@ static PyObject *__pyx_n_s_v;
 static PyObject *__pyx_n_s_value;
 static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_create(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_cls, PyObject *__pyx_v_iv, PyObject *__pyx_v_typecode, PyObject *__pyx_v_storage, PyObject *__pyx_v_memmap_dir, PyObject *__pyx_v_overwrite); /* proto */
 static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_2__getitem__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_index); /* proto */
-static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_4aggregate(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_4sum(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
 static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_typecode, PyObject *__pyx_v_storage, PyObject *__pyx_v_memmap_dir, PyObject *__pyx_v_overwrite); /* proto */
 static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension___defaults__(CYTHON_UNUSED PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_2add_chrom(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_chrom, PyObject *__pyx_v_length, PyObject *__pyx_v_start_index); /* proto */
@@ -1998,7 +1998,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
  *         else:
  *             return ret             # <<<<<<<<<<<<<<
  * 
- *     def aggregate(self):
+ *     def sum(self):
  */
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
@@ -2034,26 +2034,26 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
 /* "bluewhalecore/data/htseq_extension.pyx":56
  *             return ret
  * 
- *     def aggregate(self):             # <<<<<<<<<<<<<<
+ *     def sum(self):             # <<<<<<<<<<<<<<
  *         res = 0.0
  *         for iv, value in self.steps():
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5aggregate(PyObject *__pyx_self, PyObject *__pyx_v_self); /*proto*/
-static PyMethodDef __pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5aggregate = {"aggregate", (PyCFunction)__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5aggregate, METH_O, 0};
-static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5aggregate(PyObject *__pyx_self, PyObject *__pyx_v_self) {
+static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum(PyObject *__pyx_self, PyObject *__pyx_v_self); /*proto*/
+static PyMethodDef __pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum = {"sum", (PyCFunction)__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum, METH_O, 0};
+static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum(PyObject *__pyx_self, PyObject *__pyx_v_self) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("aggregate (wrapper)", 0);
-  __pyx_r = __pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_4aggregate(__pyx_self, ((PyObject *)__pyx_v_self));
+  __Pyx_RefNannySetupContext("sum (wrapper)", 0);
+  __pyx_r = __pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_4sum(__pyx_self, ((PyObject *)__pyx_v_self));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_4aggregate(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self) {
+static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_4sum(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self) {
   PyObject *__pyx_v_res = NULL;
   PyObject *__pyx_v_iv = NULL;
   PyObject *__pyx_v_value = NULL;
@@ -2067,11 +2067,11 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   PyObject *__pyx_t_6 = NULL;
   PyObject *__pyx_t_7 = NULL;
   PyObject *(*__pyx_t_8)(PyObject *);
-  __Pyx_RefNannySetupContext("aggregate", 0);
+  __Pyx_RefNannySetupContext("sum", 0);
 
   /* "bluewhalecore/data/htseq_extension.pyx":57
  * 
- *     def aggregate(self):
+ *     def sum(self):
  *         res = 0.0             # <<<<<<<<<<<<<<
  *         for iv, value in self.steps():
  *             res += value *(iv.end-iv.start)
@@ -2080,7 +2080,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   __pyx_v_res = __pyx_float_0_0;
 
   /* "bluewhalecore/data/htseq_extension.pyx":58
- *     def aggregate(self):
+ *     def sum(self):
  *         res = 0.0
  *         for iv, value in self.steps():             # <<<<<<<<<<<<<<
  *             res += value *(iv.end-iv.start)
@@ -2226,7 +2226,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __pyx_t_3 = 0;
 
     /* "bluewhalecore/data/htseq_extension.pyx":58
- *     def aggregate(self):
+ *     def sum(self):
  *         res = 0.0
  *         for iv, value in self.steps():             # <<<<<<<<<<<<<<
  *             res += value *(iv.end-iv.start)
@@ -2250,7 +2250,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   /* "bluewhalecore/data/htseq_extension.pyx":56
  *             return ret
  * 
- *     def aggregate(self):             # <<<<<<<<<<<<<<
+ *     def sum(self):             # <<<<<<<<<<<<<<
  *         res = 0.0
  *         for iv, value in self.steps():
  */
@@ -2262,7 +2262,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_AddTraceback("bluewhalecore.data.htseq_extension.BwChromVector.aggregate", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("bluewhalecore.data.htseq_extension.BwChromVector.sum", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_res);
@@ -3283,8 +3283,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_, __pyx_k_, sizeof(__pyx_k_), 0, 0, 1, 0},
   {&__pyx_n_s_BwChromVector, __pyx_k_BwChromVector, sizeof(__pyx_k_BwChromVector), 0, 0, 1, 1},
   {&__pyx_n_s_BwChromVector___getitem, __pyx_k_BwChromVector___getitem, sizeof(__pyx_k_BwChromVector___getitem), 0, 0, 1, 1},
-  {&__pyx_n_s_BwChromVector_aggregate, __pyx_k_BwChromVector_aggregate, sizeof(__pyx_k_BwChromVector_aggregate), 0, 0, 1, 1},
   {&__pyx_n_s_BwChromVector_create, __pyx_k_BwChromVector_create, sizeof(__pyx_k_BwChromVector_create), 0, 0, 1, 1},
+  {&__pyx_n_s_BwChromVector_sum, __pyx_k_BwChromVector_sum, sizeof(__pyx_k_BwChromVector_sum), 0, 0, 1, 1},
   {&__pyx_n_s_BwGenomicArray, __pyx_k_BwGenomicArray, sizeof(__pyx_k_BwGenomicArray), 0, 0, 1, 1},
   {&__pyx_n_s_BwGenomicArray___init, __pyx_k_BwGenomicArray___init, sizeof(__pyx_k_BwGenomicArray___init), 0, 0, 1, 1},
   {&__pyx_n_s_BwGenomicArray_add_chrom, __pyx_k_BwGenomicArray_add_chrom, sizeof(__pyx_k_BwGenomicArray_add_chrom), 0, 0, 1, 1},
@@ -3296,7 +3296,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 0, 1, 0},
   {&__pyx_kp_s__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 0, 1, 0},
   {&__pyx_n_s_add_chrom, __pyx_k_add_chrom, sizeof(__pyx_k_add_chrom), 0, 0, 1, 1},
-  {&__pyx_n_s_aggregate, __pyx_k_aggregate, sizeof(__pyx_k_aggregate), 0, 0, 1, 1},
   {&__pyx_n_s_array, __pyx_k_array, sizeof(__pyx_k_array), 0, 0, 1, 1},
   {&__pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_k_bluewhalecore_data_htseq_extensi, sizeof(__pyx_k_bluewhalecore_data_htseq_extensi), 0, 0, 1, 1},
   {&__pyx_n_s_chrom, __pyx_k_chrom, sizeof(__pyx_k_chrom), 0, 0, 1, 1},
@@ -3355,6 +3354,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_strand_nostrand, __pyx_k_strand_nostrand, sizeof(__pyx_k_strand_nostrand), 0, 0, 1, 1},
   {&__pyx_n_s_strand_plus, __pyx_k_strand_plus, sizeof(__pyx_k_strand_plus), 0, 0, 1, 1},
   {&__pyx_n_s_stranded, __pyx_k_stranded, sizeof(__pyx_k_stranded), 0, 0, 1, 1},
+  {&__pyx_n_s_sum, __pyx_k_sum, sizeof(__pyx_k_sum), 0, 0, 1, 1},
   {&__pyx_n_s_sys, __pyx_k_sys, sizeof(__pyx_k_sys), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_s_typecode, __pyx_k_typecode, sizeof(__pyx_k_typecode), 0, 0, 1, 1},
@@ -3400,14 +3400,14 @@ static int __Pyx_InitCachedConstants(void) {
   /* "bluewhalecore/data/htseq_extension.pyx":56
  *             return ret
  * 
- *     def aggregate(self):             # <<<<<<<<<<<<<<
+ *     def sum(self):             # <<<<<<<<<<<<<<
  *         res = 0.0
  *         for iv, value in self.steps():
  */
   __pyx_tuple__10 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_res, __pyx_n_s_iv, __pyx_n_s_value); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_aggregate, 56, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 56, __pyx_L1_error)
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(1, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_sum, 56, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 56, __pyx_L1_error)
 
   /* "bluewhalecore/data/htseq_extension.pyx":64
  * class BwGenomicArray(GenomicArray):
@@ -3730,13 +3730,13 @@ PyMODINIT_FUNC PyInit_htseq_extension(void)
   /* "bluewhalecore/data/htseq_extension.pyx":56
  *             return ret
  * 
- *     def aggregate(self):             # <<<<<<<<<<<<<<
+ *     def sum(self):             # <<<<<<<<<<<<<<
  *         res = 0.0
  *         for iv, value in self.steps():
  */
-  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5aggregate, 0, __pyx_n_s_BwChromVector_aggregate, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 56, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum, 0, __pyx_n_s_BwChromVector_sum, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 56, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_aggregate, __pyx_t_5) < 0) __PYX_ERR(0, 56, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_sum, __pyx_t_5) < 0) __PYX_ERR(0, 56, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "bluewhalecore/data/htseq_extension.pyx":14

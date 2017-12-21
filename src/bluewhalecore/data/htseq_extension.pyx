@@ -53,7 +53,7 @@ class BwChromVector(ChromVector):
         else:
             return ret
 
-    def aggregate(self):
+    def sum(self):
         res = 0.0
         for iv, value in self.steps():
             res += value *(iv.end-iv.start)

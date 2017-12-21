@@ -159,9 +159,9 @@ class CoverageBwDataset(BwDataset):
                     for c in range(len(self.covers)):
                         try:
                             data[i, 0, b+self.flank, c] = \
-                                self.covers[c][piv].aggregate()
+                                self.covers[c][piv].sum()
                             data[i, 1, b+self.flank, c] = \
-                                self.covers[c][miv].aggregate()
+                                self.covers[c][miv].sum()
                         except IndexError:
                             data[i, :, b+self.flank, c] = 0
         else:
@@ -174,7 +174,7 @@ class CoverageBwDataset(BwDataset):
                     for c in range(len(self.covers)):
                         try:
                             data[i, 0, b+self.flank, c] = \
-                                self.covers[c][tiv].aggregate()
+                                self.covers[c][tiv].sum()
                         except IndexError:
                             data[i, :, b+self.flank, c] = 0
 

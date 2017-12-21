@@ -44,9 +44,9 @@ def test_bwga_instance_unstranded(tmpdir):
 
     ga[iv] += 1
     np.testing.assert_equal(list(ga[iv]), [1]*20)
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300, '.')
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     assert os.path.exists(os.path.join(tmpdir.strpath, 'chr10..nmm'))
 
 
@@ -59,11 +59,11 @@ def test_bwga_instance_stranded(tmpdir):
 
     ga[iv] += 1
     np.testing.assert_equal(list(ga[iv]), [1]*20)
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300, '-')
-    np.testing.assert_equal(ga[iv].aggregate(), 0)
+    np.testing.assert_equal(ga[iv].sum(), 0)
     iv = GenomicInterval('chr10', 0, 300, '+')
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     assert os.path.exists(os.path.join(tmpdir.strpath, 'chr10+.nmm'))
     assert os.path.exists(os.path.join(tmpdir.strpath, 'chr10-.nmm'))
 
@@ -77,11 +77,11 @@ def test_bwga_instance_stranded_step(tmpdir):
 
     ga[iv] += 1
     np.testing.assert_equal(list(ga[iv]), [1]*20)
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300, '-')
-    np.testing.assert_equal(ga[iv].aggregate(), 0)
+    np.testing.assert_equal(ga[iv].sum(), 0)
     iv = GenomicInterval('chr10', 0, 300, '+')
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'chr10+.nmm'))
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'chr10-.nmm'))
 
@@ -94,9 +94,9 @@ def test_bwga_instance_unstranded_step(tmpdir):
 
     ga[iv] += 1
     np.testing.assert_equal(list(ga[iv]), [1]*20)
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300, '.')
-    np.testing.assert_equal(ga[iv].aggregate(), 20)
+    np.testing.assert_equal(ga[iv].sum(), 20)
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'chr10..nmm'))
 
 
@@ -112,4 +112,4 @@ def test_load_bwga_bam():
 
     iv = GenomicInterval("chrIII", 217330, 217350, "+")
     np.testing.assert_equal(sum(list(cvg[iv])), 34)
-    np.testing.assert_equal(cvg[iv].aggregate(), 34)
+    np.testing.assert_equal(cvg[iv].sum(), 34)
