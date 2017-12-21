@@ -5,7 +5,6 @@ class BwDataset(object):
 
     def __init__(self, name):
         self.name = name
-        self.load()
 
     @property
     def name(self):
@@ -16,9 +15,6 @@ class BwDataset(object):
         if not isinstance(value, str):
             raise Exception('name must be a string')
         self._name = value
-
-    def load(self):
-        raise NotImplemented('load data must be implemented')
 
     def __getitem__(self, idxs):
 

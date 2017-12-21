@@ -17,29 +17,30 @@ class TabBwDataset(BwDataset):
         Filename or list of filenames containing tables to load.
     cachefile : str
         cachefile to load the data from if present
+    dtype : str
+        Type. Default: 'int8'
     sep : str
         Item separator. Default: sep=','
     """
 
-    def __init__(self, name, filename, cachedir=None, sep=','):
+    def __init__(self, name, filename, cachedir=None, dtype='int8', sep=','):
 
         self.filename = filename
         self.sep = sep
         self.header = None
+        self.dtype = dtype
+
+        data = []
+        for f in self.filename:
+            data.append(pd.read_csv(f, header=self.header,
+                                    sep=self.sep, dtype=self.dtype))
+
+            self.data = pd.concat(data, axis=1, ignore_index=True).values
 
         if isinstance(cachedir, str):
             self.cachedir = cachedir
 
         BwDataset.__init__(self, name)
-
-    def load(self):
-
-        data = []
-        for f in self.filename:
-            data.append(pd.read_csv(f, header=self.header,
-                                    sep=self.sep))
-
-        self.data = pd.concat(data, axis=1, ignore_index=True).values
 
     def __repr__(self):
         return 'TabBwDataset("{}", "{}", sep="{}")'\

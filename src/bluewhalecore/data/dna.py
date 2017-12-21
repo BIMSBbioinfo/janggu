@@ -94,11 +94,6 @@ class DnaBwDataset(BwDataset):
 
         return cls(name, seqs, stride, reglen, flank, order)
 
-    def load(self):
-        # fill up int8 rep of DNA
-        # load dna, region index, and within region index
-        pass
-
     def __repr__(self):
         return 'DnaBwDataset("{}", <seqs>, <iregion>, <inregionidx>, \
                 stride={}, reglen={}, flank={})'\

@@ -12,9 +12,6 @@ class NumpyBwDataset(BwDataset):
 
         BwDataset.__init__(self, '{}'.format(name))
 
-    def load(self):
-        pass
-
     def __repr__(self):
         return 'NumpyBwDataset("{}", <np.array>)'.format(self.name)
 
