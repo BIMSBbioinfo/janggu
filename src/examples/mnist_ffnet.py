@@ -63,6 +63,7 @@ def fmodel():
                   metrics=['accuracy'])
     return model
 
+
 # The datastructures provided by bluewhalecore can be immediately
 # supplied to keras, because they essentially mimic a numpy array
 K.clear_session()
