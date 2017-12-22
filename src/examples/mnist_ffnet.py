@@ -30,8 +30,8 @@ bw_y_test = NumpyBwDataset('y', y_test)
 
 
 # Define the body of the network
-@bottomlayer
-@toplayer
+@inputlayer
+@outputlayer
 def ffn(input, inparams, outparams, otherparams):
     layer = Flatten()(input[0])
     output = Dense(otherparams[0], activation=otherparams[1])(layer)
@@ -63,6 +63,16 @@ def fmodel():
                   metrics=['accuracy'])
     return model
 
+# The datastructures provided by bluewhalecore can be immediately
+# supplied to keras, because they essentially mimic a numpy array
+K.clear_session()
+np.random.seed(1234)
+m = fmodel()
+h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000,
+          shuffle=False, verbose=0)
+print('#' * 40)
+print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
+print('#' * 40)
 
 # then use it in bluewhale
 K.clear_session()
