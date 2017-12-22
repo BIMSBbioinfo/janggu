@@ -1,11 +1,12 @@
 import os
-import pkg_resources
 
 import numpy as np
 import pandas
+import pkg_resources
 from genomeutils.refgenome import getGenomeSize
-from bluewhalecore.data import CoverageBwDataset
 from HTSeq import GenomicInterval
+
+from bluewhalecore.data import CoverageBwDataset
 
 
 def test_load_coveragedataset_bam_stranded(tmpdir):

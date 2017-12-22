@@ -1,8 +1,8 @@
 import os
 
 import numpy as np
-from HTSeq import GenomicInterval
 from genomeutils.regions import readBed
+from HTSeq import GenomicInterval
 from pandas import DataFrame
 
 

@@ -1,8 +1,9 @@
 import os
-import pkg_resources
 
 import numpy as np
+import pkg_resources
 from genomeutils.regions import readBed
+
 from bluewhalecore.data import BwGenomicIndexer
 
 

@@ -2,11 +2,11 @@ import itertools
 import os
 
 import numpy as np
+import pyBigWig
 from data import BwDataset
+from genomic_indexer import BwGenomicIndexer
 from HTSeq import BAM_Reader
 from htseq_extension import BwGenomicArray
-from genomic_indexer import BwGenomicIndexer
-import pyBigWig
 
 
 class CoverageBwDataset(BwDataset):
@@ -146,37 +146,22 @@ class CoverageBwDataset(BwDataset):
         data = np.empty((len(idxs), 2 if self.stranded else 1,
                          1 + 2*self.flank, len(self.covers)))
 
-        if self.stranded:
-            for i in idxs:
-                iv = self.gindexer[i]
-                for b in range(-self.flank, self.flank + 1):
-                    piv = iv.copy()
-                    piv.start = iv.start + b * self.gindexer.stride
-                    piv.end = iv.end + b * self.gindexer.stride
-                    piv.strand = '+'
-                    miv = piv.copy()
-                    miv.strand = '-'
-                    for c in range(len(self.covers)):
-                        try:
-                            data[i, 0, b+self.flank, c] = \
+        sign = ['+',  '-']
+        for i in idxs:
+            iv = self.gindexer[i]
+            for b in range(-self.flank, self.flank + 1):
+                try:
+                    for s in range(2 if self.stranded else 1):
+
+                        piv = iv.copy()
+                        piv.start = iv.start + b * self.gindexer.stride
+                        piv.end = iv.end + b * self.gindexer.stride
+                        piv.strand = sign[s] if self.stranded else '.'
+                        for c in range(len(self.covers)):
+                            data[i, s, b+self.flank, c] = \
                                 self.covers[c][piv].sum()
-                            data[i, 1, b+self.flank, c] = \
-                                self.covers[c][miv].sum()
-                        except IndexError:
-                            data[i, :, b+self.flank, c] = 0
-        else:
-            for i in idxs:
-                iv = self.gindexer[i]
-                for b in range(-self.flank, self.flank + 1):
-                    tiv = iv.copy()
-                    tiv.start = iv.start + b * self.gindexer.stride
-                    tiv.end = iv.end + b * self.gindexer.stride
-                    for c in range(len(self.covers)):
-                        try:
-                            data[i, 0, b+self.flank, c] = \
-                                self.covers[c][tiv].sum()
-                        except IndexError:
-                            data[i, :, b+self.flank, c] = 0
+                except IndexError:
+                    data[i, :, b+self.flank, c] = 0
 
         for tr in self.transformations:
             data = tr(data)

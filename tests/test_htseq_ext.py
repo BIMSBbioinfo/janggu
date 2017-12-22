@@ -1,9 +1,10 @@
 import os
-import pkg_resources
 
 import numpy as np
-from HTSeq import GenomicInterval
+import pkg_resources
 from HTSeq import BAM_Reader
+from HTSeq import GenomicInterval
+
 from bluewhalecore.data import BwChromVector
 from bluewhalecore.data import BwGenomicArray
 
