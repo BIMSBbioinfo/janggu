@@ -3,8 +3,8 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 
-from bluewhalecore.decorators import bottomlayer
-from bluewhalecore.decorators import toplayer
+from bluewhalecore.decorators import inputlayer
+from bluewhalecore.decorators import outputlayer
 
 
 # ==========================================================
@@ -21,7 +21,7 @@ def make_dense_wo_decorator(input, inshapes, outshapes, params):
 
 # ==========================================================
 # Test without output decorator
-@toplayer
+@outputlayer
 def make_dense_w_top(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
@@ -31,7 +31,7 @@ def make_dense_w_top(input, inshapes, outshapes, params):
 
 # ==========================================================
 # Test without input decorator
-@bottomlayer
+@inputlayer
 def make_dense_w_bottom(input, inshapes, outshapes, params):
     input
     layer = Dense(params)(input[0])
@@ -43,8 +43,8 @@ def make_dense_w_bottom(input, inshapes, outshapes, params):
 
 # ==========================================================
 # Test without input and output decorator
-@bottomlayer
-@toplayer
+@inputlayer
+@outputlayer
 def make_dense_w_topbottom(input, inputshapes, outshapes, params):
     output = Dense(params)(input[0])
     return input, output

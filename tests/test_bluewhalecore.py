@@ -13,8 +13,8 @@ from bluewhalecore.data.data import outputShape
 from bluewhalecore.data.dna import DnaBwDataset
 from bluewhalecore.data.nparr import NumpyBwDataset
 from bluewhalecore.data.tab import TabBwDataset
-from bluewhalecore.decorators import bottomlayer
-from bluewhalecore.decorators import toplayer
+from bluewhalecore.decorators import inputlayer
+from bluewhalecore.decorators import outputlayer
 
 
 def test_main():
@@ -33,8 +33,8 @@ def test_bluewhale_instance(tmpdir):
 
     ctcf = TabBwDataset('ctcf', filename=csvfile)
 
-    @bottomlayer
-    @toplayer
+    @inputlayer
+    @outputlayer
     def cnn_model(input, inp, oup, params):
         layer = Flatten()(input)
         output = Dense(params[0])(layer)
@@ -59,8 +59,8 @@ def test_bluewhale_train_predict(tmpdir):
     X = NumpyBwDataset("X", np.random.random((1000, 100)))
     y = NumpyBwDataset('y', np.random.randint(2, size=(1000, 1)))
 
-    @bottomlayer
-    @toplayer
+    @inputlayer
+    @outputlayer
     def test_model(input, inp, oup, params):
         return input, input[0]
 

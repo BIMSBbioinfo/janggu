@@ -11,8 +11,8 @@ from bluewhalecore.bluewhale import BlueWhale
 from bluewhalecore.data.data import inputShape
 from bluewhalecore.data.data import outputShape
 from bluewhalecore.data.nparr import NumpyBwDataset
-from bluewhalecore.decorators import bottomlayer
-from bluewhalecore.decorators import toplayer
+from bluewhalecore.decorators import inputlayer
+from bluewhalecore.decorators import outputlayer
 
 np.random.seed(1234)
 
