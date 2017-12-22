@@ -32,7 +32,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 20)
-        np.testing.assert_equal(cvdata.shape, (2, 2*flank + 1, 1))
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 2, 2*flank + 1, 1))
         civ = cvdata.gindexer[0]
         np.testing.assert_equal((iv.chrom, iv.start, iv.start + 1),
                                 (civ.chrom, civ.start, civ.end))
@@ -51,7 +51,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 1)
-        np.testing.assert_equal(cvdata.shape, (2, 2*flank + 1, 1))
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 2, 2*flank + 1, 1))
 
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
         np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
@@ -90,7 +90,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 20)
-        np.testing.assert_equal(cvdata.shape, (1, 2*flank + 1, 1))
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 2*flank + 1, 1))
         civ = cvdata.gindexer[0]
         np.testing.assert_equal((iv.chrom, iv.start, iv.start + 1, iv.strand),
                                 (civ.chrom, civ.start, civ.end, civ.strand))
@@ -109,7 +109,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 1)
-        np.testing.assert_equal(cvdata.shape, (1, 2*flank + 1, 1))
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 2*flank + 1, 1))
 
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
         np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)

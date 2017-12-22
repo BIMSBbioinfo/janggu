@@ -48,7 +48,7 @@ def dna_templ(order):
                                         reglen + 2*flank - order + 1, 1))
 
     # this is the bwdataset
-    np.testing.assert_equal(data.shape, (pow(4, order),
+    np.testing.assert_equal(data.shape, (len(data), pow(4, order),
                                          reglen + 2*flank - order + 1, 1))
 
     # Check length
@@ -86,7 +86,7 @@ def test_read_ranges_from_file():
     np.testing.assert_equal(dna.shape, (len(indices), pow(4, order),
                                         reglen + 2*flank - order + 1, 1))
 
-    np.testing.assert_equal(data.shape, (pow(4, order),
+    np.testing.assert_equal(data.shape, (len(data), pow(4, order),
                                          reglen + 2*flank - order + 1, 1))
 
 
@@ -233,4 +233,4 @@ def test_read_dna_from_fasta():
     data = DnaBwDataset.fromFasta('train', fastafile=filename, order=1)
 
     np.testing.assert_equal(len(data), 3997)
-    np.testing.assert_equal(data.shape, (pow(4, order), 200, 1))
+    np.testing.assert_equal(data.shape, (len(data), pow(4, order), 200, 1))

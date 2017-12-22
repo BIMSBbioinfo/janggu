@@ -188,7 +188,7 @@ class CoverageBwDataset(BwDataset):
 
     @property
     def shape(self):
-        return (2 if self.stranded else 1,
+        return (len(self), 2 if self.stranded else 1,
                 2*self.flank + 1, len(self.covers))
 
     def flank():

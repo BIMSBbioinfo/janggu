@@ -20,7 +20,4 @@ class NumpyBwDataset(BwDataset):
 
     @property
     def shape(self):
-        if len(self.data.shape) > 1:
-            return self.data.shape[1:]
-        else:
-            return (1, )
+        return self.data.shape

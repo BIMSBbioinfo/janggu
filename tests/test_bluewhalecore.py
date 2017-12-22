@@ -79,4 +79,4 @@ def test_bluewhale_train_predict(tmpdir):
 
     pred = bwm.predict(X)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
-    np.testing.assert_equal(pred.shape[1:], y.shape)
+    np.testing.assert_equal(pred.shape, y.shape)

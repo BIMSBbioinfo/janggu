@@ -137,7 +137,7 @@ class DnaBwDataset(BwDataset):
 
     @property
     def shape(self):
-        return (pow(4, self.order), self.reglen +
+        return (len(self), pow(4, self.order), self.reglen +
                 2*self.flank - self.order + 1, 1)
 
     def order():

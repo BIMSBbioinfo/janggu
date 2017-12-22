@@ -9,5 +9,5 @@ def test_nparr(tmpdir):
 
     np.testing.assert_equal(len(X), len(y))
     np.testing.assert_equal(len(X), 1000)
-    np.testing.assert_equal(X.shape, (100,))
-    np.testing.assert_equal(y.shape, (1,))
+    np.testing.assert_equal(X.shape, (1000, 100,))
+    np.testing.assert_equal(y.shape, (1000, 1,))

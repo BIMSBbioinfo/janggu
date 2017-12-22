@@ -26,21 +26,25 @@ class BwDataset(object):
         return data
 
     def __len__(self):
-        return self.data.shape[0]
+        pass
 
     @property
     def shape(self):
-        return self.data.shape[1:]
+        pass
 
 
 def inputShape(bwdata):
     """Extracts the shape of a provided BwDataset."""
     if isinstance(bwdata, BwDataset):
-        return {bwdata.name: {'shape': bwdata.shape}}
-    elif isinstance(bwdata, list):
+        bwdata = [bwdata]
+
+    if isinstance(bwdata, list):
         x = {}
         for el in bwdata:
-            x[el.name] = {'shape': el.shape}
+            shape = el.shape[1:]
+            if shape == ():
+                shape = (1,)
+            x[el.name] = {'shape': shape}
         return x
     else:
         raise Exception('inputSpace wrong argument: {}'.format(bwdata))
@@ -50,14 +54,15 @@ def outputShape(bwdata, loss, activation='sigmoid',
                 loss_weight=1.):
     """Extracts the shape and specifies learning objectives."""
     if isinstance(bwdata, BwDataset):
-        return {bwdata.name: {'shape': bwdata.shape,
-                              'loss': loss,
-                              'loss_weight': loss_weight,
-                              'activation': activation}}
-    elif isinstance(bwdata, list):
+        bwdata = [bwdata]
+
+    if isinstance(bwdata, list):
         x = {}
         for el in bwdata:
-            x[el.name] = {'shape': el.shape,
+            shape = el.shape[1:]
+            if shape == ():
+                shape = (1,)
+            x[el.name] = {'shape': shape,
                           'loss': loss,
                           'loss_weight': loss_weight,
                           'activation': activation}
