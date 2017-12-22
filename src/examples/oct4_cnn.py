@@ -1,13 +1,11 @@
 import os
 
-import keras
 import numpy as np
 import pkg_resources
 from keras import backend as K
 from keras.layers import Dense
 from keras.layers import Conv2D
 from keras.layers import GlobalAveragePooling2D
-from keras.layers import Flatten
 from keras.layers import Input
 from keras.models import Model
 
@@ -26,6 +24,7 @@ print(len(bw_x_train))
 print(len(bw_y_train))
 print(bw_x_train.shape)
 print(bw_y_train.shape)
+
 
 # Option 2:
 # Instantiate the model manually
