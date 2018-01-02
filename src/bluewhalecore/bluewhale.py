@@ -2,9 +2,6 @@ import logging
 import os
 
 import tensorflow as tf
-from data.data import BwDataset
-from generators import generate_fit_data
-from generators import generate_predict_data
 from keras import backend as K
 from keras.backend.tensorflow_backend import set_session
 from keras.callbacks import ModelCheckpoint
@@ -12,13 +9,15 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import Model
 from keras.models import load_model
 
+from bluewhalecore.data import BwDataset
+
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.3
 config.gpu_options.visible_device_list = "0"
 set_session(tf.Session(config=config))
 
 
-class BlueWhale(object):
+class BlueWhale(Model):
     """CRBM class.
     The class :class:`BlueWhale` provides infrastructure
     for deep learning applications, including model fitting,
@@ -42,10 +41,10 @@ class BlueWhale(object):
         Flag indicating to overwrite existing results (Default: False).
     """
 
-    def __init__(self, name, kerasmodel,
+    def __init__(self, inputs, outputs, name,
                  outputdir='bluewhale_results/'):
 
-        self.name = name
+        super(BlueWhale, self).__init__(inputs, outputs, name)
 
         self.outputdir = outputdir
 
@@ -64,18 +63,16 @@ class BlueWhale(object):
                             format='%(asctime)s:%(name)s:%(message)s',
                             datefmt='%m/%d/%Y %I:%M:%S')
 
-        self.model = kerasmodel
-
         self.logger.info("Model Summary:")
-        self.model.summary(print_fn=self.logger.info)
+        self.summary(print_fn=self.logger.info)
 
     @classmethod
     def fromName(cls, name, outputdir='bluewhale_results/'):
         """Fetches a pretrained model from filename."""
         path = cls.storagePath(name, outputdir)
 
-        model = load_model(path)
-        return cls(name, model, outputdir)
+        model = load_model(path, custom_objects={'BlueWhale': Model})
+        return cls(model.inputs, model.outputs, name, outputdir)
 
     @staticmethod
     def storagePath(name, outputdir):
@@ -85,22 +82,16 @@ class BlueWhale(object):
         filename = os.path.join(outputdir, 'models', '{}.h5'.format(name))
         return filename
 
-    def saveKerasModel(self):
+    def save(self, filename=None, overwrite=True):
         """Stores the model"""
-        filename = self.storagePath(self.name, self.outputdir)
+        if not filename:
+            filename = self.storagePath(self.name, self.outputdir)
 
         self.logger.info("Save model {}".format(filename))
-        self.model.save(filename)
-
-#    def loadKerasModel(self):
-#        """Loads a pretrained model"""
-#        filename = self.storagePath(self.name, self.outputdir)
-#
-#        self.logger.info("Load model {}".format(filename))
-#        self.model = load_model(filename)
+        super(BlueWhale, self).save(filename)
 
     @classmethod
-    def fromShape(cls, name, inputdict, outputdict, modeldef,
+    def fromShape(cls, inputdict, outputdict, name, modeldef,
                   outputdir='bluewhale_results/', optimizer='adadelta',
                   metrics=['accuracy']):
         """Instantiate BlueWhale through supplying a model template
@@ -109,14 +100,14 @@ class BlueWhale(object):
 
         Parameters
         -----------
-        name : str
-            Unique name of the model.
         inputdict : dict
             Dictionary containing dataset names as keys with dataset
             shapes as values
         outputdir : dict
             Dictionary containing dataset names as keys with dataset
             shapes as values
+        name : str
+            Unique name of the model.
         modeldef : tuple
             Contains a function that defines a model template and
             additional model parameters.
@@ -137,7 +128,8 @@ class BlueWhale(object):
 
         inputs, output = modelfct(None, inputdict, outputdict, modelparams)
 
-        kerasmodel = Model(inputs=inputs, outputs=output)
+        model = cls(inputs=inputs, outputs=output, name=name,
+                    outputdir=outputdir)
 
         losses = {}
         loss_weights = {}
@@ -145,131 +137,154 @@ class BlueWhale(object):
             losses[k] = outputdict[k]['loss']
             loss_weights[k] = outputdict[k]['loss_weight']
 
-        kerasmodel.compile(loss=losses, optimizer=optimizer,
-                           loss_weights=loss_weights, metrics=metrics)
+        model.compile(loss=losses, optimizer=optimizer,
+                      loss_weights=loss_weights, metrics=metrics)
 
-        return cls(name, kerasmodel, outputdir)
+        return model
 
-    def fit(self, X, y, epochs, batch_size=32,
-            train_idxs=None, val_idxs=None,
-            fitgen=generate_fit_data,
-            sample_weights=None,
+    def compile(self, optimizer, loss, metrics=None, loss_weights=None,
+                sample_weight_mode=None, weighted_metrics=None,
+                target_tensors=None, **kwargs):
+        super(BlueWhale, self).compile(optimizer, loss, metrics, loss_weights,
+                                       sample_weight_mode, weighted_metrics,
+                                       target_tensors, **kwargs)
+
+    def fit(self,
+            x=None,
+            y=None,
+            batch_size=None,
+            epochs=1,
+            verbose=1,
+            callbacks=None,
+            validation_split=0.,
+            validation_data=None,
             shuffle=True,
-            use_multiprocessing=True,
-            workers=4,
-            verbose=1):
-        """Fit the model.
+            class_weight=None,
+            sample_weight=None,
+            initial_epoch=0,
+            steps_per_epoch=None,
+            validation_steps=None,
+            fit_gen=None,
+            **kwargs):
 
-        Parameters
-        -----------
-        X : :class:`BWDataset` or list
-            Input BWDataset or list of BWDataset
-        y : BWDataset or list
-            Output BWDataset or list of BWDatasets
-        epochs : int
-            Number of epochs to train
-        batch_size : int
-            Batch size
-        train_idxs : list of int
-            Optional list of training indices
-        val_idxs : list of int
-            Optional list of validation indices
-        """
-        self.logger.info("Start training ...")
-
-        if isinstance(X, BwDataset):
-            X = [X]
-
-        if isinstance(y, BwDataset):
-            y = [y]
-
-        self.logger.info('Training: {}'.format(self.name))
-        self.logger.info("batch_size: {}".format(batch_size))
-        self.logger.info("shuffle: {}".format(shuffle))
-        self.logger.info("use_multiprocessing: {}".format(use_multiprocessing))
-        self.logger.info("workers: {}".format(workers))
-        self.logger.info("Input:")
-        for el in X:
-            self.logger.info("\t{}: {} x {}".format(el.name,
-                             len(el), el.shape))
-
-        self.logger.info("Output:")
-        for el in y:
-            self.logger.info("\t{}: {} x {}".format(el.name,
-                             len(el), el.shape))
+        x = self._convertData(x)
+        y = self._convertData(y)
 
         checkpoint = ModelCheckpoint(self.storagePath(self.name,
                                                       self.outputdir))
-        # tensorboard_logdir = \
-        #     os.path.join(self.dataroot, "tensorboard",
-        #                  (os.path.splitext(
-        #                   os.path.basename(self.summary_file))[0]))
+        if callbacks:
+            callbacks.append(checkpoint)
+        else:
+            callbacks = [checkpoint]
 
-        # self.logger.info('TensorBoard output: {}'
-        # .format(tensorboard_logdir))
-        # tb_cbl = TensorBoard(log_dir=tensorboard_logdir,
-        #                      histogram_freq=0, batch_size=batch_size,
-        #                      write_graph=True, write_grads=False,
-        #                      write_images=False, embeddings_freq=0,
-        #                      embeddings_layer_names=None,
-        #                      embeddings_metadata=None)
+        self.logger.info('Fit: {}'.format(self.name))
+        self.logger.info("Input:")
+        self._dimLogging(x)
+        self.logger.info("Output:")
+        self._dimLogging(y)
 
-        # need to get the indices for training and test
-        if train_idxs is None:
-            train_idxs = range(len(X[0]))
-
-        if val_idxs is None:
-            val_idxs = range(len(X[0]))
-
-        callbacks = [checkpoint]
-
-        h = self.model.fit_generator(
-            fitgen(X, y, train_idxs, batch_size, sample_weights=sample_weights,
-                   shuffle=shuffle),
-            steps_per_epoch=len(train_idxs)//batch_size + (1 if len(train_idxs)
-                                                           % batch_size > 0
-                                                           else 0),
-            epochs=epochs,
-            validation_data=fitgen(X, y, val_idxs, batch_size),
-            validation_steps=len(val_idxs)//batch_size + (1 if len(val_idxs)
-                                                          % batch_size > 0
-                                                          else 0),
-            use_multiprocessing=use_multiprocessing,
-            workers=workers,
-            verbose=verbose,
-            callbacks=callbacks)
+#        if fit_gen:
+#            xlen = x.shape[0]
+#
+#            h = self.fit_generator(fit_gen(x, y, batch_size,
+#                                           sample_weights=sample_weights,
+#                                           shuffle=shuffle),
+#            steps_per_epoch=len(x)//batch_size + (1 if len(x)
+#                                                  % batch_size > 0
+#                                                  else 0),
+#            epochs=epochs,
+#            validation_data=fit_gen(xval, yval, batch_size,
+#                                    sample_weights=sample_weights),
+#            validation_steps=len(val_idxs)//batch_size +
+#                             (1 if len(val_idxs) % batch_size > 0
+#                              else 0),
+#            use_multiprocessing=True,
+#            workers=1,
+#            verbose=verbose,
+#            callbacks=callbacks)
+#
+#        else:
+        h = super(BlueWhale, self).fit(x, y, batch_size, epochs, verbose,
+                                       callbacks, validation_split,
+                                       validation_data, shuffle,
+                                       class_weight,
+                                       sample_weight, initial_epoch,
+                                       steps_per_epoch, validation_steps,
+                                       **kwargs)
 
         self.logger.info('#' * 40)
         for k in h.history:
             self.logger.info('{}: {}'.format(k, h.history[k][-1]))
         self.logger.info('#' * 40)
 
-        self.logger.info("Finished training ...")
+        self.logger.info("Training finished ...")
         return h
 
-    def predict(self, X, indices=None,
-                predictgen=generate_predict_data, batch_size=32,
-                verbose=0):
-        """Perform predictions for a set of indices"""
+    def predict(self, x,
+                batch_size=None,
+                verbose=0,
+                steps=None):
 
-        self.logger.info('Prediction: {}'.format(self.name))
+        x = self._convertData(x)
+
+        self.logger.info('Predict: {}'.format(self.name))
         self.logger.info("Input:")
+        self._dimLogging(x)
 
-        if isinstance(X, BwDataset):
-            X = [X]
+        return super(BlueWhale, self).predict(x, batch_size, verbose, steps)
 
-        for el in X:
-            self.logger.info("\t{}: {}x{}".format(el.name, len(el), el.shape))
+    def evaluate(self, x=None, y=None,
+                 batch_size=None,
+                 verbose=1,
+                 sample_weight=None,
+                 steps=None):
 
-        if indices is None:
-            indices = range(len(X[0]))
+        x = self._convertData(x)
+        y = self._convertData(y)
 
-        # Check performance on training set
-        return self.model.predict_generator(generate_predict_data(X,
-                                            indices, batch_size),
-                                            steps=len(indices)//batch_size
-                                            + (1 if
-                                               len(indices) % batch_size > 0
-                                               else 0),
-                                            use_multiprocessing=False,
-                                            verbose=verbose)
+        self.logger.info('Evaluate: {}'.format(self.name))
+        self.logger.info("Input:")
+        self._dimLogging(x)
+        self.logger.info("Output:")
+        self._dimLogging(y)
+
+        values = super(BlueWhale, self).evaluate(x, y, batch_size, verbose,
+                                                 sample_weight, steps)
+
+        self.logger.info('#' * 40)
+        for i, v in enumerate(values):
+            self.logger.info('{}: {}'.format(self.metrics_names[i], v))
+        self.logger.info('#' * 40)
+
+        self.logger.info("Evaluation finished ...")
+        return values
+
+    def _dimLogging(self, data):
+        if isinstance(data, dict):
+            for k in data:
+                self.logger.info("\t{}: {}x{}".format(k, len(data[k]),
+                                                      data[k].shape))
+
+        if hasattr(data, "shape"):
+            data = [data]
+
+        if isinstance(data, list):
+            for el in data:
+                self.logger.info("\t{}x{}".format(len(el), el.shape))
+
+    @staticmethod
+    def _convertData(data):
+        # If we deal with BwDataset, we convert it to a Dictionary
+        # which is directly interpretable by keras
+        if isinstance(data, BwDataset):
+            x = {}
+            x[data.name] = data
+        elif isinstance(data, list) and isinstance(data[0], BwDataset):
+            x = {}
+            for d in data:
+                x[d.name] = d
+        else:
+            # Otherwise, we deal with non-bwdatasets (e.g. numpy)
+            # which for compatibility reasons we just pass through
+            x = data
+        return x

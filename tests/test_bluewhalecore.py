@@ -5,6 +5,7 @@ import pkg_resources
 from genomeutils.regions import readBed
 from keras.layers import Dense
 from keras.layers import Flatten
+from keras.layers import Input
 
 from bluewhalecore.bluewhale import BlueWhale
 from bluewhalecore.cli import main
@@ -40,22 +41,22 @@ def test_bluewhale_instance(tmpdir):
         output = Dense(params[0])(layer)
         return input, output
 
-    bwm = BlueWhale.fromShape('dna_train_ctcf_HepG2.cnn',
-                              inputShape(dna),
+    bwm = BlueWhale.fromShape(inputShape(dna),
                               outputShape(ctcf, 'binary_crossentropy'),
+                              'dna_ctcf_HepG2.cnn',
                               (cnn_model, (2,)),
                               outputdir=tmpdir.strpath)
 
     storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
 
-    bwm.saveKerasModel()
+    bwm.save()
 
     assert os.path.exists(storage)
 
-    BlueWhale.fromName('dna_train_ctcf_HepG2.cnn', outputdir=tmpdir.strpath)
+    BlueWhale.fromName('dna_ctcf_HepG2.cnn', outputdir=tmpdir.strpath)
 
 
-def test_bluewhale_train_predict(tmpdir):
+def test_bluewhale_train_predict_option1(tmpdir):
     X = NumpyBwDataset("X", np.random.random((1000, 100)))
     y = NumpyBwDataset('y', np.random.randint(2, size=(1000, 1)))
 
@@ -64,19 +65,103 @@ def test_bluewhale_train_predict(tmpdir):
     def test_model(input, inp, oup, params):
         return input, input[0]
 
-    bwm = BlueWhale.fromShape('nptest',
-                              inputShape(X),
+    bwm = BlueWhale.fromShape(inputShape(X),
                               outputShape(y, 'binary_crossentropy'),
+                              'nptest',
                               (test_model, None),
                               outputdir=tmpdir.strpath)
 
     storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
-    bwm.fit(X, y, epochs=2, batch_size=32, use_multiprocessing=False)
+    bwm.fit(X, y, epochs=2, batch_size=32)
 
     assert os.path.exists(storage)
 
     pred = bwm.predict(X)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
     np.testing.assert_equal(pred.shape, y.shape)
+    bwm.evaluate(X, y)
+
+
+def test_bluewhale_train_predict_option2(tmpdir):
+    X = NumpyBwDataset("x", np.random.random((1000, 100)))
+    y = NumpyBwDataset('y', np.random.randint(2, size=(1000, 1)))
+
+    def test_model(path):
+        input = Input((100,), name='x')
+        output = Dense(1, name='y')(input)
+        model = BlueWhale(inputs=input, outputs=output, name='test',
+                          outputdir=path)
+        model.compile(optimizer='adadelta', loss='binary_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
+    bwm = test_model(tmpdir.strpath)
+
+    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit([X], [y], epochs=2, batch_size=32)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict([X])
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
+    np.testing.assert_equal(pred.shape, y.shape)
+    bwm.evaluate([X], [y])
+
+
+def test_bluewhale_train_predict_option3(tmpdir):
+    X = np.random.random((1000, 100))
+    y = np.random.randint(2, size=(1000, 1))
+
+    def test_model(path):
+        input = Input((100,), name='x')
+        output = Dense(1)(input)
+        model = BlueWhale(inputs=input, outputs=output, name='test',
+                          outputdir=path)
+        model.compile(optimizer='adadelta', loss='binary_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
+    bwm = test_model(tmpdir.strpath)
+
+    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit([X], [y], epochs=2, batch_size=32)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict([X])
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
+    np.testing.assert_equal(pred.shape, y.shape)
+    bwm.evaluate([X], [y])
+
+def test_bluewhale_train_predict_option4(tmpdir):
+    X = np.random.random((1000, 100))
+    y = np.random.randint(2, size=(1000, 1))
+
+    def test_model(path):
+        input = Input((100,), name='x')
+        output = Dense(1)(input)
+        model = BlueWhale(inputs=input, outputs=output, name='test',
+                          outputdir=path)
+        model.compile(optimizer='adadelta', loss='binary_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
+    bwm = test_model(tmpdir.strpath)
+
+    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit(X, y, epochs=2, batch_size=32)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(X)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
+    np.testing.assert_equal(pred.shape, y.shape)
+    bwm.evaluate(X, y)

@@ -29,31 +29,9 @@ bw_y_train = NumpyBwDataset('y', y_train)
 bw_y_test = NumpyBwDataset('y', y_test)
 
 
-# Define the body of the network
-@inputlayer
-@outputlayer
-def ffn(input, inparams, outparams, otherparams):
-    layer = Flatten()(input[0])
-    output = Dense(otherparams[0], activation=otherparams[1])(layer)
-    return input, output
-
-
-# Option 1:
-# Instantiate model from input and output shape
-K.clear_session()
-np.random.seed(1234)
-bw = BlueWhale.fromShape('mnist_ffn', inputShape(bw_x_train),
-                         outputShape(bw_y_train, 'categorical_crossentropy'),
-                         modeldef=(ffn, (10, 'relu',)))
-h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
-print('#' * 40)
-print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('#' * 40)
-
-
 # Option 2:
 # Instantiate the model manually
-def fmodel():
+def kerasmodel():
     input = Input(shape=(28, 28), name='x')
     layer = Flatten()(input)
     layer = Dense(10, activation='relu')(layer)
@@ -64,13 +42,37 @@ def fmodel():
     return model
 
 
+# Option 2:
+# Instantiate the model manually
+def bluewhalemodel():
+    input = Input(shape=(28, 28), name='x')
+    layer = Flatten()(input)
+    layer = Dense(10, activation='relu')(layer)
+    output = Dense(10, activation='sigmoid', name='y')(layer)
+    model = BlueWhale(inputs=input, outputs=output, name='mnist')
+    model.compile(optimizer='adadelta', loss='categorical_crossentropy',
+                  metrics=['accuracy'])
+    return model
+
+
+# Option 3:
+# Define the body of the network using the decorators.
+# This option is used with BlueWhale.fromShape
+@inputlayer
+@outputlayer
+def ffn(input, inparams, outparams, otherparams):
+    layer = Flatten()(input[0])
+    output = Dense(otherparams[0], activation=otherparams[1])(layer)
+    return input, output
+
+
 # The datastructures provided by bluewhalecore can be immediately
-# supplied to keras, because they essentially mimic a numpy array
+# supplied to keras, because they mimic numpy arrays
 K.clear_session()
 np.random.seed(1234)
-m = fmodel()
-h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000,
-          shuffle=False, verbose=0)
+m = kerasmodel()
+h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
+print('Option 1')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
 print('#' * 40)
@@ -78,9 +80,9 @@ print('#' * 40)
 # then use it in bluewhale
 K.clear_session()
 np.random.seed(1234)
-bw = BlueWhale('bw', fmodel())
+bw = bluewhalemodel()
 h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
-
+print('Option 2')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
 print('#' * 40)
@@ -89,9 +91,25 @@ print('#' * 40)
 # For comparison, here is how the model would train without BlueWhale
 K.clear_session()
 np.random.seed(1234)
-m = fmodel()
+m = kerasmodel()
 h = m.fit(x_train, y_train, epochs=30, batch_size=1000,
           shuffle=False, verbose=0)
+print('Option 3')
+print('#' * 40)
+print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
+print('#' * 40)
+
+
+# Option 1:
+# Instantiate model from input and output shape
+K.clear_session()
+np.random.seed(1234)
+bw = BlueWhale.fromShape(inputShape(bw_x_train),
+                         outputShape(bw_y_train, 'categorical_crossentropy'),
+                         'mnist_ffn',
+                         modeldef=(ffn, (10, 'relu',)))
+h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
+print('Option 4')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
 print('#' * 40)

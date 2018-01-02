@@ -28,8 +28,14 @@ def threadsafe_generator(gen):
 
 
 @threadsafe_generator
-def generate_fit_data(inputdata, outputdata, indices, batchsize,
+def generate_fit_data(inputdata, outputdata, batchsize,
                       sample_weights=None, shuffle=False):
+    if not isinstance(inputdata, dict) or not isinstance(outputdata, dict):
+        raise Exception('generate_fit_data expects data to be dicts')
+
+    for k in inputdata:
+        indices = range(len(inputdata[k]))
+        break
 
     while 1:
         ib = 0
@@ -45,13 +51,13 @@ def generate_fit_data(inputdata, outputdata, indices, batchsize,
 
             input = {}
 
-            for data in inputdata:
-                input[data.name] = data[indices[ib*batchsize:(ib+1)*batchsize]]
+            for k in inputdata:
+                input[k] = inputdata[k][indices[ib*batchsize:(ib+1)*batchsize]]
 
             output = {}
-            for data in outputdata:
-                output[data.name] = data[indices[ib*batchsize:
-                                         (ib+1)*batchsize]]
+            for k in outputdata:
+                output[k] = outputdata[k][indices[ib*batchsize:
+                                                  (ib+1)*batchsize]]
 
             if sample_weights:
                 sw = sample_weights[indices[ib*batchsize:(ib+1)*batchsize]]
@@ -62,48 +68,16 @@ def generate_fit_data(inputdata, outputdata, indices, batchsize,
             ib += 1
 
 
-def generate_fit_data_directthreading(inputdata, outputdata, indices,
-                                      batchsize,
-                                      sample_weights=None, shuffle=False):
-
-    lock = threading.Lock()
-    while 1:
-        ib = 0
-        if shuffle:
-            np.random.shuffle(indices)
-
-        if len(indices) == 0:
-            raise Exception("index list is empty")
-
-        while ib < \
-                (len(indices)//batchsize +
-                    (1 if len(indices) % batchsize > 0 else 0)):
-
-            with lock:
-                tmpib = ib
-                ib += 1
-
-            input = {}
-
-            for data in inputdata:
-                input[data.name] = data[indices[tmpib*batchsize:
-                                                (tmpib+1)*batchsize]]
-
-            output = {}
-            for data in outputdata:
-                output[data.name] = data[indices[tmpib*batchsize:
-                                                 (tmpib+1)*batchsize]]
-
-            if sample_weights:
-                sw = sample_weights[indices[tmpib*batchsize:
-                                            (tmpib+1)*batchsize]]
-                yield input, output, sw
-            else:
-                yield input, output
-
-
 @threadsafe_generator
-def generate_predict_data(inputdata, indices, batchsize):
+def generate_predict_data(inputdata, batchsize):
+
+    if not isinstance(inputdata, dict):
+        raise Exception('generate_predict_data expects inputdata to be a dict')
+
+    for k in inputdata:
+        indices = range(len(inputdata[k]))
+        break
+
     if len(indices) == 0:
         raise Exception("index list is empty")
     while 1:
@@ -114,8 +88,8 @@ def generate_predict_data(inputdata, indices, batchsize):
 
             input = {}
 
-            for data in inputdata:
-                input[data.name] = data[indices[ib*batchsize:(ib+1)*batchsize]]
+            for k in inputdata:
+                input[k] = inputdata[k][indices[ib*batchsize:(ib+1)*batchsize]]
 
             ib += 1
 
