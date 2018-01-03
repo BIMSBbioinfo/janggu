@@ -41,7 +41,7 @@ class BlueWhale(Model):
         Flag indicating to overwrite existing results (Default: False).
     """
 
-    def __init__(self, inputs, outputs, name,
+    def __init__(self, inputs, outputs, name=None,
                  outputdir='bluewhale_results/'):
 
         super(BlueWhale, self).__init__(inputs, outputs, name)
