@@ -12,12 +12,14 @@ from htseq_extension import BwGenomicArray
 class CoverageBwDataset(BwDataset):
 
     def __init__(self, name, covers,
+                 samplenames,
                  gindexer,  # indices of pointing to region start
                  flank=4,  # flanking region to consider
                  stranded=True,  # strandedness to consider
                  cachedir=None):
 
         self.covers = covers
+        self.samplenames = samplenames
         self.gindexer = gindexer
         self.flank = flank
         self.stranded = stranded
@@ -27,6 +29,7 @@ class CoverageBwDataset(BwDataset):
 
     @classmethod
     def fromBam(cls, name, bam, regions, genomesize,
+                samplenames=None,
                 resolution=50, stride=50,
                 flank=4, stranded=True, storage='memmap',
                 overwrite=False,
@@ -36,6 +39,9 @@ class CoverageBwDataset(BwDataset):
 
         if isinstance(bam, str):
             bam = [bam]
+
+        if not samplenames:
+            samplenames = bam
 
         covers = []
         for sample_file in bam:
@@ -72,11 +78,12 @@ class CoverageBwDataset(BwDataset):
 
             covers.append(cover)
 
-        return cls(name, covers, gindexer, flank,
+        return cls(name, covers, samplenames, gindexer, flank,
                    stranded, cachedir)
 
     @classmethod
     def fromBigWig(cls, name, bigwigfiles, regions, genomesize,
+                   samplenames=None,
                    resolution=50, stride=50,
                    flank=4, stranded=True, storage='memmap',
                    overwrite=False,
@@ -86,6 +93,9 @@ class CoverageBwDataset(BwDataset):
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
+
+        if not samplenames:
+            samplenames = bigwigfiles
 
         covers = []
         for sample_file in bigwigfiles:
@@ -126,7 +136,7 @@ class CoverageBwDataset(BwDataset):
 
             covers.append(cover)
 
-        return cls(name, covers, gindexer, flank,
+        return cls(name, covers, samplenames, gindexer, flank,
                    stranded, cachedir)
 
     def __repr__(self):
@@ -187,8 +197,6 @@ class CoverageBwDataset(BwDataset):
                 raise Exception('_flank must be a non-negative integer')
             self._flank = value
 
-        def fdel(self):
-            del self._flank
         return locals()
 
     flank = property(**flank())

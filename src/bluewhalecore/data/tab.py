@@ -23,9 +23,15 @@ class TabBwDataset(BwDataset):
         Item separator. Default: sep=','
     """
 
-    def __init__(self, name, filename, cachedir=None, dtype='int8', sep=','):
+    def __init__(self, name, filename, samplenames=None,
+                 cachedir=None, dtype='int8', sep=','):
 
         self.filename = filename
+
+        self.samplenames = samplenames
+        if not samplenames:
+            self.samplenames = filename
+
         self.sep = sep
         self.header = None
         self.dtype = dtype
@@ -37,8 +43,7 @@ class TabBwDataset(BwDataset):
 
             self.data = pd.concat(data, axis=1, ignore_index=True).values
 
-        if isinstance(cachedir, str):
-            self.cachedir = cachedir
+        self.cachedir = cachedir
 
         BwDataset.__init__(self, name)
 
@@ -68,8 +73,6 @@ class TabBwDataset(BwDataset):
                                     not exists: {}'.format(el))
             self._filename = value
 
-        def fdel(self):
-            del self._filename
         return locals()
 
     filename = property(**filename())

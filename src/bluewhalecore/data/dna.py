@@ -50,8 +50,7 @@ class DnaBwDataset(BwDataset):
 
         self.idna = idna
 
-        if isinstance(cachedir, str):
-            self.cachedir = cachedir
+        self.cachedir = cachedir
 
         BwDataset.__init__(self, '{}'.format(name))
 
@@ -151,8 +150,6 @@ class DnaBwDataset(BwDataset):
                 raise Exception('order must be a positive integer')
             self._order = value
 
-        def fdel(self):
-            del self._order
         return locals()
 
     order = property(**order())
@@ -168,8 +165,6 @@ class DnaBwDataset(BwDataset):
                 raise Exception('stride must be a positive integer')
             self._stride = value
 
-        def fdel(self):
-            del self._stride
         return locals()
 
     stride = property(**stride())
@@ -185,8 +180,6 @@ class DnaBwDataset(BwDataset):
                 raise Exception('reglen must be a positive integer')
             self._reglen = value
 
-        def fdel(self):
-            del self._reglen
         return locals()
 
     reglen = property(**reglen())
@@ -202,8 +195,6 @@ class DnaBwDataset(BwDataset):
                 raise Exception('_flank must be a non-negative integer')
             self._flank = value
 
-        def fdel(self):
-            del self._flank
         return locals()
 
     flank = property(**flank())

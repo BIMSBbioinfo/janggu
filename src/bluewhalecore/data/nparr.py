@@ -3,12 +3,13 @@ from data import BwDataset
 
 class NumpyBwDataset(BwDataset):
 
-    def __init__(self, name, array, cachedir=None):
+    def __init__(self, name, array, samplenames=None, cachedir=None):
 
         self.data = array
+        if samplenames:
+            self.samplenames = samplenames
 
-        if isinstance(cachedir, str):
-            self.cachedir = cachedir
+        self.cachedir = cachedir
 
         BwDataset.__init__(self, '{}'.format(name))
 
