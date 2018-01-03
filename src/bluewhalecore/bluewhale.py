@@ -142,13 +142,6 @@ class BlueWhale(Model):
 
         return model
 
-    def compile(self, optimizer, loss, metrics=None, loss_weights=None,
-                sample_weight_mode=None, weighted_metrics=None,
-                target_tensors=None, **kwargs):
-        super(BlueWhale, self).compile(optimizer, loss, metrics, loss_weights,
-                                       sample_weight_mode, weighted_metrics,
-                                       target_tensors, **kwargs)
-
     def fit(self,
             x=None,
             y=None,
@@ -164,7 +157,9 @@ class BlueWhale(Model):
             initial_epoch=0,
             steps_per_epoch=None,
             validation_steps=None,
-            fit_gen=None,
+            generator=None,
+            use_multiprocessing=True,
+            workers=1,
             **kwargs):
 
         x = self._convertData(x)
@@ -183,34 +178,60 @@ class BlueWhale(Model):
         self.logger.info("Output:")
         self._dimLogging(y)
 
-#        if fit_gen:
-#            xlen = x.shape[0]
-#
-#            h = self.fit_generator(fit_gen(x, y, batch_size,
-#                                           sample_weights=sample_weights,
-#                                           shuffle=shuffle),
-#            steps_per_epoch=len(x)//batch_size + (1 if len(x)
-#                                                  % batch_size > 0
-#                                                  else 0),
-#            epochs=epochs,
-#            validation_data=fit_gen(xval, yval, batch_size,
-#                                    sample_weights=sample_weights),
-#            validation_steps=len(val_idxs)//batch_size +
-#                             (1 if len(val_idxs) % batch_size > 0
-#                              else 0),
-#            use_multiprocessing=True,
-#            workers=1,
-#            verbose=verbose,
-#            callbacks=callbacks)
-#
-#        else:
-        h = super(BlueWhale, self).fit(x, y, batch_size, epochs, verbose,
-                                       callbacks, validation_split,
-                                       validation_data, shuffle,
-                                       class_weight,
-                                       sample_weight, initial_epoch,
-                                       steps_per_epoch, validation_steps,
-                                       **kwargs)
+        if generator:
+
+            if not batch_size:
+                batch_size = 32
+
+            xlen = len(x.itervalues().next())
+
+            if not steps_per_epoch:
+                steps_per_epoch = xlen//batch_size + \
+                    (1 if xlen % batch_size > 0 else 0)
+
+            if validation_data:
+                if len(validation_data) == 2:
+                    vgen = generator(validation_data[0],
+                                     validation_data[1],
+                                     batch_size,
+                                     shuffle=shuffle)
+                else:
+                    vgen = generator(validation_data[0],
+                                     validation_data[1],
+                                     batch_size,
+                                     sample_weight=validation_data[2],
+                                     shuffle=shuffle)
+
+                if not validation_steps:
+                    validation_steps = len(validation_data[0])//batch_size + \
+                                     (1 if len(validation_data[0]) % batch_size > 0
+                                      else 0)
+            else:
+                vgen = None
+
+            h = self.fit_generator(generator(x, y, batch_size,
+                                             sample_weight=sample_weight,
+                                             shuffle=shuffle),
+                                   steps_per_epoch=steps_per_epoch,
+                                   epochs=epochs,
+                                   validation_data=vgen,
+                                   validation_steps=validation_steps,
+                                   class_weight=class_weight,
+                                   initial_epoch=initial_epoch,
+                                   shuffle=False,  # dealt with in generator
+                                   use_multiprocessing=use_multiprocessing,
+                                   workers=workers,
+                                   verbose=verbose,
+                                   callbacks=callbacks)
+
+        else:
+            h = super(BlueWhale, self).fit(x, y, batch_size, epochs, verbose,
+                                           callbacks, validation_split,
+                                           validation_data, shuffle,
+                                           class_weight,
+                                           sample_weight, initial_epoch,
+                                           steps_per_epoch, validation_steps,
+                                           **kwargs)
 
         self.logger.info('#' * 40)
         for k in h.history:
@@ -223,7 +244,10 @@ class BlueWhale(Model):
     def predict(self, x,
                 batch_size=None,
                 verbose=0,
-                steps=None):
+                steps=None,
+                generator=None,
+                use_multiprocessing=True,
+                workers=1):
 
         x = self._convertData(x)
 
@@ -231,13 +255,32 @@ class BlueWhale(Model):
         self.logger.info("Input:")
         self._dimLogging(x)
 
-        return super(BlueWhale, self).predict(x, batch_size, verbose, steps)
+        if generator:
+
+            if not batch_size:
+                batch_size = 32
+
+            xlen = len(x.itervalues().next())
+
+            if not steps:
+                steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
+
+            return self.predict_generator(generator(x, batch_size),
+                                          steps=steps,
+                                          use_multiprocessing=use_multiprocessing,
+                                          workers=workers,
+                                          verbose=verbose)
+        else:
+            return super(BlueWhale, self).predict(x, batch_size, verbose, steps)
 
     def evaluate(self, x=None, y=None,
                  batch_size=None,
                  verbose=1,
                  sample_weight=None,
-                 steps=None):
+                 steps=None,
+                 generator=None,
+                 use_multiprocessing=True,
+                 workers=1):
 
         x = self._convertData(x)
         y = self._convertData(y)
@@ -248,8 +291,25 @@ class BlueWhale(Model):
         self.logger.info("Output:")
         self._dimLogging(y)
 
-        values = super(BlueWhale, self).evaluate(x, y, batch_size, verbose,
-                                                 sample_weight, steps)
+        if generator:
+
+            if not batch_size:
+                batch_size = 32
+
+            xlen = len(x.itervalues().next())
+
+            if not steps:
+                steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
+
+            values = self.evaluate_generator(generator(x, y, batch_size,
+                                                       sample_weight=sample_weight,
+                                                       shuffle=False),
+                                             steps=steps,
+                                             use_multiprocessing=use_multiprocessing,
+                                             workers=workers)
+        else:
+            values = super(BlueWhale, self).evaluate(x, y, batch_size, verbose,
+                                                     sample_weight, steps)
 
         self.logger.info('#' * 40)
         for i, v in enumerate(values):

@@ -28,8 +28,8 @@ def threadsafe_generator(gen):
 
 
 @threadsafe_generator
-def generate_fit_data(inputdata, outputdata, batchsize,
-                      sample_weights=None, shuffle=False):
+def bluewhale_fit_generator(inputdata, outputdata, batchsize,
+                            sample_weight=None, shuffle=False):
     if not isinstance(inputdata, dict) or not isinstance(outputdata, dict):
         raise Exception('generate_fit_data expects data to be dicts')
 
@@ -59,8 +59,8 @@ def generate_fit_data(inputdata, outputdata, batchsize,
                 output[k] = outputdata[k][indices[ib*batchsize:
                                                   (ib+1)*batchsize]]
 
-            if sample_weights:
-                sw = sample_weights[indices[ib*batchsize:(ib+1)*batchsize]]
+            if sample_weight:
+                sw = sample_weight[indices[ib*batchsize:(ib+1)*batchsize]]
                 yield input, output, sw
             else:
                 yield input, output
@@ -69,7 +69,7 @@ def generate_fit_data(inputdata, outputdata, batchsize,
 
 
 @threadsafe_generator
-def generate_predict_data(inputdata, batchsize):
+def bluewhale_predict_generator(inputdata, batchsize):
 
     if not isinstance(inputdata, dict):
         raise Exception('generate_predict_data expects inputdata to be a dict')

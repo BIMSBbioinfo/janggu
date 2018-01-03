@@ -7,15 +7,17 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Input
 
-from bluewhalecore.bluewhale import BlueWhale
+from bluewhalecore import BlueWhale
+from bluewhalecore import bluewhale_fit_generator
+from bluewhalecore import bluewhale_predict_generator
+from bluewhalecore import inputlayer
+from bluewhalecore import outputlayer
 from bluewhalecore.cli import main
-from bluewhalecore.data.data import inputShape
-from bluewhalecore.data.data import outputShape
-from bluewhalecore.data.dna import DnaBwDataset
-from bluewhalecore.data.nparr import NumpyBwDataset
-from bluewhalecore.data.tab import TabBwDataset
-from bluewhalecore.decorators import inputlayer
-from bluewhalecore.decorators import outputlayer
+from bluewhalecore.data import DnaBwDataset
+from bluewhalecore.data import NumpyBwDataset
+from bluewhalecore.data import TabBwDataset
+from bluewhalecore.data import inputShape
+from bluewhalecore.data import outputShape
 
 
 def test_main():
@@ -139,6 +141,7 @@ def test_bluewhale_train_predict_option3(tmpdir):
     np.testing.assert_equal(pred.shape, y.shape)
     bwm.evaluate([X], [y])
 
+
 def test_bluewhale_train_predict_option4(tmpdir):
     X = np.random.random((1000, 100))
     y = np.random.randint(2, size=(1000, 1))
@@ -165,3 +168,31 @@ def test_bluewhale_train_predict_option4(tmpdir):
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
     np.testing.assert_equal(pred.shape, y.shape)
     bwm.evaluate(X, y)
+
+
+def test_bluewhale_train_predict_generator(tmpdir):
+    X = NumpyBwDataset("x", np.random.random((1000, 100)))
+    y = NumpyBwDataset('y', np.random.randint(2, size=(1000, 1)))
+
+    def test_model(path):
+        input = Input((100,), name='x')
+        output = Dense(1, name='y')(input)
+        model = BlueWhale(inputs=input, outputs=output, name='test',
+                          outputdir=path)
+        model.compile(optimizer='adadelta', loss='binary_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
+    bwm = test_model(tmpdir.strpath)
+
+    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit(X, y, epochs=2, generator=bluewhale_fit_generator)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(X, generator=bluewhale_predict_generator)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
+    np.testing.assert_equal(pred.shape, y.shape)
+    bwm.evaluate(X, y, generator=bluewhale_fit_generator)
