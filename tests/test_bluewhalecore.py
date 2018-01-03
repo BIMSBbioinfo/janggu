@@ -188,11 +188,14 @@ def test_bluewhale_train_predict_generator(tmpdir):
     storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
-    bwm.fit(X, y, epochs=2, generator=bluewhale_fit_generator)
+    bwm.fit(X, y, epochs=2, generator=bluewhale_fit_generator,
+            use_multiprocessing=False)
 
     assert os.path.exists(storage)
 
-    pred = bwm.predict(X, generator=bluewhale_predict_generator)
+    pred = bwm.predict(X, generator=bluewhale_predict_generator,
+                       use_multiprocessing=False)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(X))
     np.testing.assert_equal(pred.shape, y.shape)
-    bwm.evaluate(X, y, generator=bluewhale_fit_generator)
+    bwm.evaluate(X, y, generator=bluewhale_fit_generator,
+                 use_multiprocessing=False)
