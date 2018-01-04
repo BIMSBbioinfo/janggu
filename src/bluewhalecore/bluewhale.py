@@ -204,8 +204,8 @@ class BlueWhale(Model):
 
                 if not validation_steps:
                     validation_steps = len(validation_data[0])//batch_size + \
-                                     (1 if len(validation_data[0]) % batch_size > 0
-                                      else 0)
+                                (1 if len(validation_data[0]) % batch_size > 0
+                                 else 0)
             else:
                 vgen = None
 
@@ -265,13 +265,15 @@ class BlueWhale(Model):
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
-            return self.predict_generator(generator(x, batch_size),
-                                          steps=steps,
-                                          use_multiprocessing=use_multiprocessing,
-                                          workers=workers,
-                                          verbose=verbose)
+            return self.predict_generator(
+                generator(x, batch_size),
+                steps=steps,
+                use_multiprocessing=use_multiprocessing,
+                workers=workers,
+                verbose=verbose)
         else:
-            return super(BlueWhale, self).predict(x, batch_size, verbose, steps)
+            return super(BlueWhale, self).predict(x, batch_size,
+                                                  verbose, steps)
 
     def evaluate(self, x=None, y=None,
                  batch_size=None,
@@ -301,12 +303,13 @@ class BlueWhale(Model):
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
-            values = self.evaluate_generator(generator(x, y, batch_size,
-                                                       sample_weight=sample_weight,
-                                                       shuffle=False),
-                                             steps=steps,
-                                             use_multiprocessing=use_multiprocessing,
-                                             workers=workers)
+            values = self.evaluate_generator(
+                generator(x, y, batch_size,
+                          sample_weight=sample_weight,
+                          shuffle=False),
+                steps=steps,
+                use_multiprocessing=use_multiprocessing,
+                workers=workers)
         else:
             values = super(BlueWhale, self).evaluate(x, y, batch_size, verbose,
                                                      sample_weight, steps)
