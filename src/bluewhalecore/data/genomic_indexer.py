@@ -54,7 +54,8 @@ class BwGenomicIndexer:
             return GenomicInterval(self.chrs[index], start,
                                    start + self.resolution, '.')
 
-        raise NotImplementedError('GenomicIndexer indexing with "int" only')
+        raise IndexError('Index support only for "int". Given {}'.format(
+                    type(index)))
 
     def idxByChrom(self, include=[], exclude=[]):
 
