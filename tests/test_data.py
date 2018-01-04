@@ -18,6 +18,7 @@ def test_inshape():
     refgenome = os.path.join(data_path, 'genome.fa')
 
     dna = DnaBwDataset.fromRefGenome('dna', refgenome=refgenome,
+                                     storage='ndarray',
                                      regions=regions, order=1)
     rcdna = RevCompDnaBwDataset('rcdna', dna)
 

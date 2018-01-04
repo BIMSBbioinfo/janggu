@@ -226,6 +226,12 @@ def test_dna_dataset_sanity(tmpdir):
                                    storage='ndarray',
                                    regions=regions, stride=0)
 
+    with pytest.raises(Exception):
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='step',
+                                   regions=regions, order=1,
+                                   cachedir=tmpdir.strpath)
+
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'genome.fa', 'chr1..nmm'))
 
