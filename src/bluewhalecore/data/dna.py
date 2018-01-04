@@ -2,28 +2,28 @@ import os
 
 import numpy as np
 from data import BwDataset
-from bluewhalecore.data import BwGenomicArray
-from bluewhalecore.data import BwGenomicIndexer
+from genomic_indexer import BwGenomicIndexer
 from HTSeq import GenomicInterval
-from genomeutils.sequences import dna2ind
-from genomeutils.sequences import sequencesFromFasta
+from htseq_extension import BwGenomicArray
 from pandas import DataFrame
+from utils import dna2ind
+from utils import sequencesFromFasta
 
 
 class DnaBwDataset(BwDataset):
 
-    def __init__(self, name, seqs, gindexer,
+    def __init__(self, name, garray, gindexer,
                  flank=150, order=1, cachedir=None):
 
         self.flank = flank
         self.order = order
-        self.seqs = seqs
+        self.garray = garray
         self.gindexer = gindexer
 
         BwDataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _makeGenomicArray(name, fastafile, order, storage, cachedir=None,
+    def _makeGenomicArray(name, fastafile, order, storage, cachedir='',
                           overwrite=False):
         # Load sequences from refgenome
         seqs = sequencesFromFasta(fastafile)
@@ -31,10 +31,10 @@ class DnaBwDataset(BwDataset):
         chromlens = {}
 
         for seq in seqs:
-            chromlens[seq.chr] = len(seq) - order + 1
+            chromlens[seq.id] = len(seq) - order + 1
 
-        if storage != 'memmap' or storage != 'nparray':
-            raise Exception('storage must be memmap or nparray')
+        if not (storage == 'memmap' or storage == 'ndarray'):
+            raise Exception('storage must be memmap or ndarray')
 
         if storage == 'memmap':
             memmap_dir = os.path.join(cachedir, name,
@@ -50,7 +50,7 @@ class DnaBwDataset(BwDataset):
             memmap_dir = ''
 
         garray = BwGenomicArray(chromlens, stranded=False,
-                                typecode='int8',
+                                typecode='int16',
                                 storage=storage, memmap_dir=memmap_dir,
                                 overwrite=overwrite)
 
@@ -60,9 +60,9 @@ class DnaBwDataset(BwDataset):
             # Convert sequences to index array
             print('Convert sequences to index array')
             for seq in seqs:
-                iv = GenomicInterval(seq.chr, 0, len(seq) - order + 1, '.')
+                iv = GenomicInterval(seq.id, 0, len(seq) - order + 1, '.')
 
-                dna = np.asarray(dna2ind(seq), dtype='int8')
+                dna = np.asarray(dna2ind(seq), dtype='int16')
 
                 if order > 1:
                     # for higher order motifs, this part is used
@@ -77,23 +77,23 @@ class DnaBwDataset(BwDataset):
     def fromRefGenome(cls, name, refgenome, regions,
                       stride=50, reglen=200,
                       flank=150, order=1, storage='memmap',
-                      cachedir=None, overwrite=False):
+                      cachedir='', overwrite=False):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
         gindexer = BwGenomicIndexer(regions, reglen, stride)
 
-        garray = cls._makeGenomicArray(name, refgenome, storage,
+        garray = cls._makeGenomicArray(name, refgenome, order, storage,
                                        cachedir=cachedir,
                                        overwrite=overwrite)
 
         return cls(name, garray, gindexer, flank, order)
 
     @classmethod
-    def fromFasta(cls, name, fastafile, storage='nparray',
-                  order=1, cachedir=None, overwrite=False):
+    def fromFasta(cls, name, fastafile, storage='ndarray',
+                  order=1, cachedir='', overwrite=False):
 
-        garray = cls._makeGenomicArray(name, fastafile, storage,
+        garray = cls._makeGenomicArray(name, fastafile, order, storage,
                                        cachedir=cachedir,
                                        overwrite=overwrite)
 
@@ -120,14 +120,14 @@ class DnaBwDataset(BwDataset):
         return cls(name, garray, gindexer, flank, order)
 
     def __repr__(self):
-        return 'DnaBwDataset("{}", <seqs>, <gindexer>, \
-                flank={})'\
-                .format(self.name, self.flank)
+        return 'DnaBwDataset("{}", <garray>, <gindexer>, \
+                flank={}, order={})'\
+                .format(self.name, self.flank, self.order)
 
     def idna4idx(self, idxs):
         # for each index read use the adaptor indices to retrieve the seq.
         idna = np.empty((len(idxs), self.gindexer.resolution +
-                         2*self.flank - self.order + 1), dtype="int8")
+                         2*self.flank - self.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
             iv = self.gindexer[idx]
@@ -139,8 +139,7 @@ class DnaBwDataset(BwDataset):
         return idna
 
     def as_onehot(self, idna):
-        onehot = np.zeros((len(idna),
-                           pow(4, self.order),
+        onehot = np.zeros((len(idna), pow(4, self.order),
                            idna.shape[1], 1), dtype='int8')
         for nuc in np.arange(pow(4, self.order)):
             Ilist = np.where(idna == nuc)
@@ -163,42 +162,34 @@ class DnaBwDataset(BwDataset):
         return data
 
     def __len__(self):
-        return len(self.iregion)
+        return len(self.gindexer)
 
     @property
     def shape(self):
-        return (len(self), pow(4, self.order), self.reglen +
+        return (len(self), pow(4, self.order), self.gindexer.resolution +
                 2*self.flank - self.order + 1, 1)
 
-    def order():
-        doc = "The order property."
+    @property
+    def order(self):
+        return self._order
 
-        def fget(self):
-            return self._order
+    @order.setter
+    def order(self, value):
+        if not isinstance(value, int) or value < 1:
+            raise Exception('order must be a positive integer')
+        if value > 4:
+            raise Exception('order support only up to order=4.')
+        self._order = value
 
-        def fset(self, value):
-            if not isinstance(value, int) or value < 1:
-                raise Exception('order must be a positive integer')
-            self._order = value
+    @property
+    def flank(self):
+        return self._flank
 
-        return locals()
-
-    order = property(**order())
-
-    def flank():
-        doc = "The flank property."
-
-        def fget(self):
-            return self._flank
-
-        def fset(self, value):
-            if not isinstance(value, int) or value < 0:
-                raise Exception('_flank must be a non-negative integer')
-            self._flank = value
-
-        return locals()
-
-    flank = property(**flank())
+    @flank.setter
+    def flank(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise Exception('_flank must be a non-negative integer')
+        self._flank = value
 
 
 class RevCompDnaBwDataset(BwDataset):

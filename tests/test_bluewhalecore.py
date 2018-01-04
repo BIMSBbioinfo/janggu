@@ -31,8 +31,8 @@ def test_bluewhale_instance(tmpdir):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaBwDataset.extractRegionsFromRefGenome('dna', refgenome=refgenome,
-                                                   regions=regions, order=1)
+    dna = DnaBwDataset.fromRefGenome('dna', refgenome=refgenome,
+                                     regions=regions, order=1)
 
     ctcf = TabBwDataset('ctcf', filename=csvfile)
 

@@ -17,8 +17,8 @@ def test_inshape():
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaBwDataset.extractRegionsFromRefGenome('dna', refgenome=refgenome,
-                                                   regions=regions, order=1)
+    dna = DnaBwDataset.fromRefGenome('dna', refgenome=refgenome,
+                                     regions=regions, order=1)
     rcdna = RevCompDnaBwDataset('rcdna', dna)
 
     sh = inputShape([dna, rcdna])
