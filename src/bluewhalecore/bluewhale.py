@@ -322,15 +322,14 @@ class BlueWhale(Model):
     def _dimLogging(self, data):
         if isinstance(data, dict):
             for k in data:
-                self.logger.info("\t{}: {}x{}".format(k, len(data[k]),
-                                                      data[k].shape))
+                self.logger.info("\t{}: {}".format(k, data[k].shape))
 
         if hasattr(data, "shape"):
             data = [data]
 
         if isinstance(data, list):
             for el in data:
-                self.logger.info("\t{}x{}".format(len(el), el.shape))
+                self.logger.info("\t{}".format(el.shape))
 
     @staticmethod
     def _convertData(data):
