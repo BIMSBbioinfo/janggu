@@ -1,8 +1,7 @@
-import sys
+from collections import defaultdict
 
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
-from collections import defaultdict
 
 
 def sequencesFromFasta(fasta):
