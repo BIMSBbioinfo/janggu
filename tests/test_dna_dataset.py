@@ -26,14 +26,12 @@ def dna_templ(order):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.extractRegionsFromRefGenome('train',
-                                                    refgenome=refgenome,
-                                                    regions=regions,
-                                                    order=order)
-    idata = DnaBwDataset.extractRegionsFromRefGenome('itrain',
-                                                     refgenome=refgenome,
-                                                     regions=indiv_reg,
-                                                     order=order)
+    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                      regions=regions, storage='ndarray',
+                                      order=order)
+    idata = DnaBwDataset.fromRefGenome('itrain', refgenome=refgenome,
+                                       regions=indiv_reg, storage='ndarray',
+                                       order=order)
 
     indices = [1, 600, 1000]
 
@@ -70,10 +68,9 @@ def test_read_ranges_from_file():
     refgenome = os.path.join(data_path, 'genome.fa')
     regions = os.path.join(data_path, 'regions.bed')
 
-    data = DnaBwDataset.extractRegionsFromRefGenome('train',
-                                                    refgenome=refgenome,
-                                                    regions=regions,
-                                                    order=order)
+    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                      regions=regions, storage='ndarray',
+                                      order=order)
 
     indices = [1, 600, 1000]
 
@@ -107,10 +104,9 @@ def revcomp(order):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.extractRegionsFromRefGenome('train',
-                                                    refgenome=refgenome,
-                                                    regions=regions,
-                                                    order=order)
+    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                      regions=regions, storage='ndarray',
+                                      order=order)
     rcdata = RevCompDnaBwDataset('rctrain', data)
     rcrcdata = RevCompDnaBwDataset('rcrctrain', rcdata)
 
@@ -138,18 +134,18 @@ def test_revcomp_rcmatrix():
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.extractRegionsFromRefGenome('train',
-                                                    refgenome=refgenome,
-                                                    regions=regions, order=1)
+    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                      storage='ndarray',
+                                      regions=regions, order=1)
     rcdata = RevCompDnaBwDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix,
                             np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0],
                                       [1, 0, 0, 0]]))
 
-    data = DnaBwDataset.extractRegionsFromRefGenome('train',
-                                                    refgenome=refgenome,
-                                                    regions=regions, order=2)
+    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                      storage='ndarray',
+                                      regions=regions, order=2)
     rcdata = RevCompDnaBwDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix[0],
@@ -186,51 +182,149 @@ def test_rcmatrix_identity():
         regions = readBed(os.path.join(data_path, 'regions.bed'))
         refgenome = os.path.join(data_path, 'genome.fa')
 
-        data = DnaBwDataset.extractRegionsFromRefGenome('train',
-                                                        refgenome=refgenome,
-                                                        regions=regions,
-                                                        order=order)
+        data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                          storage='ndarray',
+                                          regions=regions, order=order)
         rcdata = RevCompDnaBwDataset('rctrain', data)
 
         np.testing.assert_equal(np.eye(pow(4, order)),
                                 np.matmul(rcdata.rcmatrix, rcdata.rcmatrix))
 
 
-def test_dna_dataset_sanity():
+def test_dna_dataset_sanity(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
     regions = readBed(os.path.join(data_path, 'regions.bed'))
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome='',
-                                                 regions=regions, order=1)
+        DnaBwDataset.fromRefGenome('train', refgenome='',
+                                   storage='ndarray',
+                                   regions=regions, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome='test',
-                                                 regions=regions, order=1)
+        DnaBwDataset.fromRefGenome('train', refgenome='test',
+                                   storage='ndarray',
+                                   regions=regions, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome=refgenome,
-                                                 regions=None, order=1)
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='ndarray',
+                                   regions=None, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome=refgenome,
-                                                 regions=regions, order=0)
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='ndarray',
+                                   regions=regions, order=0)
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome=refgenome,
-                                                 regions=regions, flank=-1)
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='ndarray',
+                                   regions=regions, flank=-1)
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome=refgenome,
-                                                 regions=regions, reglen=0)
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='ndarray',
+                                   regions=regions, reglen=0)
     with pytest.raises(Exception):
-        DnaBwDataset.extractRegionsFromRefGenome('train', refgenome=refgenome,
-                                                 regions=regions, stride=0)
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='ndarray',
+                                   regions=regions, stride=0)
+
+    with pytest.raises(Exception):
+        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                                   storage='step',
+                                   regions=regions, order=1,
+                                   cachedir=tmpdir.strpath)
+
+    assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
+                                           'genome.fa', 'chr1..nmm'))
+
+    DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
+                               storage='memmap',
+                               regions=regions, order=1,
+                               cachedir=tmpdir.strpath)
+
+    assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
+                                       'chr1..nmm'))
 
 
-def test_read_dna_from_fasta():
+def test_read_dna_from_fasta_order_1(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
     order = 1
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBwDataset.fromFasta('train', fastafile=filename, order=1)
+    data = DnaBwDataset.fromFasta('train', fastafile=filename, order=order)
 
-    np.testing.assert_equal(len(data), 3997)
+    np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), pow(4, order), 200, 1))
+    np.testing.assert_equal(data[0].shape, (1, 4, 200, 1))
+
+    # correctness of the first sequence - uppercase
+    # cacagcagag
+    np.testing.assert_equal(data[0][0, 0, :5, 0], np.asarray([0, 1, 0, 1, 0]))
+    np.testing.assert_equal(data[0][0, 1, :5, 0], np.asarray([1, 0, 1, 0, 0]))
+    np.testing.assert_equal(data[0][0, 3, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[0][0, 2, :5, 0], np.asarray([0, 0, 0, 0, 1]))
+
+    # correctness of the second sequence - uppercase
+    # cncact
+    np.testing.assert_equal(data[1][0, 0, :5, 0], np.asarray([0, 0, 0, 1, 0]))
+    np.testing.assert_equal(data[1][0, 1, :5, 0], np.asarray([1, 0, 1, 0, 1]))
+    np.testing.assert_equal(data[1][0, 2, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[1][0, 3, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+
+    # correctness of the third sequence - lowercase
+    # aagtta
+    np.testing.assert_equal(data[2][0, 0, :5, 0], np.asarray([1, 1, 0, 0, 0]))
+    np.testing.assert_equal(data[2][0, 1, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[2][0, 2, :5, 0], np.asarray([0, 0, 1, 0, 0]))
+    np.testing.assert_equal(data[2][0, 3, :5, 0], np.asarray([0, 0, 0, 1, 1]))
+
+    # correctness of the third sequence - lowercase
+    # cnaagt
+    np.testing.assert_equal(data[3][0, 0, :5, 0], np.asarray([0, 0, 1, 1, 0]))
+    np.testing.assert_equal(data[3][0, 1, :5, 0], np.asarray([1, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[3][0, 2, :5, 0], np.asarray([0, 0, 0, 0, 1]))
+    np.testing.assert_equal(data[3][0, 3, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+
+
+def test_read_dna_from_fasta_order_2(tmpdir):
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+
+    order = 2
+    filename = os.path.join(data_path, 'oct4.fa')
+    data = DnaBwDataset.fromFasta('train', fastafile=filename, order=order,
+                                  cachedir=tmpdir.strpath)
+
+    np.testing.assert_equal(len(data), 4)
+    np.testing.assert_equal(data.shape, (len(data), 16, 199, 1))
+
+    # correctness of the first sequence - uppercase
+    # cacagc
+    np.testing.assert_equal(data[0][0, 4, 0, 0], 1)
+    np.testing.assert_equal(data[0][0, 1, 1, 0], 1)
+    np.testing.assert_equal(data[0][0, 4, 2, 0], 1)
+    np.testing.assert_equal(data[0][0, 2, 3, 0], 1)
+    np.testing.assert_equal(data[0][0, 9, 4, 0], 1)
+    np.testing.assert_equal(data[0][:, :, :5, :].sum(), 5)
+
+    # correctness of the second sequence - uppercase
+    # cncact
+    # np.testing.assert_equal(data[0][5, 0, 0], 1)
+    # np.testing.assert_equal(data[0][2, 1, 0], 1)
+    np.testing.assert_equal(data[1][0, 4, 2, 0], 1)
+    np.testing.assert_equal(data[1][0, 1, 3, 0], 1)
+    np.testing.assert_equal(data[1][0, 7, 4, 0], 1)
+    np.testing.assert_equal(data[1][:, :, :5, :].sum(), 3)
+
+    # correctness of the third sequence - lowercase
+    # aagtta
+    np.testing.assert_equal(data[2][0, 0, 0, 0], 1)
+    np.testing.assert_equal(data[2][0, 2, 1, 0], 1)
+    np.testing.assert_equal(data[2][0, 11, 2, 0], 1)
+    np.testing.assert_equal(data[2][0, 15, 3, 0], 1)
+    np.testing.assert_equal(data[2][0, 12, 4, 0], 1)
+    np.testing.assert_equal(data[2][0, :, :5, :].sum(), 5)
+
+    # correctness of the third sequence - lowercase
+    # cnaagt
+    np.testing.assert_equal(data[3][0, 0, 2, 0], 1)
+    np.testing.assert_equal(data[3][0, 2, 3, 0], 1)
+    np.testing.assert_equal(data[3][0, 11, 4, 0], 1)
+    np.testing.assert_equal(data[3][0, :, :5, :].sum(), 3)
