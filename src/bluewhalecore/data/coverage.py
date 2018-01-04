@@ -186,17 +186,12 @@ class CoverageBwDataset(BwDataset):
         return (len(self), 2 if self.stranded else 1,
                 2*self.flank + 1, len(self.covers))
 
-    def flank():
-        doc = "The flank property."
+    @property
+    def flank(self):
+        return self._flank
 
-        def fget(self):
-            return self._flank
-
-        def fset(self, value):
-            if not isinstance(value, int) or value < 0:
-                raise Exception('_flank must be a non-negative integer')
-            self._flank = value
-
-        return locals()
-
-    flank = property(**flank())
+    @flank.setter
+    def flank(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise Exception('_flank must be a non-negative integer')
+        self._flank = value

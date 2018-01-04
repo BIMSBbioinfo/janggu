@@ -3,8 +3,20 @@ import os
 import numpy as np
 import pkg_resources
 from genomeutils.regions import readBed
-
+import pytest
 from bluewhalecore.data import BwGenomicIndexer
+
+
+def test_gindexer_errors():
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+
+    with pytest.raises(ValueError):
+        BwGenomicIndexer(os.path.join(data_path, 'regions.bed'),
+                         resolution=0, stride=50)
+
+    with pytest.raises(ValueError):
+        BwGenomicIndexer(os.path.join(data_path, 'regions.bed'),
+                         resolution=10, stride=0)
 
 
 def test_gindexer_merged():

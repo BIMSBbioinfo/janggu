@@ -6,7 +6,7 @@ from HTSeq import GenomicInterval
 from pandas import DataFrame
 
 
-class BwGenomicIndexer:
+class BwGenomicIndexer(object):
     """ Maps genomic positions to the respective indices"""
 
     def __init__(self, regions, resolution, stride):
@@ -55,6 +55,26 @@ class BwGenomicIndexer:
                                    start + self.resolution, '.')
 
         raise NotImplementedError('GenomicIndexer indexing with "int" only')
+
+    @property
+    def resolution(self):
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, value):
+        if value <= 0:
+            raise ValueError('resolution must be positive')
+        self._resolution = value
+
+    @property
+    def stride(self):
+        return self._stride
+
+    @stride.setter
+    def stride(self, value):
+        if value <= 0:
+            raise ValueError('stride must be positive')
+        self._stride = value
 
     def idxByChrom(self, include=[], exclude=[]):
 
