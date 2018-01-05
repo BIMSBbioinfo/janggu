@@ -12,7 +12,7 @@ from bluewhalecore.data import CoverageBwDataset
 def test_load_coveragedataset_bam_stranded(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
     file_ = os.path.join(data_path, "yeast_I_II_III.bam")
-    gsize = getGenomeSize('sacCer3', outputdir=tmpdir.strpath)
+    gsize = getGenomeSize('sacCer3', outputdir=data_path)
 
     regions = pandas.DataFrame({'chr': ['chrIII'],
                                 'start': [217330],
@@ -21,8 +21,9 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
     flank = 4
 
-    for store in ['step', 'memmap', 'ndarray']:
+    for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
+        print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
                                            bam=file_,
                                            regions=regions,
@@ -41,7 +42,9 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
         np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
-    for store in ['step', 'memmap', 'ndarray']:
+    for store in ['step', 'memmap', 'ndarray', 'hdf5']:
+        # 20 bp resolution
+        print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
                                            bam=file_,
                                            regions=regions,
@@ -70,7 +73,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 def test_load_coveragedataset_bam_unstranded(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
     file_ = os.path.join(data_path, "yeast_I_II_III.bam")
-    gsize = getGenomeSize('sacCer3', outputdir=tmpdir.strpath)
+    gsize = getGenomeSize('sacCer3', outputdir=data_path)
 
     regions = pandas.DataFrame({'chr': ['chrIII'],
                                 'start': [217330],
@@ -79,8 +82,9 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     flank = 4
     iv = GenomicInterval("chrIII", 217330, 217350, ".")
 
-    for store in ['step', 'memmap', 'ndarray']:
+    for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
+        print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
                                            bam=file_,
                                            regions=regions,
@@ -99,7 +103,9 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
         np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
-    for store in ['step', 'memmap', 'ndarray']:
+    for store in ['step', 'memmap', 'ndarray', 'hdf5']:
+        # 20 bp resolution
+        print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
                                            bam=file_,
                                            regions=regions,

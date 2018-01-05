@@ -58,6 +58,18 @@ class CoverageBwDataset(BwDataset):
                                         ['-', '+'] if stranded
                                         else ['.'])]
                 nmms = [os.path.exists(p) for p in ps]
+            elif storage == 'hdf5':
+                memmap_dir = os.path.join(cachedir, name,
+                                          os.path.basename(sample_file))
+                if not os.path.exists(memmap_dir):
+                    os.makedirs(memmap_dir)
+
+                ps = [os.path.join(memmap_dir, '{}{}.h5'.format(x[0], x[1]))
+                      for x in
+                      itertools.product(genomesize.keys(),
+                                        ['-', '+'] if stranded
+                                        else ['.'])]
+                nmms = [os.path.exists(p) for p in ps]
             else:
                 nmms = [False]
                 memmap_dir = ''
@@ -99,14 +111,22 @@ class CoverageBwDataset(BwDataset):
 
         covers = []
         for sample_file in bigwigfiles:
+            memmap_dir = os.path.join(cachedir, name,
+                                      os.path.basename(sample_file))
+            if not os.path.exists(memmap_dir):
+                os.makedirs(memmap_dir)
 
             if storage == 'memmap':
-                memmap_dir = os.path.join(cachedir, name,
-                                          os.path.basename(sample_file))
-                if not os.path.exists(memmap_dir):
-                    os.makedirs(memmap_dir)
 
                 ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
+                      for x in
+                      itertools.product(genomesize.keys(),
+                                        ['-', '+'] if stranded
+                                        else ['.'])]
+                nmms = [os.path.exists(p) for p in ps]
+            elif storage == 'hdf5':
+
+                ps = [os.path.join(memmap_dir, '{}{}.h5'.format(x[0], x[1]))
                       for x in
                       itertools.product(genomesize.keys(),
                                         ['-', '+'] if stranded
