@@ -3,33 +3,11 @@ import threading
 import numpy as np
 
 
-# taken from the blog post:
-# https://keunwoochoi.wordpress.com/2017/08/24/tip-fit_generator-in-keras-how-to-parallelise-correctly/
-class threadsafe_iter:
-    """Takes an iterator/generator and makes it thread-safe by
-    serializing call to the `next` method of given iterator/generator.
-    """
-    def __init__(self, it):
-        self.it = it
-        self.lock = threading.Lock()
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        with self.lock:
-            return self.it.next()
-
-
-def threadsafe_generator(gen):
-    def g(*args, **kargs):
-        return threadsafe_iter(gen(*args, **kargs))
-    return g
-
-
-@threadsafe_generator
-def bluewhale_fit_generator(inputdata, outputdata, batchsize,
+def bluewhale_fit_generator(inputdata, outputdata, batch_size,
                             sample_weight=None, shuffle=False):
+
+    lock = threading.Lock()
+
     if not isinstance(inputdata, dict) or not isinstance(outputdata, dict):
         raise Exception('generate_fit_data expects data to be dicts')
 
@@ -46,30 +24,36 @@ def bluewhale_fit_generator(inputdata, outputdata, batchsize,
             raise Exception("index list is empty")
 
         while ib < \
-                (len(indices)//batchsize +
-                    (1 if len(indices) % batchsize > 0 else 0)):
+                (len(indices)//batch_size +
+                    (1 if len(indices) % batch_size > 0 else 0)):
+
+            with lock:
+                tmpi = ib
+                ib += 1
 
             input = {}
 
             for k in inputdata:
-                input[k] = inputdata[k][indices[ib*batchsize:(ib+1)*batchsize]]
+                input[k] = inputdata[k][indices[tmpi*batch_size:
+                                                (tmpi+1)*batch_size]]
 
             output = {}
             for k in outputdata:
-                output[k] = outputdata[k][indices[ib*batchsize:
-                                                  (ib+1)*batchsize]]
+                output[k] = outputdata[k][indices[tmpi*batch_size:
+                                                  (tmpi+1)*batch_size]]
 
             if sample_weight:
-                sw = sample_weight[indices[ib*batchsize:(ib+1)*batchsize]]
+                sw = sample_weight[indices[tmpi*batch_size:
+                                           (tmpi+1)*batch_size]]
                 yield input, output, sw
             else:
                 yield input, output
+            # ib += 1
 
-            ib += 1
 
+def bluewhale_predict_generator(inputdata, batch_size):
 
-@threadsafe_generator
-def bluewhale_predict_generator(inputdata, batchsize):
+    lock = threading.Lock()
 
     if not isinstance(inputdata, dict):
         raise Exception('generate_predict_data expects inputdata to be a dict')
@@ -83,14 +67,17 @@ def bluewhale_predict_generator(inputdata, batchsize):
     while 1:
         ib = 0
         while ib < \
-                (len(indices)//batchsize +
-                    (1 if len(indices) % batchsize > 0 else 0)):
+                (len(indices)//batch_size +
+                    (1 if len(indices) % batch_size > 0 else 0)):
+
+            with lock:
+                tmpi = ib
+                ib += 1
 
             input = {}
 
             for k in inputdata:
-                input[k] = inputdata[k][indices[ib*batchsize:(ib+1)*batchsize]]
-
-            ib += 1
+                input[k] = inputdata[k][indices[tmpi*batch_size:
+                                                (tmpi+1)*batch_size]]
 
             yield input
