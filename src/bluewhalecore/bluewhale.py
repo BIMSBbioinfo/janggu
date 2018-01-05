@@ -11,10 +11,10 @@ from keras.models import load_model
 
 from bluewhalecore.data import BwDataset
 
-config = tf.ConfigProto()
-config.gpu_options.per_process_gpu_memory_fraction = 0.3
-config.gpu_options.visible_device_list = "0"
-set_session(tf.Session(config=config))
+#config = tf.ConfigProto()
+#config.gpu_options.per_process_gpu_memory_fraction = 0.3
+#config.gpu_options.visible_device_list = "0"
+#set_session(tf.Session(config=config))
 
 
 class BlueWhale(Model):
@@ -220,6 +220,7 @@ class BlueWhale(Model):
                                    initial_epoch=initial_epoch,
                                    shuffle=False,  # dealt with in generator
                                    use_multiprocessing=use_multiprocessing,
+                                   max_queue_size=50,
                                    workers=workers,
                                    verbose=verbose,
                                    callbacks=callbacks)
