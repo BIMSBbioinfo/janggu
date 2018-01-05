@@ -25,6 +25,7 @@ class DnaBwDataset(BwDataset):
     @staticmethod
     def _makeGenomicArray(name, fastafile, order, storage, cachedir='',
                           overwrite=False):
+
         # Load sequences from refgenome
         seqs = sequencesFromFasta(fastafile)
 
@@ -33,8 +34,9 @@ class DnaBwDataset(BwDataset):
         for seq in seqs:
             chromlens[seq.id] = len(seq) - order + 1
 
-        if not (storage == 'memmap' or storage == 'ndarray'):
-            raise Exception('storage must be memmap or ndarray')
+        if not (storage == 'memmap' or storage == 'ndarray' or
+                storage == 'hdf5'):
+            raise Exception('storage must be memmap, ndarray or hdf5')
 
         if storage == 'memmap':
             memmap_dir = os.path.join(cachedir, name,
@@ -43,6 +45,15 @@ class DnaBwDataset(BwDataset):
                 os.makedirs(memmap_dir)
 
             ps = [os.path.join(memmap_dir, '{}..nmm'.format(x))
+                  for x in chromlens.keys()]
+            nmms = [os.path.exists(p) for p in ps]
+        elif storage == 'hdf5':
+            memmap_dir = os.path.join(cachedir, name,
+                                      os.path.basename(fastafile))
+            if not os.path.exists(memmap_dir):
+                os.makedirs(memmap_dir)
+
+            ps = [os.path.join(memmap_dir, '{}..h5'.format(x))
                   for x in chromlens.keys()]
             nmms = [os.path.exists(p) for p in ps]
         else:

@@ -1,5 +1,6 @@
 import sys
 import os
+import h5py
 
 import numpy
 # cimport numpy
@@ -24,12 +25,15 @@ class BwChromVector(ChromVector):
         ncv.offset = iv.start
         ncv.is_vector_of_sets = False
 
-        f = os.path.join(memmap_dir, iv.chrom + iv.strand + ".nmm")
+        f = os.path.join(memmap_dir, iv.chrom + iv.strand + ".h5")
 
-        if storage == "memmap" and overwrite == False and os.path.exists(f):
-            ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
-                                     filename=f,
-                                     mode='r+')
+        if storage == "hdf5":
+            f = h5py.File(f, 'w' if overwrite else 'a')
+            if ncv.iv.chrom in f.keys():
+                ncv.array = f.get(ncv.iv.chrom)
+            else:
+                ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
+                                             dtype=typecode)
         else:
             #ncv = cls()
             ncv_ = ChromVector.create(iv, typecode,
