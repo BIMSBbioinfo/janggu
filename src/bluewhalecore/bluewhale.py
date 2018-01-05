@@ -1,20 +1,13 @@
 import logging
 import os
 
-import tensorflow as tf
 from keras import backend as K
-from keras.backend.tensorflow_backend import set_session
 from keras.callbacks import ModelCheckpoint
 # from keras.callbacks import TensorBoard
 from keras.models import Model
 from keras.models import load_model
 
 from bluewhalecore.data import BwDataset
-
-#config = tf.ConfigProto()
-#config.gpu_options.per_process_gpu_memory_fraction = 0.3
-#config.gpu_options.visible_device_list = "0"
-#set_session(tf.Session(config=config))
 
 
 class BlueWhale(Model):
