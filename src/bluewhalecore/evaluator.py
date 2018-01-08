@@ -53,8 +53,8 @@ class Evaluator(object):
         for key in elementwise_score:
             for s in range(ypred.shape[1]):
                 val = elementwise_score[key](ytrue[:, s], ypred[:, s])
-                d = datatags
-                d.append(ytrue.samplenames)
+                d = list(datatags)
+                d.append(ytrue.samplenames[s])
                 iid = self._record(bluewhale.name, modeltags, key, val, d)
                 bluewhale.logger.info("Recorded {}".format(iid))
 
