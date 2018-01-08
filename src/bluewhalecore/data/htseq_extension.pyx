@@ -25,7 +25,9 @@ class BwChromVector(ChromVector):
         ncv.offset = iv.start
         ncv.is_vector_of_sets = False
 
-        f = os.path.join(memmap_dir, iv.chrom + iv.strand + ".h5")
+        f = os.path.join(memmap_dir, 
+            iv.chrom + iv.strand + ".{}".format('h5' if storage == 'hdf5'
+                                                else 'nmm'))
 
         if storage == "hdf5":
             f = h5py.File(f, 'w' if overwrite else 'a')
@@ -34,6 +36,10 @@ class BwChromVector(ChromVector):
             else:
                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
                                              dtype=typecode)
+        elif storage == 'memmap' and overwrite == False and os.path.exists(f):
+            ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
+                                     filename=f,
+                                     mode='r+')
         else:
             #ncv = cls()
             ncv_ = ChromVector.create(iv, typecode,
@@ -42,6 +48,7 @@ class BwChromVector(ChromVector):
             ncv.array = ncv_.array
 
         return ncv
+
 
     def __getitem__(self, index):
         ret = ChromVector.__getitem__(self, index)
@@ -58,10 +65,8 @@ class BwChromVector(ChromVector):
             return ret
 
     def sum(self):
-        res = 0.0
-        for iv, value in self.steps():
-            res += value *(iv.end-iv.start)
-        return res
+        return sum(list(self))
+
 
 class BwGenomicArray(GenomicArray):
 

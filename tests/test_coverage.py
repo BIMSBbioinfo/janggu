@@ -23,7 +23,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
-        print(store)
+        # print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
                                            bam=file_,
                                            regions=regions,
@@ -44,7 +44,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # 20 bp resolution
-        print(store)
+        # print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
                                            bam=file_,
                                            regions=regions,
@@ -96,6 +96,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
 
         np.testing.assert_equal(len(cvdata), 20)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 2*flank + 1, 1))
+        print(list(cvdata.covers[0][iv]))
         civ = cvdata.gindexer[0]
         np.testing.assert_equal((iv.chrom, iv.start, iv.start + 1, iv.strand),
                                 (civ.chrom, civ.start, civ.end, civ.strand))
@@ -103,7 +104,19 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
         np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
-    for store in ['step', 'memmap', 'ndarray', 'hdf5']:
+        x = cvdata[3]
+        np.testing.assert_equal(x.shape, (1, 1, 2*flank + 1, 1))
+        np.testing.assert_equal(x[0, 0, 2*flank, 0], 1.0)
+
+        x = cvdata[7]
+        np.testing.assert_equal(x.shape, (1, 1, 2*flank + 1, 1))
+        np.testing.assert_equal(x[0, 0, flank, 0], 1.0)
+
+        x = cvdata[11]
+        np.testing.assert_equal(x.shape, (1, 1, 2*flank + 1, 1))
+        np.testing.assert_equal(x[0, 0, 0, 0], 1.0)
+
+    for store in ['step', 'ndarray', 'memmap', 'hdf5']:
         # 20 bp resolution
         print(store)
         cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",

@@ -27,6 +27,24 @@ class CoverageBwDataset(BwDataset):
 
         BwDataset.__init__(self, '{}'.format(name))
 
+    @staticmethod
+    def cacheexists(memmap_dir, chroms, stranded, storage):
+
+        if storage == 'memmap' or storage == 'hdf5':
+            suffix = 'nmm' if storage == 'memmap' else 'h5'
+
+            ps = [os.path.join(memmap_dir, '{}{}.{}'.format(x[0], x[1],
+                                                            suffix))
+                  for x in
+                  itertools.product(chroms,
+                                    ['-', '+'] if stranded
+                                    else ['.'])]
+            files_exist = [os.path.exists(p) for p in ps]
+        else:
+            files_exist = [False]
+
+        return files_exist
+
     @classmethod
     def fromBam(cls, name, bam, regions, genomesize,
                 samplenames=None,
@@ -45,34 +63,16 @@ class CoverageBwDataset(BwDataset):
 
         covers = []
         for sample_file in bam:
-
-            if storage == 'memmap':
+            if storage in ['memmap', 'hdf5']:
                 memmap_dir = os.path.join(cachedir, name,
                                           os.path.basename(sample_file))
                 if not os.path.exists(memmap_dir):
                     os.makedirs(memmap_dir)
-
-                ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
-                      for x in
-                      itertools.product(genomesize.keys(),
-                                        ['-', '+'] if stranded
-                                        else ['.'])]
-                nmms = [os.path.exists(p) for p in ps]
-            elif storage == 'hdf5':
-                memmap_dir = os.path.join(cachedir, name,
-                                          os.path.basename(sample_file))
-                if not os.path.exists(memmap_dir):
-                    os.makedirs(memmap_dir)
-
-                ps = [os.path.join(memmap_dir, '{}{}.h5'.format(x[0], x[1]))
-                      for x in
-                      itertools.product(genomesize.keys(),
-                                        ['-', '+'] if stranded
-                                        else ['.'])]
-                nmms = [os.path.exists(p) for p in ps]
             else:
-                nmms = [False]
                 memmap_dir = ''
+
+            nmms = cls.cacheexists(memmap_dir, genomesize.keys(), stranded,
+                                   storage)
 
             cover = BwGenomicArray(genomesize, stranded=stranded,
                                    storage=storage, memmap_dir=memmap_dir,
@@ -111,30 +111,16 @@ class CoverageBwDataset(BwDataset):
 
         covers = []
         for sample_file in bigwigfiles:
-            memmap_dir = os.path.join(cachedir, name,
-                                      os.path.basename(sample_file))
-            if not os.path.exists(memmap_dir):
-                os.makedirs(memmap_dir)
-
-            if storage == 'memmap':
-
-                ps = [os.path.join(memmap_dir, '{}{}.nmm'.format(x[0], x[1]))
-                      for x in
-                      itertools.product(genomesize.keys(),
-                                        ['-', '+'] if stranded
-                                        else ['.'])]
-                nmms = [os.path.exists(p) for p in ps]
-            elif storage == 'hdf5':
-
-                ps = [os.path.join(memmap_dir, '{}{}.h5'.format(x[0], x[1]))
-                      for x in
-                      itertools.product(genomesize.keys(),
-                                        ['-', '+'] if stranded
-                                        else ['.'])]
-                nmms = [os.path.exists(p) for p in ps]
+            if storage in ['memmap', 'hdf5']:
+                memmap_dir = os.path.join(cachedir, name,
+                                          os.path.basename(sample_file))
+                if not os.path.exists(memmap_dir):
+                    os.makedirs(memmap_dir)
             else:
-                nmms = False
                 memmap_dir = ''
+
+            nmms = cls.cacheexists(memmap_dir, genomesize.keys(), stranded,
+                                   storage)
 
             # At the moment, we treat the information contained
             # in each bw-file as unstranded
@@ -143,9 +129,10 @@ class CoverageBwDataset(BwDataset):
                                    overwrite=overwrite)
 
             if all(nmms) and not overwrite:
-                print('Reload BwGenomicArray from {}'.format(memmap_dir))
+                pass
+                # print('Reload BwGenomicArray from {}'.format(memmap_dir))
             else:
-                print('Scoring from {}'.format(sample_file))
+                # print('Scoring from {}'.format(sample_file))
                 bw = pyBigWig(sample_file)
 
                 for i in range(len(gindexer)):
@@ -177,8 +164,8 @@ class CoverageBwDataset(BwDataset):
                          1 + 2*self.flank, len(self.covers)))
 
         sign = ['+',  '-']
-        for i in idxs:
-            iv = self.gindexer[i]
+        for i, idx in enumerate(idxs):
+            iv = self.gindexer[idx]
             for b in range(-self.flank, self.flank + 1):
                 try:
                     for s in range(2 if self.stranded else 1):
