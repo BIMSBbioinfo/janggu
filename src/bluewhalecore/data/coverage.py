@@ -10,6 +10,45 @@ from htseq_extension import BwGenomicArray
 
 
 class CoverageBwDataset(BwDataset):
+    """CoverageBwDataset class.
+
+    This datastructure holds coverage information across the genome.
+    The coverage can conveniently fetched from a bam-file, a bigwig-file,
+    or a list of files. E.g. a list of bam-files.
+    For convenience, the
+
+    Parameters
+    -----------
+    name : str
+        Name of the dataset
+    covers : :class:`BwGenomicArray`
+        A genomic array that holds the coverage data
+    gindxer : :class:`BwGenomicIndexer`
+        A genomic index mapper that translates an integer index to a
+        genomic coordinate.
+    flank : int
+        Number of flanking regions to take into account. Default: 4.
+    stranded : boolean
+        Consider strandedness of coverage. Default: True.
+    cachedir : str or None
+        Directory in which the cachefiles are located. Default: None.
+
+    Attributes
+    -----------
+    name : str
+        Name of the dataset
+    covers : :class:`BwGenomicArray`
+        A genomic array that holds the coverage data
+    gindxer : :class:`BwGenomicIndexer`
+        A genomic index mapper that translates an integer index to a
+        genomic coordinate.
+    flank : int
+        Number of flanking regions to take into account. Default: 4.
+    stranded : boolean
+        Consider strandedness of coverage. Default: True.
+    cachedir : str or None
+        Directory in which the cachefiles are located. Default: None.
+    """
 
     def __init__(self, name, covers,
                  samplenames,
@@ -28,7 +67,8 @@ class CoverageBwDataset(BwDataset):
         BwDataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def cacheexists(memmap_dir, chroms, stranded, storage):
+    def _cacheexists(memmap_dir, chroms, stranded, storage):
+        """Returns if the cachefiles exist."""
 
         if storage == 'memmap' or storage == 'hdf5':
             suffix = 'nmm' if storage == 'memmap' else 'h5'
@@ -49,9 +89,43 @@ class CoverageBwDataset(BwDataset):
     def fromBam(cls, name, bam, regions, genomesize,
                 samplenames=None,
                 resolution=50, stride=50,
-                flank=4, stranded=True, storage='memmap',
+                flank=4, stranded=True, storage='hdf5',
                 overwrite=False,
                 cachedir=None):
+        """Create a CoverageBwDataset class from a bam-file (or files).
+
+        Parameters
+        -----------
+        name : str
+            Name of the dataset
+        bam : str or list
+            bam-file or list of bam files.
+        gindxer : pandas.DataFrame or str
+            bed-filename or content of a bed-file
+            (in terms of a pandas.DataFrame).
+        genomesize : dict
+            Dictionary containing the genome size.
+        samplenames : list
+            List of samplenames. Default: None means that the filenames
+            are used as samplenames as well.
+        resolution : int
+            Resolution in basepairs. Default: 50.
+        stride : int
+            Stride in basepairs. This defines the step size for traversing
+            the genome. Default: 50.
+        flank : int
+            Adjacent flanking bins to use, where the bin size is determined
+            by the resolution. Default: 4.
+        stranded : boolean
+            Consider strandedness of coverage. Default: True.
+        storage : str
+            Storage mode for storing the coverage data can be
+            'step', 'ndarray', 'memmap' or 'hdf5'. Default: 'hdf5'.
+        overwrite : boolean
+            overwrite cachefiles. Default: False.
+        cachedir : str or None
+            Directory in which the cachefiles are located. Default: None.
+        """
 
         gindexer = BwGenomicIndexer(regions, resolution, stride)
 
@@ -71,8 +145,8 @@ class CoverageBwDataset(BwDataset):
             else:
                 memmap_dir = ''
 
-            nmms = cls.cacheexists(memmap_dir, genomesize.keys(), stranded,
-                                   storage)
+            nmms = cls._cacheexists(memmap_dir, genomesize.keys(), stranded,
+                                    storage)
 
             cover = BwGenomicArray(genomesize, stranded=stranded,
                                    storage=storage, memmap_dir=memmap_dir,
@@ -97,9 +171,43 @@ class CoverageBwDataset(BwDataset):
     def fromBigWig(cls, name, bigwigfiles, regions, genomesize,
                    samplenames=None,
                    resolution=50, stride=50,
-                   flank=4, stranded=True, storage='memmap',
+                   flank=4, stranded=True, storage='hdf5',
                    overwrite=False,
                    cachedir=None):
+        """Create a CoverageBwDataset class from a bigwig-file (or files).
+
+        Parameters
+        -----------
+        name : str
+            Name of the dataset
+        bam : str or list
+            bam-file or list of bam files.
+        gindxer : pandas.DataFrame or str
+            bed-filename or content of a bed-file
+            (in terms of a pandas.DataFrame).
+        genomesize : dict
+            Dictionary containing the genome size.
+        samplenames : list
+            List of samplenames. Default: None means that the filenames
+            are used as samplenames as well.
+        resolution : int
+            Resolution in basepairs. Default: 50.
+        stride : int
+            Stride in basepairs. This defines the step size for traversing
+            the genome. Default: 50.
+        flank : int
+            Adjacent flanking bins to use, where the bin size is determined
+            by the resolution. Default: 4.
+        stranded : boolean
+            Consider strandedness of coverage. Default: True.
+        storage : str
+            Storage mode for storing the coverage data can be
+            'step', 'ndarray', 'memmap' or 'hdf5'. Default: 'hdf5'.
+        overwrite : boolean
+            overwrite cachefiles. Default: False.
+        cachedir : str or None
+            Directory in which the cachefiles are located. Default: None.
+        """
 
         gindexer = BwGenomicIndexer(regions, resolution, stride)
 
@@ -119,8 +227,8 @@ class CoverageBwDataset(BwDataset):
             else:
                 memmap_dir = ''
 
-            nmms = cls.cacheexists(memmap_dir, genomesize.keys(), stranded,
-                                   storage)
+            nmms = cls._cacheexists(memmap_dir, genomesize.keys(), stranded,
+                                    storage)
 
             # At the moment, we treat the information contained
             # in each bw-file as unstranded
@@ -190,11 +298,13 @@ class CoverageBwDataset(BwDataset):
 
     @property
     def shape(self):
+        """Shape of the Dataset"""
         return (len(self), 2 if self.stranded else 1,
                 2*self.flank + 1, len(self.covers))
 
     @property
     def flank(self):
+        """Flanking bins"""
         return self._flank
 
     @flank.setter
