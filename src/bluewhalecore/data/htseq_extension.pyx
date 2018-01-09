@@ -13,10 +13,44 @@ strand_minus = "-"
 strand_nostrand = "."
 
 class BwChromVector(ChromVector):
+    """BwChromVector extends HTSeq.ChromVector.
+
+    It acts as a dataset for holding 1-dimensional data. For instance,
+    coverage along a chromosome.
+    The extension allows to reload previously established numpy memory maps
+    as well as hdf5 stored datasets.
+
+    Note
+    ----
+    If the dataset is too large to be loaded into the memory of the process,
+    we suggest to utilize hdf5 storage of the data. Otherwise, one can
+    directly load the dataset as a numpy array.
+    """
 
     @classmethod
     def create(cls, iv, typecode, storage,
                memmap_dir="", overwrite=False):
+        """Create a BwChromVector.
+
+        Parameters
+        ----------
+        iv : HTSeq.GenomicInterval
+            Chromosome properties, including length, used for allocating the
+            dataset.
+        typecode : str
+            Datatype.
+        storage : str
+            Storage type can be 'step', 'ndarray', 'memmap' or 'hdf5'.
+            The first three behave similarly as described in HTSeq.ChromVector.
+            The latter two can be used to reload pre-determined genome-wide
+            scores (e.g. coverage tracks), to avoid having to establish
+            this information each time.
+        memmap_dir : str
+            Directory in which to store the cachefiles. Used only with
+            'memmap' and 'hdf5'. Default: "".
+        overwrite : bool
+            Overwrite the cachefiles. Default: False.
+        """
 
         ncv = cls()
         ncv.iv = iv
@@ -25,7 +59,7 @@ class BwChromVector(ChromVector):
         ncv.offset = iv.start
         ncv.is_vector_of_sets = False
 
-        f = os.path.join(memmap_dir, 
+        f = os.path.join(memmap_dir,
             iv.chrom + iv.strand + ".{}".format('h5' if storage == 'hdf5'
                                                 else 'nmm'))
 
@@ -69,6 +103,40 @@ class BwChromVector(ChromVector):
 
 
 class BwGenomicArray(GenomicArray):
+    """BwGenomicArray extends HTSeq.GenomicArray.
+
+    It acts as a dataset for holding genomic data. For instance,
+    coverage along an entire genome composed of arbitrary length chromosomes.
+    The extension allows to reload previously established numpy memory maps
+    as well as hdf5 stored datasets.
+
+    Note
+    ----
+    If the dataset is too large to be loaded into the memory of the process,
+    we suggest to utilize hdf5 storage of the data. Otherwise, one can
+    directly load the dataset as a numpy array.
+
+    Parameters
+    ----------
+    chroms : dict
+        Dictionary with chromosome names as keys and chromosome lengths
+        as values.
+    stranded : bool
+        Consider stranded profiles. Default: True.
+    typecode : str
+        Datatype. Default: 'd'.
+    storage : str
+        Storage type can be 'step', 'ndarray', 'memmap' or 'hdf5'.
+        The first three behave similarly as described in HTSeq.ChromVector.
+        The latter two can be used to reload pre-determined genome-wide
+        scores (e.g. coverage tracks), to avoid having to establish
+        this information each time. Default: 'step'
+    memmap_dir : str
+        Directory in which to store the cachefiles. Used only with
+        'memmap' and 'hdf5'. Default: "".
+    overwrite : bool
+        Overwrite the cachefiles. Default: False.
+    """
 
     def __init__(self, chroms, stranded=True, typecode='d',
                  storage='step', memmap_dir="", overwrite=False):
@@ -80,6 +148,7 @@ class BwGenomicArray(GenomicArray):
                               memmap_dir=memmap_dir)
 
     def add_chrom(self, chrom, length=sys.maxint, start_index=0):
+        """Adds a chromosome track."""
         if length == sys.maxint:
             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
         else:

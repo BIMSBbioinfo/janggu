@@ -1087,16 +1087,20 @@ static const char __pyx_k_BwChromVector_create[] = "BwChromVector.create";
 static const char __pyx_k_BwGenomicArray___init[] = "BwGenomicArray.__init__";
 static const char __pyx_k_BwChromVector___getitem[] = "BwChromVector.__getitem__";
 static const char __pyx_k_BwGenomicArray_add_chrom[] = "BwGenomicArray.add_chrom";
+static const char __pyx_k_BwChromVector_extends_HTSeq_Chro[] = "BwChromVector extends HTSeq.ChromVector.\n\n    It acts as a dataset for holding 1-dimensional data. For instance,\n    coverage along a chromosome.\n    The extension allows to reload previously established numpy memory maps\n    as well as hdf5 stored datasets.\n\n    Note\n    ----\n    If the dataset is too large to be loaded into the memory of the process,\n    we suggest to utilize hdf5 storage of the data. Otherwise, one can\n    directly load the dataset as a numpy array.\n    ";
+static const char __pyx_k_BwGenomicArray_extends_HTSeq_Gen[] = "BwGenomicArray extends HTSeq.GenomicArray.\n\n    It acts as a dataset for holding genomic data. For instance,\n    coverage along an entire genome composed of arbitrary length chromosomes.\n    The extension allows to reload previously established numpy memory maps\n    as well as hdf5 stored datasets.\n\n    Note\n    ----\n    If the dataset is too large to be loaded into the memory of the process,\n    we suggest to utilize hdf5 storage of the data. Otherwise, one can\n    directly load the dataset as a numpy array.\n\n    Parameters\n    ----------\n    chroms : dict\n        Dictionary with chromosome names as keys and chromosome lengths\n        as values.\n    stranded : bool\n        Consider stranded profiles. Default: True.\n    typecode : str\n        Datatype. Default: 'd'.\n    storage : str\n        Storage type can be 'step', 'ndarray', 'memmap' or 'hdf5'.\n        The first three behave similarly as described in HTSeq.ChromVector.\n        The latter two can be used to reload pre-determined genome-wide\n        scores (e.g. coverage tracks), to avoid having to establish\n        this information each time. Default: 'step'\n    memmap_dir : str\n        Directory in which to store the cachefiles. Used only with\n        'memmap' and 'hdf5'. Default: \"\".\n    overwrite : bool\n        Overwrite the cachefiles. Default: False.\n    ";
 static const char __pyx_k_bluewhalecore_data_htseq_extensi[] = "bluewhalecore.data.htseq_extension";
 static const char __pyx_k_src_bluewhalecore_data_htseq_ext[] = "src/bluewhalecore/data/htseq_extension.pyx";
 static PyObject *__pyx_kp_s_;
 static PyObject *__pyx_n_s_BwChromVector;
 static PyObject *__pyx_n_s_BwChromVector___getitem;
 static PyObject *__pyx_n_s_BwChromVector_create;
+static PyObject *__pyx_kp_s_BwChromVector_extends_HTSeq_Chro;
 static PyObject *__pyx_n_s_BwChromVector_sum;
 static PyObject *__pyx_n_s_BwGenomicArray;
 static PyObject *__pyx_n_s_BwGenomicArray___init;
 static PyObject *__pyx_n_s_BwGenomicArray_add_chrom;
+static PyObject *__pyx_kp_s_BwGenomicArray_extends_HTSeq_Gen;
 static PyObject *__pyx_n_s_ChromVector;
 static PyObject *__pyx_n_s_File;
 static PyObject *__pyx_n_s_GenomicArray;
@@ -1196,17 +1200,18 @@ static PyObject *__pyx_codeobj__12;
 static PyObject *__pyx_codeobj__14;
 static PyObject *__pyx_codeobj__17;
 
-/* "bluewhalecore/data/htseq_extension.pyx":18
+/* "bluewhalecore/data/htseq_extension.pyx":31
  * 
  *     @classmethod
  *     def create(cls, iv, typecode, storage,             # <<<<<<<<<<<<<<
  *                memmap_dir="", overwrite=False):
- * 
+ *         """Create a BwChromVector.
  */
 
 /* Python wrapper */
 static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create = {"create", (PyCFunction)__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create, METH_VARARGS|METH_KEYWORDS, 0};
+static char __pyx_doc_13bluewhalecore_4data_15htseq_extension_13BwChromVector_create[] = "Create a BwChromVector.\n\n        Parameters\n        ----------\n        iv : HTSeq.GenomicInterval\n            Chromosome properties, including length, used for allocating the\n            dataset.\n        typecode : str\n            Datatype.\n        storage : str\n            Storage type can be 'step', 'ndarray', 'memmap' or 'hdf5'.\n            The first three behave similarly as described in HTSeq.ChromVector.\n            The latter two can be used to reload pre-determined genome-wide\n            scores (e.g. coverage tracks), to avoid having to establish\n            this information each time.\n        memmap_dir : str\n            Directory in which to store the cachefiles. Used only with\n            'memmap' and 'hdf5'. Default: \"\".\n        overwrite : bool\n            Overwrite the cachefiles. Default: False.\n        ";
+static PyMethodDef __pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create = {"create", (PyCFunction)__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create, METH_VARARGS|METH_KEYWORDS, __pyx_doc_13bluewhalecore_4data_15htseq_extension_13BwChromVector_create};
 static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_cls = 0;
   PyObject *__pyx_v_iv = 0;
@@ -1222,12 +1227,12 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     PyObject* values[6] = {0,0,0,0,0,0};
     values[4] = ((PyObject *)((PyObject*)__pyx_kp_s_));
 
-    /* "bluewhalecore/data/htseq_extension.pyx":19
+    /* "bluewhalecore/data/htseq_extension.pyx":32
  *     @classmethod
  *     def create(cls, iv, typecode, storage,
  *                memmap_dir="", overwrite=False):             # <<<<<<<<<<<<<<
+ *         """Create a BwChromVector.
  * 
- *         ncv = cls()
  */
     values[5] = ((PyObject *)((PyObject *)Py_False));
     if (unlikely(__pyx_kwds)) {
@@ -1258,19 +1263,19 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_iv)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, 1); __PYX_ERR(0, 18, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, 1); __PYX_ERR(0, 31, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_typecode)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, 2); __PYX_ERR(0, 18, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, 2); __PYX_ERR(0, 31, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_storage)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, 3); __PYX_ERR(0, 18, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, 3); __PYX_ERR(0, 31, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -1286,7 +1291,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "create") < 0)) __PYX_ERR(0, 18, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "create") < 0)) __PYX_ERR(0, 31, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -1311,7 +1316,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 18, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("create", 0, 4, 6, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 31, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("bluewhalecore.data.htseq_extension.BwChromVector.create", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1319,12 +1324,12 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVector_create(__pyx_self, __pyx_v_cls, __pyx_v_iv, __pyx_v_typecode, __pyx_v_storage, __pyx_v_memmap_dir, __pyx_v_overwrite);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":18
+  /* "bluewhalecore/data/htseq_extension.pyx":31
  * 
  *     @classmethod
  *     def create(cls, iv, typecode, storage,             # <<<<<<<<<<<<<<
  *                memmap_dir="", overwrite=False):
- * 
+ *         """Create a BwChromVector.
  */
 
   /* function exit code */
@@ -1351,8 +1356,8 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   int __pyx_t_11;
   __Pyx_RefNannySetupContext("create", 0);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":21
- *                memmap_dir="", overwrite=False):
+  /* "bluewhalecore/data/htseq_extension.pyx":55
+ *         """
  * 
  *         ncv = cls()             # <<<<<<<<<<<<<<
  *         ncv.iv = iv
@@ -1370,89 +1375,89 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     }
   }
   if (__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_ncv = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":22
+  /* "bluewhalecore/data/htseq_extension.pyx":56
  * 
  *         ncv = cls()
  *         ncv.iv = iv             # <<<<<<<<<<<<<<
  *         ncv._storage = storage
  *         # TODO: Test whether offset works properly
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_iv, __pyx_v_iv) < 0) __PYX_ERR(0, 22, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_iv, __pyx_v_iv) < 0) __PYX_ERR(0, 56, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":23
+  /* "bluewhalecore/data/htseq_extension.pyx":57
  *         ncv = cls()
  *         ncv.iv = iv
  *         ncv._storage = storage             # <<<<<<<<<<<<<<
  *         # TODO: Test whether offset works properly
  *         ncv.offset = iv.start
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_storage_2, __pyx_v_storage) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_storage_2, __pyx_v_storage) < 0) __PYX_ERR(0, 57, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":25
+  /* "bluewhalecore/data/htseq_extension.pyx":59
  *         ncv._storage = storage
  *         # TODO: Test whether offset works properly
  *         ncv.offset = iv.start             # <<<<<<<<<<<<<<
  *         ncv.is_vector_of_sets = False
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 25, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 59, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_offset, __pyx_t_1) < 0) __PYX_ERR(0, 25, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_offset, __pyx_t_1) < 0) __PYX_ERR(0, 59, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":26
+  /* "bluewhalecore/data/htseq_extension.pyx":60
  *         # TODO: Test whether offset works properly
  *         ncv.offset = iv.start
  *         ncv.is_vector_of_sets = False             # <<<<<<<<<<<<<<
  * 
  *         f = os.path.join(memmap_dir,
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_is_vector_of_sets, Py_False) < 0) __PYX_ERR(0, 26, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_is_vector_of_sets, Py_False) < 0) __PYX_ERR(0, 60, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":28
+  /* "bluewhalecore/data/htseq_extension.pyx":62
  *         ncv.is_vector_of_sets = False
  * 
  *         f = os.path.join(memmap_dir,             # <<<<<<<<<<<<<<
  *             iv.chrom + iv.strand + ".{}".format('h5' if storage == 'hdf5'
  *                                                 else 'nmm'))
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_path); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_path); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_join); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_join); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 62, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":29
+  /* "bluewhalecore/data/htseq_extension.pyx":63
  * 
  *         f = os.path.join(memmap_dir,
  *             iv.chrom + iv.strand + ".{}".format('h5' if storage == 'hdf5'             # <<<<<<<<<<<<<<
  *                                                 else 'nmm'))
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_chrom); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_chrom); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_strand); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_strand); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyNumber_Add(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_5 = PyNumber_Add(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s__2, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s__2, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_hdf5, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_hdf5, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 63, __pyx_L1_error)
   if (__pyx_t_7) {
     __Pyx_INCREF(__pyx_n_s_h5);
     __pyx_t_6 = __pyx_n_s_h5;
@@ -1471,14 +1476,14 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     }
   }
   if (!__pyx_t_8) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_6};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -1487,26 +1492,26 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_t_6};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     } else
     #endif
     {
-      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 63, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
       __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
       __Pyx_GIVEREF(__pyx_t_6);
       PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_6);
       __pyx_t_6 = 0;
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 29, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 63, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyNumber_Add(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 29, __pyx_L1_error)
+  __pyx_t_3 = PyNumber_Add(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -1525,7 +1530,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_2)) {
     PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_memmap_dir, __pyx_t_3};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -1534,14 +1539,14 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
     PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_v_memmap_dir, __pyx_t_3};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(2+__pyx_t_10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 28, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_10); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_4) {
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -1552,7 +1557,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_10, __pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
@@ -1560,29 +1565,29 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   __pyx_v_f = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":32
+  /* "bluewhalecore/data/htseq_extension.pyx":66
  *                                                 else 'nmm'))
  * 
  *         if storage == "hdf5":             # <<<<<<<<<<<<<<
  *             f = h5py.File(f, 'w' if overwrite else 'a')
  *             if ncv.iv.chrom in f.keys():
  */
-  __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_hdf5, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_hdf5, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 66, __pyx_L1_error)
   if (__pyx_t_7) {
 
-    /* "bluewhalecore/data/htseq_extension.pyx":33
+    /* "bluewhalecore/data/htseq_extension.pyx":67
  * 
  *         if storage == "hdf5":
  *             f = h5py.File(f, 'w' if overwrite else 'a')             # <<<<<<<<<<<<<<
  *             if ncv.iv.chrom in f.keys():
  *                 ncv.array = f.get(ncv.iv.chrom)
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_h5py); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_h5py); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 67, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_File); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_File); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 67, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_overwrite); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 33, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_overwrite); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 67, __pyx_L1_error)
     if (__pyx_t_7) {
       __Pyx_INCREF(__pyx_n_s_w);
       __pyx_t_2 = __pyx_n_s_w;
@@ -1605,7 +1610,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_f, __pyx_t_2};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 33, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -1614,14 +1619,14 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_f, __pyx_t_2};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 33, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_10, 2+__pyx_t_10); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(2+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 33, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(2+__pyx_t_10); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 67, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       if (__pyx_t_3) {
         __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -1632,7 +1637,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
       __Pyx_GIVEREF(__pyx_t_2);
       PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_10, __pyx_t_2);
       __pyx_t_2 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 33, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
@@ -1640,19 +1645,19 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __Pyx_DECREF_SET(__pyx_v_f, __pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":34
+    /* "bluewhalecore/data/htseq_extension.pyx":68
  *         if storage == "hdf5":
  *             f = h5py.File(f, 'w' if overwrite else 'a')
  *             if ncv.iv.chrom in f.keys():             # <<<<<<<<<<<<<<
  *                 ncv.array = f.get(ncv.iv.chrom)
  *             else:
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv, __pyx_n_s_iv); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv, __pyx_n_s_iv); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_chrom); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_chrom); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 68, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_keys); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_keys); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 68, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_2 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -1665,31 +1670,31 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
       }
     }
     if (__pyx_t_2) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 34, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_7 = (__Pyx_PySequence_ContainsTF(__pyx_t_5, __pyx_t_1, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 34, __pyx_L1_error)
+    __pyx_t_7 = (__Pyx_PySequence_ContainsTF(__pyx_t_5, __pyx_t_1, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 68, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __pyx_t_11 = (__pyx_t_7 != 0);
     if (__pyx_t_11) {
 
-      /* "bluewhalecore/data/htseq_extension.pyx":35
+      /* "bluewhalecore/data/htseq_extension.pyx":69
  *             f = h5py.File(f, 'w' if overwrite else 'a')
  *             if ncv.iv.chrom in f.keys():
  *                 ncv.array = f.get(ncv.iv.chrom)             # <<<<<<<<<<<<<<
  *             else:
  *                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
  */
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_get); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 35, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_get); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 69, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv, __pyx_n_s_iv); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 35, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv, __pyx_n_s_iv); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 69, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_chrom); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 35, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_chrom); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 69, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_t_4 = NULL;
@@ -1703,14 +1708,14 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
         }
       }
       if (!__pyx_t_4) {
-        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 69, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_GOTREF(__pyx_t_1);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_5)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
-          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 69, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -1719,29 +1724,29 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
           PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
-          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 69, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         } else
         #endif
         {
-          __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
+          __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 69, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
           __Pyx_GIVEREF(__pyx_t_2);
           PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_2);
           __pyx_t_2 = 0;
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 35, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 69, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         }
       }
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_1) < 0) __PYX_ERR(0, 35, __pyx_L1_error)
+      if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_1) < 0) __PYX_ERR(0, 69, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-      /* "bluewhalecore/data/htseq_extension.pyx":34
+      /* "bluewhalecore/data/htseq_extension.pyx":68
  *         if storage == "hdf5":
  *             f = h5py.File(f, 'w' if overwrite else 'a')
  *             if ncv.iv.chrom in f.keys():             # <<<<<<<<<<<<<<
@@ -1751,7 +1756,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
       goto __pyx_L4;
     }
 
-    /* "bluewhalecore/data/htseq_extension.pyx":37
+    /* "bluewhalecore/data/htseq_extension.pyx":71
  *                 ncv.array = f.get(ncv.iv.chrom)
  *             else:
  *                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),             # <<<<<<<<<<<<<<
@@ -1759,57 +1764,57 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):
  */
     /*else*/ {
-      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_create_dataset); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_f, __pyx_n_s_create_dataset); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv, __pyx_n_s_iv); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv, __pyx_n_s_iv); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_chrom); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_chrom); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_3);
       PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
       __pyx_t_3 = 0;
-      __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_length); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_length); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
-      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_2);
       PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
       __pyx_t_2 = 0;
-      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_shape, __pyx_t_4) < 0) __PYX_ERR(0, 37, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_shape, __pyx_t_4) < 0) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-      /* "bluewhalecore/data/htseq_extension.pyx":38
+      /* "bluewhalecore/data/htseq_extension.pyx":72
  *             else:
  *                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
  *                                              dtype=typecode)             # <<<<<<<<<<<<<<
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):
  *             ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
  */
-      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 37, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 71, __pyx_L1_error)
 
-      /* "bluewhalecore/data/htseq_extension.pyx":37
+      /* "bluewhalecore/data/htseq_extension.pyx":71
  *                 ncv.array = f.get(ncv.iv.chrom)
  *             else:
  *                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),             # <<<<<<<<<<<<<<
  *                                              dtype=typecode)
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):
  */
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 37, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_4) < 0) __PYX_ERR(0, 37, __pyx_L1_error)
+      if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_4) < 0) __PYX_ERR(0, 71, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
     __pyx_L4:;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":32
+    /* "bluewhalecore/data/htseq_extension.pyx":66
  *                                                 else 'nmm'))
  * 
  *         if storage == "hdf5":             # <<<<<<<<<<<<<<
@@ -1819,33 +1824,33 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     goto __pyx_L3;
   }
 
-  /* "bluewhalecore/data/htseq_extension.pyx":39
+  /* "bluewhalecore/data/htseq_extension.pyx":73
  *                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
  *                                              dtype=typecode)
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):             # <<<<<<<<<<<<<<
  *             ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
  *                                      filename=f,
  */
-  __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_memmap, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_7 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_memmap, Py_EQ)); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 73, __pyx_L1_error)
   if (__pyx_t_7) {
   } else {
     __pyx_t_11 = __pyx_t_7;
     goto __pyx_L5_bool_binop_done;
   }
-  __pyx_t_4 = PyObject_RichCompare(__pyx_v_overwrite, Py_False, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_4 = PyObject_RichCompare(__pyx_v_overwrite, Py_False, Py_EQ); __Pyx_XGOTREF(__pyx_t_4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   if (__pyx_t_7) {
   } else {
     __pyx_t_11 = __pyx_t_7;
     goto __pyx_L5_bool_binop_done;
   }
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_exists); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_exists); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_t_5 = NULL;
@@ -1859,13 +1864,13 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_f); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_f};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
@@ -1873,80 +1878,80 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_f};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     {
-      __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 39, __pyx_L1_error)
+      __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 73, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_5); __pyx_t_5 = NULL;
       __Pyx_INCREF(__pyx_v_f);
       __Pyx_GIVEREF(__pyx_v_f);
       PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_v_f);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 39, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 73, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 39, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_t_4); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 73, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_11 = __pyx_t_7;
   __pyx_L5_bool_binop_done:;
   if (__pyx_t_11) {
 
-    /* "bluewhalecore/data/htseq_extension.pyx":40
+    /* "bluewhalecore/data/htseq_extension.pyx":74
  *                                              dtype=typecode)
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):
  *             ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,             # <<<<<<<<<<<<<<
  *                                      filename=f,
  *                                      mode='r+')
  */
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_memmap); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_memmap); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_length); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
     __pyx_t_1 = 0;
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_shape, __pyx_t_5) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_shape, __pyx_t_5) < 0) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 74, __pyx_L1_error)
 
-    /* "bluewhalecore/data/htseq_extension.pyx":41
+    /* "bluewhalecore/data/htseq_extension.pyx":75
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):
  *             ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
  *                                      filename=f,             # <<<<<<<<<<<<<<
  *                                      mode='r+')
  *         else:
  */
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_filename, __pyx_v_f) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_mode, __pyx_kp_s_r) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_filename, __pyx_v_f) < 0) __PYX_ERR(0, 74, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_mode, __pyx_kp_s_r) < 0) __PYX_ERR(0, 74, __pyx_L1_error)
 
-    /* "bluewhalecore/data/htseq_extension.pyx":40
+    /* "bluewhalecore/data/htseq_extension.pyx":74
  *                                              dtype=typecode)
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):
  *             ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,             # <<<<<<<<<<<<<<
  *                                      filename=f,
  *                                      mode='r+')
  */
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 40, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_5) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_5) < 0) __PYX_ERR(0, 74, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":39
+    /* "bluewhalecore/data/htseq_extension.pyx":73
  *                 ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
  *                                              dtype=typecode)
  *         elif storage == 'memmap' and overwrite == False and os.path.exists(f):             # <<<<<<<<<<<<<<
@@ -1956,7 +1961,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     goto __pyx_L3;
   }
 
-  /* "bluewhalecore/data/htseq_extension.pyx":45
+  /* "bluewhalecore/data/htseq_extension.pyx":79
  *         else:
  *             #ncv = cls()
  *             ncv_ = ChromVector.create(iv, typecode,             # <<<<<<<<<<<<<<
@@ -1964,20 +1969,20 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
  * 
  */
   /*else*/ {
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 45, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_create); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 45, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_create); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":46
+    /* "bluewhalecore/data/htseq_extension.pyx":80
  *             #ncv = cls()
  *             ncv_ = ChromVector.create(iv, typecode,
  *                                      storage, memmap_dir=memmap_dir)             # <<<<<<<<<<<<<<
  * 
  *             ncv.array = ncv_.array
  */
-    __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 45, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_INCREF(__pyx_v_iv);
     __Pyx_GIVEREF(__pyx_v_iv);
@@ -1988,18 +1993,18 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __Pyx_INCREF(__pyx_v_storage);
     __Pyx_GIVEREF(__pyx_v_storage);
     PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_v_storage);
-    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 46, __pyx_L1_error)
+    __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 80, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_memmap_dir, __pyx_v_memmap_dir) < 0) __PYX_ERR(0, 46, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_memmap_dir, __pyx_v_memmap_dir) < 0) __PYX_ERR(0, 80, __pyx_L1_error)
 
-    /* "bluewhalecore/data/htseq_extension.pyx":45
+    /* "bluewhalecore/data/htseq_extension.pyx":79
  *         else:
  *             #ncv = cls()
  *             ncv_ = ChromVector.create(iv, typecode,             # <<<<<<<<<<<<<<
  *                                      storage, memmap_dir=memmap_dir)
  * 
  */
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 45, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 79, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -2007,21 +2012,21 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __pyx_v_ncv_ = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":48
+    /* "bluewhalecore/data/htseq_extension.pyx":82
  *                                      storage, memmap_dir=memmap_dir)
  * 
  *             ncv.array = ncv_.array             # <<<<<<<<<<<<<<
  * 
  *         return ncv
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv_, __pyx_n_s_array); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 48, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ncv_, __pyx_n_s_array); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 82, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_1) < 0) __PYX_ERR(0, 48, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_ncv, __pyx_n_s_array, __pyx_t_1) < 0) __PYX_ERR(0, 82, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __pyx_L3:;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":50
+  /* "bluewhalecore/data/htseq_extension.pyx":84
  *             ncv.array = ncv_.array
  * 
  *         return ncv             # <<<<<<<<<<<<<<
@@ -2033,12 +2038,12 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   __pyx_r = __pyx_v_ncv;
   goto __pyx_L0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":18
+  /* "bluewhalecore/data/htseq_extension.pyx":31
  * 
  *     @classmethod
  *     def create(cls, iv, typecode, storage,             # <<<<<<<<<<<<<<
  *                memmap_dir="", overwrite=False):
- * 
+ *         """Create a BwChromVector.
  */
 
   /* function exit code */
@@ -2062,7 +2067,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   return __pyx_r;
 }
 
-/* "bluewhalecore/data/htseq_extension.pyx":53
+/* "bluewhalecore/data/htseq_extension.pyx":87
  * 
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
@@ -2102,11 +2107,11 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_index)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, 1); __PYX_ERR(0, 53, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, 1); __PYX_ERR(0, 87, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__getitem__") < 0)) __PYX_ERR(0, 53, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__getitem__") < 0)) __PYX_ERR(0, 87, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -2119,7 +2124,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 53, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 87, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("bluewhalecore.data.htseq_extension.BwChromVector.__getitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2146,16 +2151,16 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   int __pyx_t_7;
   __Pyx_RefNannySetupContext("__getitem__", 0);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":54
+  /* "bluewhalecore/data/htseq_extension.pyx":88
  * 
  *     def __getitem__(self, index):
  *         ret = ChromVector.__getitem__(self, index)             # <<<<<<<<<<<<<<
  * 
  *         if isinstance(ret, ChromVector):
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 54, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 88, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_getitem); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 54, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_getitem); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 88, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
@@ -2173,7 +2178,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_self, __pyx_v_index};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
@@ -2181,13 +2186,13 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_self, __pyx_v_index};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_2) {
       __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2); __pyx_t_2 = NULL;
@@ -2198,7 +2203,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __Pyx_INCREF(__pyx_v_index);
     __Pyx_GIVEREF(__pyx_v_index);
     PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_4, __pyx_v_index);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
@@ -2206,28 +2211,28 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   __pyx_v_ret = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":56
+  /* "bluewhalecore/data/htseq_extension.pyx":90
  *         ret = ChromVector.__getitem__(self, index)
  * 
  *         if isinstance(ret, ChromVector):             # <<<<<<<<<<<<<<
  *             v = BwChromVector()
  *             v.iv = ret.iv
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 90, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_6 = PyObject_IsInstance(__pyx_v_ret, __pyx_t_1); if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 56, __pyx_L1_error)
+  __pyx_t_6 = PyObject_IsInstance(__pyx_v_ret, __pyx_t_1); if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 90, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_7 = (__pyx_t_6 != 0);
   if (__pyx_t_7) {
 
-    /* "bluewhalecore/data/htseq_extension.pyx":57
+    /* "bluewhalecore/data/htseq_extension.pyx":91
  * 
  *         if isinstance(ret, ChromVector):
  *             v = BwChromVector()             # <<<<<<<<<<<<<<
  *             v.iv = ret.iv
  *             v.array = ret.array
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 91, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -2240,77 +2245,77 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
       }
     }
     if (__pyx_t_5) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 91, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 91, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_v_v = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":58
+    /* "bluewhalecore/data/htseq_extension.pyx":92
  *         if isinstance(ret, ChromVector):
  *             v = BwChromVector()
  *             v.iv = ret.iv             # <<<<<<<<<<<<<<
  *             v.array = ret.array
  *             v.offset = ret.offset
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_iv); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 58, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_iv); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_iv, __pyx_t_1) < 0) __PYX_ERR(0, 58, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_iv, __pyx_t_1) < 0) __PYX_ERR(0, 92, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":59
+    /* "bluewhalecore/data/htseq_extension.pyx":93
  *             v = BwChromVector()
  *             v.iv = ret.iv
  *             v.array = ret.array             # <<<<<<<<<<<<<<
  *             v.offset = ret.offset
  *             v.is_vector_of_sets = ret.is_vector_of_sets
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_array); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_array); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 93, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_array, __pyx_t_1) < 0) __PYX_ERR(0, 59, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_array, __pyx_t_1) < 0) __PYX_ERR(0, 93, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":60
+    /* "bluewhalecore/data/htseq_extension.pyx":94
  *             v.iv = ret.iv
  *             v.array = ret.array
  *             v.offset = ret.offset             # <<<<<<<<<<<<<<
  *             v.is_vector_of_sets = ret.is_vector_of_sets
  *             v._storage = ret._storage
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_offset); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 60, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_offset); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_offset, __pyx_t_1) < 0) __PYX_ERR(0, 60, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_offset, __pyx_t_1) < 0) __PYX_ERR(0, 94, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":61
+    /* "bluewhalecore/data/htseq_extension.pyx":95
  *             v.array = ret.array
  *             v.offset = ret.offset
  *             v.is_vector_of_sets = ret.is_vector_of_sets             # <<<<<<<<<<<<<<
  *             v._storage = ret._storage
  *             return v
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_is_vector_of_sets); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_is_vector_of_sets); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_is_vector_of_sets, __pyx_t_1) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_is_vector_of_sets, __pyx_t_1) < 0) __PYX_ERR(0, 95, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":62
+    /* "bluewhalecore/data/htseq_extension.pyx":96
  *             v.offset = ret.offset
  *             v.is_vector_of_sets = ret.is_vector_of_sets
  *             v._storage = ret._storage             # <<<<<<<<<<<<<<
  *             return v
  *         else:
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_storage_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_ret, __pyx_n_s_storage_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_storage_2, __pyx_t_1) < 0) __PYX_ERR(0, 62, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_v, __pyx_n_s_storage_2, __pyx_t_1) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":63
+    /* "bluewhalecore/data/htseq_extension.pyx":97
  *             v.is_vector_of_sets = ret.is_vector_of_sets
  *             v._storage = ret._storage
  *             return v             # <<<<<<<<<<<<<<
@@ -2322,7 +2327,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     __pyx_r = __pyx_v_v;
     goto __pyx_L0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":56
+    /* "bluewhalecore/data/htseq_extension.pyx":90
  *         ret = ChromVector.__getitem__(self, index)
  * 
  *         if isinstance(ret, ChromVector):             # <<<<<<<<<<<<<<
@@ -2331,7 +2336,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
  */
   }
 
-  /* "bluewhalecore/data/htseq_extension.pyx":65
+  /* "bluewhalecore/data/htseq_extension.pyx":99
  *             return v
  *         else:
  *             return ret             # <<<<<<<<<<<<<<
@@ -2345,7 +2350,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
     goto __pyx_L0;
   }
 
-  /* "bluewhalecore/data/htseq_extension.pyx":53
+  /* "bluewhalecore/data/htseq_extension.pyx":87
  * 
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
@@ -2369,7 +2374,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   return __pyx_r;
 }
 
-/* "bluewhalecore/data/htseq_extension.pyx":67
+/* "bluewhalecore/data/htseq_extension.pyx":101
  *             return ret
  * 
  *     def sum(self):             # <<<<<<<<<<<<<<
@@ -2398,7 +2403,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("sum", 0);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":68
+  /* "bluewhalecore/data/htseq_extension.pyx":102
  * 
  *     def sum(self):
  *         return sum(list(self))             # <<<<<<<<<<<<<<
@@ -2406,21 +2411,21 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PySequence_List(__pyx_v_self); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __pyx_t_1 = PySequence_List(__pyx_v_self); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_sum, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_sum, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":67
+  /* "bluewhalecore/data/htseq_extension.pyx":101
  *             return ret
  * 
  *     def sum(self):             # <<<<<<<<<<<<<<
@@ -2440,8 +2445,8 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_13BwChromVecto
   return __pyx_r;
 }
 
-/* "bluewhalecore/data/htseq_extension.pyx":73
- * class BwGenomicArray(GenomicArray):
+/* "bluewhalecore/data/htseq_extension.pyx":141
+ *     """
  * 
  *     def __init__(self, chroms, stranded=True, typecode='d',             # <<<<<<<<<<<<<<
  *                  storage='step', memmap_dir="", overwrite=False):
@@ -2470,7 +2475,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     values[4] = ((PyObject *)((PyObject*)__pyx_n_s_step));
     values[5] = ((PyObject *)((PyObject*)__pyx_kp_s_));
 
-    /* "bluewhalecore/data/htseq_extension.pyx":74
+    /* "bluewhalecore/data/htseq_extension.pyx":142
  * 
  *     def __init__(self, chroms, stranded=True, typecode='d',
  *                  storage='step', memmap_dir="", overwrite=False):             # <<<<<<<<<<<<<<
@@ -2508,7 +2513,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chroms)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, 1); __PYX_ERR(0, 73, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, 1); __PYX_ERR(0, 141, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -2542,7 +2547,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 73, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 141, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2572,7 +2577,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 73, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 141, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("bluewhalecore.data.htseq_extension.BwGenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2580,8 +2585,8 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray___init__(__pyx_self, __pyx_v_self, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_typecode, __pyx_v_storage, __pyx_v_memmap_dir, __pyx_v_overwrite);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":73
- * class BwGenomicArray(GenomicArray):
+  /* "bluewhalecore/data/htseq_extension.pyx":141
+ *     """
  * 
  *     def __init__(self, chroms, stranded=True, typecode='d',             # <<<<<<<<<<<<<<
  *                  storage='step', memmap_dir="", overwrite=False):
@@ -2602,28 +2607,28 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   PyObject *__pyx_t_4 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":76
+  /* "bluewhalecore/data/htseq_extension.pyx":144
  *                  storage='step', memmap_dir="", overwrite=False):
  * 
  *         self.overwrite = overwrite             # <<<<<<<<<<<<<<
  * 
  *         GenomicArray.__init__(self, chroms, stranded=stranded,
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_overwrite, __pyx_v_overwrite) < 0) __PYX_ERR(0, 76, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_overwrite, __pyx_v_overwrite) < 0) __PYX_ERR(0, 144, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":78
+  /* "bluewhalecore/data/htseq_extension.pyx":146
  *         self.overwrite = overwrite
  * 
  *         GenomicArray.__init__(self, chroms, stranded=stranded,             # <<<<<<<<<<<<<<
  *                               typecode=typecode, storage=storage,
  *                               memmap_dir=memmap_dir)
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_init); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_v_self);
   __Pyx_GIVEREF(__pyx_v_self);
@@ -2631,45 +2636,45 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   __Pyx_INCREF(__pyx_v_chroms);
   __Pyx_GIVEREF(__pyx_v_chroms);
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_v_chroms);
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_stranded, __pyx_v_stranded) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_stranded, __pyx_v_stranded) < 0) __PYX_ERR(0, 146, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":79
+  /* "bluewhalecore/data/htseq_extension.pyx":147
  * 
  *         GenomicArray.__init__(self, chroms, stranded=stranded,
  *                               typecode=typecode, storage=storage,             # <<<<<<<<<<<<<<
  *                               memmap_dir=memmap_dir)
  * 
  */
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_typecode, __pyx_v_typecode) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_storage, __pyx_v_storage) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_typecode, __pyx_v_typecode) < 0) __PYX_ERR(0, 146, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_storage, __pyx_v_storage) < 0) __PYX_ERR(0, 146, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":80
+  /* "bluewhalecore/data/htseq_extension.pyx":148
  *         GenomicArray.__init__(self, chroms, stranded=stranded,
  *                               typecode=typecode, storage=storage,
  *                               memmap_dir=memmap_dir)             # <<<<<<<<<<<<<<
  * 
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):
  */
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_memmap_dir, __pyx_v_memmap_dir) < 0) __PYX_ERR(0, 78, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_memmap_dir, __pyx_v_memmap_dir) < 0) __PYX_ERR(0, 146, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":78
+  /* "bluewhalecore/data/htseq_extension.pyx":146
  *         self.overwrite = overwrite
  * 
  *         GenomicArray.__init__(self, chroms, stranded=stranded,             # <<<<<<<<<<<<<<
  *                               typecode=typecode, storage=storage,
  *                               memmap_dir=memmap_dir)
  */
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 146, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":73
- * class BwGenomicArray(GenomicArray):
+  /* "bluewhalecore/data/htseq_extension.pyx":141
+ *     """
  * 
  *     def __init__(self, chroms, stranded=True, typecode='d',             # <<<<<<<<<<<<<<
  *                  storage='step', memmap_dir="", overwrite=False):
@@ -2692,12 +2697,12 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   return __pyx_r;
 }
 
-/* "bluewhalecore/data/htseq_extension.pyx":82
+/* "bluewhalecore/data/htseq_extension.pyx":150
  *                               memmap_dir=memmap_dir)
  * 
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):             # <<<<<<<<<<<<<<
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:
- *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  */
 
 static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension___defaults__(CYTHON_UNUSED PyObject *__pyx_self) {
@@ -2707,7 +2712,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension___defaults__(C
   PyObject *__pyx_t_2 = NULL;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_length);
   __Pyx_GIVEREF(__Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_self)->__pyx_arg_length);
@@ -2715,7 +2720,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension___defaults__(C
   __Pyx_INCREF(((PyObject *)__pyx_int_0));
   __Pyx_GIVEREF(((PyObject *)__pyx_int_0));
   PyTuple_SET_ITEM(__pyx_t_1, 1, ((PyObject *)__pyx_int_0));
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
@@ -2741,7 +2746,8 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension___defaults__(C
 
 /* Python wrapper */
 static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom = {"add_chrom", (PyCFunction)__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom, METH_VARARGS|METH_KEYWORDS, 0};
+static char __pyx_doc_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_2add_chrom[] = "Adds a chromosome track.";
+static PyMethodDef __pyx_mdef_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom = {"add_chrom", (PyCFunction)__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom, METH_VARARGS|METH_KEYWORDS, __pyx_doc_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_2add_chrom};
 static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_self = 0;
   PyObject *__pyx_v_chrom = 0;
@@ -2780,7 +2786,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chrom)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("add_chrom", 0, 2, 4, 1); __PYX_ERR(0, 82, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("add_chrom", 0, 2, 4, 1); __PYX_ERR(0, 150, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -2796,7 +2802,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "add_chrom") < 0)) __PYX_ERR(0, 82, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "add_chrom") < 0)) __PYX_ERR(0, 150, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2817,7 +2823,7 @@ static PyObject *__pyx_pw_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("add_chrom", 0, 2, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 82, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("add_chrom", 0, 2, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 150, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("bluewhalecore.data.htseq_extension.BwGenomicArray.add_chrom", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2844,36 +2850,36 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannySetupContext("add_chrom", 0);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":83
- * 
+  /* "bluewhalecore/data/htseq_extension.pyx":152
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:             # <<<<<<<<<<<<<<
  *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  *         else:
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_maxint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_maxint); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_length, __pyx_t_2, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_length, __pyx_t_2, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 83, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 152, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_3) {
 
-    /* "bluewhalecore/data/htseq_extension.pyx":84
- *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):
+    /* "bluewhalecore/data/htseq_extension.pyx":153
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:
  *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")             # <<<<<<<<<<<<<<
  *         else:
  *             iv = GenomicInterval(chrom, start_index, start_index + length, ".")
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 153, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 84, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 153, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_maxint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 84, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_maxint); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 153, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_t_4 = NULL;
@@ -2891,7 +2897,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[5] = {__pyx_t_4, __pyx_v_chrom, __pyx_v_start_index, __pyx_t_5, __pyx_kp_s__3};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -2900,14 +2906,14 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[5] = {__pyx_t_4, __pyx_v_chrom, __pyx_v_start_index, __pyx_t_5, __pyx_kp_s__3};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else
     #endif
     {
-      __pyx_t_7 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 84, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 153, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       if (__pyx_t_4) {
         __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -2924,7 +2930,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
       __Pyx_GIVEREF(__pyx_kp_s__3);
       PyTuple_SET_ITEM(__pyx_t_7, 3+__pyx_t_6, __pyx_kp_s__3);
       __pyx_t_5 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 153, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
@@ -2932,9 +2938,9 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     __pyx_v_iv = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":83
- * 
+    /* "bluewhalecore/data/htseq_extension.pyx":152
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:             # <<<<<<<<<<<<<<
  *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  *         else:
@@ -2942,7 +2948,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     goto __pyx_L3;
   }
 
-  /* "bluewhalecore/data/htseq_extension.pyx":86
+  /* "bluewhalecore/data/htseq_extension.pyx":155
  *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  *         else:
  *             iv = GenomicInterval(chrom, start_index, start_index + length, ".")             # <<<<<<<<<<<<<<
@@ -2950,9 +2956,9 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
  *         if self.stranded:
  */
   /*else*/ {
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 155, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_7 = PyNumber_Add(__pyx_v_start_index, __pyx_v_length); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 86, __pyx_L1_error)
+    __pyx_t_7 = PyNumber_Add(__pyx_v_start_index, __pyx_v_length); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 155, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_5 = NULL;
     __pyx_t_6 = 0;
@@ -2969,7 +2975,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[5] = {__pyx_t_5, __pyx_v_chrom, __pyx_v_start_index, __pyx_t_7, __pyx_kp_s__3};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -2978,14 +2984,14 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[5] = {__pyx_t_5, __pyx_v_chrom, __pyx_v_start_index, __pyx_t_7, __pyx_kp_s__3};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_6, 4+__pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 86, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(4+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 155, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       if (__pyx_t_5) {
         __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_5); __pyx_t_5 = NULL;
@@ -3002,7 +3008,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
       __Pyx_GIVEREF(__pyx_kp_s__3);
       PyTuple_SET_ITEM(__pyx_t_4, 3+__pyx_t_6, __pyx_kp_s__3);
       __pyx_t_7 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 86, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 155, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
@@ -3012,76 +3018,76 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
   }
   __pyx_L3:;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":88
+  /* "bluewhalecore/data/htseq_extension.pyx":157
  *             iv = GenomicInterval(chrom, start_index, start_index + length, ".")
  * 
  *         if self.stranded:             # <<<<<<<<<<<<<<
  *             self.chrom_vectors[chrom] = {}
  *             iv.strand = "+"
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_stranded); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_stranded); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 157, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 88, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 157, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_3) {
 
-    /* "bluewhalecore/data/htseq_extension.pyx":89
+    /* "bluewhalecore/data/htseq_extension.pyx":158
  * 
  *         if self.stranded:
  *             self.chrom_vectors[chrom] = {}             # <<<<<<<<<<<<<<
  *             iv.strand = "+"
  *             self.chrom_vectors[chrom][strand_plus] = \
  */
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 89, __pyx_L1_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 158, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 89, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 158, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_v_chrom, __pyx_t_1) < 0)) __PYX_ERR(0, 89, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_v_chrom, __pyx_t_1) < 0)) __PYX_ERR(0, 158, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":90
+    /* "bluewhalecore/data/htseq_extension.pyx":159
  *         if self.stranded:
  *             self.chrom_vectors[chrom] = {}
  *             iv.strand = "+"             # <<<<<<<<<<<<<<
  *             self.chrom_vectors[chrom][strand_plus] = \
  *                 BwChromVector.create(iv, self.typecode,
  */
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_iv, __pyx_n_s_strand, __pyx_kp_s__4) < 0) __PYX_ERR(0, 90, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_iv, __pyx_n_s_strand, __pyx_kp_s__4) < 0) __PYX_ERR(0, 159, __pyx_L1_error)
 
-    /* "bluewhalecore/data/htseq_extension.pyx":92
+    /* "bluewhalecore/data/htseq_extension.pyx":161
  *             iv.strand = "+"
  *             self.chrom_vectors[chrom][strand_plus] = \
  *                 BwChromVector.create(iv, self.typecode,             # <<<<<<<<<<<<<<
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_create); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_create); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_typecode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_typecode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "bluewhalecore/data/htseq_extension.pyx":93
+    /* "bluewhalecore/data/htseq_extension.pyx":162
  *             self.chrom_vectors[chrom][strand_plus] = \
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,             # <<<<<<<<<<<<<<
  *                                      overwrite=self.overwrite)
  *             iv = iv.copy()
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_storage); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_storage); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 162, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
 
-    /* "bluewhalecore/data/htseq_extension.pyx":92
+    /* "bluewhalecore/data/htseq_extension.pyx":161
  *             iv.strand = "+"
  *             self.chrom_vectors[chrom][strand_plus] = \
  *                 BwChromVector.create(iv, self.typecode,             # <<<<<<<<<<<<<<
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  */
-    __pyx_t_7 = PyTuple_New(3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_INCREF(__pyx_v_iv);
     __Pyx_GIVEREF(__pyx_v_iv);
@@ -3093,72 +3099,72 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     __pyx_t_1 = 0;
     __pyx_t_4 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":93
+    /* "bluewhalecore/data/htseq_extension.pyx":162
  *             self.chrom_vectors[chrom][strand_plus] = \
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,             # <<<<<<<<<<<<<<
  *                                      overwrite=self.overwrite)
  *             iv = iv.copy()
  */
-    __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 162, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_memmap_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 93, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_memmap_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 162, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_memmap_dir, __pyx_t_1) < 0) __PYX_ERR(0, 93, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_memmap_dir, __pyx_t_1) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":94
+    /* "bluewhalecore/data/htseq_extension.pyx":163
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)             # <<<<<<<<<<<<<<
  *             iv = iv.copy()
  *             iv.strand = "-"
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_overwrite); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 94, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_overwrite); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 163, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_overwrite, __pyx_t_1) < 0) __PYX_ERR(0, 93, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_overwrite, __pyx_t_1) < 0) __PYX_ERR(0, 162, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":92
+    /* "bluewhalecore/data/htseq_extension.pyx":161
  *             iv.strand = "+"
  *             self.chrom_vectors[chrom][strand_plus] = \
  *                 BwChromVector.create(iv, self.typecode,             # <<<<<<<<<<<<<<
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  */
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 92, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_7, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 161, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":91
+    /* "bluewhalecore/data/htseq_extension.pyx":160
  *             self.chrom_vectors[chrom] = {}
  *             iv.strand = "+"
  *             self.chrom_vectors[chrom][strand_plus] = \             # <<<<<<<<<<<<<<
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 91, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 160, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_7 = PyObject_GetItem(__pyx_t_4, __pyx_v_chrom); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 91, __pyx_L1_error)
+    __pyx_t_7 = PyObject_GetItem(__pyx_t_4, __pyx_v_chrom); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 160, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_strand_plus); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 91, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_strand_plus); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 160, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
-    if (unlikely(PyObject_SetItem(__pyx_t_7, __pyx_t_4, __pyx_t_1) < 0)) __PYX_ERR(0, 91, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_7, __pyx_t_4, __pyx_t_1) < 0)) __PYX_ERR(0, 160, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":95
+    /* "bluewhalecore/data/htseq_extension.pyx":164
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  *             iv = iv.copy()             # <<<<<<<<<<<<<<
  *             iv.strand = "-"
  *             self.chrom_vectors[chrom][strand_minus] = \
  */
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_copy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 95, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_iv, __pyx_n_s_copy); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 164, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_t_7 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_4))) {
@@ -3171,58 +3177,58 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
       }
     }
     if (__pyx_t_7) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 164, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 95, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 164, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF_SET(__pyx_v_iv, __pyx_t_1);
     __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":96
+    /* "bluewhalecore/data/htseq_extension.pyx":165
  *                                      overwrite=self.overwrite)
  *             iv = iv.copy()
  *             iv.strand = "-"             # <<<<<<<<<<<<<<
  *             self.chrom_vectors[chrom][strand_minus] = \
  *                 BwChromVector.create(iv, self.typecode,
  */
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_iv, __pyx_n_s_strand, __pyx_kp_s__5) < 0) __PYX_ERR(0, 96, __pyx_L1_error)
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_iv, __pyx_n_s_strand, __pyx_kp_s__5) < 0) __PYX_ERR(0, 165, __pyx_L1_error)
 
-    /* "bluewhalecore/data/htseq_extension.pyx":98
+    /* "bluewhalecore/data/htseq_extension.pyx":167
  *             iv.strand = "-"
  *             self.chrom_vectors[chrom][strand_minus] = \
  *                 BwChromVector.create(iv, self.typecode,             # <<<<<<<<<<<<<<
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_create); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_create); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_typecode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_typecode); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "bluewhalecore/data/htseq_extension.pyx":99
+    /* "bluewhalecore/data/htseq_extension.pyx":168
  *             self.chrom_vectors[chrom][strand_minus] = \
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,             # <<<<<<<<<<<<<<
  *                                      overwrite=self.overwrite)
  *         else:
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_storage); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 99, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_storage); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
 
-    /* "bluewhalecore/data/htseq_extension.pyx":98
+    /* "bluewhalecore/data/htseq_extension.pyx":167
  *             iv.strand = "-"
  *             self.chrom_vectors[chrom][strand_minus] = \
  *                 BwChromVector.create(iv, self.typecode,             # <<<<<<<<<<<<<<
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  */
-    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __pyx_t_2 = PyTuple_New(3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_INCREF(__pyx_v_iv);
     __Pyx_GIVEREF(__pyx_v_iv);
@@ -3234,65 +3240,65 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     __pyx_t_1 = 0;
     __pyx_t_7 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":99
+    /* "bluewhalecore/data/htseq_extension.pyx":168
  *             self.chrom_vectors[chrom][strand_minus] = \
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,             # <<<<<<<<<<<<<<
  *                                      overwrite=self.overwrite)
  *         else:
  */
-    __pyx_t_7 = PyDict_New(); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 99, __pyx_L1_error)
+    __pyx_t_7 = PyDict_New(); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_memmap_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 99, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_memmap_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_memmap_dir, __pyx_t_1) < 0) __PYX_ERR(0, 99, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_memmap_dir, __pyx_t_1) < 0) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":100
+    /* "bluewhalecore/data/htseq_extension.pyx":169
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)             # <<<<<<<<<<<<<<
  *         else:
  *             self.chrom_vectors[chrom] = {
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_overwrite); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 100, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_overwrite); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_overwrite, __pyx_t_1) < 0) __PYX_ERR(0, 99, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_7, __pyx_n_s_overwrite, __pyx_t_1) < 0) __PYX_ERR(0, 168, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":98
+    /* "bluewhalecore/data/htseq_extension.pyx":167
  *             iv.strand = "-"
  *             self.chrom_vectors[chrom][strand_minus] = \
  *                 BwChromVector.create(iv, self.typecode,             # <<<<<<<<<<<<<<
  *                                      self.storage, memmap_dir=self.memmap_dir,
  *                                      overwrite=self.overwrite)
  */
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 98, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 167, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":97
+    /* "bluewhalecore/data/htseq_extension.pyx":166
  *             iv = iv.copy()
  *             iv.strand = "-"
  *             self.chrom_vectors[chrom][strand_minus] = \             # <<<<<<<<<<<<<<
  *                 BwChromVector.create(iv, self.typecode,
  *                                      self.storage, memmap_dir=self.memmap_dir,
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_2 = PyObject_GetItem(__pyx_t_7, __pyx_v_chrom); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_2 = PyObject_GetItem(__pyx_t_7, __pyx_v_chrom); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_strand_minus); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 97, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_strand_minus); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 166, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_t_7, __pyx_t_1) < 0)) __PYX_ERR(0, 97, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_t_7, __pyx_t_1) < 0)) __PYX_ERR(0, 166, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":88
+    /* "bluewhalecore/data/htseq_extension.pyx":157
  *             iv = GenomicInterval(chrom, start_index, start_index + length, ".")
  * 
  *         if self.stranded:             # <<<<<<<<<<<<<<
@@ -3302,7 +3308,7 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     goto __pyx_L4;
   }
 
-  /* "bluewhalecore/data/htseq_extension.pyx":103
+  /* "bluewhalecore/data/htseq_extension.pyx":172
  *         else:
  *             self.chrom_vectors[chrom] = {
  *                 strand_nostrand:             # <<<<<<<<<<<<<<
@@ -3310,28 +3316,28 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
  *                                          overwrite=self.overwrite,
  */
   /*else*/ {
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 103, __pyx_L1_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 172, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_strand_nostrand); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 103, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_strand_nostrand); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 172, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
 
-    /* "bluewhalecore/data/htseq_extension.pyx":104
+    /* "bluewhalecore/data/htseq_extension.pyx":173
  *             self.chrom_vectors[chrom] = {
  *                 strand_nostrand:
  *                     BwChromVector.create(iv, self.typecode, self.storage,             # <<<<<<<<<<<<<<
  *                                          overwrite=self.overwrite,
  *                                          memmap_dir=self.memmap_dir)}
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_BwChromVector); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_create); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_create); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_typecode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_typecode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_storage); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_storage); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_8 = PyTuple_New(3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
     __Pyx_INCREF(__pyx_v_iv);
     __Pyx_GIVEREF(__pyx_v_iv);
@@ -3343,66 +3349,66 @@ static PyObject *__pyx_pf_13bluewhalecore_4data_15htseq_extension_14BwGenomicArr
     __pyx_t_2 = 0;
     __pyx_t_5 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":105
+    /* "bluewhalecore/data/htseq_extension.pyx":174
  *                 strand_nostrand:
  *                     BwChromVector.create(iv, self.typecode, self.storage,
  *                                          overwrite=self.overwrite,             # <<<<<<<<<<<<<<
  *                                          memmap_dir=self.memmap_dir)}
  */
-    __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 105, __pyx_L1_error)
+    __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 174, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_overwrite); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_overwrite); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 174, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_overwrite, __pyx_t_2) < 0) __PYX_ERR(0, 105, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_overwrite, __pyx_t_2) < 0) __PYX_ERR(0, 174, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":106
+    /* "bluewhalecore/data/htseq_extension.pyx":175
  *                     BwChromVector.create(iv, self.typecode, self.storage,
  *                                          overwrite=self.overwrite,
  *                                          memmap_dir=self.memmap_dir)}             # <<<<<<<<<<<<<<
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_memmap_dir); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 106, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_memmap_dir); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 175, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_memmap_dir, __pyx_t_2) < 0) __PYX_ERR(0, 105, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_memmap_dir, __pyx_t_2) < 0) __PYX_ERR(0, 174, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":104
+    /* "bluewhalecore/data/htseq_extension.pyx":173
  *             self.chrom_vectors[chrom] = {
  *                 strand_nostrand:
  *                     BwChromVector.create(iv, self.typecode, self.storage,             # <<<<<<<<<<<<<<
  *                                          overwrite=self.overwrite,
  *                                          memmap_dir=self.memmap_dir)}
  */
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 104, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_8, __pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (PyDict_SetItem(__pyx_t_1, __pyx_t_7, __pyx_t_2) < 0) __PYX_ERR(0, 103, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_1, __pyx_t_7, __pyx_t_2) < 0) __PYX_ERR(0, 172, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-    /* "bluewhalecore/data/htseq_extension.pyx":102
+    /* "bluewhalecore/data/htseq_extension.pyx":171
  *                                      overwrite=self.overwrite)
  *         else:
  *             self.chrom_vectors[chrom] = {             # <<<<<<<<<<<<<<
  *                 strand_nostrand:
  *                     BwChromVector.create(iv, self.typecode, self.storage,
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_chrom_vectors); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 171, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_v_chrom, __pyx_t_1) < 0)) __PYX_ERR(0, 102, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_v_chrom, __pyx_t_1) < 0)) __PYX_ERR(0, 171, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __pyx_L4:;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":82
+  /* "bluewhalecore/data/htseq_extension.pyx":150
  *                               memmap_dir=memmap_dir)
  * 
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):             # <<<<<<<<<<<<<<
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:
- *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  */
 
   /* function exit code */
@@ -3451,10 +3457,12 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_BwChromVector, __pyx_k_BwChromVector, sizeof(__pyx_k_BwChromVector), 0, 0, 1, 1},
   {&__pyx_n_s_BwChromVector___getitem, __pyx_k_BwChromVector___getitem, sizeof(__pyx_k_BwChromVector___getitem), 0, 0, 1, 1},
   {&__pyx_n_s_BwChromVector_create, __pyx_k_BwChromVector_create, sizeof(__pyx_k_BwChromVector_create), 0, 0, 1, 1},
+  {&__pyx_kp_s_BwChromVector_extends_HTSeq_Chro, __pyx_k_BwChromVector_extends_HTSeq_Chro, sizeof(__pyx_k_BwChromVector_extends_HTSeq_Chro), 0, 0, 1, 0},
   {&__pyx_n_s_BwChromVector_sum, __pyx_k_BwChromVector_sum, sizeof(__pyx_k_BwChromVector_sum), 0, 0, 1, 1},
   {&__pyx_n_s_BwGenomicArray, __pyx_k_BwGenomicArray, sizeof(__pyx_k_BwGenomicArray), 0, 0, 1, 1},
   {&__pyx_n_s_BwGenomicArray___init, __pyx_k_BwGenomicArray___init, sizeof(__pyx_k_BwGenomicArray___init), 0, 0, 1, 1},
   {&__pyx_n_s_BwGenomicArray_add_chrom, __pyx_k_BwGenomicArray_add_chrom, sizeof(__pyx_k_BwGenomicArray_add_chrom), 0, 0, 1, 1},
+  {&__pyx_kp_s_BwGenomicArray_extends_HTSeq_Gen, __pyx_k_BwGenomicArray_extends_HTSeq_Gen, sizeof(__pyx_k_BwGenomicArray_extends_HTSeq_Gen), 0, 0, 1, 0},
   {&__pyx_n_s_ChromVector, __pyx_k_ChromVector, sizeof(__pyx_k_ChromVector), 0, 0, 1, 1},
   {&__pyx_n_s_File, __pyx_k_File, sizeof(__pyx_k_File), 0, 0, 1, 1},
   {&__pyx_n_s_GenomicArray, __pyx_k_GenomicArray, sizeof(__pyx_k_GenomicArray), 0, 0, 1, 1},
@@ -3537,7 +3545,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_sum = __Pyx_GetBuiltinName(__pyx_n_s_sum); if (!__pyx_builtin_sum) __PYX_ERR(0, 68, __pyx_L1_error)
+  __pyx_builtin_sum = __Pyx_GetBuiltinName(__pyx_n_s_sum); if (!__pyx_builtin_sum) __PYX_ERR(0, 102, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -3547,71 +3555,71 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":18
+  /* "bluewhalecore/data/htseq_extension.pyx":31
  * 
  *     @classmethod
  *     def create(cls, iv, typecode, storage,             # <<<<<<<<<<<<<<
  *                memmap_dir="", overwrite=False):
- * 
+ *         """Create a BwChromVector.
  */
-  __pyx_tuple__6 = PyTuple_Pack(9, __pyx_n_s_cls, __pyx_n_s_iv, __pyx_n_s_typecode, __pyx_n_s_storage, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite, __pyx_n_s_ncv, __pyx_n_s_f, __pyx_n_s_ncv_2); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(9, __pyx_n_s_cls, __pyx_n_s_iv, __pyx_n_s_typecode, __pyx_n_s_storage, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite, __pyx_n_s_ncv, __pyx_n_s_f, __pyx_n_s_ncv_2); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
-  __pyx_codeobj__7 = (PyObject*)__Pyx_PyCode_New(6, 0, 9, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__6, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_create, 18, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__7)) __PYX_ERR(0, 18, __pyx_L1_error)
-  __pyx_tuple__8 = PyTuple_Pack(2, ((PyObject*)__pyx_kp_s_), ((PyObject *)Py_False)); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_codeobj__7 = (PyObject*)__Pyx_PyCode_New(6, 0, 9, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__6, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_create, 31, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__7)) __PYX_ERR(0, 31, __pyx_L1_error)
+  __pyx_tuple__8 = PyTuple_Pack(2, ((PyObject*)__pyx_kp_s_), ((PyObject *)Py_False)); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":53
+  /* "bluewhalecore/data/htseq_extension.pyx":87
  * 
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
  *         ret = ChromVector.__getitem__(self, index)
  * 
  */
-  __pyx_tuple__9 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_index, __pyx_n_s_ret, __pyx_n_s_v); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __pyx_tuple__9 = PyTuple_Pack(4, __pyx_n_s_self, __pyx_n_s_index, __pyx_n_s_ret, __pyx_n_s_v); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
-  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_getitem, 53, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_getitem, 87, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 87, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":67
+  /* "bluewhalecore/data/htseq_extension.pyx":101
  *             return ret
  * 
  *     def sum(self):             # <<<<<<<<<<<<<<
  *         return sum(list(self))
  * 
  */
-  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_tuple__11 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 101, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__11);
   __Pyx_GIVEREF(__pyx_tuple__11);
-  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_sum, 67, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_sum, 101, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 101, __pyx_L1_error)
 
-  /* "bluewhalecore/data/htseq_extension.pyx":73
- * class BwGenomicArray(GenomicArray):
+  /* "bluewhalecore/data/htseq_extension.pyx":141
+ *     """
  * 
  *     def __init__(self, chroms, stranded=True, typecode='d',             # <<<<<<<<<<<<<<
  *                  storage='step', memmap_dir="", overwrite=False):
  * 
  */
-  __pyx_tuple__13 = PyTuple_Pack(7, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_typecode, __pyx_n_s_storage, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_tuple__13 = PyTuple_Pack(7, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_typecode, __pyx_n_s_storage, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 141, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__13);
   __Pyx_GIVEREF(__pyx_tuple__13);
-  __pyx_codeobj__14 = (PyObject*)__Pyx_PyCode_New(7, 0, 7, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__13, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_init, 73, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__14)) __PYX_ERR(0, 73, __pyx_L1_error)
-  __pyx_tuple__15 = PyTuple_Pack(5, ((PyObject *)Py_True), ((PyObject*)__pyx_n_s_d), ((PyObject*)__pyx_n_s_step), ((PyObject*)__pyx_kp_s_), ((PyObject *)Py_False)); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_codeobj__14 = (PyObject*)__Pyx_PyCode_New(7, 0, 7, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__13, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_init, 141, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__14)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __pyx_tuple__15 = PyTuple_Pack(5, ((PyObject *)Py_True), ((PyObject*)__pyx_n_s_d), ((PyObject*)__pyx_n_s_step), ((PyObject*)__pyx_kp_s_), ((PyObject *)Py_False)); if (unlikely(!__pyx_tuple__15)) __PYX_ERR(0, 141, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__15);
   __Pyx_GIVEREF(__pyx_tuple__15);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":82
+  /* "bluewhalecore/data/htseq_extension.pyx":150
  *                               memmap_dir=memmap_dir)
  * 
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):             # <<<<<<<<<<<<<<
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:
- *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  */
-  __pyx_tuple__16 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_chrom, __pyx_n_s_length, __pyx_n_s_start_index, __pyx_n_s_iv); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_tuple__16 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_chrom, __pyx_n_s_length, __pyx_n_s_start_index, __pyx_n_s_iv); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__16);
   __Pyx_GIVEREF(__pyx_tuple__16);
-  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(4, 0, 5, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__16, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_add_chrom, 82, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(4, 0, 5, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__16, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_bluewhalecore_data_htseq_ext, __pyx_n_s_add_chrom, 150, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -3864,8 +3872,8 @@ PyMODINIT_FUNC PyInit_htseq_extension(void)
  * strand_nostrand = "."
  * 
  * class BwChromVector(ChromVector):             # <<<<<<<<<<<<<<
+ *     """BwChromVector extends HTSeq.ChromVector.
  * 
- *     @classmethod
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_ChromVector); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -3876,63 +3884,63 @@ PyMODINIT_FUNC PyInit_htseq_extension(void)
   __pyx_t_2 = 0;
   __pyx_t_2 = __Pyx_CalculateMetaclass(NULL, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_2, __pyx_t_1, __pyx_n_s_BwChromVector, __pyx_n_s_BwChromVector, (PyObject *) NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, (PyObject *) NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 15, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_2, __pyx_t_1, __pyx_n_s_BwChromVector, __pyx_n_s_BwChromVector, (PyObject *) NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_kp_s_BwChromVector_extends_HTSeq_Chro); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":18
+  /* "bluewhalecore/data/htseq_extension.pyx":31
  * 
  *     @classmethod
  *     def create(cls, iv, typecode, storage,             # <<<<<<<<<<<<<<
  *                memmap_dir="", overwrite=False):
- * 
+ *         """Create a BwChromVector.
  */
-  __pyx_t_4 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create, __Pyx_CYFUNCTION_CLASSMETHOD, __pyx_n_s_BwChromVector_create, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__7)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 18, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_1create, __Pyx_CYFUNCTION_CLASSMETHOD, __pyx_n_s_BwChromVector_create, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__7)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_tuple__8);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":17
- * class BwChromVector(ChromVector):
+  /* "bluewhalecore/data/htseq_extension.pyx":30
+ *     """
  * 
  *     @classmethod             # <<<<<<<<<<<<<<
  *     def create(cls, iv, typecode, storage,
  *                memmap_dir="", overwrite=False):
  */
-  __pyx_t_5 = __Pyx_Method_ClassMethod(__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 17, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_Method_ClassMethod(__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 30, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_create, __pyx_t_5) < 0) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_create, __pyx_t_5) < 0) __PYX_ERR(0, 31, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":53
+  /* "bluewhalecore/data/htseq_extension.pyx":87
  * 
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
  *         ret = ChromVector.__getitem__(self, index)
  * 
  */
-  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_3__getitem__, 0, __pyx_n_s_BwChromVector___getitem, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__10)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 53, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_3__getitem__, 0, __pyx_n_s_BwChromVector___getitem, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__10)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_getitem, __pyx_t_5) < 0) __PYX_ERR(0, 53, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_getitem, __pyx_t_5) < 0) __PYX_ERR(0, 87, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":67
+  /* "bluewhalecore/data/htseq_extension.pyx":101
  *             return ret
  * 
  *     def sum(self):             # <<<<<<<<<<<<<<
  *         return sum(list(self))
  * 
  */
-  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum, 0, __pyx_n_s_BwChromVector_sum, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__12)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_13BwChromVector_5sum, 0, __pyx_n_s_BwChromVector_sum, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__12)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 101, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_sum, __pyx_t_5) < 0) __PYX_ERR(0, 67, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_sum, __pyx_t_5) < 0) __PYX_ERR(0, 101, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
   /* "bluewhalecore/data/htseq_extension.pyx":15
  * strand_nostrand = "."
  * 
  * class BwChromVector(ChromVector):             # <<<<<<<<<<<<<<
+ *     """BwChromVector extends HTSeq.ChromVector.
  * 
- *     @classmethod
  */
   __pyx_t_5 = __Pyx_Py3ClassCreate(__pyx_t_2, __pyx_n_s_BwChromVector, __pyx_t_1, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 15, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
@@ -3942,70 +3950,70 @@ PyMODINIT_FUNC PyInit_htseq_extension(void)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":71
+  /* "bluewhalecore/data/htseq_extension.pyx":105
  * 
  * 
  * class BwGenomicArray(GenomicArray):             # <<<<<<<<<<<<<<
+ *     """BwGenomicArray extends HTSeq.GenomicArray.
  * 
- *     def __init__(self, chroms, stranded=True, typecode='d',
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_1, __pyx_t_2, __pyx_n_s_BwGenomicArray, __pyx_n_s_BwGenomicArray, (PyObject *) NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, (PyObject *) NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_1, __pyx_t_2, __pyx_n_s_BwGenomicArray, __pyx_n_s_BwGenomicArray, (PyObject *) NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_kp_s_BwGenomicArray_extends_HTSeq_Gen); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
 
-  /* "bluewhalecore/data/htseq_extension.pyx":73
- * class BwGenomicArray(GenomicArray):
+  /* "bluewhalecore/data/htseq_extension.pyx":141
+ *     """
  * 
  *     def __init__(self, chroms, stranded=True, typecode='d',             # <<<<<<<<<<<<<<
  *                  storage='step', memmap_dir="", overwrite=False):
  * 
  */
-  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_1__init__, 0, __pyx_n_s_BwGenomicArray___init, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__14)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 73, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_1__init__, 0, __pyx_n_s_BwGenomicArray___init, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__14)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 141, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_tuple__15);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_init, __pyx_t_5) < 0) __PYX_ERR(0, 73, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_init, __pyx_t_5) < 0) __PYX_ERR(0, 141, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":82
+  /* "bluewhalecore/data/htseq_extension.pyx":150
  *                               memmap_dir=memmap_dir)
  * 
  *     def add_chrom(self, chrom, length=sys.maxint, start_index=0):             # <<<<<<<<<<<<<<
+ *         """Adds a chromosome track."""
  *         if length == sys.maxint:
- *             iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
  */
-  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom, 0, __pyx_n_s_BwGenomicArray_add_chrom, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__17)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_13bluewhalecore_4data_15htseq_extension_14BwGenomicArray_3add_chrom, 0, __pyx_n_s_BwGenomicArray_add_chrom, NULL, __pyx_n_s_bluewhalecore_data_htseq_extensi, __pyx_d, ((PyObject *)__pyx_codeobj__17)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults), 1)) __PYX_ERR(0, 82, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 82, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults), 1)) __PYX_ERR(0, 150, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_maxint); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 82, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_maxint); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_CyFunction_Defaults(__pyx_defaults, __pyx_t_5)->__pyx_arg_length = __pyx_t_6;
   __Pyx_GIVEREF(__pyx_t_6);
   __pyx_t_6 = 0;
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_5, __pyx_pf_13bluewhalecore_4data_15htseq_extension___defaults__);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_add_chrom, __pyx_t_5) < 0) __PYX_ERR(0, 82, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_add_chrom, __pyx_t_5) < 0) __PYX_ERR(0, 150, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "bluewhalecore/data/htseq_extension.pyx":71
+  /* "bluewhalecore/data/htseq_extension.pyx":105
  * 
  * 
  * class BwGenomicArray(GenomicArray):             # <<<<<<<<<<<<<<
+ *     """BwGenomicArray extends HTSeq.GenomicArray.
  * 
- *     def __init__(self, chroms, stranded=True, typecode='d',
  */
-  __pyx_t_5 = __Pyx_Py3ClassCreate(__pyx_t_1, __pyx_n_s_BwGenomicArray, __pyx_t_2, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 71, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_Py3ClassCreate(__pyx_t_1, __pyx_n_s_BwGenomicArray, __pyx_t_2, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_BwGenomicArray, __pyx_t_5) < 0) __PYX_ERR(0, 71, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_BwGenomicArray, __pyx_t_5) < 0) __PYX_ERR(0, 105, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
