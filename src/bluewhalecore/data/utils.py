@@ -5,12 +5,12 @@ from Bio.SeqRecord import SeqRecord
 
 
 def sequencesFromFasta(fasta):
-    """ Obtain fasta-formated sequences from a fasta file.
+    """Obtains nucleotide sequences from a fasta file.
 
     Parameters
     -----------
     fasta : str
-        Filename of the fastafile
+        Fasta-filename
 
     Returns
         List of Biostring sequences
@@ -30,10 +30,22 @@ NMAP.update(LETTERMAP)
 
 
 def dna2ind(seq):
-    """ Transforms a nucleotide sequence into an int8 array.
+    """Transforms a nucleotide sequence into an int array.
 
     In this array, we use the mapping
     {'A':0, 'C':1, 'G':2, 'T':3}
+    Any other characters (e.g. 'N') are represented by a large negative value
+    to avoid confusion with valid nucleotides.
+
+    Parameters
+    ----------
+    seq : str or Bio.SeqRecord
+        Nucleotide sequence as a string or SeqRecord object.
+
+    Returns
+    -------
+    list(int)
+        Integer array representation of the nucleotide sequence.
     """
 
     if isinstance(seq, str):

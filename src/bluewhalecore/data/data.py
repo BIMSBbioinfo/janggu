@@ -1,5 +1,23 @@
 
 class BwDataset(object):
+    """BlueWhale Dataset interface.
+
+    The BlueWhale dataset mimics a numpy array such that it can be
+    seamlessly used in conjunction with keras.
+
+    Parameters
+    -----------
+    name : str
+        Name of the dataset
+
+    Attributes
+    ----------
+    name : str
+        Name of the dataset
+    shape : tuple
+        numpy-style shape of the dataset
+    """
+
     # list of data augmentation transformations
     transformations = []
 
@@ -8,6 +26,7 @@ class BwDataset(object):
 
     @property
     def name(self):
+        """Name of the Dataset"""
         return self._name
 
     @name.setter
@@ -30,6 +49,7 @@ class BwDataset(object):
 
     @property
     def shape(self):
+        """Shape of the dataset"""
         pass
 
 
