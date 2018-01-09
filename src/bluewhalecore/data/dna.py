@@ -11,6 +11,53 @@ from utils import sequencesFromFasta
 
 
 class DnaBwDataset(BwDataset):
+    """DnaBwDataset class.
+
+    This datastructure holds a DNA sequence for the purpose of a deep learning
+    application.
+    The sequence can conventiently fetched from a raw fasta-file.
+    Upon indexing or slicing of the dataset, the one-hot representation
+    for the respective locus will be returned.
+
+    Note
+    ----
+    Caching is only used with storage mode 'memmap' or 'hdf5'.
+    We recommend to use 'hdf5' for performance reasons.
+
+    Parameters
+    -----------
+    name : str
+        Name of the dataset
+    garray : :class:`BwGenomicArray`
+        A genomic array that holds the sequence data.
+    gindxer : :class:`BwGenomicIndexer`
+        A genomic index mapper that translates an integer index to a
+        genomic coordinate.
+    flank : int
+        Flanking regions in basepairs to be extended up and downstream.
+        Default: 150.
+    order : int
+        Order for the one-hot representation. Default: 1.
+    cachedir : str or None
+        Directory in which the cachefiles are located. Default: None.
+
+    Attributes
+    -----------
+    name : str
+        Name of the dataset
+    garray : :class:`BwGenomicArray`
+        A genomic array that holds the sequence data.
+    gindxer : :class:`BwGenomicIndexer`
+        A genomic index mapper that translates an integer index to a
+        genomic coordinate.
+    flank : int
+        Flanking regions in basepairs to be extended up and downstream.
+        Default: 150.
+    order : int
+        Order for the one-hot representation. Default: 1.
+    cachedir : str or None
+        Directory in which the cachefiles are located. Default: None.
+    """
 
     def __init__(self, name, garray, gindexer,
                  flank=150, order=1, cachedir=None):
@@ -25,6 +72,7 @@ class DnaBwDataset(BwDataset):
     @staticmethod
     def _makeGenomicArray(name, fastafile, order, storage, cachedir='',
                           overwrite=False):
+        """Create a genomic array or reload an existing one."""
 
         # Load sequences from refgenome
         seqs = sequencesFromFasta(fastafile)
@@ -87,8 +135,36 @@ class DnaBwDataset(BwDataset):
     @classmethod
     def fromRefGenome(cls, name, refgenome, regions,
                       stride=50, reglen=200,
-                      flank=150, order=1, storage='memmap',
+                      flank=150, order=1, storage='hdf5',
                       cachedir='', overwrite=False):
+        """Create a DnaBwDataset class from a reference genome.
+
+        This requires a reference genome in fasta format as well as a bed-file
+        that holds the regions of interest.
+
+        Parameters
+        -----------
+        name : str
+            Name of the dataset
+        refgenome : str
+            Fasta file.
+        regions : :class:`pandas.DataFrame` or str
+            bed-filename or content of a bed-file as :class:`pandas.DataFrame`.
+        reglen : int
+            Region length in basepairs to be considered. Default: 200.
+        stride : int
+            Stride in basepairs for traversing the genome. Default: 50.
+        flank : int
+            Flanking regions in basepairs to be extended up and downstream.
+            Default: 150.
+        order : int
+            Order for the one-hot representation. Default: 1.
+        storage : str
+            Storage mode for storing the sequence may be 'ndarray', 'memmap' or
+            'hdf5'. Default: 'hdf5'.
+        cachedir : str
+            Directory in which the cachefiles are located. Default: ''.
+        """
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
@@ -103,7 +179,27 @@ class DnaBwDataset(BwDataset):
     @classmethod
     def fromFasta(cls, name, fastafile, storage='ndarray',
                   order=1, cachedir='', overwrite=False):
+        """Create a DnaBwDataset class from a fastafile.
 
+        This allows to load sequence of equal lengths to be loaded from
+        a fastafile.
+
+        Parameters
+        -----------
+        name : str
+            Name of the dataset
+        fastafile : str
+            Fasta file.
+        order : int
+            Order for the one-hot representation. Default: 1.
+        storage : str
+            Storage mode for storing the sequence may be 'ndarray', 'memmap' or
+            'hdf5'. Default: 'ndarray'.
+        cachedir : str
+            Directory in which the cachefiles are located. Default: ''.
+        overwrite : boolean
+            Overwrite the cachefiles. Default: False.
+        """
         garray = cls._makeGenomicArray(name, fastafile, order, storage,
                                        cachedir=cachedir,
                                        overwrite=overwrite)
@@ -136,6 +232,8 @@ class DnaBwDataset(BwDataset):
                 .format(self.name, self.flank, self.order)
 
     def idna4idx(self, idxs):
+        """Extracts the DNA sequence for set of indices."""
+
         # for each index read use the adaptor indices to retrieve the seq.
         idna = np.empty((len(idxs), self.gindexer.resolution +
                          2*self.flank - self.order + 1), dtype="int16")
@@ -150,6 +248,8 @@ class DnaBwDataset(BwDataset):
         return idna
 
     def as_onehot(self, idna):
+        """Converts the sequence into one-hot representation."""
+
         onehot = np.zeros((len(idna), pow(4, self.order),
                            idna.shape[1], 1), dtype='int8')
         for nuc in np.arange(pow(4, self.order)):
@@ -177,11 +277,13 @@ class DnaBwDataset(BwDataset):
 
     @property
     def shape(self):
+        """Shape of the Dataset"""
         return (len(self), pow(4, self.order), self.gindexer.resolution +
                 2*self.flank - self.order + 1, 1)
 
     @property
     def order(self):
+        """Order of the one-hot representation"""
         return self._order
 
     @order.setter
@@ -194,6 +296,7 @@ class DnaBwDataset(BwDataset):
 
     @property
     def flank(self):
+        """Flanking bins"""
         return self._flank
 
     @flank.setter
@@ -204,7 +307,25 @@ class DnaBwDataset(BwDataset):
 
 
 class RevCompDnaBwDataset(BwDataset):
-    """Reverse complement DNA of a provided DnaBwDataset object."""
+    """RevCompDnaBwDataset class.
+
+    This datastructure for accessing the reverse complement of a given
+    :class:`DnaBwDataset`.
+
+    Parameters
+    -----------
+    name : str
+        Name of the dataset
+    dnadata : :class:`DnaBwDataset`
+        Forward strand representation of the sequence sequence data.
+
+    Attributes
+    -----------
+    name : str
+        Name of the dataset
+    dnadata : :class:`DnaBwDataset`
+        Forward strand representation of the sequence sequence data.
+    """
 
     def __init__(self, name, dnadata):
         self.dna = dnadata
@@ -213,9 +334,6 @@ class RevCompDnaBwDataset(BwDataset):
         self.rcmatrix = self._rcpermmatrix(self.order)
 
         BwDataset.__init__(self, '{}'.format(name))
-
-    def load(self):
-        pass
 
     def __repr__(self):
         return 'RevDnaBwDataset("{}", <DnaBwDataset>)'.format(self.name)
@@ -263,4 +381,5 @@ class RevCompDnaBwDataset(BwDataset):
 
     @property
     def shape(self):
+        """Shape of the Dataset"""
         return self.dna.shape
