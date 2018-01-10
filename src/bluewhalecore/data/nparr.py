@@ -41,5 +41,5 @@ class NumpyBwDataset(BwDataset):
 
     @property
     def shape(self):
-        __doc__ = super(NumpyBwDataset, self).__doc__  # noqa
+        """Shape of the dataset"""
         return self.data.shape

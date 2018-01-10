@@ -11,27 +11,27 @@ from bluewhalecore.data import BwDataset
 
 
 class BlueWhale(Model):
-    """CRBM class.
-    The class :class:`BlueWhale` provides infrastructure
-    for deep learning applications, including model fitting,
-    prediction and evaluation.
+    """BlueWhale extends :class:`keras.models.Model`.
+
+    The class :class:`BlueWhale` provides an extended
+    infrastructure based on :class:`keras.models.Model`.
+    In particular, BlueWhale facilitates logging functionality
+    for fit, predict and evaluate.
+    Moreover, fit, predict and evaluate can be utilized directly
+    with generator functions. This allows to establish the batches
+    in parallel which might speed up the methods.
 
     Parameters
     -----------
+    inputs : Layer
+        Input layer. See https://keras.io/layers.
+    outputs : Layer
+        Output layer. See https://keras.io/layers.
     name : str
-        Unique name of the model.
-    kerasmodel : :class:`keras.models.Model`
-        Dictionary containing dataset names as keys with dataset
-        shapes as values
-    outputdir : dict
-        Dictionary containing dataset names as keys with dataset
-        shapes as values
-    modeldef : function
-        Model definition in keras
+        Name of the model. Default: None.
     outputdir : str
-        Directory in which logging output, trained models etc. will be stored
-    overwrite : bool
-        Flag indicating to overwrite existing results (Default: False).
+        Folder in which to place the log-files and stored models.
+        Default: 'bluewhale_results/'.
     """
 
     def __init__(self, inputs, outputs, name=None,
@@ -61,24 +61,41 @@ class BlueWhale(Model):
 
     @classmethod
     def fromName(cls, name, outputdir='bluewhale_results/'):
-        """Fetches a pretrained model from filename."""
-        path = cls.storagePath(name, outputdir)
+        """Creates a Bluewhale object by name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the model.
+        outputdir : str
+            Folder in which to place the log-files and stored models.
+            Default: 'bluewhale_results/'.
+        """
+        path = cls._storagePath(name, outputdir)
 
         model = load_model(path, custom_objects={'BlueWhale': Model})
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @staticmethod
-    def storagePath(name, outputdir):
-        """modelStorage returns the path to the model storage file."""
+    def _storagePath(name, outputdir):
+        """Returns the path to the model storage file."""
         if not os.path.exists(os.path.join(outputdir, "models")):
             os.mkdir(os.path.join(outputdir, "models"))
         filename = os.path.join(outputdir, 'models', '{}.h5'.format(name))
         return filename
 
     def save(self, filename=None, overwrite=True):
-        """Stores the model"""
+        """Saves the model.
+
+        Parameters
+        ----------
+        filename : str
+            Filename of the stored model. Default: None.
+        overwrite: bool
+            Overwrite a stored model. Default: False.
+        """
         if not filename:
-            filename = self.storagePath(self.name, self.outputdir)
+            filename = self._storagePath(self.name, self.outputdir)
 
         self.logger.info("Save model {}".format(filename))
         super(BlueWhale, self).save(filename)
@@ -154,12 +171,31 @@ class BlueWhale(Model):
             use_multiprocessing=True,
             workers=1,
             **kwargs):
+        """Fit the model.
+
+        Most of the parameters are described in
+        https://keras.io/models/model/#methods.
+
+        Parameters
+        -------------------
+        generator : None or generator
+            Optional generator to use for the fitting. If None is supplied,
+            the model utilizes keras.models.Model.fit.
+            The generator must adhere to the following signature:
+            `generator(x, y, batch_size, sample_weight=None, shuffle=False)`.
+            See :func:`bluewhale_fit_generator`.
+        use_multiprocessing : bool
+            Whether to use multiprocessing to process the batches. See
+            keras.models.Model.fit_generator. Default: True.
+        workers : int
+            Number of workers in `use_multiprocessing=True` mode. Default: 1.
+        """
 
         x = self._convertData(x)
         y = self._convertData(y)
 
-        checkpoint = ModelCheckpoint(self.storagePath(self.name,
-                                                      self.outputdir))
+        checkpoint = ModelCheckpoint(self._storagePath(self.name,
+                                                       self.outputdir))
         if callbacks:
             callbacks.append(checkpoint)
         else:
@@ -243,6 +279,23 @@ class BlueWhale(Model):
                 use_multiprocessing=True,
                 workers=1):
 
+        """Predict targets.
+
+        Parameters
+        -------------------
+        generator : None or generator
+            Optional generator to use for the fitting. If None is supplied,
+            the model utilizes keras.models.Model.fit.
+            The generator must adhere to the following signature:
+            `generator(x, y, batch_size, sample_weight=None, shuffle=False)`.
+            See :func:`bluewhale_fit_generator`.
+        use_multiprocessing : bool
+            Whether to use multiprocessing to process the batches. See
+            keras.models.Model.fit_generator. Default: True.
+        workers : int
+            Number of workers in `use_multiprocessing=True` mode. Default: 1.
+        """
+
         x = self._convertData(x)
 
         self.logger.info('Predict: {}'.format(self.name))
@@ -277,6 +330,22 @@ class BlueWhale(Model):
                  generator=None,
                  use_multiprocessing=True,
                  workers=1):
+        """Evaluate metrics and losses.
+
+        Parameters
+        -------------------
+        generator : None or generator
+            Optional generator to use for the fitting. If None is supplied,
+            the model utilizes keras.models.Model.fit.
+            The generator must adhere to the following signature:
+            `generator(x, y, batch_size, sample_weight=None, shuffle=False)`.
+            See :func:`bluewhale_fit_generator`.
+        use_multiprocessing : bool
+            Whether to use multiprocessing to process the batches. See
+            keras.models.Model.fit_generator. Default: True.
+        workers : int
+            Number of workers in `use_multiprocessing=True` mode. Default: 1.
+        """
 
         x = self._convertData(x)
         y = self._convertData(y)

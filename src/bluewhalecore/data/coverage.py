@@ -298,7 +298,7 @@ class CoverageBwDataset(BwDataset):
 
     @property
     def shape(self):
-        """Shape of the Dataset"""
+        """Shape of the dataset"""
         return (len(self), 2 if self.stranded else 1,
                 2*self.flank + 1, len(self.covers))
 

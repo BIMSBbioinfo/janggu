@@ -1,4 +1,5 @@
 
+
 class BwDataset(object):
     """BlueWhale Dataset interface.
 
@@ -54,7 +55,19 @@ class BwDataset(object):
 
 
 def inputShape(bwdata):
-    """Extracts the shape of a provided BwDataset."""
+    """Extracts the shape of a provided Input-BwDataset.
+
+    Parameters
+    ---------
+    bwdata : :class:`BwDataset` or list(:class:`BwDataset`)
+        BwDataset or list(BwDataset).
+
+    Returns
+    -------
+    dict
+        Dictionary with dataset names as keys and the corrsponding
+        shape as value.
+    """
     if isinstance(bwdata, BwDataset):
         bwdata = [bwdata]
 
@@ -72,7 +85,25 @@ def inputShape(bwdata):
 
 def outputShape(bwdata, loss, activation='sigmoid',
                 loss_weight=1.):
-    """Extracts the shape and specifies learning objectives."""
+    """Extracts the shape of a provided Output-BwDataset.
+
+    Parameters
+    ---------
+    bwdata : :class:`BwDataset` or list(:class:`BwDataset`)
+        BwDataset or list(BwDataset).
+    loss : str or objective function.
+        Keras compatible loss function. See https://keras.io/losses.
+    activation : str
+        Output activation function. Default: 'sigmoid'.
+    loss_weights : float
+        Loss weight used for fitting the model. Default: 1.
+
+    Returns
+    -------
+    dict
+        Dictionary description of the network output.
+    """
+
     if isinstance(bwdata, BwDataset):
         bwdata = [bwdata]
 

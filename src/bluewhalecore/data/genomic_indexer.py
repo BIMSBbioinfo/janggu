@@ -1,9 +1,10 @@
 import os
 
 import numpy as np
-from genomeutils.regions import readBed
 from HTSeq import GenomicInterval
 from pandas import DataFrame
+
+from .utils import readBed
 
 
 class BwGenomicIndexer(object):

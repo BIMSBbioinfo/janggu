@@ -5,6 +5,11 @@ from keras.layers import Input
 
 
 def outputlayer(func):
+    """Output layer decorator
+
+    This decorator appends an output layer to the
+    network with the correct shape, activation and name.
+    """
     @wraps(func)
     def add(input, inshapes, outshapes, params):
         input, output = func(input, inshapes, outshapes, params)
@@ -17,6 +22,11 @@ def outputlayer(func):
 
 
 def inputlayer(func):
+    """Input layer decorator
+
+    This decorator appends an input layer to the
+    network with the correct shape and name.
+    """
     @wraps(func)
     def add(input, inshapes, outshapes, params):
         input = [Input(inshapes[name]['shape'], name=name)

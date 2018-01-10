@@ -1,65 +1,44 @@
-import datetime
-
-from pymongo import MongoClient
-
-from .generators import bluewhale_fit_generator
-from .generators import bluewhale_predict_generator
 
 
 class Evaluator(object):
-    """This class collects the results for a trained models records
-    the model performance.
-    """
+    """Evaluator interface."""
 
-    def __init__(self, dbname="bluewhale"):
-        client = MongoClient()
-        self.db = client[dbname]
-
-    def _record(self, modelname, modeltags, metricname, value, datatags):
-        item = {'date': datetime.datetime.utcnow(),
-                'modelname': modelname,
-                'measureName': metricname,
-                'measureValue': value,
-                'datatags': datatags,
-                'modeltags': modeltags}
-
-        return self.db.results.insert_one(item).inserted_id
-
-    def dump(self, bluewhale, xfeat, ytrue,
+    def dump(self, bluewhale, x, y,
              elementwise_score={},
              combined_score={},
              datatags=[],
              modeltags=[],
              batch_size=None,
              use_multiprocessing=False):
+        """Dumps the result of an evaluation into a container.
 
-        # record evaluate() results
-        # This is done by default
-        val = bluewhale.evaluate(xfeat, ytrue, batch_size=batch_size,
-                                 generator=bluewhale_fit_generator,
-                                 workers=1,
-                                 use_multiprocessing=use_multiprocessing)
-        for i, v in enumerate(val):
-            iid = self._record(bluewhale.name, modeltags,
-                               bluewhale.metrics_names[i], v, datatags)
-            bluewhale.logger.info("Recorded {}".format(iid))
+        By default, the model will dump the evaluation metrics defined
+        in keras.models.Model.compile.
 
-        ypred = bluewhale.predict(xfeat, batch_size=batch_size,
-                                  generator=bluewhale_predict_generator,
-                                  workers=1,
-                                  use_multiprocessing=use_multiprocessing)
-
-        # record individual dimensions
-        for key in elementwise_score:
-            for s in range(ypred.shape[1]):
-                val = elementwise_score[key](ytrue[:, s], ypred[:, s])
-                d = list(datatags)
-                d.append(ytrue.samplenames[s])
-                iid = self._record(bluewhale.name, modeltags, key, val, d)
-                bluewhale.logger.info("Recorded {}".format(iid))
-
-        # record additional combined scores
-        for key in combined_score:
-            val = combined_score[key](ytrue[:], ypred)
-            iid = self._record(bluewhale.name, modeltags, key, val, datatags)
-            bluewhale.logger.info("Recorded {}".format(iid))
+        Parameters
+        ----------
+        bluewhale : :class:`BlueWhale`
+            BlueWhale model to evaluate.
+        x : :class:`BwDataset`
+            Input dataset.
+        y : :class:`BwDataset`
+            Output dataset
+        elementwise_score : dict
+            Element-wise scores for multi-dimensional output data, which
+            is applied to each output dimension separately. Default: \{\}.
+        combined_score : dict
+            Combined score for multi-dimensional output data applied across
+            all dimensions toghether. For example, average AUC across all
+            output dimensions. Default: \{\}.
+        datatags : list
+            List of dataset tags to be recorded. Default: [].
+        modeltags : list
+            List of modeltags to be recorded. Default: [].
+        batch_size : int or None
+            Batchsize used to enumerate the dataset. Default: None means a
+            batch_size of 32 is used.
+        use_multiprocessing : bool
+            Use multiprocess threading for evaluating the results.
+            Default: False.
+        """
+        pass

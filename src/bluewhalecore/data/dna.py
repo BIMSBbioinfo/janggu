@@ -277,7 +277,7 @@ class DnaBwDataset(BwDataset):
 
     @property
     def shape(self):
-        """Shape of the Dataset"""
+        """Shape of the dataset"""
         return (len(self), pow(4, self.order), self.gindexer.resolution +
                 2*self.flank - self.order + 1, 1)
 

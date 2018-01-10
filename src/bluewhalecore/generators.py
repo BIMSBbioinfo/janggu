@@ -5,6 +5,33 @@ import numpy as np
 
 def bluewhale_fit_generator(inputdata, outputdata, batch_size,
                             sample_weight=None, shuffle=False):
+    """Generator for BlueWhale-model fitting.
+
+    This generator is designed for the use with :meth:`BlueWhale.fit`
+    or :meth:`BlueWhale.evaluate`.
+
+    Parameters
+    ----------
+    inputdata : dict
+        Dictionary with keys corresponding to the dataset names and
+        values being a :class:`BwDataset`.
+    outputdata : dict
+        Dictionary with keys corresponding to the dataset names and
+        values being a :class:`BwDataset`.
+    batch_size : int
+        Batchsize to use for enumerating the dataset.
+    sample_weight : None or list
+        List of sample-specific weights. Default: None means no
+        sample_weight is used.
+    shuffle : bool
+        Shuffle the dataset once per epoch. Default: False.
+
+    Yields
+    ------
+    tuple
+        Either `(input, output, sample_weight)` per batch if
+        sample_weight is used or `(input, output)` otherwise.
+    """
 
     lock = threading.Lock()
 
@@ -52,6 +79,23 @@ def bluewhale_fit_generator(inputdata, outputdata, batch_size,
 
 
 def bluewhale_predict_generator(inputdata, batch_size):
+    """Generator for BlueWhale-model prediction.
+
+    This generator is designed for the use with :meth:`BlueWhale.predict`.
+
+    Parameters
+    ----------
+    inputdata : dict
+        Dictionary with keys corresponding to the dataset names and
+        values being a :class:`BwDataset`.
+    batch_size : int
+        Batchsize to use for enumerating the dataset.
+
+    Yields
+    ------
+    numpy.array or list(numpy.array)
+        Per batch output of model.
+    """
 
     lock = threading.Lock()
 
