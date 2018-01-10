@@ -9,6 +9,6 @@ from .htseq_extension import BwChromVector  # noqa
 from .htseq_extension import BwGenomicArray  # noqa
 from .nparr import NumpyBwDataset  # noqa
 from .tab import TabBwDataset  # noqa
+from .utils import dna2ind  # noqa
 from .utils import readBed  # noqa
 from .utils import sequencesFromFasta  # noqa
-from .utils import dna2ind  # noqa
