@@ -2,8 +2,8 @@ import os
 
 import pkg_resources
 import pytest
-from genomeutils.regions import readBed
 
+from bluewhalecore.data import readBed
 from bluewhalecore.data.data import inputShape
 from bluewhalecore.data.data import outputShape
 from bluewhalecore.data.dna import DnaBwDataset

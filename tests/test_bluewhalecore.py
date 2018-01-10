@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import pkg_resources
-from genomeutils.regions import readBed
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Input
@@ -18,6 +17,7 @@ from bluewhalecore.data import NumpyBwDataset
 from bluewhalecore.data import TabBwDataset
 from bluewhalecore.data import inputShape
 from bluewhalecore.data import outputShape
+from bluewhalecore.data import readBed
 
 
 def test_main():
@@ -50,7 +50,7 @@ def test_bluewhale_instance(tmpdir):
                               (cnn_model, (2,)),
                               outputdir=tmpdir.strpath)
 
-    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
 
     bwm.save()
 
@@ -74,7 +74,7 @@ def test_bluewhale_train_predict_option1(tmpdir):
                               (test_model, None),
                               outputdir=tmpdir.strpath)
 
-    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(X, y, epochs=2, batch_size=32)
@@ -102,7 +102,7 @@ def test_bluewhale_train_predict_option2(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit([X], [y], epochs=2, batch_size=32)
@@ -130,7 +130,7 @@ def test_bluewhale_train_predict_option3(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit([X], [y], epochs=2, batch_size=32)
@@ -158,7 +158,7 @@ def test_bluewhale_train_predict_option4(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(X, y, epochs=2, batch_size=32)
@@ -186,7 +186,7 @@ def test_bluewhale_train_predict_generator(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm.storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(X, y, epochs=2, generator=bluewhale_fit_generator,

@@ -3,10 +3,10 @@ import os
 import numpy as np
 import pkg_resources
 import pytest
-from genomeutils.regions import readBed
 
-from bluewhalecore.data.dna import DnaBwDataset
-from bluewhalecore.data.dna import RevCompDnaBwDataset
+from bluewhalecore.data import DnaBwDataset
+from bluewhalecore.data import RevCompDnaBwDataset
+from bluewhalecore.data import readBed
 
 reglen = 200
 flank = 150

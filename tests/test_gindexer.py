@@ -3,9 +3,9 @@ import os
 import numpy as np
 import pkg_resources
 import pytest
-from genomeutils.regions import readBed
 
 from bluewhalecore.data import BwGenomicIndexer
+from bluewhalecore.data import readBed
 
 
 def test_gindexer_errors():
