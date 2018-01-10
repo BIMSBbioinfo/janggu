@@ -1,5 +1,5 @@
 bluewhalecore.data - Genomics datasets for deep learning
-===================
+=========================================================
 
 
 This section describes several datasets that act as a bridge between
@@ -9,13 +9,42 @@ application.
 
 .. currentmodule:: bluewhalecore.data
 
-
-.. testsetup::
-
-    from bluewhalecore.data import *
-
-.. automodule::
-    :members:
-
-
+Interface
+---------
 .. autosummary::
+   BwDataset
+
+.. autoclass:: BwDataset
+   :members: name, shape
+
+Classes
+-------
+.. autosummary::
+   CoverageBwDataset
+   DnaBwDataset
+   RevCompDnaBwDataset
+   TabBwDataset
+   NumpyBwDataset
+   DnaBwDataset
+
+.. autoclass:: CoverageBwDataset
+   :members: fromBam, fromBigWig
+
+.. autoclass:: DnaBwDataset
+   :members: fromRefGenome, fromFasta
+
+.. autoclass:: RevCompDnaBwDataset
+
+
+Utilities
+---------
+.. autosummary::
+   inputShape
+   outputShape
+  # sequencesFromFasta
+  # dna2ind
+  # readBed
+
+
+.. autofunction:: inputShape
+.. autofunction:: outputShape

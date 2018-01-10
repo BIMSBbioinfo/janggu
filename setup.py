@@ -28,7 +28,8 @@ if Cython:
         Extension(
             splitext(relpath(path, 'src').replace(os.sep, '.'))[0],
             sources=[path],
-            include_dirs=[dirname(path)]
+            include_dirs=[dirname(path)],
+            compiler_directives={'emdedsignature': True}
         )
         for root, _, _ in os.walk('src')
         for path in glob(join(root, '*.pyx' if Cython else '*.c'))
@@ -103,7 +104,6 @@ setup(
         'sklearn',
         'h5py',
         'pyBigWig'
-        # 'genomeutils>=0.1.0'
     ],
     extras_require={
         # eg:

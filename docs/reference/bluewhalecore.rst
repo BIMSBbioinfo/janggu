@@ -1,9 +1,35 @@
-bluewhalecore
-=============
+bluewhalecore - Deep learning for Genomics data
+===============================================
 
-.. testsetup::
+This section describes the interface and utilities that bluewhalecore provides
+for deep learning.
 
-    from bluewhalecore import *
+.. currentmodule:: bluewhalecore
 
-.. automodule:: bluewhalecore
-    :members:
+BlueWhale Model
+---------------
+
+.. autosummary::
+   BlueWhale
+   BlueWhale.fromShape
+   BlueWhale.fromName
+   BlueWhale.fit
+   BlueWhale.predict
+   BlueWhale.evaluate
+
+.. autoclass:: BlueWhale
+   :members:
+
+Evaluator
+---------
+
+.. autosummary::
+   Evaluator
+   Evaluator.dump
+   MongoDbEvaluator
+
+.. autoclass:: Evaluator
+   :members:
+
+.. autoclass:: MongoDbEvaluator
+   :members:
