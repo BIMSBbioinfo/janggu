@@ -12,11 +12,11 @@ from keras.models import load_model
 from bluewhalecore.data import BwDataset
 
 
-class BlueWhale(Model):
-    """BlueWhale extends :class:`keras.models.Model`.
+class BlueWhale(object):
+    """BlueWhale model
 
-    The class :class:`BlueWhale` provides an extended
-    infrastructure based on :class:`keras.models.Model`.
+    The class :class:`BlueWhale` extends the :class:`keras.models.Model`
+    infrastructure.
     In particular, BlueWhale facilitates logging functionality
     for fit, predict and evaluate.
     Moreover, fit, predict and evaluate can be utilized directly
@@ -39,7 +39,8 @@ class BlueWhale(Model):
     def __init__(self, inputs, outputs, name=None,
                  outputdir='bluewhale_results/'):
 
-        super(BlueWhale, self).__init__(inputs, outputs, name)
+        self.name = name
+        self.kerasmodel = Model(inputs, outputs, name)
 
         self.outputdir = outputdir
 
@@ -59,7 +60,7 @@ class BlueWhale(Model):
                             datefmt='%m/%d/%Y %I:%M:%S')
 
         self.logger.info("Model Summary:")
-        self.summary(print_fn=self.logger.info)
+        self.kerasmodel.summary(print_fn=self.logger.info)
 
     @classmethod
     def create_by_name(cls, name, outputdir='bluewhale_results/'):
@@ -100,7 +101,7 @@ class BlueWhale(Model):
             filename = self._storage_path(self.name, self.outputdir)
 
         self.logger.info("Save model %s", filename)
-        super(BlueWhale, self).save(filename)
+        self.kerasmodel.save(filename, overwrite)
 
     @classmethod
     def create_by_shape(cls, inputdict, outputdict, name, modeldef,
@@ -156,9 +157,25 @@ class BlueWhale(Model):
 
         return model
 
+    def compile(self, optimizer, loss, metrics=None,
+                loss_weights=None, sample_weight_mode=None,
+                weighted_metrics=None, target_tensors=None):
+        """Compiles a model.
+
+        This method just delegates to keras.models.Model.compile
+        (see https://keras.io/models/model/) in order to compile
+        the keras model.
+
+        The parameters are identical to the corresponding keras method.
+        """
+
+        self.kerasmodel.compile(optimizer, loss, metrics, loss_weights,
+                                sample_weight_mode, weighted_metrics,
+                                target_tensors)
+
     def fit(self,
-            x=None,
-            y=None,
+            inputs=None,
+            outputs=None,
             batch_size=None,
             epochs=1,
             verbose=1,
@@ -186,7 +203,8 @@ class BlueWhale(Model):
             Optional generator to use for the fitting. If None is supplied,
             the model utilizes keras.models.Model.fit.
             The generator must adhere to the following signature:
-            `generator(x, y, batch_size, sample_weight=None, shuffle=False)`.
+            `generator(inputs, outputs, batch_size, sample_weight=None,
+            shuffle=False)`.
             See :func:`bluewhale_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
@@ -195,8 +213,8 @@ class BlueWhale(Model):
             Number of workers in `use_multiprocessing=True` mode. Default: 1.
         """
 
-        x = self.__convert_data(x)
-        y = self.__convert_data(y)
+        inputs = self.__convert_data(inputs)
+        outputs = self.__convert_data(outputs)
 
         checkpoint = ModelCheckpoint(self._storage_path(self.name,
                                                         self.outputdir))
@@ -207,16 +225,16 @@ class BlueWhale(Model):
 
         self.logger.info('Fit: %s', self.name)
         self.logger.info("Input:")
-        self.__dim_logging(x)
+        self.__dim_logging(inputs)
         self.logger.info("Output:")
-        self.__dim_logging(y)
+        self.__dim_logging(outputs)
 
         if generator:
 
             if not batch_size:
                 batch_size = 32
 
-            xlen = len(x.itervalues().next())
+            xlen = len(inputs.itervalues().next())
 
             if not steps_per_epoch:
                 steps_per_epoch = xlen//batch_size + \
@@ -242,32 +260,33 @@ class BlueWhale(Model):
             else:
                 vgen = None
 
-            history = self.fit_generator(generator(x, y, batch_size,
-                                                   sample_weight=sample_weight,
-                                                   shuffle=shuffle),
-                                         steps_per_epoch=steps_per_epoch,
-                                         epochs=epochs,
-                                         validation_data=vgen,
-                                         validation_steps=validation_steps,
-                                         class_weight=class_weight,
-                                         initial_epoch=initial_epoch,
-                                         shuffle=False,  # must be false!
-                                         use_multiprocessing=use_multiprocessing,
-                                         max_queue_size=50,
-                                         workers=workers,
-                                         verbose=verbose,
-                                         callbacks=callbacks)
+            history = self.kerasmodel.fit_generator(
+                generator(inputs, outputs, batch_size,
+                          sample_weight=sample_weight,
+                          shuffle=shuffle),
+                steps_per_epoch=steps_per_epoch,
+                epochs=epochs,
+                validation_data=vgen,
+                validation_steps=validation_steps,
+                class_weight=class_weight,
+                initial_epoch=initial_epoch,
+                shuffle=False,  # must be false!
+                use_multiprocessing=use_multiprocessing,
+                max_queue_size=50,
+                workers=workers,
+                verbose=verbose,
+                callbacks=callbacks)
 
         else:
-            history = super(BlueWhale, self).fit(x, y, batch_size, epochs,
-                                                 verbose,
-                                                 callbacks, validation_split,
-                                                 validation_data, shuffle,
-                                                 class_weight,
-                                                 sample_weight, initial_epoch,
-                                                 steps_per_epoch,
-                                                 validation_steps,
-                                                 **kwargs)
+            history = self.kerasmodel.fit(inputs, outputs, batch_size, epochs,
+                                          verbose,
+                                          callbacks, validation_split,
+                                          validation_data, shuffle,
+                                          class_weight,
+                                          sample_weight, initial_epoch,
+                                          steps_per_epoch,
+                                          validation_steps,
+                                          **kwargs)
 
         self.logger.info('#' * 40)
         for k in history.history:
@@ -277,7 +296,7 @@ class BlueWhale(Model):
         self.logger.info("Training finished ...")
         return history
 
-    def predict(self, x,
+    def predict(self, inputs,
                 batch_size=None,
                 verbose=0,
                 steps=None,
@@ -293,7 +312,7 @@ class BlueWhale(Model):
             Optional generator to use for the fitting. If None is supplied,
             the model utilizes keras.models.Model.fit.
             The generator must adhere to the following signature:
-            `generator(x, y, batch_size, sample_weight=None, shuffle=False)`.
+            `generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
             See :func:`bluewhale_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
@@ -302,33 +321,32 @@ class BlueWhale(Model):
             Number of workers in `use_multiprocessing=True` mode. Default: 1.
         """
 
-        x = self.__convert_data(x)
+        inputs = self.__convert_data(inputs)
 
         self.logger.info('Predict: %s', self.name)
         self.logger.info("Input:")
-        self.__dim_logging(x)
+        self.__dim_logging(inputs)
 
         if generator:
 
             if not batch_size:
                 batch_size = 32
 
-            xlen = len(x.itervalues().next())
+            xlen = len(inputs.itervalues().next())
 
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
-            return self.predict_generator(
-                generator(x, batch_size),
+            return self.kerasmodel.predict_generator(
+                generator(inputs, batch_size),
                 steps=steps,
                 use_multiprocessing=use_multiprocessing,
                 workers=workers,
                 verbose=verbose)
         else:
-            return super(BlueWhale, self).predict(x, batch_size,
-                                                  verbose, steps)
+            return self.kerasmodel.predict(inputs, batch_size, verbose, steps)
 
-    def evaluate(self, x=None, y=None,
+    def evaluate(self, inputs=None, outputs=None,
                  batch_size=None,
                  verbose=1,
                  sample_weight=None,
@@ -344,7 +362,8 @@ class BlueWhale(Model):
             Optional generator to use for the fitting. If None is supplied,
             the model utilizes keras.models.Model.fit.
             The generator must adhere to the following signature:
-            `generator(x, y, batch_size, sample_weight=None, shuffle=False)`.
+            `generator(inputs, outputs, batch_size,
+            sample_weight=None, shuffle=False)`.
             See :func:`bluewhale_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
@@ -353,41 +372,41 @@ class BlueWhale(Model):
             Number of workers in `use_multiprocessing=True` mode. Default: 1.
         """
 
-        x = self.__convert_data(x)
-        y = self.__convert_data(y)
+        inputs = self.__convert_data(inputs)
+        outputs = self.__convert_data(outputs)
 
         self.logger.info('Evaluate: %s', self.name)
         self.logger.info("Input:")
-        self.__dim_logging(x)
+        self.__dim_logging(inputs)
         self.logger.info("Output:")
-        self.__dim_logging(y)
+        self.__dim_logging(outputs)
 
         if generator:
 
             if not batch_size:
                 batch_size = 32
 
-            xlen = len(x.itervalues().next())
+            xlen = len(inputs.itervalues().next())
 
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
-            values = self.evaluate_generator(
-                generator(x, y, batch_size,
+            values = self.kerasmodel.evaluate_generator(
+                generator(inputs, outputs, batch_size,
                           sample_weight=sample_weight,
                           shuffle=False),
                 steps=steps,
                 use_multiprocessing=use_multiprocessing,
                 workers=workers)
         else:
-            values = super(BlueWhale, self).evaluate(x, y, batch_size, verbose,
-                                                     sample_weight, steps)
+            values = self.kerasmodel.evaluate(inputs, outputs, batch_size,
+                                              verbose, sample_weight, steps)
 
         self.logger.info('#' * 40)
         if not isinstance(values, list):
             values = [values]
         for i, value in enumerate(values):
-            self.logger.info('%s: %f', self.metrics_names[i], value)
+            self.logger.info('%s: %f', self.kerasmodel.metrics_names[i], value)
         self.logger.info('#' * 40)
 
         self.logger.info("Evaluation finished ...")

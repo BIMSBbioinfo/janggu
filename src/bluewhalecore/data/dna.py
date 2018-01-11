@@ -321,6 +321,15 @@ def _rcindex(idx, order):
     return irc
 
 
+def _rcpermmatrix(order):
+    perm = np.zeros((pow(4, order), pow(4, order)))
+    for idx in range(pow(4, order)):
+        jdx = _rcindex(idx, order)
+        perm[jdx, idx] = 1
+
+    return perm
+
+
 class RevCompDnaBwDataset(BwDataset):
     """RevCompDnaBwDataset class.
 
@@ -346,20 +355,12 @@ class RevCompDnaBwDataset(BwDataset):
         self.dna = dnadata
         self.order = self.dna.order
 
-        self.rcmatrix = self._rcpermmatrix(self.order)
+        self.rcmatrix = _rcpermmatrix(self.order)
 
         BwDataset.__init__(self, '{}'.format(name))
 
     def __repr__(self):
         return 'RevDnaBwDataset("{}", <DnaBwDataset>)'.format(self.name)
-
-    def _rcpermmatrix(self, order):
-        perm = np.zeros((pow(4, order), pow(4, order)))
-        for idx in range(pow(4, order)):
-            jdx = _rcindex(idx, order)
-            perm[jdx, idx] = 1
-
-        return perm
 
     def as_revcomp(self, data):
         # compute the reverse complement of the original sequence
