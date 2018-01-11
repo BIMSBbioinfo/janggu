@@ -42,6 +42,8 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         np.testing.assert_equal(sum(list(cvdata.covers[0][iv])), 2)
         np.testing.assert_equal(cvdata.covers[0][iv].sum(), 2)
 
+        np.testing.assert_equal(cvdata[:].shape, cvdata.shape)
+
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # 20 bp resolution
         # print(store)
@@ -68,6 +70,8 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         np.testing.assert_equal(x.shape, (1, 2, 2*flank + 1, 1))
         np.testing.assert_equal(x[0, 0, flank, 0], 2.0)
         np.testing.assert_equal(x[0, 1, flank, 0], 0.0)
+
+        np.testing.assert_equal(cvdata[:].shape, cvdata.shape)
 
 
 def test_load_coveragedataset_bam_unstranded(tmpdir):
@@ -116,6 +120,8 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         np.testing.assert_equal(x.shape, (1, 1, 2*flank + 1, 1))
         np.testing.assert_equal(x[0, 0, 0, 0], 1.0)
 
+        np.testing.assert_equal(cvdata[:].shape, cvdata.shape)
+
     for store in ['step', 'ndarray', 'memmap', 'hdf5']:
         # 20 bp resolution
         print(store)
@@ -141,3 +147,6 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         x = cvdata[0]
         np.testing.assert_equal(x.shape, (1, 1, 2*flank + 1, 1))
         np.testing.assert_equal(x[0, 0, flank, 0], 2.0)
+
+        # check if slicing works
+        np.testing.assert_equal(cvdata[:].shape, cvdata.shape)

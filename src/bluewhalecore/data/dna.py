@@ -265,9 +265,14 @@ class DnaBwDataset(BwDataset):
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = [idxs]
+        if isinstance(idxs, slice):
+            idxs = range(idxs.start if idxs.start else 0,
+                         idxs.stop if idxs.stop else len(self),
+                         idxs.step if idxs.step else 1)
         if not isinstance(idxs, list):
-            raise IndexError('DnaBwDataset.__getitem__ '
-                             + 'requires "int" or "list"')
+            raise IndexError(
+                'DnaBwDataset.__getitem__ '
+                + 'requires "int" or "list": got {}'.format(type(idxs)))
 
         data = self.as_onehot(self.idna4idx(idxs))
 

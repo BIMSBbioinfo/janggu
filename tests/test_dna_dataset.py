@@ -1,16 +1,39 @@
-import os
+import Bio.SeqIO as sio
+from Bio.Alphabet import IUPAC
 
 import numpy as np
+import os
+
 import pkg_resources
 import pytest
 
 from bluewhalecore.data import DnaBwDataset
 from bluewhalecore.data import RevCompDnaBwDataset
 from bluewhalecore.data import read_bed
+from bluewhalecore.data import sequences_from_fasta
+
+from bluewhalecore.data.utils import NMAP
 
 reglen = 200
 flank = 150
 stride = 50
+
+
+# adopted from secomo
+def _seqToOneHot(seqs):
+    onehots = []
+    for seq in seqs:
+        onehots.append(_getOneHotSeq(seq.seq))
+    return np.concatenate(onehots, axis=0)
+
+
+def _getOneHotSeq(seq):
+    m = len(seq.alphabet.letters)
+    n = len(seq)
+    result = np.zeros((1, m, n, 1), dtype=np.float32)
+    for i in range(len(seq)):
+        result[0, NMAP[seq[i]], i, 0] = 1
+    return result
 
 
 def datalen(regions):
@@ -334,3 +357,14 @@ def test_read_dna_from_fasta_order_2(tmpdir):
     np.testing.assert_equal(data[3][0, 2, 3, 0], 1)
     np.testing.assert_equal(data[3][0, 11, 4, 0], 1)
     np.testing.assert_equal(data[3][0, :, :5, :].sum(), 3)
+
+
+def test_stemcell_onehot_identity():
+    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+
+    filename = os.path.join(data_path, 'stemcells.fa')
+    data = DnaBwDataset.create_from_fasta('dna', fastafile=filename)
+
+    oh = _seqToOneHot(sequences_from_fasta(filename))
+
+    np.testing.assert_equal(data[:], oh)
