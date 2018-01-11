@@ -13,4 +13,4 @@ from bluewhalecore.data.utils import dna2ind  # noqa
 from bluewhalecore.data.utils import input_shape  # noqa
 from bluewhalecore.data.utils import output_shape  # noqa
 from bluewhalecore.data.utils import read_bed  # noqa
-from bluewhalecore.data.utils import sequencescreate_from_fasta  # noqa
+from bluewhalecore.data.utils import sequences_from_fasta  # noqa

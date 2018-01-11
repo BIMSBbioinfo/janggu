@@ -7,7 +7,7 @@ from Bio.SeqRecord import SeqRecord
 from bluewhalecore.data.data import BwDataset
 
 
-def sequencescreate_from_fasta(fasta):
+def sequences_from_fasta(fasta):
     """Obtains nucleotide sequences from a fasta file.
 
     Parameters

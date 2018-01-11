@@ -8,7 +8,7 @@ from bluewhalecore.data.data import BwDataset
 from bluewhalecore.data.genomic_indexer import BwGenomicIndexer
 from bluewhalecore.data.htseq_extension import BwGenomicArray
 from bluewhalecore.data.utils import dna2ind
-from bluewhalecore.data.utils import sequencescreate_from_fasta
+from bluewhalecore.data.utils import sequences_from_fasta
 
 
 class DnaBwDataset(BwDataset):
@@ -79,7 +79,7 @@ class DnaBwDataset(BwDataset):
         """Create a genomic array or reload an existing one."""
 
         # Load sequences from refgenome
-        seqs = sequencescreate_from_fasta(fastafile)
+        seqs = sequences_from_fasta(fastafile)
 
         chromlens = {}
 
@@ -209,7 +209,7 @@ class DnaBwDataset(BwDataset):
                                          cachedir=cachedir,
                                          overwrite=overwrite)
 
-        seqs = sequencescreate_from_fasta(fastafile)
+        seqs = sequences_from_fasta(fastafile)
 
         # Check if sequences are equally long
         lens = [len(seq) for seq in seqs]
