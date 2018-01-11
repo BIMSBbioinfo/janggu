@@ -16,13 +16,13 @@ Why does this file exist, and why not put this in __main__?
 """
 import argparse
 
-parser = argparse.ArgumentParser(description='Command description.')
-parser.add_argument('names', metavar='NAME', nargs=argparse.ZERO_OR_MORE,
+PARSER = argparse.ArgumentParser(description='Command description.')
+PARSER.add_argument('names', metavar='NAME', nargs=argparse.ZERO_OR_MORE,
                     help="A name of something.")
 
 
 def main(args=None):
-    args = parser.parse_args(args=args)
+    args = PARSER.parse_args(args=args)
     print('Welcome to bluewhalecore (GPL-v2). Copyright (C) 2017 '
           + 'Wolfgang Kopp.')
     print(args.names)

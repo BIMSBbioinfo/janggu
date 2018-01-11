@@ -4,7 +4,7 @@ import numpy as np
 from HTSeq import GenomicInterval
 from pandas import DataFrame
 
-from .utils import readBed
+from bluewhalecore.data.utils import read_bed
 
 
 class BwGenomicIndexer(object):
@@ -23,6 +23,9 @@ class BwGenomicIndexer(object):
         Stride (step size) for traversing the genome in basepairs.
     """
 
+    _stride = None
+    _resolution = None
+
     def __init__(self, regions, resolution, stride):
 
         self.resolution = resolution
@@ -31,7 +34,7 @@ class BwGenomicIndexer(object):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
         if isinstance(regions, str) and os.path.exists(regions):
-            regions_ = readBed(regions)
+            regions_ = read_bed(regions)
         elif isinstance(regions, DataFrame):
             regions_ = regions.copy()
         else:
@@ -45,13 +48,13 @@ class BwGenomicIndexer(object):
 
         self.chrs = []
         self.offsets = []
-        for i in range(len(reglens)):
-            self.chrs += [regions_.chr[i]] * reglens[i]
-            self.offsets += [regions_.start[i]] * reglens[i]
+        for i, reglen in enumerate(reglens):
+            self.chrs += [regions_.chr[i]] * reglen
+            self.offsets += [regions_.start[i]] * reglen
 
         self.inregionidx = []
-        for i in range(len(reglens)):
-            self.inregionidx += range(reglens[i])
+        for reglen in reglens:
+            self.inregionidx += range(reglen)
 
     def __len__(self):
         return len(self.chrs)
@@ -69,7 +72,7 @@ class BwGenomicIndexer(object):
                                    start + self.resolution, '.')
 
         raise IndexError('Index support only for "int". Given {}'.format(
-                    type(index)))
+            type(index)))
 
     @property
     def resolution(self):
@@ -93,8 +96,8 @@ class BwGenomicIndexer(object):
             raise ValueError('stride must be positive')
         self._stride = value
 
-    def idxByChrom(self, include=[], exclude=[]):
-        """idxByChrom filters for chromosome ids.
+    def idx_by_chrom(self, include=None, exclude=None):
+        """idx_by_chrom filters for chromosome ids.
 
         It takes a list of chromosome ids which should be included
         or excluded and returns the indices associated with the
@@ -113,20 +116,23 @@ class BwGenomicIndexer(object):
         list(int)
             List of compatible indices.
         """
+
         if isinstance(include, str):
             include = [include]
 
         if isinstance(exclude, str):
             exclude = [exclude]
 
-        if include == []:
+        if not include:
             idxs = set(range(len(self)))
         else:
             idxs = set()
             for inc in include:
                 idxs.update(np.where(np.asarray(self.chrs) == inc)[0])
 
-        for exc in exclude:
-            idxs = idxs.difference(np.where(np.asarray(self.chrs) == exc)[0])
+        if exclude:
+            for exc in exclude:
+                idxs = idxs.difference(
+                    np.where(np.asarray(self.chrs) == exc)[0])
 
         return list(idxs)

@@ -3,10 +3,11 @@ import os
 
 import numpy as np
 import pyBigWig
-from data import BwDataset
-from genomic_indexer import BwGenomicIndexer
 from HTSeq import BAM_Reader
-from htseq_extension import BwGenomicArray
+
+from bluewhalecore.data.data import BwDataset
+from bluewhalecore.data.genomic_indexer import BwGenomicIndexer
+from bluewhalecore.data.htseq_extension import BwGenomicArray
 
 
 class CoverageBwDataset(BwDataset):
@@ -50,6 +51,8 @@ class CoverageBwDataset(BwDataset):
         Directory in which the cachefiles are located. Default: None.
     """
 
+    _flank = None
+
     def __init__(self, name, covers,
                  samplenames,
                  gindexer,  # indices of pointing to region start
@@ -73,25 +76,24 @@ class CoverageBwDataset(BwDataset):
         if storage == 'memmap' or storage == 'hdf5':
             suffix = 'nmm' if storage == 'memmap' else 'h5'
 
-            ps = [os.path.join(memmap_dir, '{}{}.{}'.format(x[0], x[1],
-                                                            suffix))
-                  for x in
-                  itertools.product(chroms,
-                                    ['-', '+'] if stranded
-                                    else ['.'])]
-            files_exist = [os.path.exists(p) for p in ps]
+            paths = [os.path.join(memmap_dir, '{}{}.{}'.format(x[0], x[1],
+                                                               suffix))
+                     for x in
+                     itertools.product(chroms, ['-', '+'] if stranded
+                                       else ['.'])]
+            files_exist = [os.path.exists(p) for p in paths]
         else:
             files_exist = [False]
 
         return files_exist
 
     @classmethod
-    def fromBam(cls, name, bam, regions, genomesize,
-                samplenames=None,
-                resolution=50, stride=50,
-                flank=4, stranded=True, storage='hdf5',
-                overwrite=False,
-                cachedir=None):
+    def from_bam(cls, name, bam, regions, genomesize,
+                 samplenames=None,
+                 resolution=50, stride=50,
+                 flank=4, stranded=True, storage='hdf5',
+                 overwrite=False,
+                 cachedir=None):
         """Create a CoverageBwDataset class from a bam-file (or files).
 
         Parameters
@@ -168,12 +170,12 @@ class CoverageBwDataset(BwDataset):
                    stranded, cachedir)
 
     @classmethod
-    def fromBigWig(cls, name, bigwigfiles, regions, genomesize,
-                   samplenames=None,
-                   resolution=50, stride=50,
-                   flank=4, stranded=True, storage='hdf5',
-                   overwrite=False,
-                   cachedir=None):
+    def from_bigwig(cls, name, bigwigfiles, regions, genomesize,
+                    samplenames=None,
+                    resolution=50, stride=50,
+                    flank=4, stranded=True, storage='hdf5',
+                    overwrite=False,
+                    cachedir=None):
         """Create a CoverageBwDataset class from a bigwig-file (or files).
 
         Parameters
@@ -238,16 +240,14 @@ class CoverageBwDataset(BwDataset):
 
             if all(nmms) and not overwrite:
                 pass
-                # print('Reload BwGenomicArray from {}'.format(memmap_dir))
             else:
-                # print('Scoring from {}'.format(sample_file))
-                bw = pyBigWig(sample_file)
+                bwfile = pyBigWig.open(sample_file)
 
                 for i in range(len(gindexer)):
-                    iv = gindexer[i]
-                    cover[iv.start_as_pos] += bw.values(iv.chrom,
-                                                        int(iv.start),
-                                                        int(iv.end))
+                    interval = gindexer[i]
+                    cover[interval.start_as_pos] += \
+                        bwfile.values(interval.chrom, int(interval.start),
+                                      int(interval.end))
 
             covers.append(cover)
 
@@ -271,25 +271,28 @@ class CoverageBwDataset(BwDataset):
         data = np.empty((len(idxs), 2 if self.stranded else 1,
                          1 + 2*self.flank, len(self.covers)))
 
-        sign = ['+',  '-']
+        sign = ['+', '-']
         for i, idx in enumerate(idxs):
-            iv = self.gindexer[idx]
-            for b in range(-self.flank, self.flank + 1):
+            interval = self.gindexer[idx]
+            for iflank in range(-self.flank, self.flank + 1):
                 try:
-                    for s in range(2 if self.stranded else 1):
+                    for istrand in range(2 if self.stranded else 1):
 
-                        piv = iv.copy()
-                        piv.start = iv.start + b * self.gindexer.stride
-                        piv.end = iv.end + b * self.gindexer.stride
-                        piv.strand = sign[s] if self.stranded else '.'
-                        for c in range(len(self.covers)):
-                            data[i, s, b+self.flank, c] = \
-                                self.covers[c][piv].sum()
+                        pinterval = interval.copy()
+                        pinterval.start = interval.start + \
+                            iflank * self.gindexer.stride
+                        pinterval.end = interval.end + \
+                            iflank * self.gindexer.stride
+                        pinterval.strand = sign[istrand] \
+                            if self.stranded else '.'
+                        for icov, cover in enumerate(self.covers):
+                            data[i, istrand, iflank+self.flank, icov] = \
+                                cover[pinterval].sum()
                 except IndexError:
-                    data[i, :, b+self.flank, c] = 0
+                    data[i, :, iflank+self.flank, :] = 0
 
-        for tr in self.transformations:
-            data = tr(data)
+        for transform in self.transformations:
+            data = transform(data)
 
         return data
 

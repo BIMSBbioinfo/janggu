@@ -1,6 +1,6 @@
 import numpy as np
 
-from bluewhalecore.data.nparr import NumpyBwDataset
+from bluewhalecore.data import NumpyBwDataset
 
 
 def test_nparr(tmpdir):

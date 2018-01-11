@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
+"""Setup script"""
+
 from __future__ import absolute_import
 from __future__ import print_function
 
 import io
-import os
 import re
 from glob import glob
+from os import sep
+from os import walk
 from os.path import basename
 from os.path import dirname
 from os.path import join
@@ -24,21 +27,21 @@ except ImportError:
     Cython = None
 
 if Cython:
-    cythonized = cythonize([
+    CYTHONIZED = cythonize([
         Extension(
-            splitext(relpath(path, 'src').replace(os.sep, '.'))[0],
+            splitext(relpath(path, 'src').replace(sep, '.'))[0],
             sources=[path],
             include_dirs=[dirname(path)],
             compiler_directives={'emdedsignature': True}
         )
-        for root, _, _ in os.walk('src')
+        for root, _, _ in walk('src')
         for path in glob(join(root, '*.pyx' if Cython else '*.c'))
     ])
 else:
-    cythonized = None
+    CYTHONIZED = None
 
 
-def read(*names, **kwargs):
+def _read(*names, **kwargs):
     return io.open(
         join(dirname(__file__), *names),
         encoding=kwargs.get('encoding', 'utf8')
@@ -50,11 +53,11 @@ setup(
     version='0.4.2',
     license='BSD 3-Clause License',
     description='Code infrastructure for deep learning to make modelling '
-                + 'reproducible and maintainable',
+    + 'reproducible and maintainable',
     long_description='%s\n%s' % (
         re.compile('^.. start-badges.*^.. end-badges',
-                   re.M | re.S).sub('', read('README.rst')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
+                   re.M | re.S).sub('', _read('README.rst')),
+        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', _read('CHANGELOG.rst'))
     ),
     author='Wolfgang Kopp',
     author_email='wolfgang.kopp@mdc-berlin.de',
@@ -118,5 +121,5 @@ setup(
             'bluewhalecore = bluewhalecore.cli:main',
         ]
     },
-    ext_modules=cythonized,
+    ext_modules=CYTHONIZED,
 )

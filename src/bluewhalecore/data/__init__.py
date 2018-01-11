@@ -1,14 +1,16 @@
-from .coverage import CoverageBwDataset  # noqa
-from .data import BwDataset  # noqa
-from .data import inputShape  # noqa
-from .data import outputShape  # noqa
-from .dna import DnaBwDataset  # noqa
-from .dna import RevCompDnaBwDataset  # noqa
-from .genomic_indexer import BwGenomicIndexer  # noqa
-from .htseq_extension import BwChromVector  # noqa
-from .htseq_extension import BwGenomicArray  # noqa
-from .nparr import NumpyBwDataset  # noqa
-from .tab import TabBwDataset  # noqa
-from .utils import dna2ind  # noqa
-from .utils import readBed  # noqa
-from .utils import sequencesFromFasta  # noqa
+"""BlueWhale datasets for deep learning in genomics."""
+
+from bluewhalecore.data.coverage import CoverageBwDataset  # noqa
+from bluewhalecore.data.data import BwDataset  # noqa
+from bluewhalecore.data.dna import DnaBwDataset  # noqa
+from bluewhalecore.data.dna import RevCompDnaBwDataset  # noqa
+from bluewhalecore.data.genomic_indexer import BwGenomicIndexer  # noqa
+from bluewhalecore.data.htseq_extension import BwChromVector  # noqa
+from bluewhalecore.data.htseq_extension import BwGenomicArray  # noqa
+from bluewhalecore.data.nparr import NumpyBwDataset  # noqa
+from bluewhalecore.data.tab import TabBwDataset  # noqa
+from bluewhalecore.data.utils import dna2ind  # noqa
+from bluewhalecore.data.utils import input_shape  # noqa
+from bluewhalecore.data.utils import output_shape  # noqa
+from bluewhalecore.data.utils import read_bed  # noqa
+from bluewhalecore.data.utils import sequencescreate_from_fasta  # noqa

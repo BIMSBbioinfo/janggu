@@ -15,9 +15,9 @@ from bluewhalecore.cli import main
 from bluewhalecore.data import DnaBwDataset
 from bluewhalecore.data import NumpyBwDataset
 from bluewhalecore.data import TabBwDataset
-from bluewhalecore.data import inputShape
-from bluewhalecore.data import outputShape
-from bluewhalecore.data import readBed
+from bluewhalecore.data import input_shape
+from bluewhalecore.data import output_shape
+from bluewhalecore.data import read_bed
 
 
 def test_main():
@@ -26,14 +26,14 @@ def test_main():
 
 def test_bluewhale_instance(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    regions = readBed(os.path.join(data_path, 'regions.bed'))
+    regions = read_bed(os.path.join(data_path, 'regions.bed'))
     csvfile = os.path.join(data_path, 'ctcf_sample.csv')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaBwDataset.fromRefGenome('dna', refgenome=refgenome,
-                                     storage='ndarray',
-                                     regions=regions, order=1)
+    dna = DnaBwDataset.create_from_refgenome('dna', refgenome=refgenome,
+                                             storage='ndarray',
+                                             regions=regions, order=1)
 
     ctcf = TabBwDataset('ctcf', filename=csvfile)
 
@@ -44,19 +44,19 @@ def test_bluewhale_instance(tmpdir):
         output = Dense(params[0])(layer)
         return input, output
 
-    bwm = BlueWhale.fromShape(inputShape(dna),
-                              outputShape(ctcf, 'binary_crossentropy'),
-                              'dna_ctcf_HepG2.cnn',
-                              (cnn_model, (2,)),
-                              outputdir=tmpdir.strpath)
+    bwm = BlueWhale.create_by_shape(input_shape(dna),
+                                    output_shape(ctcf, 'binary_crossentropy'),
+                                    'dna_ctcf_HepG2.cnn',
+                                    (cnn_model, (2,)),
+                                    outputdir=tmpdir.strpath)
 
-    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
 
     bwm.save()
 
     assert os.path.exists(storage)
 
-    BlueWhale.fromName('dna_ctcf_HepG2.cnn', outputdir=tmpdir.strpath)
+    BlueWhale.create_by_name('dna_ctcf_HepG2.cnn', outputdir=tmpdir.strpath)
 
 
 def test_bluewhale_train_predict_option1(tmpdir):
@@ -68,13 +68,13 @@ def test_bluewhale_train_predict_option1(tmpdir):
     def test_model(input, inp, oup, params):
         return input, input[0]
 
-    bwm = BlueWhale.fromShape(inputShape(X),
-                              outputShape(y, 'binary_crossentropy'),
-                              'nptest',
-                              (test_model, None),
-                              outputdir=tmpdir.strpath)
+    bwm = BlueWhale.create_by_shape(input_shape(X),
+                                    output_shape(y, 'binary_crossentropy'),
+                                    'nptest',
+                                    (test_model, None),
+                                    outputdir=tmpdir.strpath)
 
-    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(X, y, epochs=2, batch_size=32)
@@ -102,7 +102,7 @@ def test_bluewhale_train_predict_option2(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit([X], [y], epochs=2, batch_size=32)
@@ -130,7 +130,7 @@ def test_bluewhale_train_predict_option3(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit([X], [y], epochs=2, batch_size=32)
@@ -158,7 +158,7 @@ def test_bluewhale_train_predict_option4(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(X, y, epochs=2, batch_size=32)
@@ -186,7 +186,7 @@ def test_bluewhale_train_predict_generator(tmpdir):
 
     bwm = test_model(tmpdir.strpath)
 
-    storage = bwm._storagePath(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(X, y, epochs=2, generator=bluewhale_fit_generator,

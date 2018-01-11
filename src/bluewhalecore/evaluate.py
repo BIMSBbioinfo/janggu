@@ -1,3 +1,9 @@
+"""Functions to evaluate the model performances.
+
+These functions, e.g. auROC, mostly are just wrappers
+around sklearn methods.
+"""
+
 import numpy as np
 from sklearn import metrics
 
@@ -92,8 +98,8 @@ def bw_av_auroc(ytrue, ypred):
         average auROC score
     """
     vals = []
-    for s in range(ytrue.shape[1]):
-        vals.append(metrics.roc_auc_score(ytrue, ypred))
+    for idx in range(ytrue.shape[1]):
+        vals.append(metrics.roc_auc_score(ytrue[:, idx], ypred[:, idx]))
     return np.asarray(vals).mean()
 
 
@@ -115,6 +121,7 @@ def bw_av_auprc(ytrue, ypred):
         average auPRC score
     """
     vals = []
-    for s in range(ytrue.shape[1]):
-        vals.append(metrics.average_precision_score(ytrue, ypred))
+    for idx in range(ytrue.shape[1]):
+        vals.append(metrics.average_precision_score(ytrue[:, idx],
+                                                    ypred[:, idx]))
     return np.asarray(vals).mean()

@@ -28,10 +28,10 @@ Classes
    DnaBwDataset
 
 .. autoclass:: CoverageBwDataset
-   :members: fromBam, fromBigWig
+   :members: create_from_bam, create_from_bigwig
 
 .. autoclass:: DnaBwDataset
-   :members: fromRefGenome, fromFasta
+   :members: create_from_refgenome, create_from_fasta
 
 .. autoclass:: RevCompDnaBwDataset
 
@@ -39,12 +39,9 @@ Classes
 Utilities
 ---------
 .. autosummary::
-   inputShape
-   outputShape
-  # sequencesFromFasta
-  # dna2ind
-  # readBed
+   input_shape
+   output_shape
 
 
-.. autofunction:: inputShape
-.. autofunction:: outputShape
+.. autofunction:: input_shape
+.. autofunction:: output_shape

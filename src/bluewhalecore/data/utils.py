@@ -4,8 +4,10 @@ import pandas as pd
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
+from bluewhalecore.data.data import BwDataset
 
-def sequencesFromFasta(fasta):
+
+def sequencescreate_from_fasta(fasta):
     """Obtains nucleotide sequences from a fasta file.
 
     Parameters
@@ -17,8 +19,8 @@ def sequencesFromFasta(fasta):
         List of Biostring sequences
     """
 
-    h = open(fasta)
-    gen = SeqIO.parse(h, "fasta")
+    file_ = open(fasta)
+    gen = SeqIO.parse(file_, "fasta")
     seqs = [item for item in gen]
 
     return seqs
@@ -50,15 +52,14 @@ def dna2ind(seq):
     """
 
     if isinstance(seq, str):
-        return map(lambda x: NMAP[x], seq)
+        return [NMAP[x] for x in seq]
     elif isinstance(seq, SeqRecord):
-        return map(lambda x: NMAP[x], str(seq.seq))
+        return [NMAP[x] for x in seq.seq]
     else:
         raise Exception('dna2ind: Format is not supported')
 
 
-def readBed(bedfile, trunc=None, usecols=[0, 1, 2],
-            names=["chr", "start", "end"], sortBy=None):
+def read_bed(bedfile, trunc=None, usecols=None, names=None, sort_by=None):
     """Read content of a bedfile as pandas.DataFrame.
 
     Parameters
@@ -82,18 +83,92 @@ def readBed(bedfile, trunc=None, usecols=[0, 1, 2],
         DataFrame containing the bed-file content.
     """
 
+    if not usecols:
+        usecols = [0, 1, 2]
+
+    if not names:
+        names = ["chr", "start", "end"]
+
     # currently I am only interested in using cols 1-3
     bed = pd.read_csv(bedfile, sep="\t", header=None, usecols=usecols,
                       names=names)
 
-    if isinstance(sortBy, str):
-        bed.sort_values(sortBy, ascending=False, inplace=True)
+    if isinstance(sort_by, str):
+        bed.sort_values(sort_by, ascending=False, inplace=True)
 
     if isinstance(trunc, int):
         if trunc < 0:
-            raise Exception('readBed: trunc must be greater than zero.')
+            raise Exception('read_bed: trunc must be greater than zero.')
 
         bed.start = (bed.end - bed.start)//2 + bed.start - trunc
         bed.end = bed.start + 2*trunc
 
     return bed
+
+
+def input_shape(bwdata):
+    """Extracts the shape of a provided Input-BwDataset.
+
+    Parameters
+    ---------
+    bwdata : :class:`BwDataset` or list(:class:`BwDataset`)
+        BwDataset or list(BwDataset).
+
+    Returns
+    -------
+    dict
+        Dictionary with dataset names as keys and the corrsponding
+        shape as value.
+    """
+    if isinstance(bwdata, BwDataset):
+        bwdata = [bwdata]
+
+    if isinstance(bwdata, list):
+        data = {}
+        for bwdatum in bwdata:
+            shape = bwdatum.shape[1:]
+            if shape == ():
+                shape = (1,)
+            data[bwdatum.name] = {'shape': shape}
+        return data
+    else:
+        raise Exception('inputSpace wrong argument: {}'.format(bwdata))
+
+
+def output_shape(bwdata, loss, activation='sigmoid',
+                 loss_weight=1.):
+    """Extracts the shape of a provided Output-BwDataset.
+
+    Parameters
+    ---------
+    bwdata : :class:`BwDataset` or list(:class:`BwDataset`)
+        BwDataset or list(BwDataset).
+    loss : str or objective function.
+        Keras compatible loss function. See https://keras.io/losses.
+    activation : str
+        Output activation function. Default: 'sigmoid'.
+    loss_weights : float
+        Loss weight used for fitting the model. Default: 1.
+
+    Returns
+    -------
+    dict
+        Dictionary description of the network output.
+    """
+
+    if isinstance(bwdata, BwDataset):
+        bwdata = [bwdata]
+
+    if isinstance(bwdata, list):
+        data = {}
+        for bwdatum in bwdata:
+            shape = bwdatum.shape[1:]
+            if shape == ():
+                shape = (1,)
+            data[bwdatum.name] = {'shape': shape,
+                                  'loss': loss,
+                                  'loss_weight': loss_weight,
+                                  'activation': activation}
+        return data
+    else:
+        raise Exception('outputSpace wrong argument: {}'.format(bwdata))

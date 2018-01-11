@@ -29,8 +29,8 @@ def bluewhale_fit_generator(inputdata, outputdata, batch_size,
     Yields
     ------
     tuple
-        Either `(input, output, sample_weight)` per batch if
-        sample_weight is used or `(input, output)` otherwise.
+        Either `(inputs, outputs, sample_weight)` per batch if
+        sample_weight is used or `(inputs, outputs)` otherwise.
     """
 
     lock = threading.Lock()
@@ -43,39 +43,38 @@ def bluewhale_fit_generator(inputdata, outputdata, batch_size,
         break
 
     while 1:
-        ib = 0
+        ibatch = 0
         if shuffle:
             np.random.shuffle(indices)
 
-        if len(indices) == 0:
+        if not indices:
             raise Exception("index list is empty")
 
-        while ib < \
+        while ibatch < \
                 (len(indices)//batch_size +
-                    (1 if len(indices) % batch_size > 0 else 0)):
+                 (1 if len(indices) % batch_size > 0 else 0)):
 
             with lock:
-                tmpi = ib
-                ib += 1
+                tmpi = ibatch
+                ibatch += 1
 
-            input = {}
+            inputs = {}
 
             for k in inputdata:
-                input[k] = inputdata[k][indices[tmpi*batch_size:
-                                                (tmpi+1)*batch_size]]
+                inputs[k] = inputdata[k][indices[tmpi*batch_size:
+                                                 (tmpi+1)*batch_size]]
 
-            output = {}
+            outputs = {}
             for k in outputdata:
-                output[k] = outputdata[k][indices[tmpi*batch_size:
-                                                  (tmpi+1)*batch_size]]
+                outputs[k] = outputdata[k][indices[tmpi*batch_size:
+                                                   (tmpi+1)*batch_size]]
 
             if sample_weight:
-                sw = sample_weight[indices[tmpi*batch_size:
-                                           (tmpi+1)*batch_size]]
-                yield input, output, sw
+                sweight = sample_weight[indices[tmpi*batch_size:
+                                                (tmpi+1)*batch_size]]
+                yield inputs, outputs, sweight
             else:
-                yield input, output
-            # ib += 1
+                yield inputs, outputs
 
 
 def bluewhale_predict_generator(inputdata, batch_size):
@@ -106,22 +105,22 @@ def bluewhale_predict_generator(inputdata, batch_size):
         indices = range(len(inputdata[k]))
         break
 
-    if len(indices) == 0:
+    if not indices:
         raise Exception("index list is empty")
     while 1:
-        ib = 0
-        while ib < \
+        ibatch = 0
+        while ibatch < \
                 (len(indices)//batch_size +
-                    (1 if len(indices) % batch_size > 0 else 0)):
+                 (1 if len(indices) % batch_size > 0 else 0)):
 
             with lock:
-                tmpi = ib
-                ib += 1
+                tmpi = ibatch
+                ibatch += 1
 
-            input = {}
+            inputs = {}
 
             for k in inputdata:
-                input[k] = inputdata[k][indices[tmpi*batch_size:
-                                                (tmpi+1)*batch_size]]
+                inputs[k] = inputdata[k][indices[tmpi*batch_size:
+                                                 (tmpi+1)*batch_size]]
 
-            yield input
+            yield inputs

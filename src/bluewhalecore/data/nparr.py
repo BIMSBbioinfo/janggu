@@ -1,4 +1,4 @@
-from data import BwDataset
+from bluewhalecore.data.data import BwDataset
 
 
 class NumpyBwDataset(BwDataset):
@@ -38,6 +38,14 @@ class NumpyBwDataset(BwDataset):
 
     def __len__(self):
         return len(self.data)
+
+    def __getitem__(self, idxs):
+        data = self.data[idxs]
+
+        for transform in self.transformations:
+            data = transform(data)
+
+        return data
 
     @property
     def shape(self):

@@ -1,7 +1,8 @@
 import os
 
 import pandas as pd
-from data import BwDataset
+
+from bluewhalecore.data.data import BwDataset
 
 
 class TabBwDataset(BwDataset):
@@ -28,6 +29,8 @@ class TabBwDataset(BwDataset):
         Item separator. Default: sep=','.
     """
 
+    _filename = None
+
     def __init__(self, name, filename, samplenames=None,
                  cachedir=None, dtype='int8', sep=','):
 
@@ -37,14 +40,10 @@ class TabBwDataset(BwDataset):
         if not samplenames:
             self.samplenames = filename
 
-        self.sep = sep
-        self.header = None
-        self.dtype = dtype
-
         data = []
-        for f in self.filename:
-            data.append(pd.read_csv(f, header=self.header,
-                                    sep=self.sep, dtype=self.dtype))
+        for _file in self.filename:
+            data.append(pd.read_csv(_file, header=None,
+                                    sep=sep, dtype=dtype))
 
             self.data = pd.concat(data, axis=1, ignore_index=True).values
 
@@ -53,8 +52,8 @@ class TabBwDataset(BwDataset):
         BwDataset.__init__(self, name)
 
     def __repr__(self):
-        return 'TabBwDataset("{}", "{}", sep="{}")'\
-                .format(self.name, self.filename, self.sep)
+        return 'TabBwDataset("{}", "{}")'\
+                .format(self.name, self.filename)
 
     def __len__(self):
         return len(self.data)
@@ -64,17 +63,25 @@ class TabBwDataset(BwDataset):
         """Shape of the dataset"""
         return self.data.shape
 
+    def __getitem__(self, idxs):
+        data = self.data[idxs]
+
+        for transform in self.transformations:
+            data = transform(data)
+
+        return data
+
     @property
     def filename(self):
         """The filename property."""
         return self._filename
 
     @filename.setter
-    def filename(self, value):
-        if isinstance(value, str):
-            value = [value]
-        for el in value:
-            if not os.path.exists(el):
+    def filename(self, values):
+        if isinstance(values, str):
+            values = [values]
+        for value in values:
+            if not os.path.exists(value):
                 raise Exception('File does not exist \
-                                not exists: {}'.format(el))
-        self._filename = value
+                                not exists: {}'.format(value))
+        self._filename = values

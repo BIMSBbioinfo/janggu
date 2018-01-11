@@ -14,14 +14,14 @@ from bluewhalecore import inputlayer
 from bluewhalecore import outputlayer
 from bluewhalecore.data import DnaBwDataset
 from bluewhalecore.data import NumpyBwDataset
-from bluewhalecore.data import inputShape
-from bluewhalecore.data import outputShape
+from bluewhalecore.data import input_shape
+from bluewhalecore.data import output_shape
 
 np.random.seed(1234)
 
 data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 filename = os.path.join(data_path, 'oct4.fa')
-bw_x_train = DnaBwDataset.fromFasta('dna', fastafile=filename, order=1)
+bw_x_train = DnaBwDataset.create_from_fasta('dna', fastafile=filename, order=1)
 bw_y_train = NumpyBwDataset('y', np.random.randint(2, size=(len(bw_x_train),
                                                             1)))
 
@@ -89,10 +89,10 @@ def bluewhalebody(input, inp, oup, params):
 
 K.clear_session()
 np.random.seed(1234)
-m = BlueWhale.fromShape(inputShape(bw_x_train),
-                        outputShape(bw_y_train, 'binary_crossentropy'),
-                        'oct4_cnn',
-                        modeldef=(bluewhalebody, (10, 'relu',)))
+m = BlueWhale.create_by_shape(input_shape(bw_x_train),
+                              output_shape(bw_y_train, 'binary_crossentropy'),
+                              'oct4_cnn',
+                              modeldef=(bluewhalebody, (10, 'relu',)))
 h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000,
           shuffle=False, verbose=0)
 print('Option 3')

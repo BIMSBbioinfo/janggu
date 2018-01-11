@@ -1,3 +1,5 @@
+"""BlueWhale deep learning model for genomics"""
+
 import logging
 import os
 
@@ -60,7 +62,7 @@ class BlueWhale(Model):
         self.summary(print_fn=self.logger.info)
 
     @classmethod
-    def fromName(cls, name, outputdir='bluewhale_results/'):
+    def create_by_name(cls, name, outputdir='bluewhale_results/'):
         """Creates a Bluewhale object by name.
 
         Parameters
@@ -71,13 +73,13 @@ class BlueWhale(Model):
             Folder in which to place the log-files and stored models.
             Default: 'bluewhale_results/'.
         """
-        path = cls._storagePath(name, outputdir)
+        path = cls._storage_path(name, outputdir)
 
         model = load_model(path, custom_objects={'BlueWhale': Model})
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @staticmethod
-    def _storagePath(name, outputdir):
+    def _storage_path(name, outputdir):
         """Returns the path to the model storage file."""
         if not os.path.exists(os.path.join(outputdir, "models")):
             os.mkdir(os.path.join(outputdir, "models"))
@@ -95,15 +97,15 @@ class BlueWhale(Model):
             Overwrite a stored model. Default: False.
         """
         if not filename:
-            filename = self._storagePath(self.name, self.outputdir)
+            filename = self._storage_path(self.name, self.outputdir)
 
-        self.logger.info("Save model {}".format(filename))
+        self.logger.info("Save model %s", filename)
         super(BlueWhale, self).save(filename)
 
     @classmethod
-    def fromShape(cls, inputdict, outputdict, name, modeldef,
-                  outputdir='bluewhale_results/', optimizer='adadelta',
-                  metrics=['accuracy']):
+    def create_by_shape(cls, inputdict, outputdict, name, modeldef,
+                        outputdir='bluewhale_results/', optimizer='adadelta',
+                        metrics=None):
         """Instantiate BlueWhale through supplying a model template
         and the shapes of the dataset.
         From this the correct keras model will be constructed.
@@ -129,6 +131,8 @@ class BlueWhale(Model):
         metrics : list
             List of metrics. Default: metrics = ['accuracy']
         """
+        if not metrics:
+            metrics = []
 
         print('create BlueWhale from shape.')
         modelfct = modeldef[0]
@@ -143,9 +147,9 @@ class BlueWhale(Model):
 
         losses = {}
         loss_weights = {}
-        for k in outputdict:
-            losses[k] = outputdict[k]['loss']
-            loss_weights[k] = outputdict[k]['loss_weight']
+        for key in outputdict:
+            losses[key] = outputdict[key]['loss']
+            loss_weights[key] = outputdict[key]['loss_weight']
 
         model.compile(loss=losses, optimizer=optimizer,
                       loss_weights=loss_weights, metrics=metrics)
@@ -191,21 +195,21 @@ class BlueWhale(Model):
             Number of workers in `use_multiprocessing=True` mode. Default: 1.
         """
 
-        x = self._convertData(x)
-        y = self._convertData(y)
+        x = self.__convert_data(x)
+        y = self.__convert_data(y)
 
-        checkpoint = ModelCheckpoint(self._storagePath(self.name,
-                                                       self.outputdir))
+        checkpoint = ModelCheckpoint(self._storage_path(self.name,
+                                                        self.outputdir))
         if callbacks:
             callbacks.append(checkpoint)
         else:
             callbacks = [checkpoint]
 
-        self.logger.info('Fit: {}'.format(self.name))
+        self.logger.info('Fit: %s', self.name)
         self.logger.info("Input:")
-        self._dimLogging(x)
+        self.__dim_logging(x)
         self.logger.info("Output:")
-        self._dimLogging(y)
+        self.__dim_logging(y)
 
         if generator:
 
@@ -238,38 +242,40 @@ class BlueWhale(Model):
             else:
                 vgen = None
 
-            h = self.fit_generator(generator(x, y, batch_size,
-                                             sample_weight=sample_weight,
-                                             shuffle=shuffle),
-                                   steps_per_epoch=steps_per_epoch,
-                                   epochs=epochs,
-                                   validation_data=vgen,
-                                   validation_steps=validation_steps,
-                                   class_weight=class_weight,
-                                   initial_epoch=initial_epoch,
-                                   shuffle=False,  # dealt with in generator
-                                   use_multiprocessing=use_multiprocessing,
-                                   max_queue_size=50,
-                                   workers=workers,
-                                   verbose=verbose,
-                                   callbacks=callbacks)
+            history = self.fit_generator(generator(x, y, batch_size,
+                                                   sample_weight=sample_weight,
+                                                   shuffle=shuffle),
+                                         steps_per_epoch=steps_per_epoch,
+                                         epochs=epochs,
+                                         validation_data=vgen,
+                                         validation_steps=validation_steps,
+                                         class_weight=class_weight,
+                                         initial_epoch=initial_epoch,
+                                         shuffle=False,  # must be false!
+                                         use_multiprocessing=use_multiprocessing,
+                                         max_queue_size=50,
+                                         workers=workers,
+                                         verbose=verbose,
+                                         callbacks=callbacks)
 
         else:
-            h = super(BlueWhale, self).fit(x, y, batch_size, epochs, verbose,
-                                           callbacks, validation_split,
-                                           validation_data, shuffle,
-                                           class_weight,
-                                           sample_weight, initial_epoch,
-                                           steps_per_epoch, validation_steps,
-                                           **kwargs)
+            history = super(BlueWhale, self).fit(x, y, batch_size, epochs,
+                                                 verbose,
+                                                 callbacks, validation_split,
+                                                 validation_data, shuffle,
+                                                 class_weight,
+                                                 sample_weight, initial_epoch,
+                                                 steps_per_epoch,
+                                                 validation_steps,
+                                                 **kwargs)
 
         self.logger.info('#' * 40)
-        for k in h.history:
-            self.logger.info('{}: {}'.format(k, h.history[k][-1]))
+        for k in history.history:
+            self.logger.info('%s: %f', k, history.history[k][-1])
         self.logger.info('#' * 40)
 
         self.logger.info("Training finished ...")
-        return h
+        return history
 
     def predict(self, x,
                 batch_size=None,
@@ -296,11 +302,11 @@ class BlueWhale(Model):
             Number of workers in `use_multiprocessing=True` mode. Default: 1.
         """
 
-        x = self._convertData(x)
+        x = self.__convert_data(x)
 
-        self.logger.info('Predict: {}'.format(self.name))
+        self.logger.info('Predict: %s', self.name)
         self.logger.info("Input:")
-        self._dimLogging(x)
+        self.__dim_logging(x)
 
         if generator:
 
@@ -347,14 +353,14 @@ class BlueWhale(Model):
             Number of workers in `use_multiprocessing=True` mode. Default: 1.
         """
 
-        x = self._convertData(x)
-        y = self._convertData(y)
+        x = self.__convert_data(x)
+        y = self.__convert_data(y)
 
-        self.logger.info('Evaluate: {}'.format(self.name))
+        self.logger.info('Evaluate: %s', self.name)
         self.logger.info("Input:")
-        self._dimLogging(x)
+        self.__dim_logging(x)
         self.logger.info("Output:")
-        self._dimLogging(y)
+        self.__dim_logging(y)
 
         if generator:
 
@@ -378,38 +384,40 @@ class BlueWhale(Model):
                                                      sample_weight, steps)
 
         self.logger.info('#' * 40)
-        for i, v in enumerate(values):
-            self.logger.info('{}: {}'.format(self.metrics_names[i], v))
+        if not isinstance(values, list):
+            values = [values]
+        for i, value in enumerate(values):
+            self.logger.info('%s: %f', self.metrics_names[i], value)
         self.logger.info('#' * 40)
 
         self.logger.info("Evaluation finished ...")
         return values
 
-    def _dimLogging(self, data):
+    def __dim_logging(self, data):
         if isinstance(data, dict):
-            for k in data:
-                self.logger.info("\t{}: {}".format(k, data[k].shape))
+            for key in data:
+                self.logger.info("\t%s: %s", key, data[key].shape)
 
         if hasattr(data, "shape"):
             data = [data]
 
         if isinstance(data, list):
-            for el in data:
-                self.logger.info("\t{}".format(el.shape))
+            for datum in data:
+                self.logger.info("\t%s", datum.shape)
 
     @staticmethod
-    def _convertData(data):
+    def __convert_data(data):
         # If we deal with BwDataset, we convert it to a Dictionary
         # which is directly interpretable by keras
         if isinstance(data, BwDataset):
-            x = {}
-            x[data.name] = data
+            c_data = {}
+            c_data[data.name] = data
         elif isinstance(data, list) and isinstance(data[0], BwDataset):
-            x = {}
-            for d in data:
-                x[d.name] = d
+            c_data = {}
+            for datum in data:
+                c_data[datum.name] = datum
         else:
             # Otherwise, we deal with non-bwdatasets (e.g. numpy)
             # which for compatibility reasons we just pass through
-            x = data
-        return x
+            c_data = data
+        return c_data

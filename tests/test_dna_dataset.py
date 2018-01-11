@@ -6,7 +6,7 @@ import pytest
 
 from bluewhalecore.data import DnaBwDataset
 from bluewhalecore.data import RevCompDnaBwDataset
-from bluewhalecore.data import readBed
+from bluewhalecore.data import read_bed
 
 reglen = 200
 flank = 150
@@ -21,17 +21,19 @@ def datalen(regions):
 def dna_templ(order):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    regions = readBed(os.path.join(data_path, 'regions.bed'))
-    indiv_reg = readBed(os.path.join(data_path, 'indiv_regions.bed'))
+    regions = read_bed(os.path.join(data_path, 'regions.bed'))
+    indiv_reg = read_bed(os.path.join(data_path, 'indiv_regions.bed'))
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                      regions=regions, storage='ndarray',
-                                      order=order)
-    idata = DnaBwDataset.fromRefGenome('itrain', refgenome=refgenome,
-                                       regions=indiv_reg, storage='ndarray',
-                                       order=order)
+    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                              regions=regions,
+                                              storage='ndarray',
+                                              order=order)
+    idata = DnaBwDataset.create_from_refgenome('itrain', refgenome=refgenome,
+                                               regions=indiv_reg,
+                                               storage='ndarray',
+                                               order=order)
 
     indices = [1, 600, 1000]
 
@@ -68,9 +70,10 @@ def test_read_ranges_from_file():
     refgenome = os.path.join(data_path, 'genome.fa')
     regions = os.path.join(data_path, 'regions.bed')
 
-    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                      regions=regions, storage='ndarray',
-                                      order=order)
+    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                              regions=regions,
+                                              storage='ndarray',
+                                              order=order)
 
     indices = [1, 600, 1000]
 
@@ -100,13 +103,14 @@ def test_dna_dims_order_2():
 def revcomp(order):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    regions = readBed(os.path.join(data_path, 'regions.bed'))
+    regions = read_bed(os.path.join(data_path, 'regions.bed'))
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                      regions=regions, storage='ndarray',
-                                      order=order)
+    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                              regions=regions,
+                                              storage='ndarray',
+                                              order=order)
     rcdata = RevCompDnaBwDataset('rctrain', data)
     rcrcdata = RevCompDnaBwDataset('rcrctrain', rcdata)
 
@@ -130,22 +134,22 @@ def test_revcomp_order_2():
 def test_revcomp_rcmatrix():
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    regions = readBed(os.path.join(data_path, 'regions.bed'))
+    regions = read_bed(os.path.join(data_path, 'regions.bed'))
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                      storage='ndarray',
-                                      regions=regions, order=1)
+    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                              storage='ndarray',
+                                              regions=regions, order=1)
     rcdata = RevCompDnaBwDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix,
                             np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0],
                                       [1, 0, 0, 0]]))
 
-    data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                      storage='ndarray',
-                                      regions=regions, order=2)
+    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                              storage='ndarray',
+                                              regions=regions, order=2)
     rcdata = RevCompDnaBwDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix[0],
@@ -179,12 +183,12 @@ def test_rcmatrix_identity():
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
     for order in range(1, 4):
-        regions = readBed(os.path.join(data_path, 'regions.bed'))
+        regions = read_bed(os.path.join(data_path, 'regions.bed'))
         refgenome = os.path.join(data_path, 'genome.fa')
 
-        data = DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                          storage='ndarray',
-                                          regions=regions, order=order)
+        data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                                  storage='ndarray',
+                                                  regions=regions, order=order)
         rcdata = RevCompDnaBwDataset('rctrain', data)
 
         np.testing.assert_equal(np.eye(pow(4, order)),
@@ -193,52 +197,52 @@ def test_rcmatrix_identity():
 
 def test_dna_dataset_sanity(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    regions = readBed(os.path.join(data_path, 'regions.bed'))
+    regions = read_bed(os.path.join(data_path, 'regions.bed'))
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome='',
-                                   storage='ndarray',
-                                   regions=regions, order=1)
+        DnaBwDataset.create_from_refgenome('train', refgenome='',
+                                           storage='ndarray',
+                                           regions=regions, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome='test',
-                                   storage='ndarray',
-                                   regions=regions, order=1)
+        DnaBwDataset.create_from_refgenome('train', refgenome='test',
+                                           storage='ndarray',
+                                           regions=regions, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                   storage='ndarray',
-                                   regions=None, order=1)
+        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                           storage='ndarray',
+                                           regions=None, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                   storage='ndarray',
-                                   regions=regions, order=0)
+        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                           storage='ndarray',
+                                           regions=regions, order=0)
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                   storage='ndarray',
-                                   regions=regions, flank=-1)
+        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                           storage='ndarray',
+                                           regions=regions, flank=-1)
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                   storage='ndarray',
-                                   regions=regions, reglen=0)
+        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                           storage='ndarray',
+                                           regions=regions, reglen=0)
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                   storage='ndarray',
-                                   regions=regions, stride=0)
+        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                           storage='ndarray',
+                                           regions=regions, stride=0)
 
     with pytest.raises(Exception):
-        DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                                   storage='step',
-                                   regions=regions, order=1,
-                                   cachedir=tmpdir.strpath)
+        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                           storage='step',
+                                           regions=regions, order=1,
+                                           cachedir=tmpdir.strpath)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'genome.fa', 'chr1..nmm'))
 
-    DnaBwDataset.fromRefGenome('train', refgenome=refgenome,
-                               storage='memmap',
-                               regions=regions, order=1,
-                               cachedir=tmpdir.strpath)
+    DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                       storage='memmap',
+                                       regions=regions, order=1,
+                                       cachedir=tmpdir.strpath)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..nmm'))
@@ -249,7 +253,8 @@ def test_read_dna_from_fasta_order_1(tmpdir):
 
     order = 1
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBwDataset.fromFasta('train', fastafile=filename, order=order)
+    data = DnaBwDataset.create_from_fasta('train', fastafile=filename,
+                                          order=order)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), pow(4, order), 200, 1))
@@ -289,8 +294,9 @@ def test_read_dna_from_fasta_order_2(tmpdir):
 
     order = 2
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBwDataset.fromFasta('train', fastafile=filename, order=order,
-                                  cachedir=tmpdir.strpath)
+    data = DnaBwDataset.create_from_fasta('train', fastafile=filename,
+                                          order=order,
+                                          cachedir=tmpdir.strpath)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), 16, 199, 1))

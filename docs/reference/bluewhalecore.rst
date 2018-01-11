@@ -11,8 +11,8 @@ BlueWhale Model
 
 .. autosummary::
    BlueWhale
-   BlueWhale.fromShape
-   BlueWhale.fromName
+   BlueWhale.create_by_shape
+   BlueWhale.create_by_name
    BlueWhale.fit
    BlueWhale.predict
    BlueWhale.evaluate

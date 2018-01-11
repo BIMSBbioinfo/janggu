@@ -15,8 +15,8 @@ from bluewhalecore import bluewhale_fit_generator
 from bluewhalecore import bluewhale_predict_generator
 from bluewhalecore.bluewhale import BlueWhale
 from bluewhalecore.data import NumpyBwDataset
-from bluewhalecore.data import inputShape
-from bluewhalecore.data import outputShape
+from bluewhalecore.data import input_shape
+from bluewhalecore.data import output_shape
 from bluewhalecore.decorators import inputlayer
 from bluewhalecore.decorators import outputlayer
 from bluewhalecore.evaluate import bw_auprc
@@ -69,7 +69,7 @@ def bluewhalemodel():
 
 # Option 3:
 # Define the body of the network using the decorators.
-# This option is used with BlueWhale.fromShape
+# This option is used with BlueWhale.create_by_shape
 @inputlayer
 @outputlayer
 def ffn(input, inparams, outparams, otherparams):
@@ -162,10 +162,11 @@ print('#' * 40)
 # Instantiate model from input and output shape
 K.clear_session()
 np.random.seed(1234)
-bw = BlueWhale.fromShape(inputShape(bw_x_train),
-                         outputShape(bw_y_train, 'categorical_crossentropy'),
-                         'mnist_ffn',
-                         modeldef=(ffn, (10, 'tanh',)))
+bw = BlueWhale.create_by_shape(input_shape(bw_x_train),
+                               output_shape(bw_y_train,
+                                            'categorical_crossentropy'),
+                               'mnist_ffn',
+                               modeldef=(ffn, (10, 'tanh',)))
 h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100, verbose=0)
 ypred = bw.predict(bw_x_test)
 print('Option 4')

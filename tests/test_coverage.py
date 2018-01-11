@@ -24,14 +24,14 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
         # print(store)
-        cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
-                                           bam=file_,
-                                           regions=regions,
-                                           genomesize=gsize,
-                                           resolution=1, stride=1,
-                                           flank=flank, stranded=True,
-                                           storage=store,
-                                           cachedir=tmpdir.strpath)
+        cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
+                                            bam=file_,
+                                            regions=regions,
+                                            genomesize=gsize,
+                                            resolution=1, stride=1,
+                                            flank=flank, stranded=True,
+                                            storage=store,
+                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 20)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2, 2*flank + 1, 1))
@@ -45,14 +45,14 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # 20 bp resolution
         # print(store)
-        cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
-                                           bam=file_,
-                                           regions=regions,
-                                           genomesize=gsize,
-                                           resolution=20, stride=20,
-                                           flank=flank, stranded=True,
-                                           storage=store,
-                                           cachedir=tmpdir.strpath)
+        cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
+                                            bam=file_,
+                                            regions=regions,
+                                            genomesize=gsize,
+                                            resolution=20, stride=20,
+                                            flank=flank, stranded=True,
+                                            storage=store,
+                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 1)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2, 2*flank + 1, 1))
@@ -85,14 +85,14 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
         print(store)
-        cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
-                                           bam=file_,
-                                           regions=regions,
-                                           genomesize=gsize,
-                                           resolution=1, stride=1,
-                                           flank=flank, stranded=False,
-                                           storage=store,
-                                           cachedir=tmpdir.strpath)
+        cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
+                                            bam=file_,
+                                            regions=regions,
+                                            genomesize=gsize,
+                                            resolution=1, stride=1,
+                                            flank=flank, stranded=False,
+                                            storage=store,
+                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 20)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 2*flank + 1, 1))
@@ -119,14 +119,14 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     for store in ['step', 'ndarray', 'memmap', 'hdf5']:
         # 20 bp resolution
         print(store)
-        cvdata = CoverageBwDataset.fromBam("yeast_I_II_III.bam",
-                                           bam=file_,
-                                           regions=regions,
-                                           genomesize=gsize,
-                                           resolution=20, stride=20,
-                                           flank=flank, stranded=False,
-                                           storage=store,
-                                           cachedir=tmpdir.strpath)
+        cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
+                                            bam=file_,
+                                            regions=regions,
+                                            genomesize=gsize,
+                                            resolution=20, stride=20,
+                                            flank=flank, stranded=False,
+                                            storage=store,
+                                            cachedir=tmpdir.strpath)
 
         np.testing.assert_equal(len(cvdata), 1)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 2*flank + 1, 1))

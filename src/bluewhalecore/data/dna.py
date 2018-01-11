@@ -1,13 +1,14 @@
 import os
 
 import numpy as np
-from data import BwDataset
-from genomic_indexer import BwGenomicIndexer
 from HTSeq import GenomicInterval
-from htseq_extension import BwGenomicArray
 from pandas import DataFrame
-from utils import dna2ind
-from utils import sequencesFromFasta
+
+from bluewhalecore.data.data import BwDataset
+from bluewhalecore.data.genomic_indexer import BwGenomicIndexer
+from bluewhalecore.data.htseq_extension import BwGenomicArray
+from bluewhalecore.data.utils import dna2ind
+from bluewhalecore.data.utils import sequencescreate_from_fasta
 
 
 class DnaBwDataset(BwDataset):
@@ -59,8 +60,11 @@ class DnaBwDataset(BwDataset):
         Directory in which the cachefiles are located. Default: None.
     """
 
+    _order = None
+    _flank = None
+
     def __init__(self, name, garray, gindexer,
-                 flank=150, order=1, cachedir=None):
+                 flank=150, order=1):
 
         self.flank = flank
         self.order = order
@@ -70,12 +74,12 @@ class DnaBwDataset(BwDataset):
         BwDataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _makeGenomicArray(name, fastafile, order, storage, cachedir='',
-                          overwrite=False):
+    def _make_genomic_array(name, fastafile, order, storage, cachedir='',
+                            overwrite=False):
         """Create a genomic array or reload an existing one."""
 
         # Load sequences from refgenome
-        seqs = sequencesFromFasta(fastafile)
+        seqs = sequencescreate_from_fasta(fastafile)
 
         chromlens = {}
 
@@ -87,56 +91,57 @@ class DnaBwDataset(BwDataset):
             raise Exception('storage must be memmap, ndarray or hdf5')
 
         if storage == 'memmap':
-            memmap_dir = os.path.join(cachedir, name,
-                                      os.path.basename(fastafile))
-            if not os.path.exists(memmap_dir):
-                os.makedirs(memmap_dir)
+            cachedir = os.path.join(cachedir, name,
+                                    os.path.basename(fastafile))
+            if not os.path.exists(cachedir):
+                os.makedirs(cachedir)
 
-            ps = [os.path.join(memmap_dir, '{}..nmm'.format(x))
-                  for x in chromlens.keys()]
-            nmms = [os.path.exists(p) for p in ps]
+            paths = [os.path.join(cachedir, '{}..nmm'.format(x))
+                     for x in chromlens.iterkeys()]
+            nmms = [os.path.exists(p) for p in paths]
         elif storage == 'hdf5':
-            memmap_dir = os.path.join(cachedir, name,
-                                      os.path.basename(fastafile))
-            if not os.path.exists(memmap_dir):
-                os.makedirs(memmap_dir)
+            cachedir = os.path.join(cachedir, name,
+                                    os.path.basename(fastafile))
+            if not os.path.exists(cachedir):
+                os.makedirs(cachedir)
 
-            ps = [os.path.join(memmap_dir, '{}..h5'.format(x))
-                  for x in chromlens.keys()]
-            nmms = [os.path.exists(p) for p in ps]
+            paths = [os.path.join(cachedir, '{}..h5'.format(x))
+                     for x in chromlens.iterkeys()]
+            nmms = [os.path.exists(p) for p in paths]
         else:
             nmms = [False]
-            memmap_dir = ''
+            cachedir = ''
 
         garray = BwGenomicArray(chromlens, stranded=False,
                                 typecode='int16',
-                                storage=storage, memmap_dir=memmap_dir,
+                                storage=storage, memmap_dir=cachedir,
                                 overwrite=overwrite)
 
         if all(nmms) and not overwrite:
-            print('Reload BwGenomicArray from {}'.format(memmap_dir))
+            print('Reload BwGenomicArray from {}'.format(cachedir))
         else:
             # Convert sequences to index array
             print('Convert sequences to index array')
             for seq in seqs:
-                iv = GenomicInterval(seq.id, 0, len(seq) - order + 1, '.')
+                interval = GenomicInterval(seq.id, 0,
+                                           len(seq) - order + 1, '.')
 
                 dna = np.asarray(dna2ind(seq), dtype='int16')
 
                 if order > 1:
                     # for higher order motifs, this part is used
-                    filter = np.asarray([pow(4, i) for i in range(order)])
-                    dna = np.convolve(dna, filter, mode='valid')
+                    filter_ = np.asarray([pow(4, i) for i in range(order)])
+                    dna = np.convolve(dna, filter_, mode='valid')
 
-                garray[iv] = dna
+                garray[interval] = dna
 
         return garray
 
     @classmethod
-    def fromRefGenome(cls, name, refgenome, regions,
-                      stride=50, reglen=200,
-                      flank=150, order=1, storage='hdf5',
-                      cachedir='', overwrite=False):
+    def create_from_refgenome(cls, name, refgenome, regions,
+                              stride=50, reglen=200,
+                              flank=150, order=1, storage='hdf5',
+                              cachedir='', overwrite=False):
         """Create a DnaBwDataset class from a reference genome.
 
         This requires a reference genome in fasta format as well as a bed-file
@@ -170,15 +175,15 @@ class DnaBwDataset(BwDataset):
 
         gindexer = BwGenomicIndexer(regions, reglen, stride)
 
-        garray = cls._makeGenomicArray(name, refgenome, order, storage,
-                                       cachedir=cachedir,
-                                       overwrite=overwrite)
+        garray = cls._make_genomic_array(name, refgenome, order, storage,
+                                         cachedir=cachedir,
+                                         overwrite=overwrite)
 
         return cls(name, garray, gindexer, flank, order)
 
     @classmethod
-    def fromFasta(cls, name, fastafile, storage='ndarray',
-                  order=1, cachedir='', overwrite=False):
+    def create_from_fasta(cls, name, fastafile, storage='ndarray',
+                          order=1, cachedir='', overwrite=False):
         """Create a DnaBwDataset class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
@@ -200,11 +205,11 @@ class DnaBwDataset(BwDataset):
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
-        garray = cls._makeGenomicArray(name, fastafile, order, storage,
-                                       cachedir=cachedir,
-                                       overwrite=overwrite)
+        garray = cls._make_genomic_array(name, fastafile, order, storage,
+                                         cachedir=cachedir,
+                                         overwrite=overwrite)
 
-        seqs = sequencesFromFasta(fastafile)
+        seqs = sequencescreate_from_fasta(fastafile)
 
         # Check if sequences are equally long
         lens = [len(seq) for seq in seqs]
@@ -239,11 +244,11 @@ class DnaBwDataset(BwDataset):
                          2*self.flank - self.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
-            iv = self.gindexer[idx]
-            iv.start -= self.flank
-            iv.end += self.flank - self.order + 1
+            interval = self.gindexer[idx]
+            interval.start -= self.flank
+            interval.end += self.flank - self.order + 1
 
-            idna[i] = np.asarray(list(self.garray[iv]))
+            idna[i] = np.asarray(list(self.garray[interval]))
 
         return idna
 
@@ -253,8 +258,7 @@ class DnaBwDataset(BwDataset):
         onehot = np.zeros((len(idna), pow(4, self.order),
                            idna.shape[1], 1), dtype='int8')
         for nuc in np.arange(pow(4, self.order)):
-            Ilist = np.where(idna == nuc)
-            onehot[Ilist[0], nuc, Ilist[1], 0] = 1
+            onehot[:, nuc, :, 0][idna == nuc] = 1
 
         return onehot
 
@@ -267,8 +271,8 @@ class DnaBwDataset(BwDataset):
 
         data = self.as_onehot(self.idna4idx(idxs))
 
-        for tr in self.transformations:
-            data = tr(data)
+        for transform in self.transformations:
+            data = transform(data)
 
         return data
 
@@ -306,6 +310,17 @@ class DnaBwDataset(BwDataset):
         self._flank = value
 
 
+def _rcindex(idx, order):
+    rev_idx = np.arange(4)[::-1]
+    irc = 0
+    for iord in range(order):
+        nuc = idx % 4
+        idx = idx // 4
+        irc += rev_idx[nuc] * pow(4, order - iord - 1)
+
+    return irc
+
+
 class RevCompDnaBwDataset(BwDataset):
     """RevCompDnaBwDataset class.
 
@@ -338,23 +353,13 @@ class RevCompDnaBwDataset(BwDataset):
     def __repr__(self):
         return 'RevDnaBwDataset("{}", <DnaBwDataset>)'.format(self.name)
 
-    def _rcindex(self, idx, order):
-        x = np.arange(4)[::-1]
-        irc = 0
-        for o in range(order):
-            nuc = idx % 4
-            idx = idx // 4
-            irc += x[nuc] * pow(4, order - o - 1)
-
-        return irc
-
     def _rcpermmatrix(self, order):
-        P = np.zeros((pow(4, order), pow(4, order)))
+        perm = np.zeros((pow(4, order), pow(4, order)))
         for idx in range(pow(4, order)):
-            jdx = self._rcindex(idx, order)
-            P[jdx, idx] = 1
+            jdx = _rcindex(idx, order)
+            perm[jdx, idx] = 1
 
-        return P
+        return perm
 
     def as_revcomp(self, data):
         # compute the reverse complement of the original sequence
@@ -371,8 +376,8 @@ class RevCompDnaBwDataset(BwDataset):
         # self.as_onehot(self.idna4idx(idxs))
         data = self.as_revcomp(data)
 
-        for tr in self.transformations:
-            data = tr(data)
+        for transform in self.transformations:
+            data = transform(data)
 
         return data
 

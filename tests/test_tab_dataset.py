@@ -4,7 +4,7 @@ import numpy as np
 import pkg_resources
 import pytest
 
-from bluewhalecore.data.tab import TabBwDataset
+from bluewhalecore.data import TabBwDataset
 
 
 def test_tab_reading():

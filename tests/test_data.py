@@ -3,31 +3,31 @@ import os
 import pkg_resources
 import pytest
 
-from bluewhalecore.data import readBed
-from bluewhalecore.data.data import inputShape
-from bluewhalecore.data.data import outputShape
-from bluewhalecore.data.dna import DnaBwDataset
-from bluewhalecore.data.dna import RevCompDnaBwDataset
-from bluewhalecore.data.tab import TabBwDataset
+from bluewhalecore.data import DnaBwDataset
+from bluewhalecore.data import RevCompDnaBwDataset
+from bluewhalecore.data import TabBwDataset
+from bluewhalecore.data import input_shape
+from bluewhalecore.data import output_shape
+from bluewhalecore.data import read_bed
 
 
 def test_inshape():
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    regions = readBed(os.path.join(data_path, 'regions.bed'))
+    regions = read_bed(os.path.join(data_path, 'regions.bed'))
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaBwDataset.fromRefGenome('dna', refgenome=refgenome,
-                                     storage='ndarray',
-                                     regions=regions, order=1)
+    dna = DnaBwDataset.create_from_refgenome('dna', refgenome=refgenome,
+                                             storage='ndarray',
+                                             regions=regions, order=1)
     rcdna = RevCompDnaBwDataset('rcdna', dna)
 
-    sh = inputShape([dna, rcdna])
+    sh = input_shape([dna, rcdna])
     assert 'dna' in sh
     assert 'rcdna' in sh
 
     with pytest.raises(Exception):
-        inputShape((0,))
+        input_shape((0,))
 
 
 def test_outshape():
@@ -38,10 +38,10 @@ def test_outshape():
     ctcf1 = TabBwDataset('ctcf1', filename=csvfile)
     ctcf2 = TabBwDataset('ctcf2', filename=csvfile)
 
-    sh = outputShape([ctcf1, ctcf2], 'binary_crossentropy')
+    sh = output_shape([ctcf1, ctcf2], 'binary_crossentropy')
 
     assert 'ctcf1' in sh
     assert 'ctcf2' in sh
 
     with pytest.raises(Exception):
-        outputShape((0,))
+        output_shape((0,))
