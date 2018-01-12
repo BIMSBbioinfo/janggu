@@ -1,9 +1,6 @@
-import Bio.SeqIO as sio
-from Bio.Alphabet import IUPAC
-
-import numpy as np
 import os
 
+import numpy as np
 import pkg_resources
 import pytest
 
@@ -11,7 +8,6 @@ from bluewhalecore.data import DnaBwDataset
 from bluewhalecore.data import RevCompDnaBwDataset
 from bluewhalecore.data import read_bed
 from bluewhalecore.data import sequences_from_fasta
-
 from bluewhalecore.data.utils import NMAP
 
 reglen = 200
