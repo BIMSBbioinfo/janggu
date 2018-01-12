@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import pandas as pd
 from Bio import SeqIO
+from Bio.Alphabet import IUPAC
 from Bio.SeqRecord import SeqRecord
 
 from bluewhalecore.data.data import BwDataset
@@ -20,7 +21,7 @@ def sequences_from_fasta(fasta):
     """
 
     file_ = open(fasta)
-    gen = SeqIO.parse(file_, "fasta")
+    gen = SeqIO.parse(file_, "fasta", IUPAC.unambiguous_dna)
     seqs = [item for item in gen]
 
     return seqs
