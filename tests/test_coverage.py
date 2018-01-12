@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas
 import pkg_resources
-from genomeutils.refgenome import getGenomeSize
+# from genomeutils.refgenome import getGenomeSize
 from HTSeq import GenomicInterval
 
 from bluewhalecore.data import CoverageBwDataset
@@ -11,8 +11,12 @@ from bluewhalecore.data import CoverageBwDataset
 
 def test_load_coveragedataset_bam_stranded(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    file_ = os.path.join(data_path, "yeast_I_II_III.bam")
-    gsize = getGenomeSize('sacCer3', outputdir=data_path)
+    file_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+
+    content = pandas.read_csv(file_, sep='\t', names=['chr', 'length'],
+                              index_col='chr')
+
+    gsize = content.to_dict()['length']
 
     regions = pandas.DataFrame({'chr': ['chrIII'],
                                 'start': [217330],
@@ -76,8 +80,13 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
 def test_load_coveragedataset_bam_unstranded(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    file_ = os.path.join(data_path, "yeast_I_II_III.bam")
-    gsize = getGenomeSize('sacCer3', outputdir=data_path)
+
+    file_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+
+    content = pandas.read_csv(file_, sep='\t', names=['chr', 'length'],
+                              index_col='chr')
+
+    gsize = content.to_dict()['length']
 
     regions = pandas.DataFrame({'chr': ['chrIII'],
                                 'start': [217330],
