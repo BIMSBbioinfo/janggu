@@ -231,62 +231,67 @@ class BlueWhale(object):
 
         if generator:
 
-            if not batch_size:
-                batch_size = 32
+            try:
+                if not batch_size:
+                    batch_size = 32
 
-            xlen = len(inputs.itervalues().next())
+                xlen = len(inputs.itervalues().next())
 
-            if not steps_per_epoch:
-                steps_per_epoch = xlen//batch_size + \
-                    (1 if xlen % batch_size > 0 else 0)
+                if not steps_per_epoch:
+                    steps_per_epoch = xlen//batch_size + \
+                        (1 if xlen % batch_size > 0 else 0)
 
-            if validation_data:
-                if len(validation_data) == 2:
-                    vgen = generator(validation_data[0],
-                                     validation_data[1],
-                                     batch_size,
-                                     shuffle=shuffle)
+                if validation_data:
+                    if len(validation_data) == 2:
+                        vgen = generator(validation_data[0],
+                                         validation_data[1],
+                                         batch_size,
+                                         shuffle=shuffle)
+                    else:
+                        vgen = generator(validation_data[0],
+                                         validation_data[1],
+                                         batch_size,
+                                         sample_weight=validation_data[2],
+                                         shuffle=shuffle)
+
+                    if not validation_steps:
+                        validation_steps = len(validation_data[0])//batch_size + \
+                                    (1 if len(validation_data[0]) % batch_size > 0
+                                     else 0)
                 else:
-                    vgen = generator(validation_data[0],
-                                     validation_data[1],
-                                     batch_size,
-                                     sample_weight=validation_data[2],
-                                     shuffle=shuffle)
+                    vgen = None
 
-                if not validation_steps:
-                    validation_steps = len(validation_data[0])//batch_size + \
-                                (1 if len(validation_data[0]) % batch_size > 0
-                                 else 0)
-            else:
-                vgen = None
-
-            history = self.kerasmodel.fit_generator(
-                generator(inputs, outputs, batch_size,
-                          sample_weight=sample_weight,
-                          shuffle=shuffle),
-                steps_per_epoch=steps_per_epoch,
-                epochs=epochs,
-                validation_data=vgen,
-                validation_steps=validation_steps,
-                class_weight=class_weight,
-                initial_epoch=initial_epoch,
-                shuffle=False,  # must be false!
-                use_multiprocessing=use_multiprocessing,
-                max_queue_size=50,
-                workers=workers,
-                verbose=verbose,
-                callbacks=callbacks)
-
+                history = self.kerasmodel.fit_generator(
+                    generator(inputs, outputs, batch_size,
+                              sample_weight=sample_weight,
+                              shuffle=shuffle),
+                    steps_per_epoch=steps_per_epoch,
+                    epochs=epochs,
+                    validation_data=vgen,
+                    validation_steps=validation_steps,
+                    class_weight=class_weight,
+                    initial_epoch=initial_epoch,
+                    shuffle=False,  # must be false!
+                    use_multiprocessing=use_multiprocessing,
+                    max_queue_size=50,
+                    workers=workers,
+                    verbose=verbose,
+                    callbacks=callbacks)
+            except Exception:
+                self.logger.exception('fit_generator failed:')
         else:
-            history = self.kerasmodel.fit(inputs, outputs, batch_size, epochs,
-                                          verbose,
-                                          callbacks, validation_split,
-                                          validation_data, shuffle,
-                                          class_weight,
-                                          sample_weight, initial_epoch,
-                                          steps_per_epoch,
-                                          validation_steps,
-                                          **kwargs)
+            try:
+                history = self.kerasmodel.fit(inputs, outputs, batch_size, epochs,
+                                              verbose,
+                                              callbacks, validation_split,
+                                              validation_data, shuffle,
+                                              class_weight,
+                                              sample_weight, initial_epoch,
+                                              steps_per_epoch,
+                                              validation_steps,
+                                              **kwargs)
+            except Exception:
+                self.logger.exception('fit failed:')
 
         self.logger.info('#' * 40)
         for k in history.history:
@@ -302,6 +307,7 @@ class BlueWhale(object):
                 steps=None,
                 generator=None,
                 use_multiprocessing=True,
+                layername=None,
                 workers=1):
 
         """Predict targets.
@@ -327,6 +333,14 @@ class BlueWhale(object):
         self.logger.info("Input:")
         self.__dim_logging(inputs)
 
+        # if a desired layername is specified, the features
+        # will be predicted.
+        if layername:
+            model = Model(self.kerasmodel.input,
+                          self.kerasmodel.get_layer(layername).output)
+        else:
+            model = self.kerasmodel
+
         if generator:
 
             if not batch_size:
@@ -337,14 +351,20 @@ class BlueWhale(object):
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
-            return self.kerasmodel.predict_generator(
-                generator(inputs, batch_size),
-                steps=steps,
-                use_multiprocessing=use_multiprocessing,
-                workers=workers,
-                verbose=verbose)
+            try:
+                return self.kerasmodel.predict_generator(
+                    generator(inputs, batch_size),
+                    steps=steps,
+                    use_multiprocessing=use_multiprocessing,
+                    workers=workers,
+                    verbose=verbose)
+            except Exception:
+                self.logger.exception('predict_generator failed:')
         else:
-            return self.kerasmodel.predict(inputs, batch_size, verbose, steps)
+            try:
+                return self.kerasmodel.predict(inputs, batch_size, verbose, steps)
+            except Exception:
+                self.logger.exception('predict failed:')
 
     def evaluate(self, inputs=None, outputs=None,
                  batch_size=None,
@@ -391,16 +411,23 @@ class BlueWhale(object):
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
-            values = self.kerasmodel.evaluate_generator(
-                generator(inputs, outputs, batch_size,
-                          sample_weight=sample_weight,
-                          shuffle=False),
-                steps=steps,
-                use_multiprocessing=use_multiprocessing,
-                workers=workers)
+            try:
+                values = self.kerasmodel.evaluate_generator(
+                    generator(inputs, outputs, batch_size,
+                              sample_weight=sample_weight,
+                              shuffle=False),
+                    steps=steps,
+                    use_multiprocessing=use_multiprocessing,
+                    workers=workers)
+            except Exception:
+                self.logger.exception('evaluate_generator failed:')
         else:
-            values = self.kerasmodel.evaluate(inputs, outputs, batch_size,
-                                              verbose, sample_weight, steps)
+            try:
+                values = self.kerasmodel.evaluate(inputs, outputs, batch_size,
+                                                  verbose,
+                                                  sample_weight, steps)
+            except Exception:
+                self.logger.exception('evaluate_generator failed:')
 
         self.logger.info('#' * 40)
         if not isinstance(values, list):
