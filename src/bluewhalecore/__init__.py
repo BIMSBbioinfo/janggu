@@ -1,6 +1,6 @@
 """BlueWhale model and utilities for deep learning in genomics."""
 
-__version__ = '0.4.2'
+__version__ = '0.5.0'
 
 from bluewhalecore.bluewhale import BlueWhale  # noqa
 from bluewhalecore.decorators import inputlayer  # noqa
