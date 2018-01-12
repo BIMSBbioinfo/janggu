@@ -11,9 +11,10 @@ from bluewhalecore.data import CoverageBwDataset
 
 def test_load_coveragedataset_bam_stranded(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    file_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+    bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
+    gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
 
-    content = pandas.read_csv(file_, sep='\t', names=['chr', 'length'],
+    content = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
                               index_col='chr')
 
     gsize = content.to_dict()['length']
@@ -29,7 +30,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         # base pair resolution
         # print(store)
         cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
-                                            bam=file_,
+                                            bam=bamfile_,
                                             regions=regions,
                                             genomesize=gsize,
                                             resolution=1, stride=1,
@@ -52,7 +53,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         # 20 bp resolution
         # print(store)
         cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
-                                            bam=file_,
+                                            bam=bamfile_,
                                             regions=regions,
                                             genomesize=gsize,
                                             resolution=20, stride=20,
@@ -81,9 +82,10 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 def test_load_coveragedataset_bam_unstranded(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
 
-    file_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+    bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
+    gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
 
-    content = pandas.read_csv(file_, sep='\t', names=['chr', 'length'],
+    content = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
                               index_col='chr')
 
     gsize = content.to_dict()['length']
@@ -99,7 +101,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         # base pair resolution
         print(store)
         cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
-                                            bam=file_,
+                                            bam=bamfile_,
                                             regions=regions,
                                             genomesize=gsize,
                                             resolution=1, stride=1,
@@ -135,7 +137,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         # 20 bp resolution
         print(store)
         cvdata = CoverageBwDataset.from_bam("yeast_I_II_III.bam",
-                                            bam=file_,
+                                            bam=bamfile_,
                                             regions=regions,
                                             genomesize=gsize,
                                             resolution=20, stride=20,
