@@ -20,10 +20,16 @@ from bluewhalecore.data import output_shape
 np.random.seed(1234)
 
 data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-filename = os.path.join(data_path, 'oct4.fa')
-bw_x_train = DnaBwDataset.create_from_fasta('dna', fastafile=filename, order=1)
-bw_y_train = NumpyBwDataset('y', np.random.randint(2, size=(len(bw_x_train),
-                                                            1)))
+filename = os.path.join(data_path, 'stemcells.fa')
+x1 = DnaBwDataset.create_from_fasta('dna', fastafile=filename, order=1)
+filename = os.path.join(data_path, 'fibroblast.fa')
+x2 = DnaBwDataset.create_from_fasta('dna', fastafile=filename, order=1)
+
+bw_x_train = NumpyBwDataset('dna', np.concatenate((x1[:], x2[:])))
+
+y = np.zeros((len(bw_x_train), 1))
+y[:len(x1)] = 1
+bw_y_train = NumpyBwDataset('y', y)
 
 
 # Option 1:
@@ -43,8 +49,7 @@ def kerasmodel():
 K.clear_session()
 np.random.seed(1234)
 m = kerasmodel()
-h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000,
-          shuffle=False, verbose=0)
+h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
 print('Option 1')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
@@ -67,8 +72,7 @@ def bluewhalemodel():
 
 K.clear_session()
 m = bluewhalemodel()
-h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000,
-          shuffle=False, verbose=0)
+h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
 print('Option 2')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
@@ -93,8 +97,7 @@ m = BlueWhale.create_by_shape(input_shape(bw_x_train),
                               output_shape(bw_y_train, 'binary_crossentropy'),
                               'oct4_cnn',
                               modeldef=(bluewhalebody, (10, 'relu',)))
-h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000,
-          shuffle=False, verbose=0)
+h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=1000)
 print('Option 3')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
