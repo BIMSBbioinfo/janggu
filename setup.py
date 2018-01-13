@@ -31,12 +31,11 @@ if Cython:
         Extension(
             splitext(relpath(path, 'src').replace(sep, '.'))[0],
             sources=[path],
-            include_dirs=[dirname(path)],
-            compiler_directives={'emdedsignature': True}
+            include_dirs=[dirname(path)]
         )
         for root, _, _ in walk('src')
         for path in glob(join(root, '*.pyx' if Cython else '*.c'))
-    ])
+    ], compiler_directives={'embedsignature': True})
 else:
     CYTHONIZED = None
 
