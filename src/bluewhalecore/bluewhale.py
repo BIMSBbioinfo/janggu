@@ -352,7 +352,7 @@ class BlueWhale(object):
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
             try:
-                return self.kerasmodel.predict_generator(
+                return model.predict_generator(
                     generator(inputs, batch_size),
                     steps=steps,
                     use_multiprocessing=use_multiprocessing,
@@ -362,7 +362,7 @@ class BlueWhale(object):
                 self.logger.exception('predict_generator failed:')
         else:
             try:
-                return self.kerasmodel.predict(inputs, batch_size, verbose, steps)
+                return model.predict(inputs, batch_size, verbose, steps)
             except Exception:
                 self.logger.exception('predict failed:')
 
