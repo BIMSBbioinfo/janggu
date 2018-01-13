@@ -39,7 +39,7 @@ def bluewhale_fit_generator(inputdata, outputdata, batch_size,
         raise Exception('generate_fit_data expects data to be dicts')
 
     for k in inputdata:
-        indices = range(len(inputdata[k]))
+        indices = list(range(len(inputdata[k])))
         break
 
     while 1:

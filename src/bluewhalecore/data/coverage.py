@@ -268,9 +268,11 @@ class CoverageBwDataset(BwDataset):
             idxs = range(idxs.start if idxs.start else 0,
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
-        if not isinstance(idxs, list):
-            raise IndexError('CoverageBwDataset.__getitem__ '
-                             + 'requires "int" or "list"')
+        try:
+            iter(idxs)
+        except TypeError:
+            raise IndexError('CoverageBwDataset.__getitem__: '
+                             + 'index must be iterable')
 
         data = np.empty((len(idxs), 2 if self.stranded else 1,
                          1 + 2*self.flank, len(self.covers)))

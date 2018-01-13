@@ -228,6 +228,7 @@ class BlueWhale(object):
         self.__dim_logging(inputs)
         self.logger.info("Output:")
         self.__dim_logging(outputs)
+        history = None
 
         if generator:
 
@@ -235,7 +236,9 @@ class BlueWhale(object):
                 if not batch_size:
                     batch_size = 32
 
-                xlen = len(inputs.itervalues().next())
+                for k in inputs:
+                    xlen = len(inputs[k])
+                    break
 
                 if not steps_per_epoch:
                     steps_per_epoch = xlen//batch_size + \
@@ -279,6 +282,7 @@ class BlueWhale(object):
                     callbacks=callbacks)
             except Exception:
                 self.logger.exception('fit_generator failed:')
+                raise
         else:
             try:
                 history = self.kerasmodel.fit(inputs, outputs, batch_size, epochs,
@@ -292,6 +296,7 @@ class BlueWhale(object):
                                               **kwargs)
             except Exception:
                 self.logger.exception('fit failed:')
+                raise
 
         self.logger.info('#' * 40)
         for k in history.history:
@@ -346,7 +351,9 @@ class BlueWhale(object):
             if not batch_size:
                 batch_size = 32
 
-            xlen = len(inputs.itervalues().next())
+            for k in inputs:
+                xlen = len(inputs[k])
+                break
 
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
@@ -360,11 +367,13 @@ class BlueWhale(object):
                     verbose=verbose)
             except Exception:
                 self.logger.exception('predict_generator failed:')
+                raise
         else:
             try:
                 return model.predict(inputs, batch_size, verbose, steps)
             except Exception:
                 self.logger.exception('predict failed:')
+                raise
 
     def evaluate(self, inputs=None, outputs=None,
                  batch_size=None,
@@ -406,7 +415,9 @@ class BlueWhale(object):
             if not batch_size:
                 batch_size = 32
 
-            xlen = len(inputs.itervalues().next())
+            for k in inputs:
+                xlen = len(inputs[k])
+                break
 
             if not steps:
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
@@ -421,6 +432,7 @@ class BlueWhale(object):
                     workers=workers)
             except Exception:
                 self.logger.exception('evaluate_generator failed:')
+                raise
         else:
             try:
                 values = self.kerasmodel.evaluate(inputs, outputs, batch_size,
@@ -428,6 +440,7 @@ class BlueWhale(object):
                                                   sample_weight, steps)
             except Exception:
                 self.logger.exception('evaluate_generator failed:')
+                raise
 
         self.logger.info('#' * 40)
         if not isinstance(values, list):

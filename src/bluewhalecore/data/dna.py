@@ -97,7 +97,7 @@ class DnaBwDataset(BwDataset):
                 os.makedirs(cachedir)
 
             paths = [os.path.join(cachedir, '{}..nmm'.format(x))
-                     for x in chromlens.iterkeys()]
+                     for x in iter(chromlens)]
             nmms = [os.path.exists(p) for p in paths]
         elif storage == 'hdf5':
             cachedir = os.path.join(cachedir, name,
@@ -106,7 +106,7 @@ class DnaBwDataset(BwDataset):
                 os.makedirs(cachedir)
 
             paths = [os.path.join(cachedir, '{}..h5'.format(x))
-                     for x in chromlens.iterkeys()]
+                     for x in iter(chromlens)]
             nmms = [os.path.exists(p) for p in paths]
         else:
             nmms = [False]
@@ -269,10 +269,11 @@ class DnaBwDataset(BwDataset):
             idxs = range(idxs.start if idxs.start else 0,
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
-        if not isinstance(idxs, list):
-            raise IndexError(
-                'DnaBwDataset.__getitem__ '
-                + 'requires "int" or "list": got {}'.format(type(idxs)))
+        try:
+            iter(idxs)
+        except TypeError:
+            raise IndexError('DnaBwDataset.__getitem__: '
+                             + 'index must be iterable')
 
         data = self.as_onehot(self.idna4idx(idxs))
 

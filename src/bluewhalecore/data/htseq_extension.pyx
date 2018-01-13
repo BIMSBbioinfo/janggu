@@ -11,6 +11,10 @@ from HTSeq import ChromVector
 strand_plus = "+"
 strand_minus = "-"
 strand_nostrand = "."
+if int(sys.version[0]) < 3:
+    maxint = sys.maxint
+else:
+    maxint = sys.maxsize
 
 class BwChromVector(ChromVector):
     """BwChromVector extends HTSeq.ChromVector.
@@ -147,10 +151,10 @@ class BwGenomicArray(GenomicArray):
                               typecode=typecode, storage=storage,
                               memmap_dir=memmap_dir)
 
-    def add_chrom(self, chrom, length=sys.maxint, start_index=0):
+    def add_chrom(self, chrom, length=maxint, start_index=0):
         """Adds a chromosome track."""
-        if length == sys.maxint:
-            iv = GenomicInterval(chrom, start_index, sys.maxint, ".")
+        if length == maxint:
+            iv = GenomicInterval(chrom, start_index, maxint, ".")
         else:
             iv = GenomicInterval(chrom, start_index, start_index + length, ".")
 
