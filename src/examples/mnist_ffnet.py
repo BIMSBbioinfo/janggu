@@ -10,7 +10,7 @@ from keras.layers import Input
 from keras.models import Model
 from sklearn.metrics import roc_auc_score
 
-from bluewhalecore import Evaluator
+from bluewhalecore import MongoDbEvaluator
 from bluewhalecore import bluewhale_fit_generator
 from bluewhalecore import bluewhale_predict_generator
 from bluewhalecore.bluewhale import BlueWhale
@@ -166,7 +166,8 @@ bw = BlueWhale.create_by_shape(input_shape(bw_x_train),
                                output_shape(bw_y_train,
                                             'categorical_crossentropy'),
                                'mnist_ffn',
-                               modeldef=(ffn, (10, 'tanh',)))
+                               modeldef=(ffn, (10, 'tanh',)),
+                               metrics=['acc'])
 h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100, verbose=0)
 ypred = bw.predict(bw_x_test)
 print('Option 4')
@@ -176,7 +177,7 @@ print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
 print('#' * 40)
 
 
-evaluator = Evaluator()
+evaluator = MongoDbEvaluator()
 
 # Evaluate the results
 evaluator.dump(bw, bw_x_test, bw_y_test,
