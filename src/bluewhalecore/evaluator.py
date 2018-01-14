@@ -106,7 +106,8 @@ class MongoDbEvaluator(Evaluator):
                                    use_multiprocessing=use_multiprocessing)
         for i, eval_ in enumerate(evals):
             iid = self._record(bluewhale.name, modeltags,
-                               bluewhale.metrics_names[i], eval_, datatags)
+                               bluewhale.kerasmodel.metrics_names[i], 
+                               eval_, datatags)
             bluewhale.logger.info("Recorded {}".format(iid))
 
         ypred = bluewhale.predict(inputs, batch_size=batch_size,
