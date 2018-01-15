@@ -266,6 +266,13 @@ def test_dna_dataset_sanity(tmpdir):
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..nmm'))
 
+    DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
+                                       storage='hdf5',
+                                       regions=regions, order=1,
+                                       cachedir=tmpdir.strpath)
+
+    assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
+                                       'chr1..h5'))
 
 def test_read_dna_from_fasta_order_1(tmpdir):
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
