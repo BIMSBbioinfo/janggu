@@ -106,7 +106,7 @@ class MongoDbEvaluator(Evaluator):
                                    use_multiprocessing=use_multiprocessing)
         for i, eval_ in enumerate(evals):
             iid = self._record(bluewhale.name, modeltags,
-                               bluewhale.kerasmodel.metrics_names[i], 
+                               bluewhale.kerasmodel.metrics_names[i],
                                eval_, datatags)
             bluewhale.logger.info("Recorded {}".format(iid))
 
@@ -122,7 +122,8 @@ class MongoDbEvaluator(Evaluator):
                     score = elementwise_score[key](outputs[:, idx],
                                                    ypred[:, idx])
                     tags = list(datatags)
-                    tags.append(outputs.samplenames[idx])
+                    if hasattr(outputs, "samplenames"):
+                        tags.append(outputs.samplenames[idx])
                     iid = self._record(bluewhale.name, modeltags, key,
                                        score, tags)
                     bluewhale.logger.info("Recorded {}".format(iid))
