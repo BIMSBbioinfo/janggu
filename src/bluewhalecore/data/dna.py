@@ -231,7 +231,7 @@ class DnaBwDataset(BwDataset):
 
         return cls(name, garray, gindexer, flank, order)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return 'DnaBwDataset("{}", <garray>, <gindexer>, \
                 flank={}, order={})'\
                 .format(self.name, self.flank, self.order)

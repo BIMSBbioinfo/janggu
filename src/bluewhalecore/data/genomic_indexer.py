@@ -59,7 +59,7 @@ class BwGenomicIndexer(object):
     def __len__(self):
         return len(self.chrs)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return "BwGenomicIndexer(<regions>, " \
             + "resolution={}, stride={})".format(self.resolution,
                                                  self.stride)

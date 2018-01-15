@@ -51,7 +51,7 @@ class TabBwDataset(BwDataset):
 
         BwDataset.__init__(self, name)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return 'TabBwDataset("{}", "{}")'\
                 .format(self.name, self.filename)
 

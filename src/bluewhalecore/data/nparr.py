@@ -33,7 +33,7 @@ class NumpyBwDataset(BwDataset):
 
         BwDataset.__init__(self, '{}'.format(name))
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return 'NumpyBwDataset("{}", <np.array>)'.format(self.name)
 
     def __len__(self):

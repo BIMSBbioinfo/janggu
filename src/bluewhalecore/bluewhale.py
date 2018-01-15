@@ -233,6 +233,11 @@ class BlueWhale(object):
         if generator:
 
             try:
+                if not isinstance(inputs, (list, dict)):
+                    raise TypeError("inputs must be a BwDataset, "
+                                    + "list(BwDataset)"
+                                    + "or dict(BwDataset) if used with a "
+                                    + "generator. Got {}".format(type(inputs)))
                 if not batch_size:
                     batch_size = 32
 
@@ -280,7 +285,7 @@ class BlueWhale(object):
                     workers=workers,
                     verbose=verbose,
                     callbacks=callbacks)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.logger.exception('fit_generator failed:')
                 raise
         else:
@@ -294,7 +299,7 @@ class BlueWhale(object):
                                               steps_per_epoch,
                                               validation_steps,
                                               **kwargs)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.logger.exception('fit failed:')
                 raise
 
@@ -347,7 +352,10 @@ class BlueWhale(object):
             model = self.kerasmodel
 
         if generator:
-
+            if not isinstance(inputs, (list, dict)):
+                raise TypeError("inputs must be a BwDataset, list(BwDataset)"
+                                + "or dict(BwDataset) if used with a "
+                                + "generator.")
             if not batch_size:
                 batch_size = 32
 
@@ -365,13 +373,13 @@ class BlueWhale(object):
                     use_multiprocessing=use_multiprocessing,
                     workers=workers,
                     verbose=verbose)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.logger.exception('predict_generator failed:')
                 raise
         else:
             try:
                 return model.predict(inputs, batch_size, verbose, steps)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.logger.exception('predict failed:')
                 raise
 
@@ -412,6 +420,10 @@ class BlueWhale(object):
 
         if generator:
 
+            if not isinstance(inputs, (list, dict)):
+                raise TypeError("inputs must be a BwDataset, list(BwDataset)"
+                                + "or dict(BwDataset) if used with a "
+                                + "generator.")
             if not batch_size:
                 batch_size = 32
 
@@ -430,7 +442,7 @@ class BlueWhale(object):
                     steps=steps,
                     use_multiprocessing=use_multiprocessing,
                     workers=workers)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.logger.exception('evaluate_generator failed:')
                 raise
         else:
@@ -438,7 +450,7 @@ class BlueWhale(object):
                 values = self.kerasmodel.evaluate(inputs, outputs, batch_size,
                                                   verbose,
                                                   sample_weight, steps)
-            except Exception:
+            except Exception:  # pragma: no cover
                 self.logger.exception('evaluate_generator failed:')
                 raise
 
