@@ -101,13 +101,14 @@ setup(
         'Biopython',
         'pymongo',
         'keras',
-        'tensorflow',
         'htseq',
         'sklearn',
         'h5py',
         'pyBigWig'
     ],
     extras_require={
+        "tf": ['tensorflow'],
+        "tf_gpu": ['tensorflow-gpu'],
         # eg:
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],
