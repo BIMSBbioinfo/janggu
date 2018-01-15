@@ -49,7 +49,7 @@ def _read(*names, **kwargs):
 
 setup(
     name='bluewhalecore',
-    version='0.5.0',
+    version='0.5.1',
     license='BSD 3-Clause License',
     description='Code infrastructure for deep learning to make modelling '
     + 'reproducible and maintainable',
