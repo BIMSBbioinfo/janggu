@@ -19,13 +19,13 @@ def outputlayer(func):
     network with the correct shape, activation and name.
     """
     @wraps(func)
-    def add(inputs, inshapes, outshapes, params):
+    def _add(inputs, inshapes, outshapes, params):
         inputs, outputs = func(inputs, inshapes, outshapes, params)
         outputs = [Dense(outshapes[name]['shape'][0],
                          activation=outshapes[name]['activation'],
                          name=name)(outputs) for name in outshapes]
         return inputs, outputs
-    return add
+    return _add
 
 
 def inputlayer(func):
@@ -35,9 +35,9 @@ def inputlayer(func):
     network with the correct shape and name.
     """
     @wraps(func)
-    def add(inputs, inshapes, outshapes, params):
+    def _add(inputs, inshapes, outshapes, params):
         inputs = [Input(inshapes[name]['shape'], name=name)
                   for name in inshapes]
         inputs, outputs = func(inputs, inshapes, outshapes, params)
         return inputs, outputs
-    return add
+    return _add
