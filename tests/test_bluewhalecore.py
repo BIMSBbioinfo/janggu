@@ -185,7 +185,7 @@ def test_bluewhale_train_predict_option3(tmpdir, mongodb):
                      generator=bluewhale_fit_generator)
 
 
-def test_bluewhale_train_predict_option4(tmpdir, mongodb):
+def test_bluewhale_train_predict_option4(tmpdir):
     """Train, predict and evaluate on dummy data.
 
     Only works without generators and without evaluators.
