@@ -1,3 +1,5 @@
+"""Utilities for bluewhalecore.data """
+
 from collections import defaultdict
 
 import pandas as pd
