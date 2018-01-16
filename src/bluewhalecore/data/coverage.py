@@ -88,19 +88,19 @@ class CoverageBwDataset(BwDataset):
         return files_exist
 
     @classmethod
-    def from_bam(cls, name, bam, regions, genomesize,
-                 samplenames=None,
-                 resolution=50, stride=50,
-                 flank=4, stranded=True, storage='hdf5',
-                 overwrite=False,
-                 cachedir=None):
+    def create_from_bam(cls, name, bamfiles, regions, genomesize,
+                        samplenames=None,
+                        resolution=50, stride=50,
+                        flank=4, stranded=True, storage='hdf5',
+                        overwrite=False,
+                        cachedir=None):
         """Create a CoverageBwDataset class from a bam-file (or files).
 
         Parameters
         -----------
         name : str
             Name of the dataset
-        bam : str or list
+        bamfiles : str or list
             bam-file or list of bam files.
         gindxer : pandas.DataFrame or str
             bed-filename or content of a bed-file
@@ -131,14 +131,14 @@ class CoverageBwDataset(BwDataset):
 
         gindexer = BwGenomicIndexer(regions, resolution, stride)
 
-        if isinstance(bam, str):
-            bam = [bam]
+        if isinstance(bamfiles, str):
+            bamfiles = [bamfiles]
 
         if not samplenames:
-            samplenames = bam
+            samplenames = bamfiles
 
         covers = []
-        for sample_file in bam:
+        for sample_file in bamfiles:
             if storage in ['memmap', 'hdf5']:
                 memmap_dir = os.path.join(cachedir, name,
                                           os.path.basename(sample_file))
@@ -170,20 +170,20 @@ class CoverageBwDataset(BwDataset):
                    stranded, cachedir)
 
     @classmethod
-    def from_bigwig(cls, name, bigwigfiles, regions, genomesize,
-                    samplenames=None,
-                    resolution=50, stride=50,
-                    flank=4, stranded=True, storage='hdf5',
-                    overwrite=False,
-                    cachedir=None):
+    def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize,
+                           samplenames=None,
+                           resolution=50, stride=50,
+                           flank=4, stranded=True, storage='hdf5',
+                           overwrite=False,
+                           cachedir=None):
         """Create a CoverageBwDataset class from a bigwig-file (or files).
 
         Parameters
         -----------
         name : str
             Name of the dataset
-        bam : str or list
-            bam-file or list of bam files.
+        bigwigfiles : str or list
+            bigwig-file or list of bigwig files.
         gindxer : pandas.DataFrame or str
             bed-filename or content of a bed-file
             (in terms of a pandas.DataFrame).
@@ -246,8 +246,9 @@ class CoverageBwDataset(BwDataset):
                 for i in range(len(gindexer)):
                     interval = gindexer[i]
                     cover[interval.start_as_pos] += \
-                        bwfile.values(interval.chrom, int(interval.start),
-                                      int(interval.end))
+                        np.sum(bwfile.values(interval.chrom,
+                                             int(interval.start),
+                                             int(interval.end)))
 
             covers.append(cover)
 
