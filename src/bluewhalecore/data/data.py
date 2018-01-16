@@ -53,3 +53,8 @@ class BwDataset:
     def shape(self):
         """Shape of the dataset"""
         pass
+
+    @property
+    def ndim(self):
+        """ndim"""
+        return len(self.shape)
