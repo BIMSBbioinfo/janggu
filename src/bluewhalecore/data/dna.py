@@ -79,7 +79,12 @@ class DnaBwDataset(BwDataset):
         """Create a genomic array or reload an existing one."""
 
         # Load sequences from refgenome
-        seqs = sequences_from_fasta(fastafile)
+        seqs = []
+        if isinstance(fastafile, str):
+            fastafile = [fastafile]
+
+        for fasta in fastafile:
+            seqs += sequences_from_fasta(fasta)
 
         chromlens = {}
 
@@ -90,9 +95,10 @@ class DnaBwDataset(BwDataset):
                 storage == 'hdf5'):
             raise Exception('storage must be memmap, ndarray or hdf5')
 
+        filename = '_'.join([os.path.basename(fasta) for fasta in fastafile])
         if storage == 'memmap':
             cachedir = os.path.join(cachedir, name,
-                                    os.path.basename(fastafile))
+                                    os.path.basename(filename))
             if not os.path.exists(cachedir):
                 os.makedirs(cachedir)
 
@@ -101,7 +107,7 @@ class DnaBwDataset(BwDataset):
             nmms = [os.path.exists(p) for p in paths]
         elif storage == 'hdf5':
             cachedir = os.path.join(cachedir, name,
-                                    os.path.basename(fastafile))
+                                    os.path.basename(filename))
             if not os.path.exists(cachedir):
                 os.makedirs(cachedir)
 
@@ -193,8 +199,8 @@ class DnaBwDataset(BwDataset):
         -----------
         name : str
             Name of the dataset
-        fastafile : str
-            Fasta file.
+        fastafile : str or list(str)
+            Fasta file or list of fasta files.
         order : int
             Order for the one-hot representation. Default: 1.
         storage : str
@@ -209,7 +215,12 @@ class DnaBwDataset(BwDataset):
                                          cachedir=cachedir,
                                          overwrite=overwrite)
 
-        seqs = sequences_from_fasta(fastafile)
+        seqs = []
+        if isinstance(fastafile, str):
+            fastafile = [fastafile]
+
+        for fasta in fastafile:
+            seqs += sequences_from_fasta(fasta)
 
         # Check if sequences are equally long
         lens = [len(seq) for seq in seqs]
