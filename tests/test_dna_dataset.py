@@ -373,3 +373,34 @@ def test_stemcell_onehot_identity():
     oh = _seqToOneHot(sequences_from_fasta(filename))
 
     np.testing.assert_equal(data[:], oh)
+
+
+def _dna_with_region_strandedness(order):
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+
+    bed = os.path.join(data_path, 'region_w_strand.bed')
+
+    refgenome = os.path.join(data_path, 'genome.fa')
+
+    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                               regions=bed,
+                                               storage='ndarray',
+                                               order=order)
+    rcdata = RevCompDnaBlgDataset('rctrain', data)
+
+    np.testing.assert_equal(data.shape, (2, pow(4, order),
+                                         reglen + 2*flank - order + 1, 1))
+
+    np.testing.assert_equal(data[0], rcdata[1])
+    np.testing.assert_equal(data[1], rcdata[0])
+
+    with pytest.raises(Exception):
+        np.testing.assert_equal(data[0], data[1])
+
+    with pytest.raises(Exception):
+        np.testing.assert_equal(rcdata[0], rcdata[1])
+
+
+def test_dna_with_region_strandedness():
+    _dna_with_region_strandedness(1)
+    _dna_with_region_strandedness(2)

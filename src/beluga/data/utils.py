@@ -2,6 +2,7 @@
 
 from collections import defaultdict
 
+import numpy as np
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.SeqRecord import SeqRecord
@@ -32,6 +33,8 @@ LETTERMAP = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'a': 0, 'c': 1, 'g': 2, 't': 3}
 
 NMAP = defaultdict(lambda: -1024)
 NMAP.update(LETTERMAP)
+REV_COMP_MAP = defaultdict(lambda: -1024)
+REV_COMP_MAP.update({0: 3, 1: 2, 2: 1, 3: 0})
 
 
 def dna2ind(seq):
@@ -59,6 +62,39 @@ def dna2ind(seq):
         return [NMAP[x] for x in seq.seq]
     else:
         raise Exception('dna2ind: Format is not supported')
+
+
+def as_onehot(idna, order):
+    """Converts a index sequence into one-hot representation.
+
+    This method is used to transform a nucleotide sequence
+    for a given batch, represented by integer indices,
+    into a one-hot representation.
+
+    Parameters
+    ----------
+    idna: numpy.array
+        Array that holds the indices for a given batch.
+        The dimensions of the array correspond to
+        `(batch_size, sequence_length + 2*flank - order + 1)`.
+    order: int
+        Order of the sequence representation. Used for higher-order
+        motif modelling.
+
+    Returns
+    -------
+    numpy.array
+        One-hot representation of the batch. The dimension
+        of the array is given by
+        `(batch_size, pow(4, order), sequence length, 1)`
+    """
+
+    onehot = np.zeros((len(idna), pow(4, order),
+                       idna.shape[1], 1), dtype='int8')
+    for nuc in np.arange(pow(4, order)):
+        onehot[:, nuc, :, 0][idna == nuc] = 1
+
+    return onehot
 
 
 def input_shape(bwdata):

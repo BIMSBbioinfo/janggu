@@ -6,8 +6,10 @@ from HTSeq import GenomicInterval
 from beluga.data.data import BlgDataset
 from beluga.data.genomic_indexer import BlgGenomicIndexer
 from beluga.data.htseq_extension import BlgGenomicArray
+from beluga.data.utils import as_onehot
 from beluga.data.utils import dna2ind
 from beluga.data.utils import sequences_from_fasta
+from beluga.data.utils import REV_COMP_MAP as REV_COMP
 
 
 class DnaBlgDataset(BlgDataset):
@@ -68,6 +70,7 @@ class DnaBlgDataset(BlgDataset):
         self.order = order
         self.garray = garray
         self.gindexer = gindexer
+        self._rcindex = [_rcindex(idx, order) for idx in range(pow(4, order))]
 
         BlgDataset.__init__(self, '{}'.format(name))
 
@@ -248,7 +251,23 @@ class DnaBlgDataset(BlgDataset):
                 .format(self.name, self.flank, self.order)
 
     def idna4idx(self, idxs):
-        """Extracts the DNA sequence for set of indices."""
+        """Extracts the DNA sequence for set of indices.
+
+        This method gets as input a list of indices (e.g.
+        corresponding to genomic ranges for a given batch) and returns
+        the respective sequences as an index array.
+
+        Parameters
+        ----------
+        idxs : list(int)
+            List of region indexes
+
+        Returns
+        -------
+        numpy.array
+            Nucleotide sequences associated with the regions
+            with shape `(len(idxs), sequence_length + 2*flank - order + 1)`
+        """
 
         # for each index read use the adaptor indices to retrieve the seq.
         idna = np.empty((len(idxs), self.gindexer.resolution +
@@ -259,19 +278,15 @@ class DnaBlgDataset(BlgDataset):
             interval.start -= self.flank
             interval.end += self.flank - self.order + 1
 
-            idna[i] = np.asarray(list(self.garray[interval]))
+            # Computing the forward or reverse complement of the
+            # sequence, depending on the strand flag.
+            if interval.strand in ['.', '+']:
+                idna[i] = np.fromiter(self.garray[interval], dtype='int16')
+            else:
+                idna[i] = np.asarray(
+                    [self._rcindex[val] for val in self.garray[interval]])[::-1]
 
         return idna
-
-    def as_onehot(self, idna):
-        """Converts the sequence into one-hot representation."""
-
-        onehot = np.zeros((len(idna), pow(4, self.order),
-                           idna.shape[1], 1), dtype='int8')
-        for nuc in np.arange(pow(4, self.order)):
-            onehot[:, nuc, :, 0][idna == nuc] = 1
-
-        return onehot
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -286,7 +301,7 @@ class DnaBlgDataset(BlgDataset):
             raise IndexError('DnaBlgDataset.__getitem__: '
                              + 'index must be iterable')
 
-        data = self.as_onehot(self.idna4idx(idxs))
+        data = as_onehot(self.idna4idx(idxs), self.order)
 
         for transform in self.transformations:
             data = transform(data)
@@ -379,7 +394,24 @@ class RevCompDnaBlgDataset(BlgDataset):
     def __repr__(self):
         return 'RevDnaBlgDataset("{}", <DnaBlgDataset>)'.format(self.name)
 
-    def as_revcomp(self, data):
+    def _as_revcomp(self, data):
+        """Compute the revere complement of a given sequence.
+
+        This method computes the reverse complement for the
+        entire batch of sequences by means of a permutation matrix
+        that has been determined beforehand.
+
+        Parameters
+        ----------
+        data : numpy.array
+            DNA sequence in one hot representation
+
+        Returns
+        -------
+        numpy.array
+            Revere complement of the given DNA sequence
+            in one-hot representation.
+        """
         # compute the reverse complement of the original sequence
         # This is facilitated by, using rcmatrix (a permutation matrix),
         # which computes the complementary base for a given nucletide
@@ -391,8 +423,7 @@ class RevCompDnaBlgDataset(BlgDataset):
     def __getitem__(self, idxs):
 
         data = self.dna[idxs]
-        # self.as_onehot(self.idna4idx(idxs))
-        data = self.as_revcomp(data)
+        data = self._as_revcomp(data)
 
         for transform in self.transformations:
             data = transform(data)
