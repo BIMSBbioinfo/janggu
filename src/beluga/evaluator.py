@@ -10,8 +10,8 @@ from abc import abstractmethod
 
 from pymongo import MongoClient
 
-from .generators import bluewhale_fit_generator
-from .generators import bluewhale_predict_generator
+from .generators import beluga_fit_generator
+from .generators import beluga_predict_generator
 
 
 class Evaluator:
@@ -23,7 +23,7 @@ class Evaluator:
         pass
 
     @abstractmethod
-    def dump(self, bluewhale, inputs, outputs,
+    def dump(self, beluga, inputs, outputs,
              elementwise_score=None,
              combined_score=None,
              datatags=None,
@@ -37,11 +37,11 @@ class Evaluator:
 
         Parameters
         ----------
-        bluewhale : :class:`BlueWhale`
-            BlueWhale model to evaluate.
-        inputs : :class:`BwDataset` or list
+        beluga : :class:`Beluga`
+            Beluga model to evaluate.
+        inputs : :class:`BlgDataset` or list
             Input dataset or list of datasets.
-        outputs : :class:`BwDataset` or list
+        outputs : :class:`BlgDataset` or list
             Output dataset or list of datasets.
         elementwise_score : dict
             Element-wise scores for multi-dimensional output data, which
@@ -75,7 +75,7 @@ class MongoDbEvaluator(Evaluator):
         Name of the database
     """
 
-    def __init__(self, dbname="bluewhale"):
+    def __init__(self, dbname="beluga"):
         super(MongoDbEvaluator, self).__init__()
         client = MongoClient()
         self.database = client[dbname]
@@ -90,7 +90,7 @@ class MongoDbEvaluator(Evaluator):
 
         return self.database.results.insert_one(item).inserted_id
 
-    def dump(self, bluewhale, inputs, outputs,
+    def dump(self, beluga, inputs, outputs,
              elementwise_score=None,
              combined_score=None,
              datatags=None,
@@ -100,20 +100,20 @@ class MongoDbEvaluator(Evaluator):
 
         # record evaluate() results
         # This is done by default
-        evals = bluewhale.evaluate(inputs, outputs, batch_size=batch_size,
-                                   generator=bluewhale_fit_generator,
-                                   workers=1,
-                                   use_multiprocessing=use_multiprocessing)
+        evals = beluga.evaluate(inputs, outputs, batch_size=batch_size,
+                                generator=beluga_fit_generator,
+                                workers=1,
+                                use_multiprocessing=use_multiprocessing)
         for i, eval_ in enumerate(evals):
-            iid = self._record(bluewhale.name, modeltags,
-                               bluewhale.kerasmodel.metrics_names[i],
+            iid = self._record(beluga.name, modeltags,
+                               beluga.kerasmodel.metrics_names[i],
                                eval_, datatags)
-            bluewhale.logger.info("Recorded {}".format(iid))
+            beluga.logger.info("Recorded {}".format(iid))
 
-        ypred = bluewhale.predict(inputs, batch_size=batch_size,
-                                  generator=bluewhale_predict_generator,
-                                  workers=1,
-                                  use_multiprocessing=use_multiprocessing)
+        ypred = beluga.predict(inputs, batch_size=batch_size,
+                               generator=beluga_predict_generator,
+                               workers=1,
+                               use_multiprocessing=use_multiprocessing)
 
         if elementwise_score:
             # record individual dimensions
@@ -124,14 +124,14 @@ class MongoDbEvaluator(Evaluator):
                     tags = list(datatags)
                     if hasattr(outputs, "samplenames"):
                         tags.append(outputs.samplenames[idx])
-                    iid = self._record(bluewhale.name, modeltags, key,
+                    iid = self._record(beluga.name, modeltags, key,
                                        score, tags)
-                    bluewhale.logger.info("Recorded {}".format(iid))
+                    beluga.logger.info("Recorded {}".format(iid))
 
         if combined_score:
             # record additional combined scores
             for key in combined_score:
                 score = combined_score[key](outputs[:], ypred)
-                iid = self._record(bluewhale.name, modeltags, key, score,
+                iid = self._record(beluga.name, modeltags, key, score,
                                    datatags)
-                bluewhale.logger.info("Recorded {}".format(iid))
+                beluga.logger.info("Recorded {}".format(iid))

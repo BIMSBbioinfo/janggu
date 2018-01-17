@@ -5,42 +5,42 @@ import pkg_resources
 from HTSeq import BAM_Reader
 from HTSeq import GenomicInterval
 
-from bluewhalecore.data import BwChromVector
-from bluewhalecore.data import BwGenomicArray
+from beluga.data import BlgChromVector
+from beluga.data import BlgGenomicArray
 
 
 def test_bwcv_instance_unstranded(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '.')
-    BwChromVector.create(iv, 'i', 'memmap', memmap_dir=tmpdir.strpath)
+    BlgChromVector.create(iv, 'i', 'memmap', memmap_dir=tmpdir.strpath)
     assert os.path.exists(os.path.join(tmpdir.strpath, 'chr10..nmm'))
 
 
 def test_bwcv_instance_unstranded_step(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '.')
-    BwChromVector.create(iv, 'i', 'step', memmap_dir=tmpdir.strpath)
+    BlgChromVector.create(iv, 'i', 'step', memmap_dir=tmpdir.strpath)
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'chr10..nmm'))
 
 
 def test_bwcv_instance_unstranded_ndarray(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '.')
-    BwChromVector.create(iv, 'i', 'ndarray', memmap_dir=tmpdir.strpath)
+    BlgChromVector.create(iv, 'i', 'ndarray', memmap_dir=tmpdir.strpath)
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'chr10..nmm'))
 
 
 def test_bwcv_instance_stranded(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '+')
-    BwChromVector.create(iv, 'i', 'memmap', memmap_dir=tmpdir.strpath)
+    BlgChromVector.create(iv, 'i', 'memmap', memmap_dir=tmpdir.strpath)
     assert os.path.exists(os.path.join(tmpdir.strpath, 'chr10+.nmm'))
 
     iv = GenomicInterval('chr10', 100, 120, '-')
-    BwChromVector.create(iv, 'i', 'memmap', memmap_dir=tmpdir.strpath)
+    BlgChromVector.create(iv, 'i', 'memmap', memmap_dir=tmpdir.strpath)
     assert os.path.exists(os.path.join(tmpdir.strpath, 'chr10-.nmm'))
 
 
 def test_bwga_instance_unstranded(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '.')
-    ga = BwGenomicArray({'chr10': 300}, stranded=False, typecode='int8',
-                        storage='memmap', memmap_dir=tmpdir.strpath)
+    ga = BlgGenomicArray({'chr10': 300}, stranded=False, typecode='int8',
+                         storage='memmap', memmap_dir=tmpdir.strpath)
     np.testing.assert_equal(list(ga[iv]), [0]*20)
 
     ga[iv] += 1
@@ -54,8 +54,8 @@ def test_bwga_instance_unstranded(tmpdir):
 def test_bwga_instance_stranded(tmpdir):
 
     iv = GenomicInterval('chr10', 100, 120, '+')
-    ga = BwGenomicArray({'chr10': 300}, stranded=True, typecode='int8',
-                        storage='memmap', memmap_dir=tmpdir.strpath)
+    ga = BlgGenomicArray({'chr10': 300}, stranded=True, typecode='int8',
+                         storage='memmap', memmap_dir=tmpdir.strpath)
     np.testing.assert_equal(list(ga[iv]), [0]*20)
 
     ga[iv] += 1
@@ -72,8 +72,8 @@ def test_bwga_instance_stranded(tmpdir):
 def test_bwga_instance_stranded_step(tmpdir):
 
     iv = GenomicInterval('chr10', 100, 120, '+')
-    ga = BwGenomicArray({'chr10': 300}, stranded=True, typecode='i',
-                        storage='step', memmap_dir=tmpdir.strpath)
+    ga = BlgGenomicArray({'chr10': 300}, stranded=True, typecode='i',
+                         storage='step', memmap_dir=tmpdir.strpath)
     np.testing.assert_equal(list(ga[iv]), [0]*20)
 
     ga[iv] += 1
@@ -89,8 +89,8 @@ def test_bwga_instance_stranded_step(tmpdir):
 
 def test_bwga_instance_unstranded_step(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '.')
-    ga = BwGenomicArray({'chr10': 300}, stranded=False, typecode='i',
-                        storage='step', memmap_dir=tmpdir.strpath)
+    ga = BlgGenomicArray({'chr10': 300}, stranded=False, typecode='i',
+                         storage='step', memmap_dir=tmpdir.strpath)
     np.testing.assert_equal(list(ga[iv]), [0]*20)
 
     ga[iv] += 1
@@ -102,11 +102,11 @@ def test_bwga_instance_unstranded_step(tmpdir):
 
 
 def test_load_bwga_bam():
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
     file = os.path.join(data_path, "yeast_I_II_III.bam")
 
     alignment_file = BAM_Reader(file)
-    cvg = BwGenomicArray("auto", stranded=True, typecode='i')
+    cvg = BlgGenomicArray("auto", stranded=True, typecode='i')
     for alngt in alignment_file:
         if alngt.aligned:
             cvg[alngt.iv] += 1

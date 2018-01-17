@@ -2,18 +2,18 @@
 Installation
 ============
 
-`bluewhale2` depends on `tensorflow` which might be installed with
-CPU-only or GPU support. When installing `bluewhale2`, please specify
+`beluga2` depends on `tensorflow` which might be installed with
+CPU-only or GPU support. When installing `beluga2`, please specify
 the desired `tensorflow` alternative. Otherwise, `tensorflow` will not be
 installed automatically.
 
 For CPU-only use::
 
-    pip install bluewhalecore[tf]
+    pip install beluga[tf]
 
 For GPU-support type::
 
-    pip install bluewhalecore[tf_gpu]
+    pip install beluga[tf_gpu]
 
 
 HDF5 parallel

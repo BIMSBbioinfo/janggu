@@ -5,10 +5,10 @@ import pkg_resources
 import pytest
 from HTSeq import BED_Reader
 
-from bluewhalecore.data import DnaBwDataset
-from bluewhalecore.data import RevCompDnaBwDataset
-from bluewhalecore.data import sequences_from_fasta
-from bluewhalecore.data.utils import NMAP
+from beluga.data import DnaBlgDataset
+from beluga.data import RevCompDnaBlgDataset
+from beluga.data import sequences_from_fasta
+from beluga.data.utils import NMAP
 
 reglen = 200
 flank = 150
@@ -36,26 +36,26 @@ def datalen(bed_file):
     reglens = 0
     reader = BED_Reader(bed_file)
     for reg in reader:
-    	reglens += (reg.iv.end - reg.iv.start - reglen + stride)//stride
+        reglens += (reg.iv.end - reg.iv.start - reglen + stride)//stride
     return reglens
 
 
 def dna_templ(order):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     bed_merged = os.path.join(data_path, 'regions.bed')
     bed_indiv = os.path.join(data_path, 'indiv_regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                              regions=bed_merged,
-                                              storage='ndarray',
-                                              order=order)
-    idata = DnaBwDataset.create_from_refgenome('itrain', refgenome=refgenome,
-                                               regions=bed_indiv,
+    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                               regions=bed_merged,
                                                storage='ndarray',
                                                order=order)
+    idata = DnaBlgDataset.create_from_refgenome('itrain', refgenome=refgenome,
+                                                regions=bed_indiv,
+                                                storage='ndarray',
+                                                order=order)
 
     indices = [1, 600, 1000]
 
@@ -86,14 +86,14 @@ def test_read_ranges_from_file():
 
     order = 1
 
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
     refgenome = os.path.join(data_path, 'genome.fa')
     regions = os.path.join(data_path, 'regions.bed')
 
-    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                              regions=regions,
-                                              storage='ndarray',
-                                              order=order)
+    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                               regions=regions,
+                                               storage='ndarray',
+                                               order=order)
 
     indices = [1, 600, 1000]
 
@@ -121,18 +121,18 @@ def test_dna_dims_order_2():
 
 
 def revcomp(order):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                              regions=bed_file,
-                                              storage='ndarray',
-                                              order=order)
-    rcdata = RevCompDnaBwDataset('rctrain', data)
-    rcrcdata = RevCompDnaBwDataset('rcrctrain', rcdata)
+    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                               regions=bed_file,
+                                               storage='ndarray',
+                                               order=order)
+    rcdata = RevCompDnaBlgDataset('rctrain', data)
+    rcrcdata = RevCompDnaBlgDataset('rcrctrain', rcdata)
 
     indices = [600, 500, 400]
 
@@ -152,25 +152,25 @@ def test_revcomp_order_2():
 
 
 def test_revcomp_rcmatrix():
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                              storage='ndarray',
-                                              regions=bed_file, order=1)
-    rcdata = RevCompDnaBwDataset('rctrain', data)
+    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                               storage='ndarray',
+                                               regions=bed_file, order=1)
+    rcdata = RevCompDnaBlgDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix,
                             np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0],
                                       [1, 0, 0, 0]]))
 
-    data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                              storage='ndarray',
-                                              regions=bed_file, order=2)
-    rcdata = RevCompDnaBwDataset('rctrain', data)
+    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                               storage='ndarray',
+                                               regions=bed_file, order=2)
+    rcdata = RevCompDnaBlgDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix[0],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -200,88 +200,89 @@ def test_revcomp_rcmatrix():
 
 
 def test_rcmatrix_identity():
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     for order in range(1, 4):
         bed_file = os.path.join(data_path, 'regions.bed')
         refgenome = os.path.join(data_path, 'genome.fa')
 
-        data = DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                                  storage='ndarray',
-                                                  regions=bed_file, order=order)
-        rcdata = RevCompDnaBwDataset('rctrain', data)
+        data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                                   storage='ndarray',
+                                                   regions=bed_file, order=order)
+        rcdata = RevCompDnaBlgDataset('rctrain', data)
 
         np.testing.assert_equal(np.eye(pow(4, order)),
                                 np.matmul(rcdata.rcmatrix, rcdata.rcmatrix))
 
 
 def test_dna_dataset_sanity(tmpdir):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome='',
-                                           storage='ndarray',
-                                           regions=bed_file, order=1)
+        DnaBlgDataset.create_from_refgenome('train', refgenome='',
+                                            storage='ndarray',
+                                            regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome='test',
-                                           storage='ndarray',
-                                           regions=bed_file, order=1)
+        DnaBlgDataset.create_from_refgenome('train', refgenome='test',
+                                            storage='ndarray',
+                                            regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=None, order=1)
+        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            storage='ndarray',
+                                            regions=None, order=1)
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=bed_file, order=0)
+        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            storage='ndarray',
+                                            regions=bed_file, order=0)
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=bed_file, flank=-1)
+        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            storage='ndarray',
+                                            regions=bed_file, flank=-1)
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=bed_file, reglen=0)
+        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            storage='ndarray',
+                                            regions=bed_file, reglen=0)
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=bed_file, stride=0)
+        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            storage='ndarray',
+                                            regions=bed_file, stride=0)
 
     with pytest.raises(Exception):
-        DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                           storage='step',
-                                           regions=bed_file, order=1,
-                                           cachedir=tmpdir.strpath)
+        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            storage='step',
+                                            regions=bed_file, order=1,
+                                            cachedir=tmpdir.strpath)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'genome.fa', 'chr1..nmm'))
 
-    DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                       storage='memmap',
-                                       regions=bed_file, order=1,
-                                       cachedir=tmpdir.strpath)
+    DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                        storage='memmap',
+                                        regions=bed_file, order=1,
+                                        cachedir=tmpdir.strpath)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..nmm'))
 
-    DnaBwDataset.create_from_refgenome('train', refgenome=refgenome,
-                                       storage='hdf5',
-                                       regions=bed_file, order=1,
-                                       cachedir=tmpdir.strpath)
+    DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+                                        storage='hdf5',
+                                        regions=bed_file, order=1,
+                                        cachedir=tmpdir.strpath)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..h5'))
 
+
 def test_read_dna_from_fasta_order_1(tmpdir):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     order = 1
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBwDataset.create_from_fasta('train', fastafile=filename,
-                                          order=order)
+    data = DnaBlgDataset.create_from_fasta('train', fastafile=filename,
+                                           order=order)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), pow(4, order), 200, 1))
@@ -317,13 +318,13 @@ def test_read_dna_from_fasta_order_1(tmpdir):
 
 
 def test_read_dna_from_fasta_order_2(tmpdir):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     order = 2
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBwDataset.create_from_fasta('train', fastafile=filename,
-                                          order=order,
-                                          cachedir=tmpdir.strpath)
+    data = DnaBlgDataset.create_from_fasta('train', fastafile=filename,
+                                           order=order,
+                                           cachedir=tmpdir.strpath)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), 16, 199, 1))
@@ -364,10 +365,10 @@ def test_read_dna_from_fasta_order_2(tmpdir):
 
 
 def test_stemcell_onehot_identity():
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     filename = os.path.join(data_path, 'stemcells.fa')
-    data = DnaBwDataset.create_from_fasta('dna', fastafile=filename)
+    data = DnaBlgDataset.create_from_fasta('dna', fastafile=filename)
 
     oh = _seqToOneHot(sequences_from_fasta(filename))
 

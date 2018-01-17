@@ -3,8 +3,8 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 
-from bluewhalecore import inputlayer
-from bluewhalecore import outputlayer
+from beluga import inputlayer
+from beluga import outputlayer
 
 
 # ==========================================================

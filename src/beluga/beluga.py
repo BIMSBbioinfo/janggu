@@ -1,4 +1,4 @@
-"""BlueWhale deep learning model for genomics"""
+"""Beluga deep learning model for genomics"""
 
 import logging
 import os
@@ -9,15 +9,15 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import Model
 from keras.models import load_model
 
-from bluewhalecore.data import BwDataset
+from beluga.data import BlgDataset
 
 
-class BlueWhale(object):
-    """BlueWhale model
+class Beluga(object):
+    """Beluga model
 
-    The class :class:`BlueWhale` extends the :class:`keras.models.Model`
+    The class :class:`Beluga` extends the :class:`keras.models.Model`
     infrastructure.
-    In particular, BlueWhale facilitates logging functionality
+    In particular, Beluga facilitates logging functionality
     for fit, predict and evaluate.
     Moreover, fit, predict and evaluate can be utilized directly
     with generator functions. This allows to establish the batches
@@ -33,11 +33,11 @@ class BlueWhale(object):
         Name of the model. Default: None.
     outputdir : str
         Folder in which to place the log-files and stored models.
-        Default: 'bluewhale_results/'.
+        Default: 'beluga_results/'.
     """
 
     def __init__(self, inputs, outputs, name=None,
-                 outputdir='bluewhale_results/'):
+                 outputdir='beluga_results/'):
 
         self.name = name
         self.kerasmodel = Model(inputs, outputs, name)
@@ -50,7 +50,7 @@ class BlueWhale(object):
         if not os.path.exists(os.path.join(outputdir, 'logs')):
             os.makedirs(os.path.join(outputdir, 'logs'))
 
-        logfile = os.path.join(outputdir, 'logs', 'bluewhale.log')
+        logfile = os.path.join(outputdir, 'logs', 'beluga.log')
 
         self.logger = logging.getLogger(self.name)
 
@@ -63,7 +63,7 @@ class BlueWhale(object):
         self.kerasmodel.summary(print_fn=self.logger.info)
 
     @classmethod
-    def create_by_name(cls, name, outputdir='bluewhale_results/'):
+    def create_by_name(cls, name, outputdir='beluga_results/'):
         """Creates a Bluewhale object by name.
 
         Parameters
@@ -72,11 +72,11 @@ class BlueWhale(object):
             Name of the model.
         outputdir : str
             Folder in which to place the log-files and stored models.
-            Default: 'bluewhale_results/'.
+            Default: 'beluga_results/'.
         """
         path = cls._storage_path(name, outputdir)
 
-        model = load_model(path, custom_objects={'BlueWhale': Model})
+        model = load_model(path, custom_objects={'Beluga': Model})
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @staticmethod
@@ -105,9 +105,9 @@ class BlueWhale(object):
 
     @classmethod
     def create_by_shape(cls, inputdict, outputdict, name, modeldef,
-                        outputdir='bluewhale_results/', optimizer='adadelta',
+                        outputdir='beluga_results/', optimizer='adadelta',
                         metrics=None):
-        """Instantiate BlueWhale through supplying a model template
+        """Instantiate Beluga through supplying a model template
         and the shapes of the dataset.
         From this the correct keras model will be constructed.
 
@@ -135,7 +135,7 @@ class BlueWhale(object):
         if not metrics:
             metrics = []
 
-        print('create BlueWhale from shape.')
+        print('create Beluga from shape.')
         modelfct = modeldef[0]
         modelparams = modeldef[1]
 
@@ -205,7 +205,7 @@ class BlueWhale(object):
             The generator must adhere to the following signature:
             `generator(inputs, outputs, batch_size, sample_weight=None,
             shuffle=False)`.
-            See :func:`bluewhale_fit_generator`.
+            See :func:`beluga_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
             keras.models.Model.fit_generator. Default: True.
@@ -234,9 +234,9 @@ class BlueWhale(object):
 
             try:
                 if not isinstance(inputs, (list, dict)):
-                    raise TypeError("inputs must be a BwDataset, "
-                                    + "list(BwDataset)"
-                                    + "or dict(BwDataset) if used with a "
+                    raise TypeError("inputs must be a BlgDataset, "
+                                    + "list(BlgDataset)"
+                                    + "or dict(BlgDataset) if used with a "
                                     + "generator. Got {}".format(type(inputs)))
                 if not batch_size:
                     batch_size = 32
@@ -329,7 +329,7 @@ class BlueWhale(object):
             the model utilizes keras.models.Model.fit.
             The generator must adhere to the following signature:
             `generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
-            See :func:`bluewhale_fit_generator`.
+            See :func:`beluga_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
             keras.models.Model.fit_generator. Default: True.
@@ -353,8 +353,8 @@ class BlueWhale(object):
 
         if generator:
             if not isinstance(inputs, (list, dict)):
-                raise TypeError("inputs must be a BwDataset, list(BwDataset)"
-                                + "or dict(BwDataset) if used with a "
+                raise TypeError("inputs must be a BlgDataset, list(BlgDataset)"
+                                + "or dict(BlgDataset) if used with a "
                                 + "generator.")
             if not batch_size:
                 batch_size = 32
@@ -401,7 +401,7 @@ class BlueWhale(object):
             The generator must adhere to the following signature:
             `generator(inputs, outputs, batch_size,
             sample_weight=None, shuffle=False)`.
-            See :func:`bluewhale_fit_generator`.
+            See :func:`beluga_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
             keras.models.Model.fit_generator. Default: True.
@@ -421,8 +421,8 @@ class BlueWhale(object):
         if generator:
 
             if not isinstance(inputs, (list, dict)):
-                raise TypeError("inputs must be a BwDataset, list(BwDataset)"
-                                + "or dict(BwDataset) if used with a "
+                raise TypeError("inputs must be a BlgDataset, list(BlgDataset)"
+                                + "or dict(BlgDataset) if used with a "
                                 + "generator.")
             if not batch_size:
                 batch_size = 32
@@ -478,12 +478,12 @@ class BlueWhale(object):
 
     @staticmethod
     def __convert_data(data):
-        # If we deal with BwDataset, we convert it to a Dictionary
+        # If we deal with BlgDataset, we convert it to a Dictionary
         # which is directly interpretable by keras
-        if isinstance(data, BwDataset):
+        if isinstance(data, BlgDataset):
             c_data = {}
             c_data[data.name] = data
-        elif isinstance(data, list) and isinstance(data[0], BwDataset):
+        elif isinstance(data, list) and isinstance(data[0], BlgDataset):
             c_data = {}
             for datum in data:
                 c_data[datum.name] = datum

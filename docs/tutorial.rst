@@ -3,7 +3,7 @@ Tutorial
 =========
 
 In this section we shall illustrate a plethora of ways in which
-`bluewhale2` can be used.
+`beluga2` can be used.
 
 Predict TF binding from the DNA sequence
 --------------------------------------------
@@ -15,6 +15,6 @@ Predict TF binding using higher-order motifs
 -----------------------------------------------
 
 
-To use BlueWhaleCore in a project::
+To use Beluga in a project::
 
-	import bluewhalecore
+	import beluga

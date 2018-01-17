@@ -1,4 +1,4 @@
-bluewhalecore.data - Genomics datasets for deep learning
+beluga.data - Genomics datasets for deep learning
 =========================================================
 
 
@@ -7,33 +7,33 @@ raw genomics datasets (e.g. DNA sequence from a fasta file, or genome-wide cover
 information from a bam-file) and the dataformat applications directly for a deep learning
 application.
 
-.. currentmodule:: bluewhalecore.data
+.. currentmodule:: beluga.data
 
 Interface
 ---------
 .. autosummary::
-   BwDataset
+   BlgDataset
 
-.. autoclass:: BwDataset
+.. autoclass:: BlgDataset
    :members: name, shape
 
 Classes
 -------
 .. autosummary::
-   CoverageBwDataset
-   DnaBwDataset
-   RevCompDnaBwDataset
-   TabBwDataset
-   NumpyBwDataset
-   DnaBwDataset
+   CoverageBlgDataset
+   DnaBlgDataset
+   RevCompDnaBlgDataset
+   TabBlgDataset
+   NumpyBlgDataset
+   DnaBlgDataset
 
-.. autoclass:: CoverageBwDataset
+.. autoclass:: CoverageBlgDataset
    :members: create_from_bam, create_from_bigwig
 
-.. autoclass:: DnaBwDataset
+.. autoclass:: DnaBlgDataset
    :members: create_from_refgenome, create_from_fasta
 
-.. autoclass:: RevCompDnaBwDataset
+.. autoclass:: RevCompDnaBlgDataset
 
 
 Utilities

@@ -1,23 +1,23 @@
-bluewhalecore - Deep learning for Genomics data
+beluga - Deep learning for Genomics data
 ===============================================
 
-This section describes the interface and utilities that bluewhalecore provides
+This section describes the interface and utilities that beluga provides
 for deep learning.
 
-.. currentmodule:: bluewhalecore
+.. currentmodule:: beluga
 
-BlueWhale Model
+Beluga Model
 ---------------
 
 .. autosummary::
-   BlueWhale
-   BlueWhale.create_by_shape
-   BlueWhale.create_by_name
-   BlueWhale.fit
-   BlueWhale.predict
-   BlueWhale.evaluate
+   Beluga
+   Beluga.create_by_shape
+   Beluga.create_by_name
+   Beluga.fit
+   Beluga.predict
+   Beluga.evaluate
 
-.. autoclass:: BlueWhale
+.. autoclass:: Beluga
    :members:
 
 Evaluator

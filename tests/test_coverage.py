@@ -6,11 +6,11 @@ import pkg_resources
 # from genomeutils.refgenome import getGenomeSize
 from HTSeq import GenomicInterval
 
-from bluewhalecore.data import CoverageBwDataset
+from beluga.data import CoverageBlgDataset
 
 
 def test_load_coveragedataset_bam_stranded(tmpdir):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
     bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
 
@@ -30,7 +30,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
         # print(store)
-        cvdata = CoverageBwDataset.create_from_bam(
+        cvdata = CoverageBlgDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -54,7 +54,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # 20 bp resolution
         # print(store)
-        cvdata = CoverageBwDataset.create_from_bam(
+        cvdata = CoverageBlgDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -83,7 +83,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
 
 def test_load_coveragedataset_bam_unstranded(tmpdir):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
@@ -104,7 +104,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
         print(store)
-        cvdata_bam = CoverageBwDataset.create_from_bam(
+        cvdata_bam = CoverageBlgDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -142,7 +142,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     for store in ['step', 'ndarray', 'memmap', 'hdf5']:
         # 20 bp resolution
         print(store)
-        cvdata_bam = CoverageBwDataset.create_from_bam(
+        cvdata_bam = CoverageBlgDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -172,7 +172,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
 
 
 def test_load_coveragedataset_bigwig_unstranded(tmpdir):
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
 
     bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
@@ -195,7 +195,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         # base pair resolution
         print(store)
 
-        cvdata_bigwig = CoverageBwDataset.create_from_bigwig(
+        cvdata_bigwig = CoverageBlgDataset.create_from_bigwig(
             "yeast_I_II_III.bw",
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -234,7 +234,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         # 20 bp resolution
         print(store)
 
-        cvdata_bigwig = CoverageBwDataset.create_from_bigwig(
+        cvdata_bigwig = CoverageBlgDataset.create_from_bigwig(
             "yeast_I_II_III.bw",
             bigwigfiles=bwfile_,
             regions=bed_file,

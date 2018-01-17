@@ -2,13 +2,13 @@ import os
 
 import pandas as pd
 
-from bluewhalecore.data.data import BwDataset
+from beluga.data.data import BlgDataset
 
 
-class TabBwDataset(BwDataset):
-    """TabBwDataset class.
+class TabBlgDataset(BlgDataset):
+    """TabBlgDataset class.
 
-    TabBwDataset allows to fetch data from a CSV or TSV file.
+    TabBlgDataset allows to fetch data from a CSV or TSV file.
     It might be used to load a set of training labels.
 
     Parameters
@@ -49,10 +49,10 @@ class TabBwDataset(BwDataset):
 
         self.cachedir = cachedir
 
-        BwDataset.__init__(self, name)
+        BlgDataset.__init__(self, name)
 
     def __repr__(self):  # pragma: no cover
-        return 'TabBwDataset("{}", "{}")'\
+        return 'TabBlgDataset("{}", "{}")'\
                 .format(self.name, self.filename)
 
     def __len__(self):

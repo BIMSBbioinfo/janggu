@@ -1,12 +1,12 @@
 [paths]
 source =
-   src/bluewhalecore
-   */site-packages/bluewhalecore
+   src/beluga
+   */site-packages/beluga
 
 [run]
 branch = true
 source =
-    bluewhalecore
+    beluga
 parallel = true
 
 [report]

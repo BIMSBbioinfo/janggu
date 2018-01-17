@@ -4,5 +4,5 @@ Reference
 .. toctree::
     :glob:
 
-    bluewhalecore.data
-    bluewhalecore*
+    beluga.data
+    beluga*

@@ -4,15 +4,15 @@ import numpy as np
 from HTSeq import GenomicInterval
 from pandas import DataFrame
 
-from bluewhalecore.data.data import BwDataset
-from bluewhalecore.data.genomic_indexer import BwGenomicIndexer
-from bluewhalecore.data.htseq_extension import BwGenomicArray
-from bluewhalecore.data.utils import dna2ind
-from bluewhalecore.data.utils import sequences_from_fasta
+from beluga.data.data import BlgDataset
+from beluga.data.genomic_indexer import BlgGenomicIndexer
+from beluga.data.htseq_extension import BlgGenomicArray
+from beluga.data.utils import dna2ind
+from beluga.data.utils import sequences_from_fasta
 
 
-class DnaBwDataset(BwDataset):
-    """DnaBwDataset class.
+class DnaBlgDataset(BlgDataset):
+    """DnaBlgDataset class.
 
     This datastructure holds a DNA sequence for the purpose of a deep learning
     application.
@@ -29,9 +29,9 @@ class DnaBwDataset(BwDataset):
     -----------
     name : str
         Name of the dataset
-    garray : :class:`BwGenomicArray`
+    garray : :class:`BlgGenomicArray`
         A genomic array that holds the sequence data.
-    gindxer : :class:`BwGenomicIndexer`
+    gindxer : :class:`BlgGenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -46,9 +46,9 @@ class DnaBwDataset(BwDataset):
     -----------
     name : str
         Name of the dataset
-    garray : :class:`BwGenomicArray`
+    garray : :class:`BlgGenomicArray`
         A genomic array that holds the sequence data.
-    gindxer : :class:`BwGenomicIndexer`
+    gindxer : :class:`BlgGenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -71,7 +71,7 @@ class DnaBwDataset(BwDataset):
         self.garray = garray
         self.gindexer = gindexer
 
-        BwDataset.__init__(self, '{}'.format(name))
+        BlgDataset.__init__(self, '{}'.format(name))
 
     @staticmethod
     def _make_genomic_array(name, fastafile, order, storage, cachedir='',
@@ -118,13 +118,13 @@ class DnaBwDataset(BwDataset):
             nmms = [False]
             cachedir = ''
 
-        garray = BwGenomicArray(chromlens, stranded=False,
-                                typecode='int16',
-                                storage=storage, memmap_dir=cachedir,
-                                overwrite=overwrite)
+        garray = BlgGenomicArray(chromlens, stranded=False,
+                                 typecode='int16',
+                                 storage=storage, memmap_dir=cachedir,
+                                 overwrite=overwrite)
 
         if all(nmms) and not overwrite:
-            print('Reload BwGenomicArray from {}'.format(cachedir))
+            print('Reload BlgGenomicArray from {}'.format(cachedir))
         else:
             # Convert sequences to index array
             print('Convert sequences to index array')
@@ -148,7 +148,7 @@ class DnaBwDataset(BwDataset):
                               stride=50, reglen=200,
                               flank=150, order=1, storage='hdf5',
                               cachedir='', overwrite=False):
-        """Create a DnaBwDataset class from a reference genome.
+        """Create a DnaBlgDataset class from a reference genome.
 
         This requires a reference genome in fasta format as well as a bed-file
         that holds the regions of interest.
@@ -179,7 +179,7 @@ class DnaBwDataset(BwDataset):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = BwGenomicIndexer.create_from_file(regions, reglen, stride)
+        gindexer = BlgGenomicIndexer.create_from_file(regions, reglen, stride)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
                                          cachedir=cachedir,
@@ -190,7 +190,7 @@ class DnaBwDataset(BwDataset):
     @classmethod
     def create_from_fasta(cls, name, fastafile, storage='ndarray',
                           order=1, cachedir='', overwrite=False):
-        """Create a DnaBwDataset class from a fastafile.
+        """Create a DnaBlgDataset class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
         a fastafile.
@@ -232,13 +232,11 @@ class DnaBwDataset(BwDataset):
         assert len(set(chroms)) == len(seqs), "Sequence IDs must be unique."
         # now mimic a dataframe representing a bed file
 
-        regions = DataFrame({'chr': chroms, 'start': 0, 'end': lens})
-
         reglen = lens[0]
         flank = 0
         stride = 1
 
-        gindexer = BwGenomicIndexer(reglen, stride)
+        gindexer = BlgGenomicIndexer(reglen, stride)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
         gindexer.inregionidx = [0]*len(lens)
@@ -247,7 +245,7 @@ class DnaBwDataset(BwDataset):
         return cls(name, garray, gindexer, flank, order)
 
     def __repr__(self):  # pragma: no cover
-        return 'DnaBwDataset("{}", <garray>, <gindexer>, \
+        return 'DnaBlgDataset("{}", <garray>, <gindexer>, \
                 flank={}, order={})'\
                 .format(self.name, self.flank, self.order)
 
@@ -287,7 +285,7 @@ class DnaBwDataset(BwDataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('DnaBwDataset.__getitem__: '
+            raise IndexError('DnaBlgDataset.__getitem__: '
                              + 'index must be iterable')
 
         data = self.as_onehot(self.idna4idx(idxs))
@@ -351,24 +349,24 @@ def _rcpermmatrix(order):
     return perm
 
 
-class RevCompDnaBwDataset(BwDataset):
-    """RevCompDnaBwDataset class.
+class RevCompDnaBlgDataset(BlgDataset):
+    """RevCompDnaBlgDataset class.
 
     This datastructure for accessing the reverse complement of a given
-    :class:`DnaBwDataset`.
+    :class:`DnaBlgDataset`.
 
     Parameters
     -----------
     name : str
         Name of the dataset
-    dnadata : :class:`DnaBwDataset`
+    dnadata : :class:`DnaBlgDataset`
         Forward strand representation of the sequence sequence data.
 
     Attributes
     -----------
     name : str
         Name of the dataset
-    dnadata : :class:`DnaBwDataset`
+    dnadata : :class:`DnaBlgDataset`
         Forward strand representation of the sequence sequence data.
     """
 
@@ -378,10 +376,10 @@ class RevCompDnaBwDataset(BwDataset):
 
         self.rcmatrix = _rcpermmatrix(self.order)
 
-        BwDataset.__init__(self, '{}'.format(name))
+        BlgDataset.__init__(self, '{}'.format(name))
 
     def __repr__(self):
-        return 'RevDnaBwDataset("{}", <DnaBwDataset>)'.format(self.name)
+        return 'RevDnaBlgDataset("{}", <DnaBlgDataset>)'.format(self.name)
 
     def as_revcomp(self, data):
         # compute the reverse complement of the original sequence

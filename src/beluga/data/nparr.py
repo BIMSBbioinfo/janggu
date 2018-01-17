@@ -1,13 +1,13 @@
-from bluewhalecore.data.data import BwDataset
+from beluga.data.data import BlgDataset
 
 
-class NumpyBwDataset(BwDataset):
-    """NumpyBwDataset class.
+class NumpyBlgDataset(BlgDataset):
+    """NumpyBlgDataset class.
 
     This datastructure wraps arbitrary numpy.arrays for a
-    deep learning application with BlueWhale.
+    deep learning application with Beluga.
     The main difference to an ordinary numpy.array is that
-    NumpyBwDataset has a name attribute.
+    NumpyBlgDataset has a name attribute.
 
     Parameters
     -----------
@@ -31,10 +31,10 @@ class NumpyBwDataset(BwDataset):
 
         self.cachedir = cachedir
 
-        BwDataset.__init__(self, '{}'.format(name))
+        BlgDataset.__init__(self, '{}'.format(name))
 
     def __repr__(self):  # pragma: no cover
-        return 'NumpyBwDataset("{}", <np.array>)'.format(self.name)
+        return 'NumpyBlgDataset("{}", <np.array>)'.format(self.name)
 
     def __len__(self):
         return len(self.data)

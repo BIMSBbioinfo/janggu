@@ -3,21 +3,21 @@ import threading
 import numpy as np
 
 
-def bluewhale_fit_generator(inputdata, outputdata, batch_size,
-                            sample_weight=None, shuffle=False):
-    """Generator for BlueWhale-model fitting.
+def beluga_fit_generator(inputdata, outputdata, batch_size,
+                         sample_weight=None, shuffle=False):
+    """Generator for Beluga-model fitting.
 
-    This generator is designed for the use with :meth:`BlueWhale.fit`
-    or :meth:`BlueWhale.evaluate`.
+    This generator is designed for the use with :meth:`Beluga.fit`
+    or :meth:`Beluga.evaluate`.
 
     Parameters
     ----------
     inputdata : dict
         Dictionary with keys corresponding to the dataset names and
-        values being a :class:`BwDataset`.
+        values being a :class:`BlgDataset`.
     outputdata : dict
         Dictionary with keys corresponding to the dataset names and
-        values being a :class:`BwDataset`.
+        values being a :class:`BlgDataset`.
     batch_size : int
         Batchsize to use for enumerating the dataset.
     sample_weight : None or list
@@ -77,16 +77,16 @@ def bluewhale_fit_generator(inputdata, outputdata, batch_size,
                 yield inputs, outputs
 
 
-def bluewhale_predict_generator(inputdata, batch_size):
-    """Generator for BlueWhale-model prediction.
+def beluga_predict_generator(inputdata, batch_size):
+    """Generator for Beluga-model prediction.
 
-    This generator is designed for the use with :meth:`BlueWhale.predict`.
+    This generator is designed for the use with :meth:`Beluga.predict`.
 
     Parameters
     ----------
     inputdata : dict
         Dictionary with keys corresponding to the dataset names and
-        values being a :class:`BwDataset`.
+        values being a :class:`BlgDataset`.
     batch_size : int
         Batchsize to use for enumerating the dataset.
 

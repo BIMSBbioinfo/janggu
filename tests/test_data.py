@@ -3,23 +3,23 @@ import os
 import pkg_resources
 import pytest
 
-from bluewhalecore.data import DnaBwDataset
-from bluewhalecore.data import RevCompDnaBwDataset
-from bluewhalecore.data import TabBwDataset
-from bluewhalecore.data import input_shape
-from bluewhalecore.data import output_shape
+from beluga.data import DnaBlgDataset
+from beluga.data import RevCompDnaBlgDataset
+from beluga.data import TabBlgDataset
+from beluga.data import input_shape
+from beluga.data import output_shape
 
 
 def test_inshape():
-    data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
+    data_path = pkg_resources.resource_filename('beluga', 'resources/')
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaBwDataset.create_from_refgenome('dna', refgenome=refgenome,
-                                             storage='ndarray',
-                                             regions=bed_file, order=1)
-    rcdna = RevCompDnaBwDataset('rcdna', dna)
+    dna = DnaBlgDataset.create_from_refgenome('dna', refgenome=refgenome,
+                                              storage='ndarray',
+                                              regions=bed_file, order=1)
+    rcdna = RevCompDnaBlgDataset('rcdna', dna)
 
     sh = input_shape([dna, rcdna])
     assert 'dna' in sh
@@ -30,12 +30,12 @@ def test_inshape():
 
 
 def test_outshape():
-    data_path = pkg_resources.resource_filename('bluewhalecore',
+    data_path = pkg_resources.resource_filename('beluga',
                                                 'resources/')
     csvfile = os.path.join(data_path, 'ctcf_sample.csv')
 
-    ctcf1 = TabBwDataset('ctcf1', filename=csvfile)
-    ctcf2 = TabBwDataset('ctcf2', filename=csvfile)
+    ctcf1 = TabBlgDataset('ctcf1', filename=csvfile)
+    ctcf2 = TabBlgDataset('ctcf2', filename=csvfile)
 
     sh = output_shape([ctcf1, ctcf2], 'binary_crossentropy')
 

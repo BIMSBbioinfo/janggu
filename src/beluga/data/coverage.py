@@ -5,13 +5,13 @@ import numpy as np
 import pyBigWig
 from HTSeq import BAM_Reader
 
-from bluewhalecore.data.data import BwDataset
-from bluewhalecore.data.genomic_indexer import BwGenomicIndexer
-from bluewhalecore.data.htseq_extension import BwGenomicArray
+from beluga.data.data import BlgDataset
+from beluga.data.genomic_indexer import BlgGenomicIndexer
+from beluga.data.htseq_extension import BlgGenomicArray
 
 
-class CoverageBwDataset(BwDataset):
-    """CoverageBwDataset class.
+class CoverageBlgDataset(BlgDataset):
+    """CoverageBlgDataset class.
 
     This datastructure holds coverage information across the genome.
     The coverage can conveniently fetched from a bam-file, a bigwig-file,
@@ -22,9 +22,9 @@ class CoverageBwDataset(BwDataset):
     -----------
     name : str
         Name of the dataset
-    covers : :class:`BwGenomicArray`
+    covers : :class:`BlgGenomicArray`
         A genomic array that holds the coverage data
-    gindxer : :class:`BwGenomicIndexer`
+    gindxer : :class:`BlgGenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -38,9 +38,9 @@ class CoverageBwDataset(BwDataset):
     -----------
     name : str
         Name of the dataset
-    covers : :class:`BwGenomicArray`
+    covers : :class:`BlgGenomicArray`
         A genomic array that holds the coverage data
-    gindxer : :class:`BwGenomicIndexer`
+    gindxer : :class:`BlgGenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -67,7 +67,7 @@ class CoverageBwDataset(BwDataset):
         self.stranded = stranded
         self.cachedir = cachedir
 
-        BwDataset.__init__(self, '{}'.format(name))
+        BlgDataset.__init__(self, '{}'.format(name))
 
     @staticmethod
     def _cacheexists(memmap_dir, chroms, stranded, storage):
@@ -94,7 +94,7 @@ class CoverageBwDataset(BwDataset):
                         flank=4, stranded=True, storage='hdf5',
                         overwrite=False,
                         cachedir=None):
-        """Create a CoverageBwDataset class from a bam-file (or files).
+        """Create a CoverageBlgDataset class from a bam-file (or files).
 
         Parameters
         -----------
@@ -129,8 +129,8 @@ class CoverageBwDataset(BwDataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = BwGenomicIndexer.create_from_file(regions, resolution,
-                                                     stride)
+        gindexer = BlgGenomicIndexer.create_from_file(regions, resolution,
+                                                      stride)
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -151,12 +151,12 @@ class CoverageBwDataset(BwDataset):
             nmms = cls._cacheexists(memmap_dir, genomesize.keys(), stranded,
                                     storage)
 
-            cover = BwGenomicArray(genomesize, stranded=stranded,
-                                   storage=storage, memmap_dir=memmap_dir,
-                                   overwrite=overwrite)
+            cover = BlgGenomicArray(genomesize, stranded=stranded,
+                                    storage=storage, memmap_dir=memmap_dir,
+                                    overwrite=overwrite)
 
             if all(nmms) and not overwrite:
-                print('Reload BwGenomicArray from {}'.format(memmap_dir))
+                print('Reload BlgGenomicArray from {}'.format(memmap_dir))
             else:
                 print('Counting from {}'.format(sample_file))
                 aln_file = BAM_Reader(sample_file)
@@ -177,7 +177,7 @@ class CoverageBwDataset(BwDataset):
                            flank=4, stranded=True, storage='hdf5',
                            overwrite=False,
                            cachedir=None):
-        """Create a CoverageBwDataset class from a bigwig-file (or files).
+        """Create a CoverageBlgDataset class from a bigwig-file (or files).
 
         Parameters
         -----------
@@ -212,8 +212,8 @@ class CoverageBwDataset(BwDataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = BwGenomicIndexer.create_from_file(regions, resolution,
-                                                     stride)
+        gindexer = BlgGenomicIndexer.create_from_file(regions, resolution,
+                                                      stride)
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -236,9 +236,9 @@ class CoverageBwDataset(BwDataset):
 
             # At the moment, we treat the information contained
             # in each bw-file as unstranded
-            cover = BwGenomicArray(genomesize, stranded=False,
-                                   storage=storage, memmap_dir=memmap_dir,
-                                   overwrite=overwrite)
+            cover = BlgGenomicArray(genomesize, stranded=False,
+                                    storage=storage, memmap_dir=memmap_dir,
+                                    overwrite=overwrite)
 
             if all(nmms) and not overwrite:
                 pass
@@ -258,7 +258,7 @@ class CoverageBwDataset(BwDataset):
                    stranded, cachedir)
 
     def __repr__(self):  # pragma: no cover
-        return 'CoverageBwDataset("{}", <BwGenomicArray>, <BwGenomicIndexer>, \
+        return 'CoverageBlgDataset("{}", <BlgGenomicArray>, <BlgGenomicIndexer>, \
                 flank={}, stranded={}, \
                 cachedir={})'\
                 .format(self.name, self.flank, self.stranded,
@@ -274,7 +274,7 @@ class CoverageBwDataset(BwDataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('CoverageBwDataset.__getitem__: '
+            raise IndexError('CoverageBlgDataset.__getitem__: '
                              + 'index must be iterable')
 
         data = np.empty((len(idxs), 2 if self.stranded else 1,

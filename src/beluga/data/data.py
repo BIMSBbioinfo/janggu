@@ -3,10 +3,10 @@ from abc import abstractmethod
 from abc import abstractproperty
 
 
-class BwDataset:
-    """BlueWhale Dataset interface.
+class BlgDataset:
+    """Beluga Dataset interface.
 
-    The BlueWhale dataset mimics a numpy array such that it can be
+    The Beluga dataset mimics a numpy array such that it can be
     seamlessly used in conjunction with keras.
 
     Parameters

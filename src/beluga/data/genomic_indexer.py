@@ -1,15 +1,13 @@
-import os
-
 import numpy as np
-from HTSeq import GenomicInterval
 from HTSeq import BED_Reader
+from HTSeq import GenomicInterval
 from HTSeq import GFF_Reader
 
 
-class BwGenomicIndexer(object):
-    """BwGenomicIndexer maps genomic positions to the respective indices
+class BlgGenomicIndexer(object):
+    """BlgGenomicIndexer maps genomic positions to the respective indices
 
-    Indexing a BwGenomicIndexer object returns a GenomicInterval
+    Indexing a BlgGenomicIndexer object returns a GenomicInterval
     for the associated index.
 
     Parameters
@@ -31,9 +29,9 @@ class BwGenomicIndexer(object):
 
     @classmethod
     def create_from_file(cls, regions, resolution, stride):
-        """Creates a BwGenomicIndexer object.
+        """Creates a BlgGenomicIndexer object.
 
-        This method constructs a BwGenomicIndexer from
+        This method constructs a BlgGenomicIndexer from
         a given BED or GFF file.
         """
 
@@ -75,7 +73,7 @@ class BwGenomicIndexer(object):
         return len(self.chrs)
 
     def __repr__(self):  # pragma: no cover
-        return "BwGenomicIndexer(<regions>, " \
+        return "BlgGenomicIndexer(<regions>, " \
             + "resolution={}, stride={})".format(self.resolution,
                                                  self.stride)
 

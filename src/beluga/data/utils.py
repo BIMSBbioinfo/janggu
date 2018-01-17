@@ -1,4 +1,4 @@
-"""Utilities for bluewhalecore.data """
+"""Utilities for beluga.data """
 
 from collections import defaultdict
 
@@ -6,7 +6,7 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.SeqRecord import SeqRecord
 
-from bluewhalecore.data.data import BwDataset
+from beluga.data.data import BlgDataset
 
 
 def sequences_from_fasta(fasta):
@@ -62,12 +62,12 @@ def dna2ind(seq):
 
 
 def input_shape(bwdata):
-    """Extracts the shape of a provided Input-BwDataset.
+    """Extracts the shape of a provided Input-BlgDataset.
 
     Parameters
     ---------
-    bwdata : :class:`BwDataset` or list(:class:`BwDataset`)
-        BwDataset or list(BwDataset).
+    bwdata : :class:`BlgDataset` or list(:class:`BlgDataset`)
+        BlgDataset or list(BlgDataset).
 
     Returns
     -------
@@ -75,7 +75,7 @@ def input_shape(bwdata):
         Dictionary with dataset names as keys and the corrsponding
         shape as value.
     """
-    if isinstance(bwdata, BwDataset):
+    if isinstance(bwdata, BlgDataset):
         bwdata = [bwdata]
 
     if isinstance(bwdata, list):
@@ -92,12 +92,12 @@ def input_shape(bwdata):
 
 def output_shape(bwdata, loss, activation='sigmoid',
                  loss_weight=1.):
-    """Extracts the shape of a provided Output-BwDataset.
+    """Extracts the shape of a provided Output-BlgDataset.
 
     Parameters
     ---------
-    bwdata : :class:`BwDataset` or list(:class:`BwDataset`)
-        BwDataset or list(BwDataset).
+    bwdata : :class:`BlgDataset` or list(:class:`BlgDataset`)
+        BlgDataset or list(BlgDataset).
     loss : str or objective function.
         Keras compatible loss function. See https://keras.io/losses.
     activation : str
@@ -111,7 +111,7 @@ def output_shape(bwdata, loss, activation='sigmoid',
         Dictionary description of the network output.
     """
 
-    if isinstance(bwdata, BwDataset):
+    if isinstance(bwdata, BlgDataset):
         bwdata = [bwdata]
 
     if isinstance(bwdata, list):

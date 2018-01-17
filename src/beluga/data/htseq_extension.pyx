@@ -16,8 +16,8 @@ if int(sys.version[0]) < 3:
 else:
     maxint = sys.maxsize
 
-class BwChromVector(ChromVector):
-    """BwChromVector extends HTSeq.ChromVector.
+class BlgChromVector(ChromVector):
+    """BlgChromVector extends HTSeq.ChromVector.
 
     It acts as a dataset for holding 1-dimensional data. For instance,
     coverage along a chromosome.
@@ -34,7 +34,7 @@ class BwChromVector(ChromVector):
     @classmethod
     def create(cls, iv, typecode, storage,
                memmap_dir="", overwrite=False):
-        """Create a BwChromVector.
+        """Create a BlgChromVector.
 
         Parameters
         ----------
@@ -92,7 +92,7 @@ class BwChromVector(ChromVector):
         ret = ChromVector.__getitem__(self, index)
 
         if isinstance(ret, ChromVector):
-            v = BwChromVector()
+            v = BlgChromVector()
             v.iv = ret.iv
             v.array = ret.array
             v.offset = ret.offset
@@ -106,8 +106,8 @@ class BwChromVector(ChromVector):
         return sum(list(self))
 
 
-class BwGenomicArray(GenomicArray):
-    """BwGenomicArray extends HTSeq.GenomicArray.
+class BlgGenomicArray(GenomicArray):
+    """BlgGenomicArray extends HTSeq.GenomicArray.
 
     It acts as a dataset for holding genomic data. For instance,
     coverage along an entire genome composed of arbitrary length chromosomes.
@@ -162,18 +162,18 @@ class BwGenomicArray(GenomicArray):
             self.chrom_vectors[chrom] = {}
             iv.strand = "+"
             self.chrom_vectors[chrom][strand_plus] = \
-                BwChromVector.create(iv, self.typecode,
+                BlgChromVector.create(iv, self.typecode,
                                      self.storage, memmap_dir=self.memmap_dir,
                                      overwrite=self.overwrite)
             iv = iv.copy()
             iv.strand = "-"
             self.chrom_vectors[chrom][strand_minus] = \
-                BwChromVector.create(iv, self.typecode,
+                BlgChromVector.create(iv, self.typecode,
                                      self.storage, memmap_dir=self.memmap_dir,
                                      overwrite=self.overwrite)
         else:
             self.chrom_vectors[chrom] = {
                 strand_nostrand:
-                    BwChromVector.create(iv, self.typecode, self.storage,
+                    BlgChromVector.create(iv, self.typecode, self.storage,
                                          overwrite=self.overwrite,
                                          memmap_dir=self.memmap_dir)}

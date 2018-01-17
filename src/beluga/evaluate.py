@@ -8,7 +8,7 @@ import numpy as np
 from sklearn import metrics
 
 
-def bw_auroc(ytrue, ypred):
+def blg_auroc(ytrue, ypred):
     """auROC
 
     Parameters
@@ -26,7 +26,7 @@ def bw_auroc(ytrue, ypred):
     return metrics.roc_auc_score(ytrue, ypred)
 
 
-def bw_auprc(ytrue, ypred):
+def blg_auprc(ytrue, ypred):
     """auPRC
 
     Parameters
@@ -44,7 +44,7 @@ def bw_auprc(ytrue, ypred):
     return metrics.average_precision_score(ytrue, ypred)
 
 
-def bw_accuracy(ytrue, ypred):
+def blg_accuracy(ytrue, ypred):
     """Accuracy
 
     Parameters
@@ -62,7 +62,7 @@ def bw_accuracy(ytrue, ypred):
     return metrics.accuracy_score(ytrue, ypred.round())
 
 
-def bw_f1(ytrue, ypred):
+def blg_f1(ytrue, ypred):
     """F1 score
 
     Parameters
@@ -80,7 +80,7 @@ def bw_f1(ytrue, ypred):
     return metrics.f1_score(ytrue, ypred.round())
 
 
-def bw_av_auroc(ytrue, ypred):
+def blg_av_auroc(ytrue, ypred):
     """Average auROC
 
     For the given N x M arrays, the average auROC is determined across
@@ -103,7 +103,7 @@ def bw_av_auroc(ytrue, ypred):
     return np.asarray(vals).mean()
 
 
-def bw_av_auprc(ytrue, ypred):
+def blg_av_auprc(ytrue, ypred):
     """Average auPRC
 
     For the given N x M arrays, the average auPRC is determined across

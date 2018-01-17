@@ -10,19 +10,19 @@ from keras.layers import Input
 from keras.models import Model
 from sklearn.metrics import roc_auc_score
 
-from bluewhalecore import MongoDbEvaluator
-from bluewhalecore import bluewhale_fit_generator
-from bluewhalecore import bluewhale_predict_generator
-from bluewhalecore.bluewhale import BlueWhale
-from bluewhalecore.data import NumpyBwDataset
-from bluewhalecore.data import input_shape
-from bluewhalecore.data import output_shape
-from bluewhalecore.decorators import inputlayer
-from bluewhalecore.decorators import outputlayer
-from bluewhalecore.evaluate import bw_auprc
-from bluewhalecore.evaluate import bw_auroc
-from bluewhalecore.evaluate import bw_av_auprc
-from bluewhalecore.evaluate import bw_av_auroc
+from beluga import MongoDbEvaluator
+from beluga import beluga_fit_generator
+from beluga import beluga_predict_generator
+from beluga.beluga import Beluga
+from beluga.data import NumpyBlgDataset
+from beluga.data import input_shape
+from beluga.data import output_shape
+from beluga.decorators import inputlayer
+from beluga.decorators import outputlayer
+from beluga.evaluate import blg_auprc
+from beluga.evaluate import blg_auroc
+from beluga.evaluate import blg_av_auprc
+from beluga.evaluate import blg_av_auroc
 
 np.random.seed(1234)
 
@@ -32,13 +32,13 @@ np.random.seed(1234)
 y_train = keras.utils.to_categorical(y_train)
 y_test = keras.utils.to_categorical(y_test)
 
-# Wrap it as BwDataset
-bw_x_train = NumpyBwDataset('x', x_train)
-bw_x_test = NumpyBwDataset('x', x_test)
-bw_y_train = NumpyBwDataset('y', y_train,
-                            samplenames=[str(i) for i in range(10)])
-bw_y_test = NumpyBwDataset('y', y_test,
-                           samplenames=[str(i) for i in range(10)])
+# Wrap it as BlgDataset
+blg_x_train = NumpyBlgDataset('x', x_train)
+blg_x_test = NumpyBlgDataset('x', x_test)
+blg_y_train = NumpyBlgDataset('y', y_train,
+                              samplenames=[str(i) for i in range(10)])
+blg_y_test = NumpyBlgDataset('y', y_test,
+                             samplenames=[str(i) for i in range(10)])
 
 
 # Option 2:
@@ -56,12 +56,12 @@ def kerasmodel():
 
 # Option 2:
 # Instantiate the model manually
-def bluewhalemodel():
+def belugamodel():
     input = Input(shape=(28, 28), name='x')
     layer = Flatten()(input)
     layer = Dense(10, activation='tanh')(layer)
     output = Dense(10, activation='sigmoid', name='y')(layer)
-    model = BlueWhale(inputs=input, outputs=output, name='mnist')
+    model = Beluga(inputs=input, outputs=output, name='mnist')
     model.compile(optimizer='adadelta', loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
@@ -69,7 +69,7 @@ def bluewhalemodel():
 
 # Option 3:
 # Define the body of the network using the decorators.
-# This option is used with BlueWhale.create_by_shape
+# This option is used with Beluga.create_by_shape
 @inputlayer
 @outputlayer
 def ffn(input, inparams, outparams, otherparams):
@@ -85,105 +85,105 @@ def auc3(ytrue, ypred):
     return roc_auc_score(yt, pt)
 
 
-# The datastructures provided by bluewhalecore can be immediately
+# The datastructures provided by beluga can be immediately
 # supplied to keras, because they mimic numpy arrays
 K.clear_session()
 np.random.seed(1234)
 m = kerasmodel()
-h = m.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100, verbose=0)
-ypred = m.predict(bw_x_test)
+h = m.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100, verbose=0)
+ypred = m.predict(blg_x_test)
 print('Option 1')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
+print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in bluewhale
+# then use it in beluga
 K.clear_session()
 np.random.seed(1234)
-bw = bluewhalemodel()
-h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100, verbose=0)
-ypred = bw.predict(bw_x_test)
+bw = belugamodel()
+h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100, verbose=0)
+ypred = bw.predict(blg_x_test)
 
 print('Option 2a')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
+print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in bluewhale
+# then use it in beluga
 K.clear_session()
 np.random.seed(1234)
-bw = bluewhalemodel()
-h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100,
-           generator=bluewhale_fit_generator,
+bw = belugamodel()
+h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
+           generator=beluga_fit_generator,
            workers=3, verbose=0)
-ypred = bw.predict(bw_x_test)
+ypred = bw.predict(blg_x_test)
 
 print('Option 2b')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
+print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in bluewhale
+# then use it in beluga
 K.clear_session()
 np.random.seed(1234)
-bw = bluewhalemodel()
-h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100,
-           generator=bluewhale_fit_generator,
+bw = belugamodel()
+h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
+           generator=beluga_fit_generator,
            workers=3, verbose=0)
-ypred = bw.predict(bw_x_test, generator=bluewhale_predict_generator)
+ypred = bw.predict(blg_x_test, generator=beluga_predict_generator)
 
 print('Option 2c')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
+print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# For comparison, here is how the model would train without BlueWhale
+# For comparison, here is how the model would train without Beluga
 K.clear_session()
 np.random.seed(1234)
 m = kerasmodel()
 h = m.fit(x_train, y_train, epochs=30, batch_size=100,
           shuffle=False, verbose=0)
-ypred = m.predict(bw_x_test)
+ypred = m.predict(blg_x_test)
 print('Option 3')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
+print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
 # Instantiate model from input and output shape
 K.clear_session()
 np.random.seed(1234)
-bw = BlueWhale.create_by_shape(input_shape(bw_x_train),
-                               output_shape(bw_y_train,
-                                            'categorical_crossentropy'),
-                               'mnist_ffn',
-                               modeldef=(ffn, (10, 'tanh',)),
-                               metrics=['acc'])
-h = bw.fit(bw_x_train, bw_y_train, epochs=30, batch_size=100, verbose=0)
-ypred = bw.predict(bw_x_test)
+bw = Beluga.create_by_shape(input_shape(blg_x_train),
+                            output_shape(blg_y_train,
+                                         'categorical_crossentropy'),
+                            'mnist_ffn',
+                            modeldef=(ffn, (10, 'tanh',)),
+                            metrics=['acc'])
+h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100, verbose=0)
+ypred = bw.predict(blg_x_test)
 print('Option 4')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
-print('AUC: {}'.format(auc3(bw_y_test[:], ypred)))
+print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
 evaluator = MongoDbEvaluator()
 
 # Evaluate the results
-evaluator.dump(bw, bw_x_test, bw_y_test,
-               elementwise_score={'auROC': bw_auroc, 'auPRC': bw_auprc},
-               combined_score={'av-auROC': bw_av_auroc,
-                               'av-auPRC': bw_av_auprc}, batch_size=100,
+evaluator.dump(bw, blg_x_test, blg_y_test,
+               elementwise_score={'auROC': blg_auroc, 'auPRC': blg_auprc},
+               combined_score={'av-auROC': blg_av_auroc,
+                               'av-auPRC': blg_av_auprc}, batch_size=100,
                use_multiprocessing=True)
 
 for row in evaluator.db.results.find():
