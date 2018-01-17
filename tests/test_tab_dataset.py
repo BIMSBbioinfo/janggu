@@ -28,7 +28,7 @@ def test_tab_reading():
                                    os.path.join(data_path, 'ctcf_sample.csv')])
 
     np.testing.assert_equal(len(both), 14344)
-    np.testing.assert_equal(both.shape, (len(both), 2,))
+    np.testing.assert_equal(both.shape, both[:].shape)
 
     with pytest.raises(Exception):
         TabBlgDataset('train', filename='')
