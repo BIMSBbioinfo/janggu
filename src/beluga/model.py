@@ -481,7 +481,7 @@ class Beluga(object):
             c_data = {}
             c_data[data.name] = data
         elif isinstance(data, list) and \
-            hasattr(data[0], "name") and hasattr(data[0], "shape"):
+                hasattr(data[0], "name") and hasattr(data[0], "shape"):
             c_data = {}
             for datum in data:
                 c_data[datum.name] = datum
