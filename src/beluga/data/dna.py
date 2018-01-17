@@ -9,7 +9,6 @@ from beluga.data.htseq_extension import BlgGenomicArray
 from beluga.data.utils import as_onehot
 from beluga.data.utils import dna2ind
 from beluga.data.utils import sequences_from_fasta
-from beluga.data.utils import REV_COMP_MAP as REV_COMP
 
 
 class DnaBlgDataset(BlgDataset):
