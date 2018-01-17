@@ -13,7 +13,6 @@ from sklearn.metrics import roc_auc_score
 from beluga import MongoDbEvaluator
 from beluga import beluga_fit_generator
 from beluga import beluga_predict_generator
-from beluga.model import Beluga
 from beluga.data import NumpyBlgDataset
 from beluga.data import input_shape
 from beluga.data import output_shape
@@ -23,6 +22,7 @@ from beluga.evaluate import blg_auprc
 from beluga.evaluate import blg_auroc
 from beluga.evaluate import blg_av_auprc
 from beluga.evaluate import blg_av_auroc
+from beluga.model import Beluga
 
 np.random.seed(1234)
 
