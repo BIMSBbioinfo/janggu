@@ -2,7 +2,7 @@
 
 __version__ = '0.5.1'
 
-from beluga.beluga import Beluga  # noqa
+from beluga.model import Beluga  # noqa
 from beluga.decorators import inputlayer  # noqa
 from beluga.decorators import outputlayer  # noqa
 from beluga.evaluator import Evaluator  # noqa
