@@ -1,6 +1,6 @@
 """Beluga model and utilities for deep learning in genomics."""
 
-__version__ = '0.5.1'
+__version__ = '0.6.0'
 
 from beluga.decorators import inputlayer  # noqa
 from beluga.decorators import outputlayer  # noqa

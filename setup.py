@@ -49,7 +49,7 @@ def _read(*names, **kwargs):
 
 setup(
     name='beluga',
-    version='0.5.1',
+    version='0.6.0',
     license='BSD 3-Clause License',
     description='Code infrastructure for deep learning to make modelling '
     + 'reproducible and maintainable',

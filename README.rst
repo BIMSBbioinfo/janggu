@@ -36,9 +36,9 @@ Overview
     :alt: Coverage Status
     :target: https://codecov.io/github/wkopp/beluga
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/beluga/v0.5.1.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/beluga/v0.6.0.svg
     :alt: Commits since latest release
-    :target: https://github.com/wkopp/beluga/compare/v0.5.1...master
+    :target: https://github.com/wkopp/beluga/compare/v0.6.0...master
 
 .. |version| image:: https://img.shields.io/pypi/v/beluga.svg
     :alt: PyPI Package latest release
