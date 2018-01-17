@@ -5,6 +5,7 @@ from collections import defaultdict
 import numpy as np
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
+from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from beluga.data.data import BlgDataset
@@ -33,8 +34,6 @@ LETTERMAP = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'a': 0, 'c': 1, 'g': 2, 't': 3}
 
 NMAP = defaultdict(lambda: -1024)
 NMAP.update(LETTERMAP)
-REV_COMP_MAP = defaultdict(lambda: -1024)
-REV_COMP_MAP.update({0: 3, 1: 2, 2: 1, 3: 0})
 
 
 def dna2ind(seq):
@@ -47,8 +46,8 @@ def dna2ind(seq):
 
     Parameters
     ----------
-    seq : str or Bio.SeqRecord
-        Nucleotide sequence as a string or SeqRecord object.
+    seq : str, Bio.SeqRecord or Bio.Seq.Seq
+        Nucleotide sequence represented as string, SeqRecord or Seq.
 
     Returns
     -------
@@ -56,12 +55,12 @@ def dna2ind(seq):
         Integer array representation of the nucleotide sequence.
     """
 
-    if isinstance(seq, str):
+    if isinstance(seq, SeqRecord):
+        seq = seq.seq
+    if isinstance(seq, (str, Seq)):
         return [NMAP[x] for x in seq]
-    elif isinstance(seq, SeqRecord):
-        return [NMAP[x] for x in seq.seq]
     else:
-        raise Exception('dna2ind: Format is not supported')
+        raise TypeError('dna2ind: Format is not supported')
 
 
 def as_onehot(idna, order):
