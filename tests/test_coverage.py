@@ -99,7 +99,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
 #                                'end': [217350]})
 
     flank = 4
-    iv = GenomicInterval("chrIII", 217330, 217350, ".")
+    iv = GenomicInterval("chrIII", 217330, 217350, "+")
 
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
@@ -189,7 +189,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
 #                                'end': [217350]})
 
     flank = 4
-    iv = GenomicInterval("chrIII", 217330, 217350, ".")
+    iv = GenomicInterval("chrIII", 217330, 217350, "+")
 
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution

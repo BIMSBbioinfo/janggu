@@ -84,7 +84,7 @@ class BwGenomicIndexer(object):
             start = self.offsets[index] + \
                     self.inregionidx[index]*self.stride
             return GenomicInterval(self.chrs[index], start,
-                                   start + self.resolution, '.')
+                                   start + self.resolution, self.strand[index])
 
         raise IndexError('Index support only for "int". Given {}'.format(
             type(index)))
