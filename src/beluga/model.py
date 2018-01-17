@@ -5,11 +5,8 @@ import os
 
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint
-# from keras.callbacks import TensorBoard
 from keras.models import Model
 from keras.models import load_model
-
-from beluga.data import BlgDataset
 
 
 class Beluga(object):
@@ -480,10 +477,11 @@ class Beluga(object):
     def __convert_data(data):
         # If we deal with BlgDataset, we convert it to a Dictionary
         # which is directly interpretable by keras
-        if isinstance(data, BlgDataset):
+        if hasattr(data, "name") and hasattr(data, "shape"):
             c_data = {}
             c_data[data.name] = data
-        elif isinstance(data, list) and isinstance(data[0], BlgDataset):
+        elif isinstance(data, list) and \
+            hasattr(data[0], "name") and hasattr(data[0], "shape"):
             c_data = {}
             for datum in data:
                 c_data[datum.name] = datum
