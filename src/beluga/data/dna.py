@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 from HTSeq import GenomicInterval
-from pandas import DataFrame
 
 from beluga.data.data import BlgDataset
 from beluga.data.genomic_indexer import BlgGenomicIndexer
@@ -63,8 +62,7 @@ class DnaBlgDataset(BlgDataset):
     _order = None
     _flank = None
 
-    def __init__(self, name, garray, gindexer,
-                 flank=150, order=1):
+    def __init__(self, name, garray, gindexer, flank=150, order=1):
 
         self.flank = flank
         self.order = order

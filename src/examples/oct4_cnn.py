@@ -79,6 +79,7 @@ def belugamodel():
                    metrics=['accuracy'])
     return model_
 
+
 # Option 3:
 # Instantiate an ordinary keras model
 @inputlayer
@@ -88,7 +89,6 @@ def belugabody(inputs, inp, oup, params):
                    activation=inp[1])(inputs[0])
     output = GlobalAveragePooling2D()(layer)
     return inputs, output
-
 
 
 K.clear_session()
