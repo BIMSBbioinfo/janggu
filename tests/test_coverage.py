@@ -19,9 +19,10 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
     gsize = content.to_dict()['length']
 
-    regions = pandas.DataFrame({'chr': ['chrIII'],
-                                'start': [217330],
-                                'end': [217350]})
+    bed_file = os.path.join(data_path, "yeast.bed")
+#    regions = pandas.DataFrame({'chr': ['chrIII'],
+#                                'start': [217330],
+#                                'end': [217350]})
     iv = GenomicInterval("chrIII", 217330, 217350, "+")
 
     flank = 4
@@ -32,7 +33,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         cvdata = CoverageBwDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
-            regions=regions,
+            regions=bed_file,
             genomesize=gsize,
             resolution=1, stride=1,
             flank=flank, stranded=True,
@@ -56,7 +57,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         cvdata = CoverageBwDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
-            regions=regions,
+            regions=bed_file,
             genomesize=gsize,
             resolution=20, stride=20,
             flank=flank, stranded=True,
@@ -91,10 +92,11 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
                               index_col='chr')
 
     gsize = content.to_dict()['length']
+    bed_file = os.path.join(data_path, "yeast.bed")
 
-    regions = pandas.DataFrame({'chr': ['chrIII'],
-                                'start': [217330],
-                                'end': [217350]})
+#    regions = pandas.DataFrame({'chr': ['chrIII'],
+#                                'start': [217330],
+#                                'end': [217350]})
 
     flank = 4
     iv = GenomicInterval("chrIII", 217330, 217350, ".")
@@ -105,7 +107,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         cvdata_bam = CoverageBwDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
-            regions=regions,
+            regions=bed_file,
             genomesize=gsize,
             resolution=1, stride=1,
             flank=flank, stranded=False,
@@ -143,7 +145,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
         cvdata_bam = CoverageBwDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
-            regions=regions,
+            regions=bed_file,
             genomesize=gsize,
             resolution=20, stride=20,
             flank=flank, stranded=False,
@@ -180,9 +182,11 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
 
     gsize = content.to_dict()['length']
 
-    regions = pandas.DataFrame({'chr': ['chrIII'],
-                                'start': [217330],
-                                'end': [217350]})
+    bed_file = os.path.join(data_path, "yeast.bed")
+
+#    regions = pandas.DataFrame({'chr': ['chrIII'],
+#                                'start': [217330],
+#                                'end': [217350]})
 
     flank = 4
     iv = GenomicInterval("chrIII", 217330, 217350, ".")
@@ -194,7 +198,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         cvdata_bigwig = CoverageBwDataset.create_from_bigwig(
             "yeast_I_II_III.bw",
             bigwigfiles=bwfile_,
-            regions=regions,
+            regions=bed_file,
             genomesize=gsize,
             resolution=1, stride=1,
             flank=flank, stranded=False,
@@ -233,7 +237,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         cvdata_bigwig = CoverageBwDataset.create_from_bigwig(
             "yeast_I_II_III.bw",
             bigwigfiles=bwfile_,
-            regions=regions,
+            regions=bed_file,
             genomesize=gsize,
             resolution=20, stride=20,
             flank=flank, stranded=False,

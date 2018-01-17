@@ -159,8 +159,8 @@ class DnaBwDataset(BwDataset):
             Name of the dataset
         refgenome : str
             Fasta file.
-        regions : :class:`pandas.DataFrame` or str
-            bed-filename or content of a bed-file as :class:`pandas.DataFrame`.
+        regions : str
+            BED- or GFF-filename.
         reglen : int
             Region length in basepairs to be considered. Default: 200.
         stride : int
@@ -179,7 +179,7 @@ class DnaBwDataset(BwDataset):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = BwGenomicIndexer(regions, reglen, stride)
+        gindexer = BwGenomicIndexer.create_from_file(regions, reglen, stride)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
                                          cachedir=cachedir,
@@ -238,7 +238,11 @@ class DnaBwDataset(BwDataset):
         flank = 0
         stride = 1
 
-        gindexer = BwGenomicIndexer(regions, reglen, stride)
+        gindexer = BwGenomicIndexer(reglen, stride)
+        gindexer.chrs = chroms
+        gindexer.offsets = [0]*len(lens)
+        gindexer.inregionidx = [0]*len(lens)
+        gindexer.strand = ['.']*len(lens)
 
         return cls(name, garray, gindexer, flank, order)
 

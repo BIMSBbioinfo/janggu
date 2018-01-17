@@ -2,9 +2,8 @@ import os
 
 import numpy as np
 from HTSeq import GenomicInterval
-from pandas import DataFrame
-
-from bluewhalecore.data.utils import read_bed
+from HTSeq import BED_Reader
+from HTSeq import GFF_Reader
 
 
 class BwGenomicIndexer(object):
@@ -15,8 +14,8 @@ class BwGenomicIndexer(object):
 
     Parameters
     ----------
-    regions : str or pandas.DataFrame
-        Bed-filename or content of a bed-file as a pandas.DataFrame.
+    regions : str
+        Bed- or GFF-filename.
     resolution : int
         Interval size in basepairs.
     stride : int
@@ -25,36 +24,52 @@ class BwGenomicIndexer(object):
 
     _stride = None
     _resolution = None
+    chrs = None
+    offsets = None
+    inregionidx = None
+    strand = None
 
-    def __init__(self, regions, resolution, stride):
+    @classmethod
+    def create_from_file(cls, regions, resolution, stride):
+        """Creates a BwGenomicIndexer object.
+
+        This method constructs a BwGenomicIndexer from
+        a given BED or GFF file.
+        """
+
+        if isinstance(regions, str) and regions.endswith('.bed'):
+            regions_ = BED_Reader(regions)
+        elif isinstance(regions, str) and (regions.endswith('.gff') or
+                                           regions.endswith('.gtf')):
+            regions_ = GFF_Reader(regions)
+        else:
+            raise Exception('Regions must be a bed, gff or gtf-file.')
+
+        gind = cls(resolution, stride)
+
+        chrs = []
+        offsets = []
+        inregionidx = []
+        strand = []
+        for reg in regions_:
+            reglen = (reg.iv.end - reg.iv.start -
+                      resolution + stride) // stride
+            chrs += [reg.iv.chrom] * reglen
+            offsets += [reg.iv.start] * reglen
+            strand += [reg.iv.strand] * reglen
+            inregionidx += range(reglen)
+
+        gind.chrs = chrs
+        gind.offsets = offsets
+        gind.inregionidx = inregionidx
+        gind.strand = strand
+        return gind
+#        return cls(resolution, stride, chrs, offsets, inregionidx, strand)
+
+    def __init__(self, resolution, stride):
 
         self.resolution = resolution
         self.stride = stride
-
-        # fill up int8 rep of DNA
-        # load dna, region index, and within region index
-        if isinstance(regions, str) and os.path.exists(regions):
-            regions_ = read_bed(regions)
-        elif isinstance(regions, DataFrame):
-            regions_ = regions.copy()
-        else:
-            raise Exception('regions must be a bed-filename \
-                            or a pandas.DataFrame \
-                            containing the content of a bed-file')
-
-        # Create iregion index
-        reglens = ((regions_.end - regions_.start - resolution + stride) //
-                   stride).values
-
-        self.chrs = []
-        self.offsets = []
-        for i, reglen in enumerate(reglens):
-            self.chrs += [regions_.chr[i]] * reglen
-            self.offsets += [regions_.start[i]] * reglen
-
-        self.inregionidx = []
-        for reglen in reglens:
-            self.inregionidx += range(reglen)
 
     def __len__(self):
         return len(self.chrs)

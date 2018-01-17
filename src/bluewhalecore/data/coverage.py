@@ -129,7 +129,8 @@ class CoverageBwDataset(BwDataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = BwGenomicIndexer(regions, resolution, stride)
+        gindexer = BwGenomicIndexer.create_from_file(regions, resolution,
+                                                     stride)
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -211,7 +212,8 @@ class CoverageBwDataset(BwDataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = BwGenomicIndexer(regions, resolution, stride)
+        gindexer = BwGenomicIndexer.create_from_file(regions, resolution,
+                                                     stride)
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]

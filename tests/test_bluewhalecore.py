@@ -19,7 +19,6 @@ from bluewhalecore.data import NumpyBwDataset
 from bluewhalecore.data import TabBwDataset
 from bluewhalecore.data import input_shape
 from bluewhalecore.data import output_shape
-from bluewhalecore.data import read_bed
 from bluewhalecore.evaluate import bw_accuracy
 from bluewhalecore.evaluate import bw_auprc
 from bluewhalecore.evaluate import bw_auroc
@@ -36,14 +35,18 @@ def test_main():
 def test_bluewhale_instance(tmpdir):
     """Test BlueWhale creation by shape and name."""
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    regions = read_bed(os.path.join(data_path, 'regions.bed'))
+    bed_file = os.path.join(data_path, 'regions.bed')
+    print(bed_file)
+    print(type(bed_file))
+    print(isinstance(bed_file, str))
+    print(bed_file.endswith('.bed'))
     csvfile = os.path.join(data_path, 'ctcf_sample.csv')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
     dna = DnaBwDataset.create_from_refgenome('dna', refgenome=refgenome,
                                              storage='ndarray',
-                                             regions=regions, order=1)
+                                             regions=bed_file, order=1)
 
     ctcf = TabBwDataset('ctcf', filename=csvfile)
 

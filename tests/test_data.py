@@ -8,18 +8,17 @@ from bluewhalecore.data import RevCompDnaBwDataset
 from bluewhalecore.data import TabBwDataset
 from bluewhalecore.data import input_shape
 from bluewhalecore.data import output_shape
-from bluewhalecore.data import read_bed
 
 
 def test_inshape():
     data_path = pkg_resources.resource_filename('bluewhalecore', 'resources/')
-    regions = read_bed(os.path.join(data_path, 'regions.bed'))
+    bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
     dna = DnaBwDataset.create_from_refgenome('dna', refgenome=refgenome,
                                              storage='ndarray',
-                                             regions=regions, order=1)
+                                             regions=bed_file, order=1)
     rcdna = RevCompDnaBwDataset('rcdna', dna)
 
     sh = input_shape([dna, rcdna])
