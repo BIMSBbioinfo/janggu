@@ -252,21 +252,21 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
 
 def test_load_coveragedataset_bigwig_unstranded(tmpdir):
     data_path = pkg_resources.resource_filename('beluga', 'resources/')
-    
+
     bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
-    
+
     gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
                             index_col='chr').to_dict()['length']
-    
+
     # gsize = content.to_dict()['length']
-    
+
     bed_file = os.path.join(data_path, "yeast.bed")
     bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
-    
+
     flank = 4
     interval = GenomicInterval("chrIII", 217330, 217350, "+")
-    cachedir=tmpdir.strpath
+    cachedir = tmpdir.strpath
 
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
