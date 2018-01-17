@@ -174,7 +174,7 @@ class CoverageBlgDataset(BlgDataset):
     def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize,
                            samplenames=None,
                            resolution=50, stride=50,
-                           flank=4, stranded=True, storage='hdf5',
+                           flank=4, storage='hdf5',
                            overwrite=False,
                            cachedir=None):
         """Create a CoverageBlgDataset class from a bigwig-file (or files).
@@ -201,8 +201,6 @@ class CoverageBlgDataset(BlgDataset):
         flank : int
             Adjacent flanking bins to use, where the bin size is determined
             by the resolution. Default: 4.
-        stranded : boolean
-            Consider strandedness of coverage. Default: True.
         storage : str
             Storage mode for storing the coverage data can be
             'step', 'ndarray', 'memmap' or 'hdf5'. Default: 'hdf5'.
@@ -231,7 +229,7 @@ class CoverageBlgDataset(BlgDataset):
             else:
                 memmap_dir = ''
 
-            nmms = cls._cacheexists(memmap_dir, genomesize.keys(), stranded,
+            nmms = cls._cacheexists(memmap_dir, genomesize.keys(), False,
                                     storage)
 
             # At the moment, we treat the information contained
@@ -254,15 +252,14 @@ class CoverageBlgDataset(BlgDataset):
 
             covers.append(cover)
 
-        return cls(name, covers, samplenames, gindexer, flank,
-                   stranded, cachedir)
+        return cls(name, covers, samplenames, gindexer, flank, False, cachedir)
 
     def __repr__(self):  # pragma: no cover
-        return 'CoverageBlgDataset("{}", <BlgGenomicArray>, <BlgGenomicIndexer>, \
-                flank={}, stranded={}, \
-                cachedir={})'\
-                .format(self.name, self.flank, self.stranded,
-                        self.cachedir)
+        return "CoverageBlgDataset('{}', ".format(self.name) \
+               + "<BlgGenomicArray>, " \
+               + "<BlgGenomicIndexer>, " \
+               + "flank={}, stranded={}, ".format(self.flank, self.stranded) \
+               + "cachedir={})".format(self.cachedir)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -288,18 +285,26 @@ class CoverageBlgDataset(BlgDataset):
                     for istrand in range(2 if self.stranded else 1):
 
                         pinterval = interval.copy()
+
                         pinterval.start = interval.start + \
                             iflank * self.gindexer.stride
+
                         pinterval.end = interval.end + \
                             iflank * self.gindexer.stride
+
                         pinterval.strand = sign[istrand] \
                             if self.stranded else '.'
+
                         for icov, cover in enumerate(self.covers):
                             data[i, istrand, iflank+self.flank, icov] = \
                                 cover[pinterval].sum()
+
                 except IndexError:
                     data[i, :, iflank+self.flank, :] = 0
-
+            if interval.strand == '-':
+                # if the region is on the negative strand,
+                # flip the order  of the coverage track
+                data[i, :, :, :] = data[i, ::-1, ::-1, :]
         for transform in self.transformations:
             data = transform(data)
 
