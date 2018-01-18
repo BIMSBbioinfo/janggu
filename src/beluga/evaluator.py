@@ -121,9 +121,11 @@ class MongoDbEvaluator(Evaluator):
                 for idx in range(ypred.shape[1]):
                     score = elementwise_score[key](outputs[:, idx],
                                                    ypred[:, idx])
-                    tags = list(datatags)
+                    tags = []
                     if hasattr(outputs, "samplenames"):
                         tags.append(outputs.samplenames[idx])
+                    if datatags:
+                        tags.append(datatags)
                     iid = self._record(beluga.name, modeltags, key,
                                        score, tags)
                     beluga.logger.info("Recorded {}".format(iid))
