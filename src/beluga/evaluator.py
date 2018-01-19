@@ -75,9 +75,12 @@ class MongoDbEvaluator(Evaluator):
         Name of the database
     """
 
-    def __init__(self, dbname="beluga"):
+    def __init__(self, dbname="beluga", host='localhost', port=27017,
+                 document_class=dict, tz_aware=False, connect=True, **kwargs):
         super(MongoDbEvaluator, self).__init__()
-        client = MongoClient()
+        client = MongoClient(host=host, port=port,
+                             document_class=document_class,
+                             tz_aware=tz_aware, connect=connect, **kwargs)
         self.database = client[dbname]
 
     def _record(self, modelname, modeltags, metricname, value, datatags):
