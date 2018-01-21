@@ -16,8 +16,8 @@ from beluga import inputlayer
 from beluga import outputlayer
 from beluga.data import DnaBlgDataset
 from beluga.data import NumpyBlgDataset
-from beluga.data import input_shape
-from beluga.data import output_shape
+from beluga.data import input_props
+from beluga.data import output_props
 from beluga.evaluate import blg_av_auprc
 from beluga.evaluate import blg_av_auroc
 
@@ -44,25 +44,24 @@ evaluator = MongoDbEvaluator()
 # One can use a keras model directly with all BlgDatasets, because
 # the datasets satisfy an interface that mimics ordinary numpy arrays.
 def kerasmodel():
-    input_ = Input(shape=(4, 200, 1))
+    input_ = Input(shape=(4, 200, 1), name='dna')
     layer = Conv2D(30, (4, 21), activation='relu')(input_)
     layer = GlobalAveragePooling2D()(layer)
-    output = Dense(1, activation='sigmoid')(layer)
+    output = Dense(1, activation='sigmoid', name='y')(layer)
     model_ = Model(inputs=input_, outputs=output)
     model_.compile(optimizer='adadelta', loss='binary_crossentropy',
-                   metrics=['accuracy'])
+                metrics=['accuracy'])
     return model_
-
 
 # For comparison, here is how the model would train without Beluga
 K.clear_session()
 np.random.seed(1234)
 model = kerasmodel()
-hist = model.fit(DNA_ONEHOT, LABELS, epochs=300, batch_size=100)
+hist = model.fit({'dna':DNA_ONEHOT}, {'y':LABELS}, epochs=10, batch_size=100)
 print('Option 1')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                 hist.history['acc'][-1]))
+                                hist.history['acc'][-1]))
 print('#' * 40)
 
 
@@ -92,72 +91,13 @@ def belugabody(inputs, inp, oup, params):
 
 
 K.clear_session()
-model = belugamodel()
-hist = model.fit(DNA_ONEHOT, LABELS, epochs=300, batch_size=100)
-print('Option 2')
-print('#' * 40)
-print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                 hist.history['acc'][-1]))
-print('#' * 40)
-evaluator.dump(model, DNA_ONEHOT, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
-               datatags=['onehot'],
-               modeltags=['fit'])
-
-
-K.clear_session()
-model = belugamodel()
-hist = model.fit(DNA, LABELS, epochs=300, batch_size=100)
-print('Option 2')
-print('#' * 40)
-print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                 hist.history['acc'][-1]))
-print('#' * 40)
-evaluator.dump(model, DNA, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
-               datatags=['dnaindex'],
-               modeltags=['fit'])
-
-K.clear_session()
-model = belugamodel()
-hist = model.fit(DNA_ONEHOT, LABELS, epochs=300, batch_size=100,
-                 generator=beluga_fit_generator,
-                 use_multiprocessing=True,
-                 workers=3)
-print('Option 2')
-print('#' * 40)
-print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                 hist.history['acc'][-1]))
-print('#' * 40)
-evaluator.dump(model, DNA_ONEHOT, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
-               datatags=['onehot'],
-               modeltags=['fit_generator'])
-
-
-K.clear_session()
-model = belugamodel()
-hist = model.fit(DNA, LABELS, epochs=300, batch_size=100,
-                 generator=beluga_fit_generator,
-                 use_multiprocessing=True,
-                 workers=3)
-print('Option 2')
-print('#' * 40)
-print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                 hist.history['acc'][-1]))
-print('#' * 40)
-evaluator.dump(model, DNA, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
-               datatags=['dnaindex'],
-               modeltags=['fit_generator'])
-
-
-K.clear_session()
-model = Beluga.create_by_shape(input_shape(DNA),
-                               output_shape(LABELS, 'binary_crossentropy'),
+model = Beluga.create_by_shape(input_props(DNA),
+                               output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn',
-                               modeldef=(belugabody, (30, 'relu',)))
-hist = model.fit(DNA_ONEHOT, LABELS, epochs=300, batch_size=100)
+                               modeldef=(belugabody, (30, 'relu',)),
+                               metrics=['acc'])
+hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
+model.kerasmodel.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
 print('Option 2')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
@@ -170,11 +110,12 @@ evaluator.dump(model, DNA_ONEHOT, LABELS,
 
 
 K.clear_session()
-model = Beluga.create_by_shape(input_shape(DNA),
-                               output_shape(LABELS, 'binary_crossentropy'),
+model = Beluga.create_by_shape(input_props(DNA),
+                               output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn_from_shape',
-                               modeldef=(belugabody, (30, 'relu',)))
-hist = model.fit(DNA, LABELS, epochs=300, batch_size=100)
+                               modeldef=(belugabody, (30, 'relu',)),
+                               metrics=['acc'])
+hist = model.fit(DNA, LABELS, epochs=10, batch_size=100)
 print('Option 2')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
@@ -187,11 +128,12 @@ evaluator.dump(model, DNA, LABELS,
 
 
 K.clear_session()
-model = Beluga.create_by_shape(input_shape(DNA),
-                               output_shape(LABELS, 'binary_crossentropy'),
+model = Beluga.create_by_shape(input_props(DNA),
+                               output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn_from_shape',
-                               modeldef=(belugabody, (30, 'relu',)))
-hist = model.fit(DNA_ONEHOT, LABELS, epochs=300, batch_size=100,
+                               modeldef=(belugabody, (30, 'relu',)),
+                               metrics=['acc'])
+hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100,
                  generator=beluga_fit_generator,
                  use_multiprocessing=True,
                  workers=3)
@@ -206,11 +148,73 @@ evaluator.dump(model, DNA_ONEHOT, LABELS,
                modeltags=['fit_generator'])
 
 K.clear_session()
-model = Beluga.create_by_shape(input_shape(DNA),
-                               output_shape(LABELS, 'binary_crossentropy'),
+model = Beluga.create_by_shape(input_props(DNA),
+                               output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn_from_shape',
-                               modeldef=(belugabody, (30, 'relu',)))
-hist = model.fit(DNA, LABELS, epochs=300, batch_size=100,
+                               modeldef=(belugabody, (30, 'relu',)),
+                               metrics=['acc'])
+hist = model.fit(DNA, LABELS, epochs=10, batch_size=100,
+                 generator=beluga_fit_generator,
+                 use_multiprocessing=True,
+                 workers=3)
+print('Option 2')
+print('#' * 40)
+print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
+                                 hist.history['acc'][-1]))
+print('#' * 40)
+evaluator.dump(model, DNA, LABELS,
+               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               datatags=['dnaindex'],
+               modeltags=['fit_generator'])
+
+
+K.clear_session()
+model = belugamodel()
+hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
+print('Option 2')
+print('#' * 40)
+print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
+                                 hist.history['acc'][-1]))
+print('#' * 40)
+evaluator.dump(model, DNA_ONEHOT, LABELS,
+               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               datatags=['onehot'],
+               modeltags=['fit'])
+
+
+K.clear_session()
+model = belugamodel()
+hist = model.fit(DNA, LABELS, epochs=10, batch_size=100)
+print('Option 2')
+print('#' * 40)
+print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
+                                 hist.history['acc'][-1]))
+print('#' * 40)
+evaluator.dump(model, DNA, LABELS,
+               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               datatags=['dnaindex'],
+               modeltags=['fit'])
+
+K.clear_session()
+model = belugamodel()
+hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100,
+                 generator=beluga_fit_generator,
+                 use_multiprocessing=True,
+                 workers=3)
+print('Option 2')
+print('#' * 40)
+print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
+                                 hist.history['acc'][-1]))
+print('#' * 40)
+evaluator.dump(model, DNA_ONEHOT, LABELS,
+               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               datatags=['onehot'],
+               modeltags=['fit_generator'])
+
+
+K.clear_session()
+model = belugamodel()
+hist = model.fit(DNA, LABELS, epochs=10, batch_size=100,
                  generator=beluga_fit_generator,
                  use_multiprocessing=True,
                  workers=3)

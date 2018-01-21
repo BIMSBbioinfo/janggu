@@ -8,8 +8,8 @@ from beluga.data import DnaBlgDataset
 from beluga.data import RevCompDnaBlgDataset
 from beluga.data import TabBlgDataset
 from beluga.data import dna2ind
-from beluga.data import input_shape
-from beluga.data import output_shape
+from beluga.data import input_props
+from beluga.data import output_props
 from beluga.data import sequences_from_fasta
 
 
@@ -24,12 +24,12 @@ def test_inshape():
                                               regions=bed_file, order=1)
     rcdna = RevCompDnaBlgDataset('rcdna', dna)
 
-    props = input_shape([dna, rcdna])
+    props = input_props([dna, rcdna])
     assert 'dna' in props
     assert 'rcdna' in props
 
     with pytest.raises(Exception):
-        input_shape((0,))
+        input_props((0,))
 
 
 def test_outshape():
@@ -40,13 +40,13 @@ def test_outshape():
     ctcf1 = TabBlgDataset('ctcf1', filename=csvfile)
     ctcf2 = TabBlgDataset('ctcf2', filename=csvfile)
 
-    props = output_shape([ctcf1, ctcf2], 'binary_crossentropy')
+    props = output_props([ctcf1, ctcf2], 'binary_crossentropy')
 
     assert 'ctcf1' in props
     assert 'ctcf2' in props
 
     with pytest.raises(Exception):
-        output_shape((0,), loss='binary_crossentropy')
+        output_props((0,), loss='binary_crossentropy')
 
 
 def test_dna2ind():

@@ -10,6 +10,6 @@ from beluga.data.htseq_extension import BlgGenomicArray  # noqa
 from beluga.data.nparr import NumpyBlgDataset  # noqa
 from beluga.data.tab import TabBlgDataset  # noqa
 from beluga.data.utils import dna2ind  # noqa
-from beluga.data.utils import input_shape  # noqa
-from beluga.data.utils import output_shape  # noqa
+from beluga.data.utils import input_props  # noqa
+from beluga.data.utils import output_props  # noqa
 from beluga.data.utils import sequences_from_fasta  # noqa

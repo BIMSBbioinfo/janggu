@@ -45,7 +45,7 @@ def make_dense_w_bottom(input, inshapes, outshapes, params):
 # Test without input and output decorator
 @inputlayer
 @outputlayer
-def make_dense_w_topbottom(input, input_shapes, outshapes, params):
+def make_dense_w_topbottom(input, input_props, output_props, params):
     output = Dense(params)(input[0])
     return input, output
 

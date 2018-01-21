@@ -14,8 +14,8 @@ from beluga import MongoDbEvaluator
 from beluga import beluga_fit_generator
 from beluga import beluga_predict_generator
 from beluga.data import NumpyBlgDataset
-from beluga.data import input_shape
-from beluga.data import output_shape
+from beluga.data import input_props
+from beluga.data import output_props
 from beluga.decorators import inputlayer
 from beluga.decorators import outputlayer
 from beluga.evaluate import blg_auprc
@@ -162,8 +162,8 @@ print('#' * 40)
 # Instantiate model from input and output shape
 K.clear_session()
 np.random.seed(1234)
-bw = Beluga.create_by_shape(input_shape(blg_x_train),
-                            output_shape(blg_y_train,
+bw = Beluga.create_by_shape(input_props(blg_x_train),
+                            output_props(blg_y_train,
                                          'categorical_crossentropy'),
                             'mnist_ffn',
                             modeldef=(ffn, (10, 'tanh',)),

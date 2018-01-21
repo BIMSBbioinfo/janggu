@@ -39,9 +39,9 @@ Classes
 Utilities
 ---------
 .. autosummary::
-   input_shape
-   output_shape
+   input_props
+   output_props
 
 
-.. autofunction:: input_shape
-.. autofunction:: output_shape
+.. autofunction:: input_props
+.. autofunction:: output_props

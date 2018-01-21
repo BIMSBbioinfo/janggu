@@ -96,7 +96,7 @@ def as_onehot(idna, order):
     return onehot
 
 
-def input_shape(bwdata):
+def input_props(bwdata):
     """Extracts the shape of a provided Input-BlgDataset.
 
     Parameters
@@ -125,7 +125,7 @@ def input_shape(bwdata):
         raise Exception('inputSpace wrong argument: {}'.format(bwdata))
 
 
-def output_shape(bwdata, loss, activation='sigmoid',
+def output_props(bwdata, loss, activation='sigmoid',
                  loss_weight=1.):
     """Extracts the shape of a provided Output-BlgDataset.
 

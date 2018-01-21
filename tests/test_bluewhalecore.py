@@ -17,8 +17,8 @@ from beluga.cli import main
 from beluga.data import DnaBlgDataset
 from beluga.data import NumpyBlgDataset
 from beluga.data import TabBlgDataset
-from beluga.data import input_shape
-from beluga.data import output_shape
+from beluga.data import input_props
+from beluga.data import output_props
 from beluga.evaluate import blg_accuracy
 from beluga.evaluate import blg_auprc
 from beluga.evaluate import blg_auroc
@@ -57,8 +57,8 @@ def test_beluga_instance(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
 
-    bwm = Beluga.create_by_shape(input_shape(dna),
-                                 output_shape(ctcf, 'binary_crossentropy'),
+    bwm = Beluga.create_by_shape(input_props(dna),
+                                 output_props(ctcf, 'binary_crossentropy'),
                                  'dna_ctcf_HepG2.cnn',
                                  (_cnn_model, (2,)),
                                  outputdir=tmpdir.strpath)
@@ -88,8 +88,8 @@ def test_beluga_train_predict_option1(tmpdir):
     def test_model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Beluga.create_by_shape(input_shape(inputs),
-                                 output_shape(outputs,
+    bwm = Beluga.create_by_shape(input_props(inputs),
+                                 output_props(outputs,
                                               'binary_crossentropy'),
                                  'nptest',
                                  (test_model, None),
@@ -304,8 +304,8 @@ def test_beluga_train_predict_option6(tmpdir, mongodb):
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Beluga.create_by_shape(input_shape(inputs),
-                                 output_shape(outputs,
+    bwm = Beluga.create_by_shape(input_props(inputs),
+                                 output_props(outputs,
                                               'binary_crossentropy'),
                                  'nptest',
                                  (_model, None),
