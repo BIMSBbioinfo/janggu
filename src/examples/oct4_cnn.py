@@ -84,8 +84,9 @@ def belugamodel():
 @inputlayer
 @outputlayer
 def belugabody(inputs, inp, oup, params):
-    layer = Conv2D(params[0], (inp['dna']['shape'][2], 21),
-                   activation=params[1])(inputs[0])
+    with inputs.use('dna') as layer:
+        layer = Conv2D(params[0], (inp['dna']['shape'][2], 21),
+                       activation=params[1])(layer)
     output = GlobalAveragePooling2D()(layer)
     return inputs, output
 

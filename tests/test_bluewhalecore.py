@@ -53,7 +53,7 @@ def test_beluga_instance(tmpdir):
     @inputlayer
     @outputlayer
     def _cnn_model(inputs, inp, oup, params):
-        layer = Flatten()(inputs)
+        layer = Flatten()(inputs())
         output = Dense(params[0])(layer)
         return inputs, output
 
