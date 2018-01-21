@@ -2,6 +2,7 @@
 
 import logging
 import os
+import time
 
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint
@@ -32,6 +33,7 @@ class Beluga(object):
         Folder in which to place the log-files and stored models.
         Default: 'beluga_results/'.
     """
+    timer = None
 
     def __init__(self, inputs, outputs, name=None,
                  outputdir='beluga_results/'):
@@ -225,6 +227,7 @@ class Beluga(object):
         self.__dim_logging(inputs)
         self.logger.info("Output:")
         self.__dim_logging(outputs)
+        self.timer = time.time()
         history = None
 
         if generator:
@@ -305,7 +308,7 @@ class Beluga(object):
             self.logger.info('%s: %f', k, history.history[k][-1])
         self.logger.info('#' * 40)
 
-        self.logger.info("Training finished ...")
+        self.logger.info("Training finished after {:1.2f} s".format(time.time() - self.timer))
         return history
 
     def predict(self, inputs,
@@ -339,6 +342,7 @@ class Beluga(object):
         self.logger.info('Predict: %s', self.name)
         self.logger.info("Input:")
         self.__dim_logging(inputs)
+        self.timer = time.time()
 
         # if a desired layername is specified, the features
         # will be predicted.
@@ -414,6 +418,7 @@ class Beluga(object):
         self.__dim_logging(inputs)
         self.logger.info("Output:")
         self.__dim_logging(outputs)
+        self.timer = time.time()
 
         if generator:
 
@@ -458,7 +463,7 @@ class Beluga(object):
             self.logger.info('%s: %f', self.kerasmodel.metrics_names[i], value)
         self.logger.info('#' * 40)
 
-        self.logger.info("Evaluation finished ...")
+        self.logger.info("Evaluation finished in {} s".format(time.time() - self.timer))
         return values
 
     def __dim_logging(self, data):
