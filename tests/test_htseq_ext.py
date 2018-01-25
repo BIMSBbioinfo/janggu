@@ -5,8 +5,8 @@ import pkg_resources
 from HTSeq import BAM_Reader
 from HTSeq import GenomicInterval
 
-from beluga.data import BlgChromVector
-from beluga.data import BlgGenomicArray
+from janggo.data import BlgChromVector
+from janggo.data import BlgGenomicArray
 
 
 def test_bwcv_instance_unstranded(tmpdir):
@@ -102,7 +102,7 @@ def test_bwga_instance_unstranded_step(tmpdir):
 
 
 def test_load_bwga_bam():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
     file = os.path.join(data_path, "yeast_I_II_III.bam")
 
     alignment_file = BAM_Reader(file)

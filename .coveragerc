@@ -1,12 +1,12 @@
 [paths]
 source =
-   src/beluga
-   */site-packages/beluga
+   src/janggo
+   */site-packages/janggo
 
 [run]
 branch = true
 source =
-    beluga
+    janggo
 parallel = true
 
 [report]

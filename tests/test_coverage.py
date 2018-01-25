@@ -5,11 +5,11 @@ import pandas
 import pkg_resources
 from HTSeq import GenomicInterval
 
-from beluga.data import CoverageBlgDataset
+from janggo.data import CoverageDataset
 
 
 def test_load_coveragedataset_bam_stranded(tmpdir):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
     bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
 
@@ -28,7 +28,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
         # print(store)
-        cvdata = CoverageBlgDataset.create_from_bam(
+        cvdata = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -38,7 +38,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
             storage=store,
             cachedir=tmpdir.strpath)
 
-        cvdata_bam_unstranded_bed = CoverageBlgDataset.create_from_bam(
+        cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
@@ -70,7 +70,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # 20 bp resolution
         # print(store)
-        cvdata = CoverageBlgDataset.create_from_bam(
+        cvdata = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -80,7 +80,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
             storage=store,
             cachedir=tmpdir.strpath)
 
-        cvdata_bam_unstranded_bed = CoverageBlgDataset.create_from_bam(
+        cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
@@ -124,7 +124,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
 
 
 def test_load_coveragedataset_bam_unstranded(tmpdir):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
@@ -142,7 +142,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     for store in ['step', 'memmap', 'ndarray', 'hdf5']:
         # base pair resolution
         print(store)
-        cvdata_bam = CoverageBlgDataset.create_from_bam(
+        cvdata_bam = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -152,7 +152,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
             storage=store,
             cachedir=tmpdir.strpath)
 
-        cvdata_bam_unstranded_bed = CoverageBlgDataset.create_from_bam(
+        cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
@@ -201,7 +201,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
     for store in ['step', 'ndarray', 'memmap', 'hdf5']:
         # 20 bp resolution
         print(store)
-        cvdata_bam = CoverageBlgDataset.create_from_bam(
+        cvdata_bam = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -211,7 +211,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
             storage=store,
             cachedir=tmpdir.strpath)
 
-        cvdata_bam_unstranded_bed = CoverageBlgDataset.create_from_bam(
+        cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
@@ -251,7 +251,7 @@ def test_load_coveragedataset_bam_unstranded(tmpdir):
 
 
 def test_load_coveragedataset_bigwig_unstranded(tmpdir):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
     gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
@@ -272,7 +272,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         # base pair resolution
         print(store)
 
-        cvdata_bigwig = CoverageBlgDataset.create_from_bigwig(
+        cvdata_bigwig = CoverageDataset.create_from_bigwig(
             "yeast_I_II_III.bw_res1_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -282,7 +282,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
             storage=store,
             cachedir=cachedir)
 
-        cvdata_bigwig_us = CoverageBlgDataset.create_from_bigwig(
+        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
             "yeast_I_II_III.bw_res1_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,
@@ -336,7 +336,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         # 20 bp resolution
         print(store)
 
-        cvdata_bigwig = CoverageBlgDataset.create_from_bigwig(
+        cvdata_bigwig = CoverageDataset.create_from_bigwig(
             "yeast_I_II_III.bw_res20_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -346,7 +346,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
             storage=store,
             cachedir=cachedir)
 
-        cvdata_bigwig_us = CoverageBlgDataset.create_from_bigwig(
+        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
             "yeast_I_II_III.bw_res20_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,

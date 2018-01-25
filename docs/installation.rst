@@ -2,18 +2,18 @@
 Installation
 ============
 
-`beluga` depends on `tensorflow` which might be installed with
-CPU-only or GPU support. When installing `beluga2`, please specify
+`janggo` depends on `tensorflow` which might be installed with
+CPU-only or GPU support. When installing `janggo2`, please specify
 the desired `tensorflow` alternative. Otherwise, `tensorflow` will not be
 installed automatically.
 
 For CPU-only use::
 
-    pip install beluga[tf]
+    pip install janggo[tf]
 
 For GPU-support type::
 
-    pip install beluga[tf_gpu]
+    pip install janggo[tf_gpu]
 
 Also follow the installation instructions on how to install CUDA
 and cuDNN for the purpose of using tensorflow with GPU support.
@@ -36,7 +36,7 @@ please consult `Build against parallel HDF5 <http://docs.h5py.org/en/latest/buil
 MongoDb for storing evalutation results
 ---------------------------------------
 
-beluga provides a model evaluation utility for dumping prediction
+janggo provides a model evaluation utility for dumping prediction
 performances into a MongoDb instance.
 Afterwards, model comparison and hypothesis testing based on the
 adequacy of different model variants can be easily done by

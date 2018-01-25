@@ -4,11 +4,11 @@ import numpy as np
 import pkg_resources
 import pytest
 
-from beluga.data import BlgGenomicIndexer
+from janggo.data import BlgGenomicIndexer
 
 
 def test_gindexer_errors():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     with pytest.raises(ValueError):
         BlgGenomicIndexer.create_from_file(os.path.join(data_path,
@@ -22,7 +22,7 @@ def test_gindexer_errors():
 
 
 def test_gindexer_merged():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     gi = BlgGenomicIndexer.create_from_file(
         os.path.join(data_path, 'regions.bed'), resolution=200, stride=50)
@@ -44,7 +44,7 @@ def test_gindexer_merged():
 
 
 def test_gindexer_indiv():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     gi = BlgGenomicIndexer.create_from_file(
         os.path.join(data_path, 'indiv_regions.bed'), resolution=200, stride=50)

@@ -10,19 +10,19 @@ from keras.layers import Input
 from keras.models import Model
 from sklearn.metrics import roc_auc_score
 
-from beluga import MongoDbEvaluator
-from beluga import beluga_fit_generator
-from beluga import beluga_predict_generator
-from beluga.data import NumpyBlgDataset
-from beluga.data import input_props
-from beluga.data import output_props
-from beluga.decorators import inputlayer
-from beluga.decorators import outputlayer
-from beluga.evaluate import blg_auprc
-from beluga.evaluate import blg_auroc
-from beluga.evaluate import blg_av_auprc
-from beluga.evaluate import blg_av_auroc
-from beluga.model import Beluga
+from janggo import MongoDbEvaluator
+from janggo import janggo_fit_generator
+from janggo import janggo_predict_generator
+from janggo.data import NumpyDataset
+from janggo.data import input_props
+from janggo.data import output_props
+from janggo.decorators import inputlayer
+from janggo.decorators import outputlayer
+from janggo.evaluate import auprc
+from janggo.evaluate import auroc
+from janggo.evaluate import av_auprc
+from janggo.evaluate import av_auroc
+from janggo.model import Janggo
 
 np.random.seed(1234)
 
@@ -32,12 +32,12 @@ np.random.seed(1234)
 y_train = keras.utils.to_categorical(y_train)
 y_test = keras.utils.to_categorical(y_test)
 
-# Wrap it as BlgDataset
-blg_x_train = NumpyBlgDataset('x', x_train)
-blg_x_test = NumpyBlgDataset('x', x_test)
-blg_y_train = NumpyBlgDataset('y', y_train,
+# Wrap it as Dataset
+blg_x_train = NumpyDataset('x', x_train)
+blg_x_test = NumpyDataset('x', x_test)
+blg_y_train = NumpyDataset('y', y_train,
                               samplenames=[str(i) for i in range(10)])
-blg_y_test = NumpyBlgDataset('y', y_test,
+blg_y_test = NumpyDataset('y', y_test,
                              samplenames=[str(i) for i in range(10)])
 
 
@@ -56,12 +56,12 @@ def kerasmodel():
 
 # Option 2:
 # Instantiate the model manually
-def belugamodel():
+def janggomodel():
     input = Input(shape=(28, 28), name='x')
     layer = Flatten()(input)
     layer = Dense(10, activation='tanh')(layer)
     output = Dense(10, activation='sigmoid', name='y')(layer)
-    model = Beluga(inputs=input, outputs=output, name='mnist')
+    model = Janggo(inputs=input, outputs=output, name='mnist')
     model.compile(optimizer='adadelta', loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
@@ -69,7 +69,7 @@ def belugamodel():
 
 # Option 3:
 # Define the body of the network using the decorators.
-# This option is used with Beluga.create_by_shape
+# This option is used with Janggo.create_by_shape
 @inputlayer
 @outputlayer
 def ffn(input, inparams, outparams, otherparams):
@@ -85,7 +85,7 @@ def auc3(ytrue, ypred):
     return roc_auc_score(yt, pt)
 
 
-# The datastructures provided by beluga can be immediately
+# The datastructures provided by janggo can be immediately
 # supplied to keras, because they mimic numpy arrays
 K.clear_session()
 np.random.seed(1234)
@@ -99,10 +99,10 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in beluga
+# then use it in janggo
 K.clear_session()
 np.random.seed(1234)
-bw = belugamodel()
+bw = janggomodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100, verbose=0)
 ypred = bw.predict(blg_x_test)
 
@@ -113,12 +113,12 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in beluga
+# then use it in janggo
 K.clear_session()
 np.random.seed(1234)
-bw = belugamodel()
+bw = janggomodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
-           generator=beluga_fit_generator,
+           generator=janggo_fit_generator,
            workers=3, verbose=0)
 ypred = bw.predict(blg_x_test)
 
@@ -129,14 +129,14 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in beluga
+# then use it in janggo
 K.clear_session()
 np.random.seed(1234)
-bw = belugamodel()
+bw = janggomodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
-           generator=beluga_fit_generator,
+           generator=janggo_fit_generator,
            workers=3, verbose=0)
-ypred = bw.predict(blg_x_test, generator=beluga_predict_generator)
+ypred = bw.predict(blg_x_test, generator=janggo_predict_generator)
 
 print('Option 2c')
 print('#' * 40)
@@ -145,7 +145,7 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# For comparison, here is how the model would train without Beluga
+# For comparison, here is how the model would train without Janggo
 K.clear_session()
 np.random.seed(1234)
 m = kerasmodel()
@@ -162,7 +162,7 @@ print('#' * 40)
 # Instantiate model from input and output shape
 K.clear_session()
 np.random.seed(1234)
-bw = Beluga.create_by_shape(input_props(blg_x_train),
+bw = Janggo.create_by_shape(input_props(blg_x_train),
                             output_props(blg_y_train,
                                          'categorical_crossentropy'),
                             'mnist_ffn',
@@ -181,9 +181,9 @@ evaluator = MongoDbEvaluator()
 
 # Evaluate the results
 evaluator.dump(bw, blg_x_test, blg_y_test,
-               elementwise_score={'auROC': blg_auroc, 'auPRC': blg_auprc},
-               combined_score={'av-auROC': blg_av_auroc,
-                               'av-auPRC': blg_av_auprc}, batch_size=100,
+               elementwise_score={'auROC': auroc, 'auPRC': auprc},
+               combined_score={'av-auROC': av_auroc,
+                               'av-auPRC': av_auprc}, batch_size=100,
                use_multiprocessing=True)
 
 for row in evaluator.db.results.find():

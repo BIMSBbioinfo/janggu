@@ -3,8 +3,8 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 
-from beluga import inputlayer
-from beluga import outputlayer
+from janggo import inputlayer
+from janggo import outputlayer
 
 
 # ==========================================================

@@ -262,7 +262,7 @@ ignored-classes=optparse.Values,thread._local,_thread._local
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis. It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=beluga.data.htseq_extension, numpy.random, HTSeq, pyBigWig
+ignored-modules=janggo.data.htseq_extension, numpy.random, HTSeq, pyBigWig
 
 # Show a hint with possible names when a member name was not found. The aspect
 # of finding the hint is based on edit distance.

@@ -9,21 +9,21 @@ from keras.layers import GlobalAveragePooling2D
 from keras.layers import Input
 from keras.models import Model
 
-from beluga import Beluga
-from beluga import MongoDbEvaluator
-from beluga import beluga_fit_generator
-from beluga import inputlayer
-from beluga import outputlayer
-from beluga.data import DnaBlgDataset
-from beluga.data import NumpyBlgDataset
-from beluga.data import input_props
-from beluga.data import output_props
-from beluga.evaluate import blg_av_auprc
-from beluga.evaluate import blg_av_auroc
+from janggo import Janggo
+from janggo import MongoDbEvaluator
+from janggo import inputlayer
+from janggo import janggo_fit_generator
+from janggo import outputlayer
+from janggo.data import DnaBlgDataset
+from janggo.data import NumpyBlgDataset
+from janggo.data import input_props
+from janggo.data import output_props
+from janggo.evaluate import blg_av_auprc
+from janggo.evaluate import blg_av_auroc
 
 np.random.seed(1234)
 
-DATA_PATH = pkg_resources.resource_filename('beluga', 'resources/')
+DATA_PATH = pkg_resources.resource_filename('janggo', 'resources/')
 OCT4_FILE = os.path.join(DATA_PATH, 'stemcells.fa')
 X1 = DnaBlgDataset.create_from_fasta('dna', fastafile=OCT4_FILE, order=1)
 MAFK_FILE = os.path.join(DATA_PATH, 'mafk.fa')
@@ -50,29 +50,30 @@ def kerasmodel():
     output = Dense(1, activation='sigmoid', name='y')(layer)
     model_ = Model(inputs=input_, outputs=output)
     model_.compile(optimizer='adadelta', loss='binary_crossentropy',
-                metrics=['accuracy'])
+                   metrics=['accuracy'])
     return model_
 
-# For comparison, here is how the model would train without Beluga
+
+# For comparison, here is how the model would train without Janggo
 K.clear_session()
 np.random.seed(1234)
 model = kerasmodel()
-hist = model.fit({'dna':DNA_ONEHOT}, {'y':LABELS}, epochs=10, batch_size=100)
+hist = model.fit({'dna': DNA_ONEHOT}, {'y': LABELS}, epochs=10, batch_size=100)
 print('Option 1')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                hist.history['acc'][-1]))
+                                 hist.history['acc'][-1]))
 print('#' * 40)
 
 
 # Option 2:
 # Instantiate an ordinary keras model
-def belugamodel():
+def janggomodel():
     input_ = Input(shape=(4, 200, 1), name='dna')
     layer = Conv2D(30, (4, 21), activation='relu')(input_)
     layer = GlobalAveragePooling2D()(layer)
     output = Dense(1, activation='sigmoid', name='y')(layer)
-    model_ = Beluga(inputs=input_, outputs=output,
+    model_ = Janggo(inputs=input_, outputs=output,
                     name='oct4_cnn')
     model_.compile(optimizer='adadelta', loss='binary_crossentropy',
                    metrics=['accuracy'])
@@ -83,7 +84,7 @@ def belugamodel():
 # Instantiate an ordinary keras model
 @inputlayer
 @outputlayer
-def belugabody(inputs, inp, oup, params):
+def janggobody(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         layer = Conv2D(params[0], (inp['dna']['shape'][2], 21),
                        activation=params[1])(layer)
@@ -92,10 +93,10 @@ def belugabody(inputs, inp, oup, params):
 
 
 K.clear_session()
-model = Beluga.create_by_shape(input_props(DNA),
+model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn',
-                               modeldef=(belugabody, (30, 'relu',)),
+                               modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'])
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
 model.kerasmodel.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
@@ -111,10 +112,10 @@ evaluator.dump(model, DNA_ONEHOT, LABELS,
 
 
 K.clear_session()
-model = Beluga.create_by_shape(input_props(DNA),
+model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn_from_shape',
-                               modeldef=(belugabody, (30, 'relu',)),
+                               modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'])
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100)
 print('Option 2')
@@ -129,13 +130,13 @@ evaluator.dump(model, DNA, LABELS,
 
 
 K.clear_session()
-model = Beluga.create_by_shape(input_props(DNA),
+model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn_from_shape',
-                               modeldef=(belugabody, (30, 'relu',)),
+                               modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'])
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100,
-                 generator=beluga_fit_generator,
+                 generator=janggo_fit_generator,
                  use_multiprocessing=True,
                  workers=3)
 print('Option 2')
@@ -149,13 +150,13 @@ evaluator.dump(model, DNA_ONEHOT, LABELS,
                modeltags=['fit_generator'])
 
 K.clear_session()
-model = Beluga.create_by_shape(input_props(DNA),
+model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
                                'oct4_cnn_from_shape',
-                               modeldef=(belugabody, (30, 'relu',)),
+                               modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'])
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100,
-                 generator=beluga_fit_generator,
+                 generator=janggo_fit_generator,
                  use_multiprocessing=True,
                  workers=3)
 print('Option 2')
@@ -170,7 +171,7 @@ evaluator.dump(model, DNA, LABELS,
 
 
 K.clear_session()
-model = belugamodel()
+model = janggomodel()
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
 print('Option 2')
 print('#' * 40)
@@ -184,7 +185,7 @@ evaluator.dump(model, DNA_ONEHOT, LABELS,
 
 
 K.clear_session()
-model = belugamodel()
+model = janggomodel()
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100)
 print('Option 2')
 print('#' * 40)
@@ -197,9 +198,9 @@ evaluator.dump(model, DNA, LABELS,
                modeltags=['fit'])
 
 K.clear_session()
-model = belugamodel()
+model = janggomodel()
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100,
-                 generator=beluga_fit_generator,
+                 generator=janggo_fit_generator,
                  use_multiprocessing=True,
                  workers=3)
 print('Option 2')
@@ -214,9 +215,9 @@ evaluator.dump(model, DNA_ONEHOT, LABELS,
 
 
 K.clear_session()
-model = belugamodel()
+model = janggomodel()
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100,
-                 generator=beluga_fit_generator,
+                 generator=janggo_fit_generator,
                  use_multiprocessing=True,
                  workers=3)
 print('Option 2')

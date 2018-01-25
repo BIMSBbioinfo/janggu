@@ -5,10 +5,10 @@ import pkg_resources
 import pytest
 from HTSeq import BED_Reader
 
-from beluga.data import DnaBlgDataset
-from beluga.data import RevCompDnaBlgDataset
-from beluga.data import sequences_from_fasta
-from beluga.data.utils import NMAP
+from janggo.data import DnaDataset
+from janggo.data import RevCompDnaDataset
+from janggo.data import sequences_from_fasta
+from janggo.data.utils import NMAP
 
 reglen = 200
 flank = 150
@@ -41,18 +41,18 @@ def datalen(bed_file):
 
 
 def dna_templ(order):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bed_merged = os.path.join(data_path, 'regions.bed')
     bed_indiv = os.path.join(data_path, 'indiv_regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                regions=bed_merged,
                                                storage='ndarray',
                                                order=order)
-    idata = DnaBlgDataset.create_from_refgenome('itrain', refgenome=refgenome,
+    idata = DnaDataset.create_from_refgenome('itrain', refgenome=refgenome,
                                                 regions=bed_indiv,
                                                 storage='ndarray',
                                                 order=order)
@@ -86,11 +86,11 @@ def test_read_ranges_from_file():
 
     order = 1
 
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
     refgenome = os.path.join(data_path, 'genome.fa')
     regions = os.path.join(data_path, 'regions.bed')
 
-    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                regions=regions,
                                                storage='ndarray',
                                                order=order)
@@ -121,18 +121,18 @@ def test_dna_dims_order_2():
 
 
 def revcomp(order):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                regions=bed_file,
                                                storage='ndarray',
                                                order=order)
-    rcdata = RevCompDnaBlgDataset('rctrain', data)
-    rcrcdata = RevCompDnaBlgDataset('rcrctrain', rcdata)
+    rcdata = RevCompDnaDataset('rctrain', data)
+    rcrcdata = RevCompDnaDataset('rcrctrain', rcdata)
 
     indices = [600, 500, 400]
 
@@ -152,25 +152,25 @@ def test_revcomp_order_2():
 
 
 def test_revcomp_rcmatrix():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                storage='ndarray',
                                                regions=bed_file, order=1)
-    rcdata = RevCompDnaBlgDataset('rctrain', data)
+    rcdata = RevCompDnaDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix,
                             np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0],
                                       [1, 0, 0, 0]]))
 
-    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                storage='ndarray',
                                                regions=bed_file, order=2)
-    rcdata = RevCompDnaBlgDataset('rctrain', data)
+    rcdata = RevCompDnaDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix[0],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -200,58 +200,58 @@ def test_revcomp_rcmatrix():
 
 
 def test_rcmatrix_identity():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     for order in range(1, 4):
         bed_file = os.path.join(data_path, 'regions.bed')
         refgenome = os.path.join(data_path, 'genome.fa')
 
-        data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                    storage='ndarray',
                                                    regions=bed_file, order=order)
-        rcdata = RevCompDnaBlgDataset('rctrain', data)
+        rcdata = RevCompDnaDataset('rctrain', data)
 
         np.testing.assert_equal(np.eye(pow(4, order)),
                                 np.matmul(rcdata.rcmatrix, rcdata.rcmatrix))
 
 
 def test_dna_dataset_sanity(tmpdir):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
     bed_file = os.path.join(data_path, 'regions.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome='',
+        DnaDataset.create_from_refgenome('train', refgenome='',
                                             storage='ndarray',
                                             regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome='test',
+        DnaDataset.create_from_refgenome('train', refgenome='test',
                                             storage='ndarray',
                                             regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             storage='ndarray',
                                             regions=None, order=1)
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             storage='ndarray',
                                             regions=bed_file, order=0)
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             storage='ndarray',
                                             regions=bed_file, flank=-1)
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             storage='ndarray',
                                             regions=bed_file, reglen=0)
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             storage='ndarray',
                                             regions=bed_file, stride=0)
 
     with pytest.raises(Exception):
-        DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             storage='step',
                                             regions=bed_file, order=1,
                                             cachedir=tmpdir.strpath)
@@ -259,7 +259,7 @@ def test_dna_dataset_sanity(tmpdir):
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'genome.fa', 'chr1..nmm'))
 
-    DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                         storage='memmap',
                                         regions=bed_file, order=1,
                                         cachedir=tmpdir.strpath)
@@ -267,7 +267,7 @@ def test_dna_dataset_sanity(tmpdir):
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..nmm'))
 
-    DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                         storage='hdf5',
                                         regions=bed_file, order=1,
                                         cachedir=tmpdir.strpath)
@@ -277,11 +277,11 @@ def test_dna_dataset_sanity(tmpdir):
 
 
 def test_read_dna_from_fasta_order_1(tmpdir):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     order = 1
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBlgDataset.create_from_fasta('train', fastafile=filename,
+    data = DnaDataset.create_from_fasta('train', fastafile=filename,
                                            order=order)
 
     np.testing.assert_equal(len(data), 4)
@@ -318,11 +318,11 @@ def test_read_dna_from_fasta_order_1(tmpdir):
 
 
 def test_read_dna_from_fasta_order_2(tmpdir):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     order = 2
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaBlgDataset.create_from_fasta('train', fastafile=filename,
+    data = DnaDataset.create_from_fasta('train', fastafile=filename,
                                            order=order,
                                            cachedir=tmpdir.strpath)
 
@@ -365,10 +365,10 @@ def test_read_dna_from_fasta_order_2(tmpdir):
 
 
 def test_stemcell_onehot_identity():
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     filename = os.path.join(data_path, 'stemcells.fa')
-    data = DnaBlgDataset.create_from_fasta('dna', fastafile=filename)
+    data = DnaDataset.create_from_fasta('dna', fastafile=filename)
 
     oh = _seqToOneHot(sequences_from_fasta(filename))
 
@@ -376,17 +376,17 @@ def test_stemcell_onehot_identity():
 
 
 def _dna_with_region_strandedness(order):
-    data_path = pkg_resources.resource_filename('beluga', 'resources/')
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bed = os.path.join(data_path, 'region_w_strand.bed')
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaBlgDataset.create_from_refgenome('train', refgenome=refgenome,
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                                regions=bed,
                                                storage='ndarray',
                                                order=order)
-    rcdata = RevCompDnaBlgDataset('rctrain', data)
+    rcdata = RevCompDnaDataset('rctrain', data)
 
     np.testing.assert_equal(data.shape, (2, pow(4, order),
                                          reglen + 2*flank - order + 1, 1))
