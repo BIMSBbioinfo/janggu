@@ -1,23 +1,23 @@
-beluga - Deep learning for Genomics data
+janggo - Deep learning for Genomics data
 ===============================================
 
-This section describes the interface and utilities that beluga provides
+This section describes the interface and utilities that janggo provides
 for deep learning.
 
-.. currentmodule:: beluga
+.. currentmodule:: janggo
 
-Beluga Model
+Janggo Model
 ---------------
 
 .. autosummary::
-   Beluga
-   Beluga.create_by_shape
-   Beluga.create_by_name
-   Beluga.fit
-   Beluga.predict
-   Beluga.evaluate
+   Janggo
+   Janggo.create_by_shape
+   Janggo.create_by_name
+   Janggo.fit
+   Janggo.predict
+   Janggo.evaluate
 
-.. autoclass:: Beluga
+.. autoclass:: Janggo
    :members:
 
 Evaluator

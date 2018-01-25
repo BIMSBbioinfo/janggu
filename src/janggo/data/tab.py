@@ -2,13 +2,13 @@ import os
 
 import pandas as pd
 
-from beluga.data.data import BlgDataset
+from janggo.data.data import Dataset
 
 
-class TabBlgDataset(BlgDataset):
-    """TabBlgDataset class.
+class TabDataset(Dataset):
+    """TabDataset class.
 
-    TabBlgDataset allows to fetch data from a CSV or TSV file.
+    TabDataset allows to fetch data from a CSV or TSV file.
     It might be used to load a set of training labels.
 
     Parameters
@@ -49,10 +49,10 @@ class TabBlgDataset(BlgDataset):
 
         self.cachedir = cachedir
 
-        BlgDataset.__init__(self, name)
+        Dataset.__init__(self, name)
 
     def __repr__(self):  # pragma: no cover
-        return 'TabBlgDataset("{}", "{}")'\
+        return 'TabDataset("{}", "{}")'\
                 .format(self.name, self.filename)
 
     def __len__(self):

@@ -1,13 +1,13 @@
-from beluga.data.data import BlgDataset
+from janggo.data.data import Dataset
 
 
-class NumpyBlgDataset(BlgDataset):
-    """NumpyBlgDataset class.
+class NumpyDataset(Dataset):
+    """NumpyDataset class.
 
     This datastructure wraps arbitrary numpy.arrays for a
-    deep learning application with Beluga.
+    deep learning application with Janggo.
     The main difference to an ordinary numpy.array is that
-    NumpyBlgDataset has a name attribute.
+    NumpyDataset has a name attribute.
 
     Parameters
     -----------
@@ -31,10 +31,10 @@ class NumpyBlgDataset(BlgDataset):
 
         self.cachedir = cachedir
 
-        BlgDataset.__init__(self, '{}'.format(name))
+        Dataset.__init__(self, '{}'.format(name))
 
     def __repr__(self):  # pragma: no cover
-        return 'NumpyBlgDataset("{}", <np.array>)'.format(self.name)
+        return 'NumpyDataset("{}", <np.array>)'.format(self.name)
 
     def __len__(self):
         return len(self.data)

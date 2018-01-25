@@ -1,4 +1,4 @@
-beluga.data - Genomics datasets for deep learning
+janggo.data - Genomics datasets for deep learning
 =========================================================
 
 
@@ -7,33 +7,33 @@ raw genomics datasets (e.g. DNA sequence from a fasta file, or genome-wide cover
 information from a bam-file) and the dataformat applications directly for a deep learning
 application.
 
-.. currentmodule:: beluga.data
+.. currentmodule:: janggo.data
 
 Interface
 ---------
 .. autosummary::
-   BlgDataset
+   Dataset
 
-.. autoclass:: BlgDataset
+.. autoclass:: Dataset
    :members: name, shape
 
 Classes
 -------
 .. autosummary::
-   CoverageBlgDataset
-   DnaBlgDataset
-   RevCompDnaBlgDataset
-   TabBlgDataset
-   NumpyBlgDataset
-   DnaBlgDataset
+   CoverageDataset
+   DnaDataset
+   RevCompDnaDataset
+   TabDataset
+   NumpyDataset
+   DnaDataset
 
-.. autoclass:: CoverageBlgDataset
+.. autoclass:: CoverageDataset
    :members: create_from_bam, create_from_bigwig
 
-.. autoclass:: DnaBlgDataset
+.. autoclass:: DnaDataset
    :members: create_from_refgenome, create_from_fasta
 
-.. autoclass:: RevCompDnaBlgDataset
+.. autoclass:: RevCompDnaDataset
 
 
 Utilities

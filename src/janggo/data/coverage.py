@@ -5,13 +5,13 @@ import numpy as np
 import pyBigWig
 from HTSeq import BAM_Reader
 
-from beluga.data.data import BlgDataset
-from beluga.data.genomic_indexer import BlgGenomicIndexer
-from beluga.data.htseq_extension import BlgGenomicArray
+from janggo.data.data import Dataset
+from janggo.data.genomic_indexer import BlgGenomicIndexer
+from janggo.data.htseq_extension import BlgGenomicArray
 
 
-class CoverageBlgDataset(BlgDataset):
-    """CoverageBlgDataset class.
+class CoverageDataset(Dataset):
+    """CoverageDataset class.
 
     This datastructure holds coverage information across the genome.
     The coverage can conveniently fetched from a bam-file, a bigwig-file,
@@ -67,7 +67,7 @@ class CoverageBlgDataset(BlgDataset):
         self.stranded = stranded
         self.cachedir = cachedir
 
-        BlgDataset.__init__(self, '{}'.format(name))
+        Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
     def _cacheexists(memmap_dir, chroms, stranded, storage):
@@ -94,7 +94,7 @@ class CoverageBlgDataset(BlgDataset):
                         flank=4, stranded=True, storage='hdf5',
                         overwrite=False,
                         cachedir=None):
-        """Create a CoverageBlgDataset class from a bam-file (or files).
+        """Create a CoverageDataset class from a bam-file (or files).
 
         Parameters
         -----------
@@ -177,7 +177,7 @@ class CoverageBlgDataset(BlgDataset):
                            flank=4, storage='hdf5',
                            overwrite=False,
                            cachedir=None):
-        """Create a CoverageBlgDataset class from a bigwig-file (or files).
+        """Create a CoverageDataset class from a bigwig-file (or files).
 
         Parameters
         -----------
@@ -255,7 +255,7 @@ class CoverageBlgDataset(BlgDataset):
         return cls(name, covers, samplenames, gindexer, flank, False, cachedir)
 
     def __repr__(self):  # pragma: no cover
-        return "CoverageBlgDataset('{}', ".format(self.name) \
+        return "CoverageDataset('{}', ".format(self.name) \
                + "<BlgGenomicArray>, " \
                + "<BlgGenomicIndexer>, " \
                + "flank={}, stranded={}, ".format(self.flank, self.stranded) \
@@ -271,7 +271,7 @@ class CoverageBlgDataset(BlgDataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('CoverageBlgDataset.__getitem__: '
+            raise IndexError('CoverageDataset.__getitem__: '
                              + 'index must be iterable')
 
         data = np.empty((len(idxs), 2 if self.stranded else 1,

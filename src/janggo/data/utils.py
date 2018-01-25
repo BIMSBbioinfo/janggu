@@ -1,4 +1,4 @@
-"""Utilities for beluga.data """
+"""Utilities for janggo.data """
 
 from collections import defaultdict
 
@@ -8,7 +8,7 @@ from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from beluga.data.data import BlgDataset
+from janggo.data.data import Dataset
 
 
 def sequences_from_fasta(fasta):
@@ -97,12 +97,12 @@ def as_onehot(idna, order):
 
 
 def input_props(bwdata):
-    """Extracts the shape of a provided Input-BlgDataset.
+    """Extracts the shape of a provided Input-Dataset.
 
     Parameters
     ---------
-    bwdata : :class:`BlgDataset` or list(:class:`BlgDataset`)
-        BlgDataset or list(BlgDataset).
+    bwdata : :class:`Dataset` or list(:class:`Dataset`)
+        Dataset or list(Dataset).
 
     Returns
     -------
@@ -110,7 +110,7 @@ def input_props(bwdata):
         Dictionary with dataset names as keys and the corrsponding
         shape as value.
     """
-    if isinstance(bwdata, BlgDataset):
+    if isinstance(bwdata, Dataset):
         bwdata = [bwdata]
 
     if isinstance(bwdata, list):
@@ -127,12 +127,12 @@ def input_props(bwdata):
 
 def output_props(bwdata, loss, activation='sigmoid',
                  loss_weight=1.):
-    """Extracts the shape of a provided Output-BlgDataset.
+    """Extracts the shape of a provided Output-Dataset.
 
     Parameters
     ---------
-    bwdata : :class:`BlgDataset` or list(:class:`BlgDataset`)
-        BlgDataset or list(BlgDataset).
+    bwdata : :class:`Dataset` or list(:class:`Dataset`)
+        Dataset or list(Dataset).
     loss : str or objective function.
         Keras compatible loss function. See https://keras.io/losses.
     activation : str
@@ -146,7 +146,7 @@ def output_props(bwdata, loss, activation='sigmoid',
         Dictionary description of the network output.
     """
 
-    if isinstance(bwdata, BlgDataset):
+    if isinstance(bwdata, Dataset):
         bwdata = [bwdata]
 
     if isinstance(bwdata, list):

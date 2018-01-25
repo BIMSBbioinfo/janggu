@@ -1,4 +1,4 @@
-"""Beluga deep learning model for genomics"""
+"""Janggo deep learning model for genomics"""
 
 import logging
 import os
@@ -10,12 +10,12 @@ from keras.models import Model
 from keras.models import load_model
 
 
-class Beluga(object):
-    """Beluga model
+class Janggo(object):
+    """Janggo model
 
-    The class :class:`Beluga` extends the :class:`keras.models.Model`
+    The class :class:`Janggo` extends the :class:`keras.models.Model`
     infrastructure.
-    In particular, Beluga facilitates logging functionality
+    In particular, Janggo facilitates logging functionality
     for fit, predict and evaluate.
     Moreover, fit, predict and evaluate can be utilized directly
     with generator functions. This allows to establish the batches
@@ -31,12 +31,12 @@ class Beluga(object):
         Name of the model. Default: None.
     outputdir : str
         Folder in which to place the log-files and stored models.
-        Default: 'beluga_results/'.
+        Default: 'janggo_results/'.
     """
     timer = None
 
     def __init__(self, inputs, outputs, name=None,
-                 outputdir='beluga_results/'):
+                 outputdir='janggo_results/'):
 
         self.name = name
         self.kerasmodel = Model(inputs, outputs, name)
@@ -49,7 +49,7 @@ class Beluga(object):
         if not os.path.exists(os.path.join(outputdir, 'logs')):
             os.makedirs(os.path.join(outputdir, 'logs'))
 
-        logfile = os.path.join(outputdir, 'logs', 'beluga.log')
+        logfile = os.path.join(outputdir, 'logs', 'janggo.log')
 
         self.logger = logging.getLogger(self.name)
 
@@ -62,7 +62,7 @@ class Beluga(object):
         self.kerasmodel.summary(print_fn=self.logger.info)
 
     @classmethod
-    def create_by_name(cls, name, outputdir='beluga_results/'):
+    def create_by_name(cls, name, outputdir='janggo_results/'):
         """Creates a Bluewhale object by name.
 
         Parameters
@@ -71,11 +71,11 @@ class Beluga(object):
             Name of the model.
         outputdir : str
             Folder in which to place the log-files and stored models.
-            Default: 'beluga_results/'.
+            Default: 'janggo_results/'.
         """
         path = cls._storage_path(name, outputdir)
 
-        model = load_model(path, custom_objects={'Beluga': Model})
+        model = load_model(path, custom_objects={'Janggo': Model})
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @staticmethod
@@ -104,9 +104,9 @@ class Beluga(object):
 
     @classmethod
     def create_by_shape(cls, inputdict, outputdict, name, modeldef,
-                        outputdir='beluga_results/', optimizer='adadelta',
+                        outputdir='janggo_results/', optimizer='adadelta',
                         metrics=None):
-        """Instantiate Beluga through supplying a model template
+        """Instantiate Janggo through supplying a model template
         and the shapes of the dataset.
         From this the correct keras model will be constructed.
 
@@ -134,7 +134,7 @@ class Beluga(object):
         if not metrics:
             metrics = []
 
-        print('create Beluga from shape.')
+        print('create Janggo from shape.')
         modelfct = modeldef[0]
         modelparams = modeldef[1]
 
@@ -204,7 +204,7 @@ class Beluga(object):
             The generator must adhere to the following signature:
             `generator(inputs, outputs, batch_size, sample_weight=None,
             shuffle=False)`.
-            See :func:`beluga_fit_generator`.
+            See :func:`janggo_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
             keras.models.Model.fit_generator. Default: True.
@@ -234,9 +234,9 @@ class Beluga(object):
 
             try:
                 if not isinstance(inputs, (list, dict)):
-                    raise TypeError("inputs must be a BlgDataset, "
-                                    + "list(BlgDataset)"
-                                    + "or dict(BlgDataset) if used with a "
+                    raise TypeError("inputs must be a Dataset, "
+                                    + "list(Dataset)"
+                                    + "or dict(Dataset) if used with a "
                                     + "generator. Got {}".format(type(inputs)))
                 if not batch_size:
                     batch_size = 32
@@ -329,7 +329,7 @@ class Beluga(object):
             the model utilizes keras.models.Model.fit.
             The generator must adhere to the following signature:
             `generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
-            See :func:`beluga_fit_generator`.
+            See :func:`janggo_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
             keras.models.Model.fit_generator. Default: True.
@@ -354,8 +354,8 @@ class Beluga(object):
 
         if generator:
             if not isinstance(inputs, (list, dict)):
-                raise TypeError("inputs must be a BlgDataset, list(BlgDataset)"
-                                + "or dict(BlgDataset) if used with a "
+                raise TypeError("inputs must be a Dataset, list(Dataset)"
+                                + "or dict(Dataset) if used with a "
                                 + "generator.")
             if not batch_size:
                 batch_size = 32
@@ -402,7 +402,7 @@ class Beluga(object):
             The generator must adhere to the following signature:
             `generator(inputs, outputs, batch_size,
             sample_weight=None, shuffle=False)`.
-            See :func:`beluga_fit_generator`.
+            See :func:`janggo_fit_generator`.
         use_multiprocessing : bool
             Whether to use multiprocessing to process the batches. See
             keras.models.Model.fit_generator. Default: True.
@@ -423,8 +423,8 @@ class Beluga(object):
         if generator:
 
             if not isinstance(inputs, (list, dict)):
-                raise TypeError("inputs must be a BlgDataset, list(BlgDataset)"
-                                + "or dict(BlgDataset) if used with a "
+                raise TypeError("inputs must be a Dataset, list(Dataset)"
+                                + "or dict(Dataset) if used with a "
                                 + "generator.")
             if not batch_size:
                 batch_size = 32
@@ -480,7 +480,7 @@ class Beluga(object):
 
     @staticmethod
     def __convert_data(data):
-        # If we deal with BlgDataset, we convert it to a Dictionary
+        # If we deal with Dataset, we convert it to a Dictionary
         # which is directly interpretable by keras
         if hasattr(data, "name") and hasattr(data, "shape"):
             c_data = {}

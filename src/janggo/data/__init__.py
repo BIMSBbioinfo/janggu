@@ -1,15 +1,15 @@
-"""Beluga datasets for deep learning in genomics."""
+"""Janggo datasets for deep learning in genomics."""
 
-from beluga.data.coverage import CoverageBlgDataset  # noqa
-from beluga.data.data import BlgDataset  # noqa
-from beluga.data.dna import DnaBlgDataset  # noqa
-from beluga.data.dna import RevCompDnaBlgDataset  # noqa
-from beluga.data.genomic_indexer import BlgGenomicIndexer  # noqa
-from beluga.data.htseq_extension import BlgChromVector  # noqa
-from beluga.data.htseq_extension import BlgGenomicArray  # noqa
-from beluga.data.nparr import NumpyBlgDataset  # noqa
-from beluga.data.tab import TabBlgDataset  # noqa
-from beluga.data.utils import dna2ind  # noqa
-from beluga.data.utils import input_props  # noqa
-from beluga.data.utils import output_props  # noqa
-from beluga.data.utils import sequences_from_fasta  # noqa
+from janggo.data.coverage import CoverageDataset  # noqa
+from janggo.data.data import Dataset  # noqa
+from janggo.data.dna import DnaDataset  # noqa
+from janggo.data.dna import RevCompDnaDataset  # noqa
+from janggo.data.genomic_indexer import BlgGenomicIndexer  # noqa
+from janggo.data.htseq_extension import BlgChromVector  # noqa
+from janggo.data.htseq_extension import BlgGenomicArray  # noqa
+from janggo.data.nparr import NumpyDataset  # noqa
+from janggo.data.tab import TabDataset  # noqa
+from janggo.data.utils import dna2ind  # noqa
+from janggo.data.utils import input_props  # noqa
+from janggo.data.utils import output_props  # noqa
+from janggo.data.utils import sequences_from_fasta  # noqa

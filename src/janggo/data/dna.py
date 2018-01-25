@@ -3,16 +3,16 @@ import os
 import numpy as np
 from HTSeq import GenomicInterval
 
-from beluga.data.data import BlgDataset
-from beluga.data.genomic_indexer import BlgGenomicIndexer
-from beluga.data.htseq_extension import BlgGenomicArray
-from beluga.data.utils import as_onehot
-from beluga.data.utils import dna2ind
-from beluga.data.utils import sequences_from_fasta
+from janggo.data.data import Dataset
+from janggo.data.genomic_indexer import BlgGenomicIndexer
+from janggo.data.htseq_extension import BlgGenomicArray
+from janggo.data.utils import as_onehot
+from janggo.data.utils import dna2ind
+from janggo.data.utils import sequences_from_fasta
 
 
-class DnaBlgDataset(BlgDataset):
-    """DnaBlgDataset class.
+class DnaDataset(Dataset):
+    """DnaDataset class.
 
     This datastructure holds a DNA sequence for the purpose of a deep learning
     application.
@@ -71,7 +71,7 @@ class DnaBlgDataset(BlgDataset):
         self.gindexer = gindexer
         self._rcindex = [_rcindex(idx, order) for idx in range(pow(4, order))]
 
-        BlgDataset.__init__(self, '{}'.format(name))
+        Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
     def _make_genomic_array(name, fastafile, order, storage, cachedir='',
@@ -148,7 +148,7 @@ class DnaBlgDataset(BlgDataset):
                               stride=50, reglen=200,
                               flank=150, order=1, storage='hdf5',
                               cachedir='', overwrite=False):
-        """Create a DnaBlgDataset class from a reference genome.
+        """Create a DnaDataset class from a reference genome.
 
         This requires a reference genome in fasta format as well as a bed-file
         that holds the regions of interest.
@@ -190,7 +190,7 @@ class DnaBlgDataset(BlgDataset):
     @classmethod
     def create_from_fasta(cls, name, fastafile, storage='ndarray',
                           order=1, cachedir='', overwrite=False):
-        """Create a DnaBlgDataset class from a fastafile.
+        """Create a DnaDataset class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
         a fastafile.
@@ -245,7 +245,7 @@ class DnaBlgDataset(BlgDataset):
         return cls(name, garray, gindexer, flank, order)
 
     def __repr__(self):  # pragma: no cover
-        return 'DnaBlgDataset("{}", <garray>, <gindexer>, \
+        return 'DnaDataset("{}", <garray>, <gindexer>, \
                 flank={}, order={})'\
                 .format(self.name, self.flank, self.order)
 
@@ -297,7 +297,7 @@ class DnaBlgDataset(BlgDataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('DnaBlgDataset.__getitem__: '
+            raise IndexError('DnaDataset.__getitem__: '
                              + 'index must be iterable')
 
         data = as_onehot(self.idna4idx(idxs), self.order)
@@ -361,24 +361,24 @@ def _rcpermmatrix(order):
     return perm
 
 
-class RevCompDnaBlgDataset(BlgDataset):
-    """RevCompDnaBlgDataset class.
+class RevCompDnaDataset(Dataset):
+    """RevCompDnaDataset class.
 
     This datastructure for accessing the reverse complement of a given
-    :class:`DnaBlgDataset`.
+    :class:`DnaDataset`.
 
     Parameters
     -----------
     name : str
         Name of the dataset
-    dnadata : :class:`DnaBlgDataset`
+    dnadata : :class:`DnaDataset`
         Forward strand representation of the sequence sequence data.
 
     Attributes
     -----------
     name : str
         Name of the dataset
-    dnadata : :class:`DnaBlgDataset`
+    dnadata : :class:`DnaDataset`
         Forward strand representation of the sequence sequence data.
     """
 
@@ -388,10 +388,10 @@ class RevCompDnaBlgDataset(BlgDataset):
 
         self.rcmatrix = _rcpermmatrix(self.order)
 
-        BlgDataset.__init__(self, '{}'.format(name))
+        Dataset.__init__(self, '{}'.format(name))
 
     def __repr__(self):
-        return 'RevDnaBlgDataset("{}", <DnaBlgDataset>)'.format(self.name)
+        return 'RevDnaDataset("{}", <DnaDataset>)'.format(self.name)
 
     def _as_revcomp(self, data):
         """Compute the revere complement of a given sequence.

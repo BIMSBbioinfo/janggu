@@ -3,10 +3,10 @@ from abc import abstractmethod
 from abc import abstractproperty
 
 
-class BlgDataset:
-    """Beluga Dataset interface.
+class Dataset:
+    """Janggo Dataset interface.
 
-    The Beluga dataset mimics a numpy array such that it can be
+    The Janggo dataset mimics a numpy array such that it can be
     seamlessly used in conjunction with keras.
 
     Parameters

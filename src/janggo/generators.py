@@ -3,21 +3,21 @@ import threading
 import numpy as np
 
 
-def beluga_fit_generator(inputdata, outputdata, batch_size,
+def janggo_fit_generator(inputdata, outputdata, batch_size,
                          sample_weight=None, shuffle=False):
-    """Generator for Beluga-model fitting.
+    """Generator for Janggo-model fitting.
 
-    This generator is designed for the use with :meth:`Beluga.fit`
-    or :meth:`Beluga.evaluate`.
+    This generator is designed for the use with :meth:`Janggo.fit`
+    or :meth:`Janggo.evaluate`.
 
     Parameters
     ----------
     inputdata : dict
         Dictionary with keys corresponding to the dataset names and
-        values being a :class:`BlgDataset`.
+        values being a :class:`Dataset`.
     outputdata : dict
         Dictionary with keys corresponding to the dataset names and
-        values being a :class:`BlgDataset`.
+        values being a :class:`Dataset`.
     batch_size : int
         Batchsize to use for enumerating the dataset.
     sample_weight : None or list
@@ -77,16 +77,16 @@ def beluga_fit_generator(inputdata, outputdata, batch_size,
                 yield inputs, outputs
 
 
-def beluga_predict_generator(inputdata, batch_size):
-    """Generator for Beluga-model prediction.
+def janggo_predict_generator(inputdata, batch_size):
+    """Generator for Janggo-model prediction.
 
-    This generator is designed for the use with :meth:`Beluga.predict`.
+    This generator is designed for the use with :meth:`Janggo.predict`.
 
     Parameters
     ----------
     inputdata : dict
         Dictionary with keys corresponding to the dataset names and
-        values being a :class:`BlgDataset`.
+        values being a :class:`Dataset`.
     batch_size : int
         Batchsize to use for enumerating the dataset.
 

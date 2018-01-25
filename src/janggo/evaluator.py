@@ -10,8 +10,8 @@ from abc import abstractmethod
 
 from pymongo import MongoClient
 
-from .generators import beluga_fit_generator
-from .generators import beluga_predict_generator
+from .generators import janggo_fit_generator
+from .generators import janggo_predict_generator
 
 
 class Evaluator:
@@ -23,7 +23,7 @@ class Evaluator:
         pass
 
     @abstractmethod
-    def dump(self, beluga, inputs, outputs,
+    def dump(self, janggo, inputs, outputs,
              elementwise_score=None,
              combined_score=None,
              datatags=None,
@@ -37,11 +37,11 @@ class Evaluator:
 
         Parameters
         ----------
-        beluga : :class:`Beluga`
-            Beluga model to evaluate.
-        inputs : :class:`BlgDataset` or list
+        janggo : :class:`Janggo`
+            Janggo model to evaluate.
+        inputs : :class:`Dataset` or list
             Input dataset or list of datasets.
-        outputs : :class:`BlgDataset` or list
+        outputs : :class:`Dataset` or list
             Output dataset or list of datasets.
         elementwise_score : dict
             Element-wise scores for multi-dimensional output data, which
@@ -75,7 +75,7 @@ class MongoDbEvaluator(Evaluator):
         Name of the database
     """
 
-    def __init__(self, dbname="beluga", host='localhost', port=27017,
+    def __init__(self, dbname="janggo", host='localhost', port=27017,
                  document_class=dict, tz_aware=False, connect=True, **kwargs):
         super(MongoDbEvaluator, self).__init__()
         client = MongoClient(host=host, port=port,
@@ -93,7 +93,7 @@ class MongoDbEvaluator(Evaluator):
 
         return self.database.results.insert_one(item).inserted_id
 
-    def dump(self, beluga, inputs, outputs,
+    def dump(self, janggo, inputs, outputs,
              elementwise_score=None,
              combined_score=None,
              datatags=None,
@@ -103,18 +103,18 @@ class MongoDbEvaluator(Evaluator):
 
         # record evaluate() results
         # This is done by default
-        evals = beluga.evaluate(inputs, outputs, batch_size=batch_size,
-                                generator=beluga_fit_generator,
+        evals = janggo.evaluate(inputs, outputs, batch_size=batch_size,
+                                generator=janggo_fit_generator,
                                 workers=1,
                                 use_multiprocessing=use_multiprocessing)
         for i, eval_ in enumerate(evals):
-            iid = self._record(beluga.name, modeltags,
-                               beluga.kerasmodel.metrics_names[i],
+            iid = self._record(janggo.name, modeltags,
+                               janggo.kerasmodel.metrics_names[i],
                                eval_, datatags)
-            beluga.logger.info("Recorded {}".format(iid))
+            janggo.logger.info("Recorded {}".format(iid))
 
-        ypred = beluga.predict(inputs, batch_size=batch_size,
-                               generator=beluga_predict_generator,
+        ypred = janggo.predict(inputs, batch_size=batch_size,
+                               generator=janggo_predict_generator,
                                workers=1,
                                use_multiprocessing=use_multiprocessing)
 
@@ -129,14 +129,14 @@ class MongoDbEvaluator(Evaluator):
                         tags.append(outputs.samplenames[idx])
                     if datatags:
                         tags.append(datatags)
-                    iid = self._record(beluga.name, modeltags, key,
+                    iid = self._record(janggo.name, modeltags, key,
                                        score, tags)
-                    beluga.logger.info("Recorded {}".format(iid))
+                    janggo.logger.info("Recorded {}".format(iid))
 
         if combined_score:
             # record additional combined scores
             for key in combined_score:
                 score = combined_score[key](outputs[:], ypred)
-                iid = self._record(beluga.name, modeltags, key, score,
+                iid = self._record(janggo.name, modeltags, key, score,
                                    datatags)
-                beluga.logger.info("Recorded {}".format(iid))
+                janggo.logger.info("Recorded {}".format(iid))
