@@ -36,9 +36,9 @@ y_test = keras.utils.to_categorical(y_test)
 blg_x_train = NumpyDataset('x', x_train)
 blg_x_test = NumpyDataset('x', x_test)
 blg_y_train = NumpyDataset('y', y_train,
-                              samplenames=[str(i) for i in range(10)])
+                           samplenames=[str(i) for i in range(10)])
 blg_y_test = NumpyDataset('y', y_test,
-                             samplenames=[str(i) for i in range(10)])
+                          samplenames=[str(i) for i in range(10)])
 
 
 # Option 2:

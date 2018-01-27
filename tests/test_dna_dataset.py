@@ -49,13 +49,13 @@ def dna_templ(order):
     refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                               regions=bed_merged,
-                                               storage='ndarray',
-                                               order=order)
+                                            regions=bed_merged,
+                                            storage='ndarray',
+                                            order=order)
     idata = DnaDataset.create_from_refgenome('itrain', refgenome=refgenome,
-                                                regions=bed_indiv,
-                                                storage='ndarray',
-                                                order=order)
+                                             regions=bed_indiv,
+                                             storage='ndarray',
+                                             order=order)
 
     indices = [1, 600, 1000]
 
@@ -91,9 +91,9 @@ def test_read_ranges_from_file():
     regions = os.path.join(data_path, 'regions.bed')
 
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                               regions=regions,
-                                               storage='ndarray',
-                                               order=order)
+                                            regions=regions,
+                                            storage='ndarray',
+                                            order=order)
 
     indices = [1, 600, 1000]
 
@@ -128,9 +128,9 @@ def revcomp(order):
     refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                               regions=bed_file,
-                                               storage='ndarray',
-                                               order=order)
+                                            regions=bed_file,
+                                            storage='ndarray',
+                                            order=order)
     rcdata = RevCompDnaDataset('rctrain', data)
     rcrcdata = RevCompDnaDataset('rcrctrain', rcdata)
 
@@ -159,8 +159,8 @@ def test_revcomp_rcmatrix():
     refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                               storage='ndarray',
-                                               regions=bed_file, order=1)
+                                            storage='ndarray',
+                                            regions=bed_file, order=1)
     rcdata = RevCompDnaDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix,
@@ -168,8 +168,8 @@ def test_revcomp_rcmatrix():
                                       [1, 0, 0, 0]]))
 
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                               storage='ndarray',
-                                               regions=bed_file, order=2)
+                                            storage='ndarray',
+                                            regions=bed_file, order=2)
     rcdata = RevCompDnaDataset('rctrain', data)
 
     np.testing.assert_equal(rcdata.rcmatrix[0],
@@ -207,8 +207,8 @@ def test_rcmatrix_identity():
         refgenome = os.path.join(data_path, 'genome.fa')
 
         data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                                   storage='ndarray',
-                                                   regions=bed_file, order=order)
+                                                storage='ndarray',
+                                                regions=bed_file, order=order)
         rcdata = RevCompDnaDataset('rctrain', data)
 
         np.testing.assert_equal(np.eye(pow(4, order)),
@@ -223,54 +223,54 @@ def test_dna_dataset_sanity(tmpdir):
 
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome='',
-                                            storage='ndarray',
-                                            regions=bed_file, order=1)
+                                         storage='ndarray',
+                                         regions=bed_file, order=1)
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome='test',
-                                            storage='ndarray',
-                                            regions=bed_file, order=1)
+                                         storage='ndarray',
+                                         regions=bed_file, order=1)
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=None, order=1)
+                                         storage='ndarray',
+                                         regions=None, order=1)
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=bed_file, order=0)
+                                         storage='ndarray',
+                                         regions=bed_file, order=0)
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=bed_file, flank=-1)
+                                         storage='ndarray',
+                                         regions=bed_file, flank=-1)
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=bed_file, reglen=0)
+                                         storage='ndarray',
+                                         regions=bed_file, reglen=0)
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=bed_file, stride=0)
+                                         storage='ndarray',
+                                         regions=bed_file, stride=0)
 
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='step',
-                                            regions=bed_file, order=1,
-                                            cachedir=tmpdir.strpath)
+                                         storage='step',
+                                         regions=bed_file, order=1,
+                                         cachedir=tmpdir.strpath)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'genome.fa', 'chr1..nmm'))
 
     DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                        storage='memmap',
-                                        regions=bed_file, order=1,
-                                        cachedir=tmpdir.strpath)
+                                     storage='memmap',
+                                     regions=bed_file, order=1,
+                                     cachedir=tmpdir.strpath)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..nmm'))
 
     DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                        storage='hdf5',
-                                        regions=bed_file, order=1,
-                                        cachedir=tmpdir.strpath)
+                                     storage='hdf5',
+                                     regions=bed_file, order=1,
+                                     cachedir=tmpdir.strpath)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
                                        'chr1..h5'))
@@ -282,7 +282,7 @@ def test_read_dna_from_fasta_order_1(tmpdir):
     order = 1
     filename = os.path.join(data_path, 'oct4.fa')
     data = DnaDataset.create_from_fasta('train', fastafile=filename,
-                                           order=order)
+                                        order=order)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), pow(4, order), 200, 1))
@@ -323,8 +323,8 @@ def test_read_dna_from_fasta_order_2(tmpdir):
     order = 2
     filename = os.path.join(data_path, 'oct4.fa')
     data = DnaDataset.create_from_fasta('train', fastafile=filename,
-                                           order=order,
-                                           cachedir=tmpdir.strpath)
+                                        order=order,
+                                        cachedir=tmpdir.strpath)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), 16, 199, 1))
@@ -383,9 +383,9 @@ def _dna_with_region_strandedness(order):
     refgenome = os.path.join(data_path, 'genome.fa')
 
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                               regions=bed,
-                                               storage='ndarray',
-                                               order=order)
+                                            regions=bed,
+                                            storage='ndarray',
+                                            order=order)
     rcdata = RevCompDnaDataset('rctrain', data)
 
     np.testing.assert_equal(data.shape, (2, pow(4, order),

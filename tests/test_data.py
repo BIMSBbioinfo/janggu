@@ -20,8 +20,8 @@ def test_inshape():
     refgenome = os.path.join(data_path, 'genome.fa')
 
     dna = DnaDataset.create_from_refgenome('dna', refgenome=refgenome,
-                                              storage='ndarray',
-                                              regions=bed_file, order=1)
+                                           storage='ndarray',
+                                           regions=bed_file, order=1)
     rcdna = RevCompDnaDataset('rcdna', dna)
 
     props = input_props([dna, rcdna])

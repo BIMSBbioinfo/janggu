@@ -45,8 +45,8 @@ def test_janggo_instance(tmpdir):
     refgenome = os.path.join(data_path, 'genome.fa')
 
     dna = DnaDataset.create_from_refgenome('dna', refgenome=refgenome,
-                                              storage='ndarray',
-                                              regions=bed_file, order=1)
+                                           storage='ndarray',
+                                           regions=bed_file, order=1)
 
     ctcf = TabDataset('ctcf', filename=csvfile)
 

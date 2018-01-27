@@ -14,34 +14,34 @@ from janggo import MongoDbEvaluator
 from janggo import inputlayer
 from janggo import janggo_fit_generator
 from janggo import outputlayer
-from janggo.data import DnaBlgDataset
-from janggo.data import NumpyBlgDataset
+from janggo.data import DnaDataset
+from janggo.data import NumpyDataset
 from janggo.data import input_props
 from janggo.data import output_props
-from janggo.evaluate import blg_av_auprc
-from janggo.evaluate import blg_av_auroc
+from janggo.evaluate import av_auprc
+from janggo.evaluate import av_auroc
 
 np.random.seed(1234)
 
 DATA_PATH = pkg_resources.resource_filename('janggo', 'resources/')
 OCT4_FILE = os.path.join(DATA_PATH, 'stemcells.fa')
-X1 = DnaBlgDataset.create_from_fasta('dna', fastafile=OCT4_FILE, order=1)
+X1 = DnaDataset.create_from_fasta('dna', fastafile=OCT4_FILE, order=1)
 MAFK_FILE = os.path.join(DATA_PATH, 'mafk.fa')
-X2 = DnaBlgDataset.create_from_fasta('dna', fastafile=MAFK_FILE, order=1)
+X2 = DnaDataset.create_from_fasta('dna', fastafile=MAFK_FILE, order=1)
 
-DNA = DnaBlgDataset.create_from_fasta('dna', fastafile=[OCT4_FILE, MAFK_FILE],
-                                      order=1)
-DNA_ONEHOT = NumpyBlgDataset('dna', np.concatenate((X1[:], X2[:])))
+DNA = DnaDataset.create_from_fasta('dna', fastafile=[OCT4_FILE, MAFK_FILE],
+                                   order=1)
+DNA_ONEHOT = NumpyDataset('dna', np.concatenate((X1[:], X2[:])))
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
-LABELS = NumpyBlgDataset('y', Y)
+LABELS = NumpyDataset('y', Y)
 
 evaluator = MongoDbEvaluator()
 
 
 # Option 1:
-# One can use a keras model directly with all BlgDatasets, because
+# One can use a keras model directly with all Datasets, because
 # the datasets satisfy an interface that mimics ordinary numpy arrays.
 def kerasmodel():
     input_ = Input(shape=(4, 200, 1), name='dna')
@@ -85,9 +85,10 @@ def janggomodel():
 @inputlayer
 @outputlayer
 def janggobody(inputs, inp, oup, params):
-    with inputs.use('dna') as layer:
-        layer = Conv2D(params[0], (inp['dna']['shape'][2], 21),
-                       activation=params[1])(layer)
+    layer = inputs[0]
+    #with inputs.use('dna') as layer:
+    layer = Conv2D(params[0], (inp['dna']['shape'][2], 21),
+                   activation=params[1])(layer)
     output = GlobalAveragePooling2D()(layer)
     return inputs, output
 
@@ -106,7 +107,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA_ONEHOT, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['onehot'],
                modeltags=['fit'])
 
@@ -124,7 +125,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['dnaindex'],
                modeltags=['fit'])
 
@@ -145,7 +146,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA_ONEHOT, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['onehot'],
                modeltags=['fit_generator'])
 
@@ -165,7 +166,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['dnaindex'],
                modeltags=['fit_generator'])
 
@@ -179,7 +180,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA_ONEHOT, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['onehot'],
                modeltags=['fit'])
 
@@ -193,7 +194,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['dnaindex'],
                modeltags=['fit'])
 
@@ -209,7 +210,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA_ONEHOT, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['onehot'],
                modeltags=['fit_generator'])
 
@@ -226,6 +227,6 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 evaluator.dump(model, DNA, LABELS,
-               combined_score={'AUC': blg_av_auroc, 'PRC': blg_av_auprc},
+               combined_score={'AUC': av_auroc, 'PRC': av_auprc},
                datatags=['dnaindex'],
                modeltags=['fit_generator'])
