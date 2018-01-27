@@ -3,9 +3,9 @@
 import logging
 import os
 import time
+import h5py
 
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint
 from keras.models import Model
 from keras.models import load_model
 
@@ -101,6 +101,31 @@ class Janggo(object):
 
         self.logger.info("Save model %s", filename)
         self.kerasmodel.save(filename, overwrite)
+
+    def save_hyper(self, hyper_params, filename=None):
+        """This method attaches the hyper parameters to an hdf5 file.
+
+        This method is supposed to be used after model training.
+        It attaches the hyper parameter, e.g. epochs, batch_size, etc.
+        to the hdf5 file that contains the model weights.
+        The hyper parameters are added as attributes to the
+        group 'model_weights'
+
+        Parameters
+        ----------
+        hyper_parameters : dict
+            Dictionary that contains the hyper parameters.
+        filename : str
+            Filename of the hdf5 file. This file must already exist.
+        """
+        if not filename:
+            filename = self._storage_path(self.name, self.outputdir)
+
+        content = h5py.File(filename, 'r+')
+        weights = content['model_weights']
+        for key in hyper_params:
+            weights[key] = hyper_params[key]
+        content.close()
 
     @classmethod
     def create_by_shape(cls, inputdict, outputdict, name, modeldef,
@@ -215,12 +240,17 @@ class Janggo(object):
         inputs = self.__convert_data(inputs)
         outputs = self.__convert_data(outputs)
 
-        checkpoint = ModelCheckpoint(self._storage_path(self.name,
-                                                        self.outputdir))
-        if callbacks:
-            callbacks.append(checkpoint)
-        else:
-            callbacks = [checkpoint]
+        hyper_params = {
+            'epochs': epochs,
+            'batch_size': batch_size,
+            'shuffle': shuffle,
+            'class_weight': class_weight,
+            'initial_epoch': initial_epoch,
+            'steps_per_epoch': steps_per_epoch,
+            'generator': True if generator else False,
+            'use_multiprocessing': use_multiprocessing,
+            'workers': workers
+        }
 
         self.logger.info('Fit: %s', self.name)
         self.logger.info("Input:")
@@ -308,7 +338,11 @@ class Janggo(object):
             self.logger.info('%s: %f', k, history.history[k][-1])
         self.logger.info('#' * 40)
 
-        self.logger.info("Training finished after {:1.2f} s".format(time.time() - self.timer))
+        self.save()
+        self.save_hyper(hyper_params)
+
+        self.logger.info("Training finished after %1.3f s",
+                         time.time() - self.timer)
         return history
 
     def predict(self, inputs,
@@ -463,7 +497,8 @@ class Janggo(object):
             self.logger.info('%s: %f', self.kerasmodel.metrics_names[i], value)
         self.logger.info('#' * 40)
 
-        self.logger.info("Evaluation finished in {} s".format(time.time() - self.timer))
+        self.logger.info("Evaluation finished in %1.3f s",
+                         time.time() - self.timer)
         return values
 
     def __dim_logging(self, data):
