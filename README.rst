@@ -1,5 +1,5 @@
 ========
-Overview
+Welcome to Janggo
 ========
 
 .. start-badges
@@ -59,34 +59,22 @@ Overview
 
 .. end-badges
 
-In genomics, deep learning is frequently used to study different hypothesis
-about biological mechanisms. This requires flexibility with respect to the
-particular models (e.g. convolutional neural network vs. recurrent neural network)
-as well as relative to the context (e.g. whether the nucleotide sequence
-or epigenetic features best explain a certain property).
+Janggo is a python package that facilitates deep learning in genomics. 
+Its main goal is to make it easy to establish and compare deep learning applications in genomics.
+This is achieved in several ways: 
 
-`Janggo` aims to provide data structures and infrastructure
-to ease deep learning applications in the field of genomics.
-This allows to focus on the hypothesis testing aspect of the deep learning
-application, rather than dealing with how to transform one file format
-into another one.
+1. If done manually, preprocessing the datasets in genomics is non-trivial, time-consuming and repetitive.
+Janggo helps by providing easy access to several common genomics data formats, including fasta, bam or bigwig.
+Thus, data can easily be fetched and directly used as input or output of a neural network.
 
+2. It is quite common in genomics to have to deal with large datasets (10s or even 100s of GB), which are challenging to handle.
+For instance, because the dataset might be too big to read into the RAM. Therefore, Janggo offers the possibility to read data dirctly from disk.
 
-In particular, `janggo2` offers
+3. Janggo provides an easy to use and extensible performance evaluation interface. This allows
+to quickly address biological hypothesis via model comparison.
 
-1. **Genomics data structures**, including `DnaDataset` for storing nucleotide sequences
-   or `CoverageDataset` for storing read coverage from next-generation sequencing experiments.
-   These datasets bridge the transformation between raw input data and the required
-   numpy.arrays that are used as input for a deep learning model based on `keras <keras.io>`_.
-2. **Different data storage options**: Datasets can be loaded directly into the CPU RAM.
-   However, often genomics datasets are too large to maintain in the CPU RAM. Therefore,
-   `Janggo` supports fetching data from files directly. Consequently, large scale
-   analysis (requiring >100GB of memory) can also be run on a desktop system of moderate size (e.g. 32GB).
-3. **Built-in logging functionality**: For model training, evaluation and fitting
-   which helps to monitor the correctness of the model.
-4. **Consistent evaluation**: Performance evaluation can be dumped into a readily
-   available database (MongoDb). Therefore, model evaluation for hypothesis testing
-   becomes straight forward.
+4. Janggo relies on the popular deep learning library keras for specifying, fitting and evaluating the model. Therefore, it can easily make advantage of GPUs if available.
+
 
 * Free software: BSD 3-Clause License
 
