@@ -69,7 +69,6 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
-
 # Option 2:
 # Instantiate an ordinary keras model
 def janggomodel(name):
@@ -100,7 +99,7 @@ def janggobody(inputs, inp, oup, params):
 K.clear_session()
 model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
-                               'oct4_cnn_create_shape_fit',
+                               'oct4_cnn_create_shape_fit_1',
                                modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'], outputdir='oct4_result')
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
@@ -110,16 +109,11 @@ print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-# Evaluate the results
-evaluators.evaluate(DNA_ONEHOT, LABELS,
-                    datatags=['test_set', 'onehot'],
-                    batch_size=100, use_multiprocessing=True)
-
 
 K.clear_session()
 model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
-                               'oct4_cnn_create_shape_fit',
+                               'oct4_cnn_create_shape_fit_2',
                                modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'], outputdir='oct4_result')
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100)
@@ -128,15 +122,11 @@ print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-evaluators.evaluate(DNA, LABELS,
-                    datatags=['test_set', 'dnaindex'],
-                    batch_size=100, use_multiprocessing=True)
-
 
 K.clear_session()
 model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
-                               'oct4_cnn_create_shape_fitgen',
+                               'oct4_cnn_create_shape_fitgen_3',
                                modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'], outputdir='oct4_result')
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100,
@@ -148,14 +138,11 @@ print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-evaluators.evaluate(DNA, LABELS,
-                    datatags=['test_set', 'onehot'],
-                    batch_size=100, use_multiprocessing=True)
 
 K.clear_session()
 model = Janggo.create_by_shape(input_props(DNA),
                                output_props(LABELS, 'binary_crossentropy'),
-                               'oct4_cnn_create_shape_fitgen',
+                               'oct4_cnn_create_shape_fitgen_4',
                                modeldef=(janggobody, (30, 'relu',)),
                                metrics=['acc'], outputdir='oct4_result')
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100,
@@ -167,37 +154,27 @@ print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-evaluators.evaluate(DNA, LABELS,
-                    datatags=['test_set', 'dnaindex'],
-                    batch_size=100, use_multiprocessing=True)
-
 
 K.clear_session()
-model = janggomodel('oct4_cnn_create_keras_fit')
+model = janggomodel('oct4_cnn_create_keras_fit_5')
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100)
 print('Option 2')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-evaluators.evaluate(DNA, LABELS,
-                    datatags=['test_set', 'onehot'],
-                    batch_size=100, use_multiprocessing=True)
 
 K.clear_session()
-model = janggomodel('oct4_cnn_create_keras_fit')
+model = janggomodel('oct4_cnn_create_keras_fit_6')
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100)
 print('Option 2')
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-evaluators.evaluate(DNA, LABELS,
-                    datatags=['test_set', 'dnaindex'],
-                    batch_size=100, use_multiprocessing=True)
 
 K.clear_session()
-model = janggomodel('oct4_cnn_create_keras_fitgen')
+model = janggomodel('oct4_cnn_create_keras_fitgen_7')
 hist = model.fit(DNA_ONEHOT, LABELS, epochs=10, batch_size=100,
                  generator=janggo_fit_generator,
                  use_multiprocessing=True,
@@ -207,12 +184,9 @@ print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
-evaluators.evaluate(DNA, LABELS,
-                    datatags=['test_set', 'onehot'],
-                    batch_size=100, use_multiprocessing=True)
 
 K.clear_session()
-model = janggomodel('oct4_cnn_create_keras_fitgen')
+model = janggomodel('oct4_cnn_create_keras_fitgen_8')
 hist = model.fit(DNA, LABELS, epochs=10, batch_size=100,
                  generator=janggo_fit_generator,
                  use_multiprocessing=True,
@@ -222,8 +196,13 @@ print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
+
+
 evaluators.evaluate(DNA, LABELS,
                     datatags=['test_set', 'dnaindex'],
+                    batch_size=100, use_multiprocessing=True)
+evaluators.evaluate(DNA_ONEHOT, LABELS,
+                    datatags=['test_set', 'onehot'],
                     batch_size=100, use_multiprocessing=True)
 
 # finally, dump everything into the file

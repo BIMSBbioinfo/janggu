@@ -27,7 +27,10 @@ class NumpyDataset(Dataset):
 
         self.data = array
         if samplenames:
-            self.samplenames = samplenames
+            if isinstance(samplenames, list):
+                self.samplenames = samplenames
+            else:
+                self.samplenames = [samplenames]
 
         self.cachedir = cachedir
 

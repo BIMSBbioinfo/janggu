@@ -213,12 +213,15 @@ class ScoreEvaluator(Evaluator):
 
             score = self.score_fct(outputs[:, idx], predicted[:, idx])
 
-            datatags.append(outputs.samplenames[idx])
+            tags = []
+            if datatags:
+                tags += datatags
+            tags.append(outputs.samplenames[idx])
 
             item = {'date': str(datetime.datetime.utcnow()),
                     self.score_name: score,
-                    'datatags': datatags}
-            self.results['name'] = item
+                    'datatags': tags}
+            self.results[name] = item
 
     def dump(self):
         self._dumper(self.output_file_basename, self.results)
