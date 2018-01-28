@@ -1,5 +1,5 @@
-import numpy as np
 import keras
+import numpy as np
 from keras import backend as K
 from keras.datasets import mnist
 from keras.layers import Dense

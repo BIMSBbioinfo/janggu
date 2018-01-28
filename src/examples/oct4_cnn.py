@@ -22,7 +22,6 @@ from janggo.evaluation import ScoreEvaluator
 from janggo.evaluation import auprc
 from janggo.evaluation import auroc
 
-
 np.random.seed(1234)
 
 DATA_PATH = pkg_resources.resource_filename('janggo', 'resources/')
@@ -88,10 +87,9 @@ def janggomodel(name):
 @inputlayer
 @outputlayer
 def janggobody(inputs, inp, oup, params):
-    layer = inputs[0]
-    # with inputs.use('dna') as layer:
-    layer = Conv2D(params[0], (inp['dna']['shape'][0], 21),
-                   activation=params[1])(layer)
+    with inputs.use('dna') as layer:
+        layer = Conv2D(params[0], (inp['dna']['shape'][0], 21),
+                       activation=params[1])(layer)
     output = GlobalAveragePooling2D()(layer)
     return inputs, output
 
