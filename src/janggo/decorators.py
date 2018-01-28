@@ -63,11 +63,12 @@ class InputList(object):
                 print(input_.name)
                 if name in input_.name:
                     return input_
-            raise IndexError("No input with name {} defined. Options are {}".format(name, self.input_list))
+            raise IndexError("No input with name {} defined. ".format(name)
+                             + "Options are {}".format(self.input_list))
         elif isinstance(name, int):
             return self.input_list[name]
         else:
-            IndexError("Wrong type {} for indexing".format(type(name)))
+            raise IndexError("Wrong type {} for indexing".format(type(name)))
 
     def __call__(self):
         return self.input_list

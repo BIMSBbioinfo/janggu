@@ -99,7 +99,6 @@ setup(
         'numpy',
         'pandas',
         'Biopython',
-        'pymongo',
         'keras',
         'htseq',
         'sklearn',

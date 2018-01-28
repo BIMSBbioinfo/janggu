@@ -3,8 +3,8 @@
 import logging
 import os
 import time
-import h5py
 
+import h5py
 from keras import backend as K
 from keras.models import Model
 from keras.models import load_model
@@ -30,21 +30,20 @@ class Janggo(object):
     name : str
         Name of the model. Default: None.
     outputdir : str
-        Folder in which to place the log-files and stored models.
-        Default: 'janggo_results/'.
+        Output folder. Default: 'janggo_results'.
     """
     timer = None
 
     def __init__(self, inputs, outputs, name=None,
-                 outputdir='janggo_results/'):
+                 outputdir='janggo_results'):
 
         self.name = name
         self.kerasmodel = Model(inputs, outputs, name)
 
         self.outputdir = outputdir
 
-        if not os.path.exists(os.path.dirname(outputdir)):
-            os.makedirs(os.path.dirname(outputdir))
+        if not os.path.exists(outputdir):
+            os.makedirs(outputdir)
 
         if not os.path.exists(os.path.join(outputdir, 'logs')):
             os.makedirs(os.path.join(outputdir, 'logs'))
@@ -75,7 +74,7 @@ class Janggo(object):
         """
         path = cls._storage_path(name, outputdir)
 
-        model = load_model(path, custom_objects={'Janggo': Model})
+        model = load_model(path)
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @staticmethod
@@ -124,7 +123,8 @@ class Janggo(object):
         content = h5py.File(filename, 'r+')
         weights = content['model_weights']
         for key in hyper_params:
-            weights[key] = hyper_params[key]
+            if hyper_params[key]:
+                weights.attrs[key] = hyper_params[key]
         content.close()
 
     @classmethod

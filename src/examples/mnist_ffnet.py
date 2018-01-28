@@ -1,7 +1,5 @@
-import pprint
-
-import keras
 import numpy as np
+import keras
 from keras import backend as K
 from keras.datasets import mnist
 from keras.layers import Dense
@@ -10,7 +8,6 @@ from keras.layers import Input
 from keras.models import Model
 from sklearn.metrics import roc_auc_score
 
-from janggo import MongoDbEvaluator
 from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
 from janggo.data import NumpyDataset
@@ -18,10 +15,10 @@ from janggo.data import input_props
 from janggo.data import output_props
 from janggo.decorators import inputlayer
 from janggo.decorators import outputlayer
-from janggo.evaluate import auprc
-from janggo.evaluate import auroc
-from janggo.evaluate import av_auprc
-from janggo.evaluate import av_auroc
+from janggo.evaluation import EvaluatorList
+from janggo.evaluation import ScoreEvaluator
+from janggo.evaluation import auprc
+from janggo.evaluation import auroc
 from janggo.model import Janggo
 
 np.random.seed(1234)
@@ -44,11 +41,11 @@ blg_y_test = NumpyDataset('y', y_test,
 # Option 2:
 # Instantiate the model manually
 def kerasmodel():
-    input = Input(shape=(28, 28), name='x')
-    layer = Flatten()(input)
+    input_ = Input(shape=(28, 28), name='x')
+    layer = Flatten()(input_)
     layer = Dense(10, activation='tanh')(layer)
     output = Dense(10, activation='sigmoid', name='y')(layer)
-    model = Model(inputs=input, outputs=output)
+    model = Model(inputs=input_, outputs=output)
     model.compile(optimizer='adadelta', loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
@@ -57,11 +54,11 @@ def kerasmodel():
 # Option 2:
 # Instantiate the model manually
 def janggomodel():
-    input = Input(shape=(28, 28), name='x')
-    layer = Flatten()(input)
+    input_ = Input(shape=(28, 28), name='x')
+    layer = Flatten()(input_)
     layer = Dense(10, activation='tanh')(layer)
     output = Dense(10, activation='sigmoid', name='y')(layer)
-    model = Janggo(inputs=input, outputs=output, name='mnist')
+    model = Janggo(inputs=input_, outputs=output, name='mnist')
     model.compile(optimizer='adadelta', loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
@@ -72,16 +69,16 @@ def janggomodel():
 # This option is used with Janggo.create_by_shape
 @inputlayer
 @outputlayer
-def ffn(input, inparams, outparams, otherparams):
-    layer = Flatten()(input[0])
+def ffn(input_, inparams, outparams, otherparams):
+    layer = Flatten()(input_[0])
     output = Dense(otherparams[0], activation=otherparams[1])(layer)
-    return input, output
+    return input_, output
 
 
-def auc3(ytrue, ypred):
-    yt = np.zeros((len(ytrue),))
-    yt[ytrue[:, 2] == 1] = 1
-    pt = ypred[:, 2]
+def auc3(ytrue_, ypred_):
+    yt = np.zeros((len(ytrue_),))
+    yt[ytrue_[:, 2] == 1] = 1
+    pt = ypred_[:, 2]
     return roc_auc_score(yt, pt)
 
 
@@ -167,7 +164,7 @@ bw = Janggo.create_by_shape(input_props(blg_x_train),
                                          'categorical_crossentropy'),
                             'mnist_ffn',
                             modeldef=(ffn, (10, 'tanh',)),
-                            metrics=['acc'])
+                            metrics=['acc'], outputdir='mnist_result')
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100, verbose=0)
 ypred = bw.predict(blg_x_test)
 print('Option 4')
@@ -176,15 +173,11 @@ print('loss: {}, acc: {}'.format(h.history['loss'][-1], h.history['acc'][-1]))
 print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
-
-evaluator = MongoDbEvaluator()
+auc_eval = ScoreEvaluator('mnist_result', 'auROC', auroc)
+prc_eval = ScoreEvaluator('mnist_result', 'auPRC', auprc)
+evaluators = EvaluatorList('mnist_result', [auc_eval, prc_eval])
 
 # Evaluate the results
-evaluator.dump(bw, blg_x_test, blg_y_test,
-               elementwise_score={'auROC': auroc, 'auPRC': auprc},
-               combined_score={'av-auROC': av_auroc,
-                               'av-auPRC': av_auprc}, batch_size=100,
-               use_multiprocessing=True)
-
-for row in evaluator.db.results.find():
-    pprint.pprint(row)
+evaluators.evaluate(blg_x_test, blg_y_test, datatags=['test_set'],
+                    batch_size=100, use_multiprocessing=True)
+evaluators.dump()
