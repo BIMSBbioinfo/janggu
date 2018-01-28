@@ -90,7 +90,7 @@ def janggomodel(name):
 def janggobody(inputs, inp, oup, params):
     layer = inputs[0]
     # with inputs.use('dna') as layer:
-    layer = Conv2D(params[0], (inp['dna']['shape'][2], 21),
+    layer = Conv2D(params[0], (inp['dna']['shape'][0], 21),
                    activation=params[1])(layer)
     output = GlobalAveragePooling2D()(layer)
     return inputs, output
