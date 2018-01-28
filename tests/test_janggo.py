@@ -56,9 +56,16 @@ def test_janggo_instance(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
 
+    with pytest.raises(Exception):
+        # name with dot not allowed. could be mistaken for a file-ending
+        bwm = Janggo.create_by_shape(input_props(dna),
+                                     output_props(ctcf, 'binary_crossentropy'),
+                                     'dna_ctcf_HepG2.cnn',
+                                     (_cnn_model, (2,)),
+                                     outputdir=tmpdir.strpath)
     bwm = Janggo.create_by_shape(input_props(dna),
                                  output_props(ctcf, 'binary_crossentropy'),
-                                 'dna_ctcf_HepG2.cnn',
+                                 'dna_ctcf_HepG2-cnn',
                                  (_cnn_model, (2,)),
                                  outputdir=tmpdir.strpath)
 
@@ -68,7 +75,7 @@ def test_janggo_instance(tmpdir):
 
     assert os.path.exists(storage)
 
-    Janggo.create_by_name('dna_ctcf_HepG2.cnn', outputdir=tmpdir.strpath)
+    Janggo.create_by_name('dna_ctcf_HepG2-cnn', outputdir=tmpdir.strpath)
 
 
 def test_janggo_train_predict_option1(tmpdir):

@@ -28,13 +28,14 @@ class Janggo(object):
     outputs : Layer
         Output layer. See https://keras.io/layers.
     name : str
-        Name of the model. Default: None.
+        Name of the model.
     outputdir : str
         Output folder. Default: 'janggo_results'.
     """
     timer = None
+    _name = None
 
-    def __init__(self, inputs, outputs, name=None,
+    def __init__(self, inputs, outputs, name,
                  outputdir='janggo_results'):
 
         self.name = name
@@ -76,6 +77,18 @@ class Janggo(object):
 
         model = load_model(path)
         return cls(model.inputs, model.outputs, name, outputdir)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        if not isinstance(name, str):
+            raise Exception("Name must be a string.")
+        if '.' in name:
+            raise Exception("'.' in the name is not allowed.")
+        self._name = name
 
     @staticmethod
     def _storage_path(name, outputdir):
