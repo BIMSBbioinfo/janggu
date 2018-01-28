@@ -1,17 +1,58 @@
-"""Model evaluator classes.
+"""Model evaluation utilities.
 
-The Evaluator classes can be used to record performance scores
-for given model. This should simplify model comparison eventually.
+This module contains classes and methods for simplifying
+model evaluation.
 """
 
 import datetime
+import json
+import os
 from abc import ABCMeta
 from abc import abstractmethod
 
-from pymongo import MongoClient
+from sklearn import metrics
 
-from .generators import janggo_fit_generator
-from .generators import janggo_predict_generator
+from janggo.model import Janggo
+
+
+class EvaluatorList(object):
+
+    def __init__(self, path, evaluators):
+
+        # load the model names
+        self.path = path
+        self.evaluators = evaluators
+
+    def evaluate(self, inputs, outputs, datatags=None,
+                 batch_size=None, generator=None,
+                 use_multiprocessing=False):
+
+        if len(outputs.shape) > 2:
+            raise Exception("EvaluatorList expects a 2D output numpy array."
+                            + "Given shape={}".format(outputs.shape))
+
+        model_path = os.path.join(self.path, 'models')
+        stored_models = os.listdir(model_path)
+        for stored_model in stored_models:
+            # here we automatically extract the model name
+            # from the file name. All model parameters are
+            # stored in the models subdirectory.
+            model = Janggo.create_by_name(os.path.splitext(stored_model)[0],
+                                          outputdir=self.path)
+
+            # make a prediction for the given model and input
+            predicted = model.predict(inputs, batch_size=batch_size,
+                                      generator=generator,
+                                      use_multiprocessing=use_multiprocessing)
+
+            # pass the prediction on the individual evaluators
+            for evaluator in self.evaluators:
+                evaluator.evaluate(model.name, outputs, predicted, datatags,
+                                   batch_size, use_multiprocessing)
+
+    def dump(self):
+        for evaluator in self.evaluators:
+            evaluator.dump()
 
 
 class Evaluator:
@@ -19,17 +60,15 @@ class Evaluator:
 
     __metaclass__ = ABCMeta
 
-    def __init__(self):
-        pass
+    def __init__(self, path):
+        self.output_dir = os.path.join(path, 'evaluation')
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
 
     @abstractmethod
-    def dump(self, janggo, inputs, outputs,
-             elementwise_score=None,
-             combined_score=None,
-             datatags=None,
-             modeltags=None,
-             batch_size=None,
-             use_multiprocessing=False):
+    def evaluate(self, name, outputs, predicted,
+                 datatags=None, batch_size=None,
+                 use_multiprocessing=False):
         """Dumps the result of an evaluation into a container.
 
         By default, the model will dump the evaluation metrics defined
@@ -37,23 +76,15 @@ class Evaluator:
 
         Parameters
         ----------
-        janggo : :class:`Janggo`
-            Janggo model to evaluate.
+        model :
         inputs : :class:`Dataset` or list
             Input dataset or list of datasets.
         outputs : :class:`Dataset` or list
             Output dataset or list of datasets.
-        elementwise_score : dict
-            Element-wise scores for multi-dimensional output data, which
-            is applied to each output dimension separately. Default: dict().
-        combined_score : dict
-            Combined score for multi-dimensional output data applied across
-            all dimensions toghether. For example, average AUC across all
-            output dimensions. Default: dict().
+        predicted : numpy array or list of numpy arrays
+            Predicted output for the given inputs.
         datatags : list
             List of dataset tags to be recorded. Default: list().
-        modeltags : list
-            List of modeltags to be recorded. Default: list().
         batch_size : int or None
             Batchsize used to enumerate the dataset. Default: None means a
             batch_size of 32 is used.
@@ -61,82 +92,133 @@ class Evaluator:
             Use multiprocess threading for evaluating the results.
             Default: False.
         """
+
+    def dump(self):
+        """Default method for dumping the evaluation results to a storage"""
         pass
 
 
-class MongoDbEvaluator(Evaluator):
-    """MongoDbEvaluator implements Evaluator.
-
-    This Evaluator dumps the evaluation results into a MongoDb.
+def dump_json(basename, results):
+    """Method that dumps the results in a json file.
 
     Parameters
-    -----------
-    dbname : str
-        Name of the database
+    ----------
+    basename : str
+        File-basename (without suffix e.g. '.json') to store the data at.
+        The suffix will be automatically added.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
     """
+    filename = basename + '.json'
+    try:
+        with open(filename, 'r') as jsonfile:
+            content = json.load(jsonfile)
+    except IOError:
+        content = {}  # needed for py27
+    with open(filename, 'w') as jsonfile:
+        content.update(results)
+        json.dump(content, jsonfile)
 
-    def __init__(self, dbname="janggo", host='localhost', port=27017,
-                 document_class=dict, tz_aware=False, connect=True, **kwargs):
-        super(MongoDbEvaluator, self).__init__()
-        client = MongoClient(host=host, port=port,
-                             document_class=document_class,
-                             tz_aware=tz_aware, connect=connect, **kwargs)
-        self.database = client[dbname]
 
-    def _record(self, modelname, modeltags, metricname, value, datatags):
-        item = {'date': datetime.datetime.utcnow(),
-                'modelname': modelname,
-                'measureName': metricname,
-                'measureValue': value,
-                'datatags': datatags,
-                'modeltags': modeltags}
+def auroc(ytrue, ypred):
+    """auROC
 
-        return self.database.results.insert_one(item).inserted_id
+    Parameters
+    ----------
+    ytrue : numpy.array
+        1-dimensional numpy array containing targets
+    ypred : numpy.array
+        1-dimensional numpy array containing predictions
 
-    def dump(self, janggo, inputs, outputs,
-             elementwise_score=None,
-             combined_score=None,
-             datatags=None,
-             modeltags=None,
-             batch_size=None,
-             use_multiprocessing=False):
+    Returns
+    -------
+    float
+        area under the ROC curve
+    """
+    return metrics.roc_auc_score(ytrue, ypred)
 
-        # record evaluate() results
-        # This is done by default
-        evals = janggo.evaluate(inputs, outputs, batch_size=batch_size,
-                                generator=janggo_fit_generator,
-                                workers=1,
-                                use_multiprocessing=use_multiprocessing)
-        for i, eval_ in enumerate(evals):
-            iid = self._record(janggo.name, modeltags,
-                               janggo.kerasmodel.metrics_names[i],
-                               eval_, datatags)
-            janggo.logger.info("Recorded {}".format(iid))
 
-        ypred = janggo.predict(inputs, batch_size=batch_size,
-                               generator=janggo_predict_generator,
-                               workers=1,
-                               use_multiprocessing=use_multiprocessing)
+def auprc(ytrue, ypred):
+    """auPRC
 
-        if elementwise_score:
-            # record individual dimensions
-            for key in elementwise_score:
-                for idx in range(ypred.shape[1]):
-                    score = elementwise_score[key](outputs[:, idx],
-                                                   ypred[:, idx])
-                    tags = []
-                    if hasattr(outputs, "samplenames"):
-                        tags.append(outputs.samplenames[idx])
-                    if datatags:
-                        tags.append(datatags)
-                    iid = self._record(janggo.name, modeltags, key,
-                                       score, tags)
-                    janggo.logger.info("Recorded {}".format(iid))
+    Parameters
+    ----------
+    ytrue : numpy.array
+        1-dimensional numpy array containing targets
+    ypred : numpy.array
+        1-dimensional numpy array containing predictions
 
-        if combined_score:
-            # record additional combined scores
-            for key in combined_score:
-                score = combined_score[key](outputs[:], ypred)
-                iid = self._record(janggo.name, modeltags, key, score,
-                                   datatags)
-                janggo.logger.info("Recorded {}".format(iid))
+    Returns
+    -------
+    float
+        area under the PR curve
+    """
+    return metrics.average_precision_score(ytrue, ypred)
+
+
+def accuracy(ytrue, ypred):
+    """Accuracy
+
+    Parameters
+    ----------
+    ytrue : numpy.array
+        1-dimensional numpy array containing targets
+    ypred : numpy.array
+        1-dimensional numpy array containing predictions
+
+    Returns
+    -------
+    float
+        Accuracy score
+    """
+    return metrics.accuracy_score(ytrue, ypred.round())
+
+
+def f1_score(ytrue, ypred):
+    """F1 score
+
+    Parameters
+    ----------
+    ytrue : numpy.array
+        1-dimensional numpy array containing targets
+    ypred : numpy.array
+        1-dimensional numpy array containing predictions
+
+    Returns
+    -------
+    float
+        F1 score
+    """
+    return metrics.f1_score(ytrue, ypred.round())
+
+
+class ScoreEvaluator(Evaluator):
+
+    def __init__(self, path, score_name, score_fct, dumper=dump_json):
+        # append the path by a folder 'AUC'
+        super(ScoreEvaluator, self).__init__(path)
+        self.output_file_basename = os.path.join(self.output_dir, score_name)
+        self.results = dict()
+        self._dumper = dumper
+        self.score_name = score_name
+        self.score_fct = score_fct
+
+    def evaluate(self, name, outputs, predicted,
+                 datatags=None, batch_size=None,
+                 use_multiprocessing=False):
+
+        if not datatags:
+            datatags = []
+        for idx in range(outputs.shape[1]):
+
+            score = self.score_fct(outputs[:, idx], predicted[:, idx])
+
+            datatags.append(outputs.samplenames[idx])
+
+            item = {'date': str(datetime.datetime.utcnow()),
+                    self.score_name: score,
+                    'datatags': datatags}
+            self.results['name'] = item
+
+    def dump(self):
+        self._dumper(self.output_file_basename, self.results)

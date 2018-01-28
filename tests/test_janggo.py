@@ -8,7 +8,6 @@ from keras.layers import Flatten
 from keras.layers import Input
 
 from janggo import Janggo
-from janggo import MongoDbEvaluator
 from janggo import inputlayer
 from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
@@ -19,12 +18,12 @@ from janggo.data import NumpyDataset
 from janggo.data import TabDataset
 from janggo.data import input_props
 from janggo.data import output_props
-from janggo.evaluate import accuracy
-from janggo.evaluate import auprc
-from janggo.evaluate import auroc
-from janggo.evaluate import av_auprc
-from janggo.evaluate import av_auroc
-from janggo.evaluate import f1_score
+from janggo.evaluation import EvaluatorList
+from janggo.evaluation import ScoreEvaluator
+from janggo.evaluation import accuracy
+from janggo.evaluation import auprc
+from janggo.evaluation import auroc
+from janggo.evaluation import f1_score
 
 
 def test_main():
@@ -81,7 +80,8 @@ def test_janggo_train_predict_option1(tmpdir):
     """
 
     inputs = NumpyDataset("X", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+                           samplenames=['random'])
 
     @inputlayer
     @outputlayer
@@ -117,7 +117,8 @@ def test_janggo_train_predict_option2(tmpdir):
     """
 
     inputs = NumpyDataset("x", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+                           samplenames=['random'])
 
     def _model(path):
         inputs = Input((100,), name='x')
@@ -143,7 +144,7 @@ def test_janggo_train_predict_option2(tmpdir):
     bwm.evaluate([inputs], [outputs])
 
 
-def test_janggo_train_predict_option3(tmpdir, mongodb):
+def test_janggo_train_predict_option3(tmpdir):
     """Train, predict and evaluate on dummy data.
 
     Only works without generators and without evaluators.
@@ -234,17 +235,17 @@ def test_janggo_train_predict_option4(tmpdir):
                      generator=janggo_fit_generator)
 
 
-def test_janggo_train_predict_option5(tmpdir, mongodb):
+def test_janggo_train_predict_option5(tmpdir):
     """Train, predict and evaluate on dummy data.
 
     create: NO
     Input args: list(Dataset)
     generators: YES
-    MongoDb: YES
     """
 
     inputs = NumpyDataset("x", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+                           samplenames=['random'])
 
     def _model(path):
         inputs = Input((100,), name='x')
@@ -273,31 +274,37 @@ def test_janggo_train_predict_option5(tmpdir, mongodb):
     bwm.evaluate([inputs], [outputs], generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    evaluator = MongoDbEvaluator()
-    evaluator.database = mongodb
-    evaluator.dump(
-        bwm, [inputs], outputs,
-        elementwise_score={'auROC': auroc, 'auPRC': auprc,
-                           'Accuracy': accuracy, "F1": f1_score},
-        combined_score={'av-auROC': av_auroc,
-                        'av-auPRC': av_auprc},
-        datatags=['testing'],
-        modeltags=['modeltesting'],
-        batch_size=100,
-        use_multiprocessing=False)
+    auc_eval = ScoreEvaluator(tmpdir.strpath, 'auROC', auroc)
+    prc_eval = ScoreEvaluator(tmpdir.strpath, 'auPRC', auprc)
+    acc_eval = ScoreEvaluator(tmpdir.strpath, 'accuracy', accuracy)
+    f1_eval = ScoreEvaluator(tmpdir.strpath, 'F1', f1_score)
+
+    evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
+                                                f1_eval])
+    evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
+    evaluators.dump()
+
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "auROC.json"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "auPRC.json"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "accuracy.json"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "F1.json"))
 
 
-def test_janggo_train_predict_option6(tmpdir, mongodb):
+def test_janggo_train_predict_option6(tmpdir):
     """Train, predict and evaluate on dummy data.
 
     create: NO
     Input args: Dataset
     generators: YES
-    MongoDb: YES
     """
 
     inputs = NumpyDataset("x", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+                           samplenames=['random'])
 
     @inputlayer
     @outputlayer
@@ -327,15 +334,21 @@ def test_janggo_train_predict_option6(tmpdir, mongodb):
     bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    evaluator = MongoDbEvaluator()
-    evaluator.database = mongodb
-    evaluator.dump(
-        bwm, inputs, outputs,
-        elementwise_score={'auROC': auroc, 'auPRC': auprc,
-                           'Accuracy': accuracy, "F1": f1_score},
-        combined_score={'av-auROC': av_auroc,
-                        'av-auPRC': av_auprc},
-        datatags=['testing'],
-        modeltags=['modeltesting'],
-        batch_size=100,
-        use_multiprocessing=False)
+    auc_eval = ScoreEvaluator(tmpdir.strpath, 'auROC', auroc)
+    prc_eval = ScoreEvaluator(tmpdir.strpath, 'auPRC', auprc)
+    acc_eval = ScoreEvaluator(tmpdir.strpath, 'accuracy', accuracy)
+    f1_eval = ScoreEvaluator(tmpdir.strpath, 'F1', f1_score)
+
+    evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
+                                                f1_eval])
+    evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
+    evaluators.dump()
+
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "auROC.json"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "auPRC.json"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "accuracy.json"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
+                                       "F1.json"))
