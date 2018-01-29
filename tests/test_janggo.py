@@ -1,4 +1,5 @@
 import os
+import json
 
 import numpy as np
 import pkg_resources
@@ -291,14 +292,12 @@ def test_janggo_train_predict_option5(tmpdir):
     evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
     evaluators.dump()
 
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "auROC.json"))
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "auPRC.json"))
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "accuracy.json"))
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "F1.json"))
+    for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
+        with open(os.path.join(tmpdir.strpath, "evaluation",
+                               file_), 'r') as f:
+            # there must be an entry for the model 'nptest'
+            assert 'test_model' in json.load(f)
+
 
 
 def test_janggo_train_predict_option6(tmpdir):
@@ -348,14 +347,23 @@ def test_janggo_train_predict_option6(tmpdir):
 
     evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
                                                 f1_eval], model_filter='ptest')
-    evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
+
+    # first I create fake inputs to provoke dimension
+    inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))
+    evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
     evaluators.dump()
 
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "auROC.json"))
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "auPRC.json"))
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "accuracy.json"))
-    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation",
-                                       "F1.json"))
+    for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
+        with open(os.path.join(tmpdir.strpath, "evaluation",
+                               file_), 'r') as f:
+            # the content must be empty at this point, because
+            # of mismatching dims. No evaluations were ran.
+            assert not json.load(f)
+
+    evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
+    evaluators.dump()
+    for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
+        with open(os.path.join(tmpdir.strpath, "evaluation",
+                               file_), 'r') as f:
+            # there must be an entry for the model 'nptest'
+            assert 'nptest' in json.load(f)

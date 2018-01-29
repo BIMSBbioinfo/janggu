@@ -14,7 +14,7 @@ from abc import abstractmethod
 from sklearn import metrics
 
 from janggo.model import Janggo
-
+from janggo.exceptions import DimensionMismatchException
 
 class EvaluatorList(object):
 
@@ -25,9 +25,10 @@ class EvaluatorList(object):
         self.evaluators = evaluators
         self.filter = model_filter
 
-    def evaluate(self, inputs, outputs, datatags=None,
+    def evaluate(self, inputs, outputs=None, datatags=None,
                  batch_size=None, generator=None,
                  use_multiprocessing=False):
+
 
         if len(outputs.shape) > 2:
             raise Exception("EvaluatorList expects a 2D output numpy array."
@@ -44,17 +45,58 @@ class EvaluatorList(object):
             # here we automatically extract the model name
             # from the file name. All model parameters are
             # stored in the models subdirectory.
-            model = Janggo.create_by_name(os.path.splitext(stored_model)[0],
-                                          outputdir=self.path)
+            model = Janggo.create_by_name(
+                os.path.splitext(os.path.basename(stored_model))[0],
+                outputdir=self.path)
 
-            # make a prediction for the given model and input
-            predicted = model.predict(inputs, batch_size=batch_size,
-                                      generator=generator,
-                                      use_multiprocessing=use_multiprocessing)
+            print('3' * 40)
+            print('model.name={}'.format(model.name))
+
+            try:
+                if not isinstance(inputs, list):
+                    tmpinputs = [inputs]
+                else:
+                    tmpinputs = inputs
+                for input_ in tmpinputs:
+                    # Check if input dimensions match between model specification
+                    # and dataset
+                    if not model.kerasmodel.get_layer(
+                            input_.name).input_shape[1:] == input_.shape[1:]:
+                        raise DimensionMismatchException(
+                            'Input dimension mismatch {}: '.format(input_.name) +
+                            'model-dim={} while data-dim={}'.format(
+                                model.kerasmodel.get_layer(
+                                    input_.name).input_shape[1:], input_.shape[1:]))
+                if outputs is not None:
+                    if not isinstance(outputs, list):
+                        tmpoutputs = [outputs]
+                    else:
+                        tmpoutputs = outputs
+                    # Check if output dims match between model spec and data
+                    for output in tmpoutputs:
+                        if not model.kerasmodel.get_layer(
+                                output.name).output_shape[1:] == output.shape[1:]:
+                            raise DimensionMismatchException(
+                                'Output dimension mismatch {}: '.format(output.name) +
+                                'model-dim={} while data-dim={}'.format(
+                                    model.kerasmodel.get_layer(
+                                        output.name).output_shape[1:], output.shape[1:]))
+            except DimensionMismatchException:
+                # In case the model and data dimensions disagree,
+                # we just skip the evaluation
+                continue
+
+            if outputs:
+                # make a prediction for the given model and input
+                predicted = model.predict(
+                    inputs, batch_size=batch_size, generator=generator,
+                    use_multiprocessing=use_multiprocessing)
+            else:
+                predicted = None
 
             # pass the prediction on the individual evaluators
             for evaluator in self.evaluators:
-                evaluator.evaluate(model.name, outputs, predicted, datatags,
+                evaluator.evaluate(model, inputs, outputs, predicted, datatags,
                                    batch_size, use_multiprocessing)
 
     def dump(self):
@@ -73,7 +115,7 @@ class Evaluator:
             os.makedirs(self.output_dir)
 
     @abstractmethod
-    def evaluate(self, name, outputs, predicted,
+    def evaluate(self, model, inputs, outputs=None, predicted=None,
                  datatags=None, batch_size=None,
                  use_multiprocessing=False):
         """Dumps the result of an evaluation into a container.
@@ -87,9 +129,9 @@ class Evaluator:
         inputs : :class:`Dataset` or list
             Input dataset or list of datasets.
         outputs : :class:`Dataset` or list
-            Output dataset or list of datasets.
+            Output dataset or list of datasets. Default: None.
         predicted : numpy array or list of numpy arrays
-            Predicted output for the given inputs.
+            Predicted output for the given inputs. Default: None
         datatags : list
             List of dataset tags to be recorded. Default: list().
         batch_size : int or None
@@ -210,10 +252,12 @@ class ScoreEvaluator(Evaluator):
         self.score_name = score_name
         self.score_fct = score_fct
 
-    def evaluate(self, name, outputs, predicted,
+    def evaluate(self, model, inputs, outputs=None, predicted=None,
                  datatags=None, batch_size=None,
                  use_multiprocessing=False):
 
+        if predicted is None or outputs is None:
+            raise Exception("ScoreEvaluator requires 'outputs' and 'predicted'.")
         if not datatags:
             datatags = []
         for idx in range(outputs.shape[1]):
@@ -228,7 +272,7 @@ class ScoreEvaluator(Evaluator):
             item = {'date': str(datetime.datetime.utcnow()),
                     self.score_name: score,
                     'datatags': tags}
-            self.results[name] = item
+            self.results[model.name] = item
 
     def dump(self):
         self._dumper(self.output_file_basename, self.results)
