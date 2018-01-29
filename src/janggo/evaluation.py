@@ -5,16 +5,17 @@ model evaluation.
 """
 
 import datetime
+import glob
 import json
 import os
-import glob
 from abc import ABCMeta
 from abc import abstractmethod
 
 from sklearn import metrics
 
-from janggo.model import Janggo
 from janggo.exceptions import DimensionMismatchException
+from janggo.model import Janggo
+
 
 class EvaluatorList(object):
 
@@ -28,7 +29,6 @@ class EvaluatorList(object):
     def evaluate(self, inputs, outputs=None, datatags=None,
                  batch_size=None, generator=None,
                  use_multiprocessing=False):
-
 
         if len(outputs.shape) > 2:
             raise Exception("EvaluatorList expects a 2D output numpy array."

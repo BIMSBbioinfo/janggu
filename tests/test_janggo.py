@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 import numpy as np
 import pkg_resources
@@ -297,7 +297,6 @@ def test_janggo_train_predict_option5(tmpdir):
                                file_), 'r') as f:
             # there must be an entry for the model 'nptest'
             assert 'test_model' in json.load(f)
-
 
 
 def test_janggo_train_predict_option6(tmpdir):

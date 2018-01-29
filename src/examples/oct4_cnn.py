@@ -68,6 +68,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
+
 # Option 2:
 # Instantiate an ordinary keras model
 def janggomodel(name):
