@@ -347,7 +347,7 @@ def test_janggo_train_predict_option6(tmpdir):
     f1_eval = ScoreEvaluator(tmpdir.strpath, 'F1', f1_score)
 
     evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
-                                                f1_eval])
+                                                f1_eval], model_filter='ptest')
     evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
     evaluators.dump()
 

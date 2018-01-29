@@ -7,6 +7,7 @@ model evaluation.
 import datetime
 import json
 import os
+import glob
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -17,11 +18,12 @@ from janggo.model import Janggo
 
 class EvaluatorList(object):
 
-    def __init__(self, path, evaluators):
+    def __init__(self, path, evaluators, model_filter=None):
 
         # load the model names
         self.path = path
         self.evaluators = evaluators
+        self.filter = model_filter
 
     def evaluate(self, inputs, outputs, datatags=None,
                  batch_size=None, generator=None,
@@ -32,7 +34,12 @@ class EvaluatorList(object):
                             + "Given shape={}".format(outputs.shape))
 
         model_path = os.path.join(self.path, 'models')
-        stored_models = os.listdir(model_path)
+        if self.filter:
+            model_path = os.path.join(self.path, 'models',
+                                      '*{}*.h5'.format(self.filter))
+        else:
+            model_path = os.path.join(self.path, 'models', '*.h5')
+        stored_models = glob.glob(model_path)
         for stored_model in stored_models:
             # here we automatically extract the model name
             # from the file name. All model parameters are
