@@ -103,7 +103,8 @@ setup(
         'htseq',
         'sklearn',
         'h5py',
-        'pyBigWig'
+        'pyBigWig',
+        'matplotlib'
     ],
     extras_require={
         "tf": ['tensorflow'],
