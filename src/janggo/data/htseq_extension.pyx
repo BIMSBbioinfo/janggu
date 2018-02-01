@@ -68,7 +68,8 @@ class BlgChromVector(ChromVector):
                                                 else 'nmm'))
 
         if storage == "hdf5":
-            f = h5py.File(f, 'w' if overwrite else 'a')
+            print(f)
+            f = h5py.File(f, 'w' if overwrite else 'a', driver='core')
             if ncv.iv.chrom in f.keys():
                 ncv.array = f.get(ncv.iv.chrom)
             else:
