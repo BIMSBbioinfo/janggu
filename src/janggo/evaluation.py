@@ -13,7 +13,6 @@ from abc import abstractmethod
 
 from sklearn import metrics
 
-from janggo.exceptions import DimensionMismatchException
 from janggo.model import Janggo
 
 
@@ -54,39 +53,9 @@ class EvaluatorList(object):
 
             print('3' * 40)
             print('model.name={}'.format(model.name))
-
-            try:
-                if not isinstance(inputs, list):
-                    tmpinputs = [inputs]
-                else:
-                    tmpinputs = inputs
-                for input_ in tmpinputs:
-                    # Check if input dimensions match between model specification
-                    # and dataset
-                    if not model.kerasmodel.get_layer(
-                            input_.name).input_shape[1:] == input_.shape[1:]:
-                        raise DimensionMismatchException(
-                            'Input dimension mismatch {}: '.format(input_.name) +
-                            'model-dim={} while data-dim={}'.format(
-                                model.kerasmodel.get_layer(
-                                    input_.name).input_shape[1:], input_.shape[1:]))
-                if outputs is not None:
-                    if not isinstance(outputs, list):
-                        tmpoutputs = [outputs]
-                    else:
-                        tmpoutputs = outputs
-                    # Check if output dims match between model spec and data
-                    for output in tmpoutputs:
-                        if not model.kerasmodel.get_layer(
-                                output.name).output_shape[1:] == output.shape[1:]:
-                            raise DimensionMismatchException(
-                                'Output dimension mismatch {}: '.format(output.name) +
-                                'model-dim={} while data-dim={}'.format(
-                                    model.kerasmodel.get_layer(
-                                        output.name).output_shape[1:], output.shape[1:]))
-            except DimensionMismatchException:
-                # In case the model and data dimensions disagree,
-                # we just skip the evaluation
+            if not self._input_dimension_match(model, inputs):
+                continue
+            if not self._output_dimension_match(model, outputs):
                 continue
 
             if outputs:
@@ -101,6 +70,34 @@ class EvaluatorList(object):
             for evaluator in self.evaluators:
                 evaluator.evaluate(model, inputs, outputs, predicted, datatags,
                                    batch_size, use_multiprocessing)
+
+    def _input_dimension_match(self, model, inputs):
+        """Check if input dimensions are matched"""
+
+        if not isinstance(inputs, list):
+            tmpinputs = [inputs]
+        else:
+            tmpinputs = inputs
+        for input_ in tmpinputs:
+            # Check if input dimensions match between model specification
+            # and dataset
+            if not model.kerasmodel.get_layer(
+                    input_.name).input_shape[1:] == input_.shape[1:]:
+                return False
+        return True
+
+    def _output_dimension_match(self, model, outputs):
+        if outputs is not None:
+            if not isinstance(outputs, list):
+                tmpoutputs = [outputs]
+            else:
+                tmpoutputs = outputs
+            # Check if output dims match between model spec and data
+            for output in tmpoutputs:
+                if not model.kerasmodel.get_layer(
+                        output.name).output_shape[1:] == output.shape[1:]:
+                    return False
+        return True
 
     def dump(self):
         for evaluator in self.evaluators:
