@@ -23,6 +23,9 @@ class EvaluatorList(object):
 
         # load the model names
         self.path = path
+        self.output_dir = os.path.join(path, 'evaluation')
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
         self.evaluators = evaluators
         self.filter = model_filter
 
@@ -101,7 +104,7 @@ class EvaluatorList(object):
 
     def dump(self):
         for evaluator in self.evaluators:
-            evaluator.dump()
+            evaluator.dump(self.output_dir)
 
 
 class Evaluator:
@@ -109,10 +112,8 @@ class Evaluator:
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, path):
-        self.output_dir = os.path.join(path, 'evaluation')
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
+    def __init__(self):
+        pass
 
     @abstractmethod
     def evaluate(self, model, inputs, outputs=None, predicted=None,
@@ -142,7 +143,7 @@ class Evaluator:
             Default: False.
         """
 
-    def dump(self):
+    def dump(self, path):
         """Default method for dumping the evaluation results to a storage"""
         pass
 
@@ -245,8 +246,7 @@ class ScoreEvaluator(Evaluator):
 
     def __init__(self, path, score_name, score_fct, dumper=dump_json):
         # append the path by a folder 'AUC'
-        super(ScoreEvaluator, self).__init__(path)
-        self.output_file_basename = os.path.join(self.output_dir, score_name)
+        super(ScoreEvaluator, self).__init__()
         self.results = dict()
         self._dumper = dumper
         self.score_name = score_name
@@ -274,5 +274,6 @@ class ScoreEvaluator(Evaluator):
                     'datatags': tags}
             self.results[model.name] = item
 
-    def dump(self):
-        self._dumper(self.output_file_basename, self.results)
+    def dump(self, path):
+        output_file_basename = os.path.join(path, self.score_name)
+        self._dumper(output_file_basename, self.results)
