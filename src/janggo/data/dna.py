@@ -84,13 +84,15 @@ class DnaDataset(Dataset):
             fastafile = [fastafile]
 
         for fasta in fastafile:
-            seqs += sequences_from_fasta(fasta)
+            seqs.append(sequences_from_fasta(fasta))
 
+        # Extract chromosome lengths
         chromlens = {}
 
         for seq in seqs:
             chromlens[seq.id] = len(seq) - order + 1
 
+        # Check if storage mode is compatible and if memory maps already exist
         if not (storage == 'memmap' or storage == 'ndarray' or
                 storage == 'hdf5'):
             raise Exception('storage must be memmap, ndarray or hdf5')
