@@ -84,7 +84,9 @@ class DnaDataset(Dataset):
             fastafile = [fastafile]
 
         for fasta in fastafile:
-            seqs.append(sequences_from_fasta(fasta))
+            # += is necessary since sequences_from_fasta
+            # returns a list
+            seqs += sequences_from_fasta(fasta)
 
         # Extract chromosome lengths
         chromlens = {}
