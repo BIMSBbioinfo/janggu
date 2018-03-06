@@ -5,12 +5,11 @@ import pkg_resources
 import pytest
 
 from janggo.data import DnaDataset
-from janggo.data import RevCompDnaDataset
 from janggo.data import TabDataset
-from janggo.data import dna2ind
 from janggo.data import input_props
 from janggo.data import output_props
-from janggo.data import sequences_from_fasta
+from janggo.utils import dna2ind
+from janggo.utils import sequences_from_fasta
 
 
 def test_inshape():
@@ -22,11 +21,9 @@ def test_inshape():
     dna = DnaDataset.create_from_refgenome('dna', refgenome=refgenome,
                                            storage='ndarray',
                                            regions=bed_file, order=1)
-    rcdna = RevCompDnaDataset('rcdna', dna)
 
-    props = input_props([dna, rcdna])
+    props = input_props(dna)
     assert 'dna' in props
-    assert 'rcdna' in props
 
     with pytest.raises(Exception):
         input_props((0,))

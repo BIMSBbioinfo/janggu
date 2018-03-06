@@ -59,17 +59,18 @@ def test_janggo_instance(tmpdir):
 
     with pytest.raises(Exception):
         # name with dot not allowed. could be mistaken for a file-ending
-        bwm = Janggo.create_by_shape(input_props(dna),
-                                     output_props(ctcf, 'binary_crossentropy'),
-                                     'dna_ctcf_HepG2.cnn',
-                                     (_cnn_model, (2,)),
-                                     outputdir=tmpdir.strpath)
-    bwm = Janggo.create_by_shape(input_props(dna),
-                                 output_props(ctcf, 'binary_crossentropy'),
-                                 'dna_ctcf_HepG2-cnn',
-                                 (_cnn_model, (2,)),
-                                 outputdir=tmpdir.strpath)
+        bwm = Janggo.create('dna_ctcf_HepG2.cnn',
+                            (_cnn_model, (2,)),
+                            inputp=input_props(dna),
+                            ouputp=output_props(ctcf, 'sigmoid'),
+                            outputdir=tmpdir.strpath)
+    bwm = Janggo.create('dna_ctcf_HepG2-cnn',
+                        (_cnn_model, (2,)),
+                        inputp=input_props(dna),
+                        outputp=output_props(ctcf, 'sigmoid'),
+                        outputdir=tmpdir.strpath)
 
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
 
     bwm.save()
@@ -96,12 +97,13 @@ def test_janggo_train_predict_option1(tmpdir):
     def test_model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Janggo.create_by_shape(input_props(inputs),
-                                 output_props(outputs,
-                                              'binary_crossentropy'),
-                                 'nptest',
-                                 (test_model, None),
-                                 outputdir=tmpdir.strpath)
+    bwm = Janggo.create('nptest',
+                        (test_model, None),
+                        inputp=input_props(inputs),
+                        outputp=output_props(outputs, 'sigmoid'),
+                        outputdir=tmpdir.strpath)
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
@@ -282,15 +284,14 @@ def test_janggo_train_predict_option5(tmpdir):
     bwm.evaluate([inputs], [outputs], generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    auc_eval = ScoreEvaluator(tmpdir.strpath, 'auROC', auroc)
-    prc_eval = ScoreEvaluator(tmpdir.strpath, 'auPRC', auprc)
-    acc_eval = ScoreEvaluator(tmpdir.strpath, 'accuracy', accuracy)
-    f1_eval = ScoreEvaluator(tmpdir.strpath, 'F1', f1_score)
+    auc_eval = ScoreEvaluator('auROC', auroc)
+    prc_eval = ScoreEvaluator('auPRC', auprc)
+    acc_eval = ScoreEvaluator('accuracy', accuracy)
+    f1_eval = ScoreEvaluator('F1', f1_score)
 
     evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
                                                 f1_eval])
     evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
-    evaluators.dump()
 
     for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
         with open(os.path.join(tmpdir.strpath, "evaluation",
@@ -316,12 +317,13 @@ def test_janggo_train_predict_option6(tmpdir):
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Janggo.create_by_shape(input_props(inputs),
-                                 output_props(outputs,
-                                              'binary_crossentropy'),
-                                 'nptest',
-                                 (_model, None),
-                                 outputdir=tmpdir.strpath)
+    bwm = Janggo.create('nptest',
+                        (_model, None),
+                        inputp=input_props(inputs),
+                        outputp=output_props(outputs, 'sigmoid'),
+                        outputdir=tmpdir.strpath)
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
@@ -339,10 +341,10 @@ def test_janggo_train_predict_option6(tmpdir):
     bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    auc_eval = ScoreEvaluator(tmpdir.strpath, 'auROC', auroc)
-    prc_eval = ScoreEvaluator(tmpdir.strpath, 'auPRC', auprc)
-    acc_eval = ScoreEvaluator(tmpdir.strpath, 'accuracy', accuracy)
-    f1_eval = ScoreEvaluator(tmpdir.strpath, 'F1', f1_score)
+    auc_eval = ScoreEvaluator('auROC', auroc)
+    prc_eval = ScoreEvaluator('auPRC', auprc)
+    acc_eval = ScoreEvaluator('accuracy', accuracy)
+    f1_eval = ScoreEvaluator('F1', f1_score)
 
     evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
                                                 f1_eval], model_filter='ptest')
@@ -350,7 +352,6 @@ def test_janggo_train_predict_option6(tmpdir):
     # first I create fake inputs to provoke dimension
     inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))
     evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
-    evaluators.dump()
 
     for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
         with open(os.path.join(tmpdir.strpath, "evaluation",

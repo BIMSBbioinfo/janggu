@@ -6,9 +6,10 @@ from HTSeq import GenomicInterval
 from janggo.data.data import Dataset
 from janggo.data.genomic_indexer import BlgGenomicIndexer
 from janggo.data.htseq_extension import BlgGenomicArray
-from janggo.data.utils import as_onehot
-from janggo.data.utils import dna2ind
-from janggo.data.utils import sequences_from_fasta
+from janggo.utils import as_onehot
+from janggo.utils import complement_index
+from janggo.utils import dna2ind
+from janggo.utils import sequences_from_fasta
 
 
 class DnaDataset(Dataset):
@@ -69,7 +70,8 @@ class DnaDataset(Dataset):
         self.order = order
         self.garray = garray
         self.gindexer = gindexer
-        self._rcindex = [_rcindex(idx, order) for idx in range(pow(4, order))]
+        self._rcindex = [complement_index(idx, order)
+                         for idx in range(pow(4, order))]
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -343,100 +345,3 @@ class DnaDataset(Dataset):
         if not isinstance(value, int) or value < 0:
             raise Exception('_flank must be a non-negative integer')
         self._flank = value
-
-
-def _rcindex(idx, order):
-    rev_idx = np.arange(4)[::-1]
-    irc = 0
-    for iord in range(order):
-        nuc = idx % 4
-        idx = idx // 4
-        irc += rev_idx[nuc] * pow(4, order - iord - 1)
-
-    return irc
-
-
-def _rcpermmatrix(order):
-    perm = np.zeros((pow(4, order), pow(4, order)))
-    for idx in range(pow(4, order)):
-        jdx = _rcindex(idx, order)
-        perm[jdx, idx] = 1
-
-    return perm
-
-
-class RevCompDnaDataset(Dataset):
-    """RevCompDnaDataset class.
-
-    This datastructure for accessing the reverse complement of a given
-    :class:`DnaDataset`.
-
-    Parameters
-    -----------
-    name : str
-        Name of the dataset
-    dnadata : :class:`DnaDataset`
-        Forward strand representation of the sequence sequence data.
-
-    Attributes
-    -----------
-    name : str
-        Name of the dataset
-    dnadata : :class:`DnaDataset`
-        Forward strand representation of the sequence sequence data.
-    """
-
-    def __init__(self, name, dnadata):
-        self.dna = dnadata
-        self.order = self.dna.order
-
-        self.rcmatrix = _rcpermmatrix(self.order)
-
-        Dataset.__init__(self, '{}'.format(name))
-
-    def __repr__(self):
-        return 'RevDnaDataset("{}", <DnaDataset>)'.format(self.name)
-
-    def _as_revcomp(self, data):
-        """Compute the revere complement of a given sequence.
-
-        This method computes the reverse complement for the
-        entire batch of sequences by means of a permutation matrix
-        that has been determined beforehand.
-
-        Parameters
-        ----------
-        data : numpy.array
-            DNA sequence in one hot representation
-
-        Returns
-        -------
-        numpy.array
-            Revere complement of the given DNA sequence
-            in one-hot representation.
-        """
-        # compute the reverse complement of the original sequence
-        # This is facilitated by, using rcmatrix (a permutation matrix),
-        # which computes the complementary base for a given nucletide
-        # Additionally, the sequences is reversed by ::-1
-        rcdata = np.empty(data.shape)
-        rcdata[:, :, :, 0] = np.matmul(self.rcmatrix, data[:, :, ::-1, 0])
-        return rcdata
-
-    def __getitem__(self, idxs):
-
-        data = self.dna[idxs]
-        data = self._as_revcomp(data)
-
-        for transform in self.transformations:
-            data = transform(data)
-
-        return data
-
-    def __len__(self):
-        return len(self.dna)
-
-    @property
-    def shape(self):
-        """Shape of the Dataset"""
-        return self.dna.shape

@@ -8,8 +8,6 @@ from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from janggo.data.data import Dataset
-
 
 def sequences_from_fasta(fasta):
     """Obtains nucleotide sequences from a fasta file.
@@ -96,69 +94,33 @@ def as_onehot(idna, order):
     return onehot
 
 
-def input_props(bwdata):
-    """Extracts the shape of a provided Input-Dataset.
+def complement_index(idx, order):
+    rev_idx = np.arange(4)[::-1]
+    irc = 0
+    for iord in range(order):
+        nuc = idx % 4
+        idx = idx // 4
+        irc += rev_idx[nuc] * pow(4, order - iord - 1)
+
+    return irc
+
+
+def complement_permmatrix(order):
+    """This function returns a permutation matrix for computing
+    the complementary DNA strand one-hot representation for a given order.
 
     Parameters
-    ---------
-    bwdata : :class:`Dataset` or list(:class:`Dataset`)
-        Dataset or list(Dataset).
+    ----------
+    order : int
+        Order of the one-hot representation
 
     Returns
     -------
-    dict
-        Dictionary with dataset names as keys and the corrsponding
-        shape as value.
+    np.array
+        Permutation matrix
     """
-    if isinstance(bwdata, Dataset):
-        bwdata = [bwdata]
-
-    if isinstance(bwdata, list):
-        data = {}
-        for bwdatum in bwdata:
-            shape = bwdatum.shape[1:]
-            if shape == ():
-                shape = (1,)
-            data[bwdatum.name] = {'shape': shape}
-        return data
-    else:
-        raise Exception('inputSpace wrong argument: {}'.format(bwdata))
-
-
-def output_props(bwdata, loss, activation='sigmoid',
-                 loss_weight=1.):
-    """Extracts the shape of a provided Output-Dataset.
-
-    Parameters
-    ---------
-    bwdata : :class:`Dataset` or list(:class:`Dataset`)
-        Dataset or list(Dataset).
-    loss : str or objective function.
-        Keras compatible loss function. See https://keras.io/losses.
-    activation : str
-        Output activation function. Default: 'sigmoid'.
-    loss_weights : float
-        Loss weight used for fitting the model. Default: 1.
-
-    Returns
-    -------
-    dict
-        Dictionary description of the network output.
-    """
-
-    if isinstance(bwdata, Dataset):
-        bwdata = [bwdata]
-
-    if isinstance(bwdata, list):
-        data = {}
-        for bwdatum in bwdata:
-            shape = bwdatum.shape[1:]
-            if shape == ():
-                shape = (1,)
-            data[bwdatum.name] = {'shape': shape,
-                                  'loss': loss,
-                                  'loss_weight': loss_weight,
-                                  'activation': activation}
-        return data
-    else:
-        raise Exception('outputSpace wrong argument: {}'.format(bwdata))
+    perm = np.zeros((pow(4, order), pow(4, order)))
+    for idx in range(pow(4, order)):
+        jdx = complement_index(idx, order)
+        perm[jdx, idx] = 1
+    return perm

@@ -4,11 +4,15 @@ import numpy as np
 import pkg_resources
 import pytest
 from HTSeq import BED_Reader
+from keras.layers import Input
+from keras.models import Model
 
 from janggo.data import DnaDataset
-from janggo.data import RevCompDnaDataset
-from janggo.data import sequences_from_fasta
-from janggo.data.utils import NMAP
+from janggo.layers import Complement
+from janggo.layers import Reverse
+from janggo.utils import NMAP
+from janggo.utils import complement_permmatrix
+from janggo.utils import sequences_from_fasta
 
 reglen = 200
 flank = 150
@@ -131,14 +135,18 @@ def revcomp(order):
                                             regions=bed_file,
                                             storage='ndarray',
                                             order=order)
-    rcdata = RevCompDnaDataset('rctrain', data)
-    rcrcdata = RevCompDnaDataset('rcrctrain', rcdata)
+
+    dna_in = Input(shape=data.shape[1:], name='dna')
+    rdna_layer = Reverse(2)(dna_in)
+    rcdna_layer = Complement(order)(rdna_layer)
+    mod = Model(dna_in, rcdna_layer)
 
     indices = [600, 500, 400]
 
     # actual shape of DNA
     dna = data[indices]
-    rcrcdna = rcrcdata[indices]
+    rcdna = mod.predict(dna)
+    rcrcdna = mod.predict(rcdna)
 
     np.testing.assert_equal(dna, rcrcdna)
 
@@ -152,67 +160,50 @@ def test_revcomp_order_2():
 
 
 def test_revcomp_rcmatrix():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    bed_file = os.path.join(data_path, 'regions.bed')
+    rcmatrix = complement_permmatrix(1)
 
-    refgenome = os.path.join(data_path, 'genome.fa')
-
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=bed_file, order=1)
-    rcdata = RevCompDnaDataset('rctrain', data)
-
-    np.testing.assert_equal(rcdata.rcmatrix,
+    np.testing.assert_equal(rcmatrix,
                             np.array([[0, 0, 0, 1], [0, 0, 1, 0], [0, 1, 0, 0],
                                       [1, 0, 0, 0]]))
 
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            storage='ndarray',
-                                            regions=bed_file, order=2)
-    rcdata = RevCompDnaDataset('rctrain', data)
+    rcmatrix = complement_permmatrix(2)
 
-    np.testing.assert_equal(rcdata.rcmatrix[0],
+    np.testing.assert_equal(rcmatrix[0],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                       0, 0, 0, 1]))
-    np.testing.assert_equal(rcdata.rcmatrix[4],
+    np.testing.assert_equal(rcmatrix[4],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                       0, 0, 1, 0]))
-    np.testing.assert_equal(rcdata.rcmatrix[8],
+    np.testing.assert_equal(rcmatrix[8],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                       0, 1, 0, 0]))
-    np.testing.assert_equal(rcdata.rcmatrix[12],
+    np.testing.assert_equal(rcmatrix[12],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                       1, 0, 0, 0]))
 
-    np.testing.assert_equal(rcdata.rcmatrix[1],
+    np.testing.assert_equal(rcmatrix[1],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                                       0, 0, 0, 0]))
-    np.testing.assert_equal(rcdata.rcmatrix[5],
+    np.testing.assert_equal(rcmatrix[5],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
                                       0, 0, 0, 0]))
-    np.testing.assert_equal(rcdata.rcmatrix[9],
+    np.testing.assert_equal(rcmatrix[9],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
                                       0, 0, 0, 0]))
-    np.testing.assert_equal(rcdata.rcmatrix[13],
+    np.testing.assert_equal(rcmatrix[13],
                             np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
                                       0, 0, 0, 0]))
 
 
 def test_rcmatrix_identity():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     for order in range(1, 4):
-        bed_file = os.path.join(data_path, 'regions.bed')
-        refgenome = os.path.join(data_path, 'genome.fa')
 
-        data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                                storage='ndarray',
-                                                regions=bed_file, order=order)
-        rcdata = RevCompDnaDataset('rctrain', data)
+        rcmatrix = complement_permmatrix(order)
 
         np.testing.assert_equal(np.eye(pow(4, order)),
-                                np.matmul(rcdata.rcmatrix, rcdata.rcmatrix))
+                                np.matmul(rcmatrix, rcmatrix))
 
 
 def test_dna_dataset_sanity(tmpdir):
@@ -386,19 +377,28 @@ def _dna_with_region_strandedness(order):
                                             regions=bed,
                                             storage='ndarray',
                                             order=order)
-    rcdata = RevCompDnaDataset('rctrain', data)
+
+    dna_in = Input(shape=data.shape[1:], name='dna')
+    rdna_layer = Reverse(2)(dna_in)
+    rcdna_layer = Complement(order)(rdna_layer)
+    mod = Model(dna_in, rcdna_layer)
+
+    dna = data[[0, 1]]
+    rcdna = mod.predict(data)
 
     np.testing.assert_equal(data.shape, (2, pow(4, order),
                                          reglen + 2*flank - order + 1, 1))
+    np.testing.assert_equal(dna.shape, rcdna.shape)
 
-    np.testing.assert_equal(data[0], rcdata[1])
-    np.testing.assert_equal(data[1], rcdata[0])
+    np.testing.assert_equal(data[0], rcdna[1:2])
+    np.testing.assert_equal(data[1], rcdna[:1])
+    np.testing.assert_equal(data[:], rcdna[::-1])
 
     with pytest.raises(Exception):
         np.testing.assert_equal(data[0], data[1])
 
     with pytest.raises(Exception):
-        np.testing.assert_equal(rcdata[0], rcdata[1])
+        np.testing.assert_equal(rcdna[0], rcdna[1])
 
 
 def test_dna_with_region_strandedness():

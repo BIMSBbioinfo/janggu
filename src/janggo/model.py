@@ -1,4 +1,4 @@
-"""Janggo deep learning model for genomics"""
+"""Janggo - deep learning for genomics"""
 
 import logging
 import os
@@ -9,28 +9,29 @@ from keras import backend as K
 from keras.models import Model
 from keras.models import load_model
 
+from janggo.layers import Complement
+from janggo.layers import Reverse
+
 
 class Janggo(object):
     """Janggo model
 
-    The class :class:`Janggo` extends the :class:`keras.models.Model`
-    infrastructure.
-    In particular, Janggo facilitates logging functionality
-    for fit, predict and evaluate.
-    Moreover, fit, predict and evaluate can be utilized directly
-    with generator functions. This allows to establish the batches
-    in parallel which might speed up the methods.
+    The class :class:`Janggo` builds up on :class:`keras.models.Model`
+    and allows to instantiate a neural network model.
+    This class contains methods to fit, predict and evaluate the model.
 
     Parameters
     -----------
-    inputs : Layer
-        Input layer. See https://keras.io/layers.
-    outputs : Layer
-        Output layer. See https://keras.io/layers.
+    inputs : Input or list(Input)
+        Input layer or list of Inputs as defined by keras.
+        See https://keras.io/layers.
+    outputs : Layer or list(Layer)
+        Output layer or list of outputs. See https://keras.io/layers.
     name : str
         Name of the model.
     outputdir : str
-        Output folder. Default: 'janggo_results'.
+        Output folder in which the log-files and model parameters
+        are stored. Default: 'janggo_results'.
     """
     timer = None
     _name = None
@@ -63,23 +64,48 @@ class Janggo(object):
 
     @classmethod
     def create_by_name(cls, name, outputdir='janggo_results/'):
-        """Creates a Bluewhale object by name.
+        """Creates a Janggo object by name.
+
+        This option is usually used to load an already trained model.
 
         Parameters
         ----------
         name : str
             Name of the model.
         outputdir : str
-            Folder in which to place the log-files and stored models.
-            Default: 'janggo_results/'.
+            Output directory. Default: 'janggo_results/'.
+
+        Examples
+        --------
+        .. code-block:: python
+
+          from janggo import Janggo
+
+          def test_model(inputs, inp, oup, params):
+              in_ = Input(shape=(10,), name='ip')
+              output = Dense(1, activation='sigmoid', name='out')(in_)
+              return in_, output
+
+          # create a now model
+          model = Janggo.create(name='test_model', (test_model, None))
+          model.save()
+
+          # remove the original model
+          del model
+
+          # reload the model
+          model = Janggo.create_by_name('test_model')
         """
         path = cls._storage_path(name, outputdir)
 
-        model = load_model(path)
+        model = load_model(path,
+                           custom_objects={'Reverse': Reverse,
+                                           'Complement': Complement})
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @property
     def name(self):
+        """Name property"""
         return self._name
 
     @name.setter
@@ -89,14 +115,6 @@ class Janggo(object):
         if '.' in name:
             raise Exception("'.' in the name is not allowed.")
         self._name = name
-
-    @staticmethod
-    def _storage_path(name, outputdir):
-        """Returns the path to the model storage file."""
-        if not os.path.exists(os.path.join(outputdir, "models")):
-            os.mkdir(os.path.join(outputdir, "models"))
-        filename = os.path.join(outputdir, 'models', '{}.h5'.format(name))
-        return filename
 
     def save(self, filename=None, overwrite=True):
         """Saves the model.
@@ -114,83 +132,94 @@ class Janggo(object):
         self.logger.info("Save model %s", filename)
         self.kerasmodel.save(filename, overwrite)
 
-    def save_hyper(self, hyper_params, filename=None):
-        """This method attaches the hyper parameters to an hdf5 file.
-
-        This method is supposed to be used after model training.
-        It attaches the hyper parameter, e.g. epochs, batch_size, etc.
-        to the hdf5 file that contains the model weights.
-        The hyper parameters are added as attributes to the
-        group 'model_weights'
-
-        Parameters
-        ----------
-        hyper_parameters : dict
-            Dictionary that contains the hyper parameters.
-        filename : str
-            Filename of the hdf5 file. This file must already exist.
-        """
-        if not filename:
-            filename = self._storage_path(self.name, self.outputdir)
-
-        content = h5py.File(filename, 'r+')
-        weights = content['model_weights']
-        for key in hyper_params:
-            if hyper_params[key]:
-                weights.attrs[key] = hyper_params[key]
-        content.close()
+    def summary(self):
+        """Prints the model definition."""
+        self.kerasmodel.summary()
 
     @classmethod
-    def create_by_shape(cls, inputdict, outputdict, name, modeldef,
-                        outputdir='janggo_results/', optimizer='adadelta',
-                        metrics=None):
-        """Instantiate Janggo through supplying a model template
-        and the shapes of the dataset.
-        From this the correct keras model will be constructed.
+    def create(cls, name, modeldef, inputp=None, outputp=None,
+               outputdir='janggo_results/'):
+        """Instantiate a Janggo model.
+
+        This method instantiates a Janggo model with a given name
+        and model definition. This method can be used to automatically
+        infer the input and output shapes for the model (see Examples).
 
         Parameters
         -----------
-        inputdict : dict
-            Dictionary containing dataset names as keys with dataset
-            shapes as values
-        outputdir : dict
-            Dictionary containing dataset names as keys with dataset
-            shapes as values
         name : str
-            Unique name of the model.
+            Model name.
         modeldef : tuple
             Contains a function that defines a model template and
             additional model parameters.
+        inputp : dict
+            Dictionary containing dataset properties such as the input
+            shapes. This argument can be determined using
+            :func:`input_props` on the provided Input Datasets.
+        outputp : dict
+            Dictionary containing dataset properties such as the output
+            shapes. This argument can be determined using
+            :func:`output_props` on the provided training labels.
         outputdir : str
-            Directory in which logging output, trained models etc.
+            Directory in which the log files, model parameters etc.
             will be stored
-        optimizer : str or keras.optimizer
-            Optimizer used with keras. Default: 'adadelta'
-        metrics : list
-            List of metrics. Default: metrics = ['accuracy']
-        """
-        if not metrics:
-            metrics = []
 
-        print('create Janggo from shape.')
+        Examples
+        --------
+        Variant 1: Specify all layers manually
+
+        .. code-block:: python
+
+          from janggo import Janggo
+
+          def test_manual_model(inputs, inp, oup, params):
+              in_ = Input(shape=(10,), name='ip')
+              output = Dense(1, activation='sigmoid', name='out')(in_)
+              return in_, output
+
+          model = Janggo.create(name='test_model', (test_manual_model, None))
+
+        Variant 2: Automatically infer the input and output layers.
+        This variant leaves only the network body to be specified.
+
+        .. code-block:: python
+
+          from numpy as np
+          from janggo import Janggo
+          from janggo import inputlayer, outputlayer
+          from janggo.data import input_props, output_props
+          from jangoo.data import NumpyDataset
+
+          # Some random data
+          DATA = NumpyDataset('ip', np.random.random((1000, 10)))
+          LABELS = NumpyDataset('out', np.random.randint(2, size=(1000, 1)))
+
+          # inputlayer and outputlayer automatically infer the layer shapes
+          @inputlayer
+          @outputlayer
+          def test_inferred_model(inputs, inp, oup, params):
+              in_ = output = inputs_['ip']
+              return in_, output
+
+          inp = input_props(DATA)
+          oup = output_props(LABELS)
+          model = Janggo.create(name='test_model', (test_inferred_model, None),
+                                inputp=inp, outputp=oup)
+
+          # Compile the model
+          model.compile(optimizer='adadelta', loss='binary_crossentropy')
+        """
+
+        print('create Janggo model.')
         modelfct = modeldef[0]
         modelparams = modeldef[1]
 
         K.clear_session()
 
-        inputs, output = modelfct(None, inputdict, outputdict, modelparams)
+        inputs, outputs = modelfct(None, inputp, outputp, modelparams)
 
-        model = cls(inputs=inputs, outputs=output, name=name,
+        model = cls(inputs=inputs, outputs=outputs, name=name,
                     outputdir=outputdir)
-
-        losses = {}
-        loss_weights = {}
-        for key in outputdict:
-            losses[key] = outputdict[key]['loss']
-            loss_weights[key] = outputdict[key]['loss_weight']
-
-        model.compile(loss=losses, optimizer=optimizer,
-                      loss_weights=loss_weights, metrics=metrics)
 
         return model
 
@@ -199,9 +228,9 @@ class Janggo(object):
                 weighted_metrics=None, target_tensors=None):
         """Compiles a model.
 
-        This method just delegates to keras.models.Model.compile
+        This method invokes keras.models.Model.compile
         (see https://keras.io/models/model/) in order to compile
-        the keras model.
+        the keras model that Janggo maintains.
 
         The parameters are identical to the corresponding keras method.
         """
@@ -231,23 +260,36 @@ class Janggo(object):
             **kwargs):
         """Fit the model.
 
-        Most of the parameters are described in
-        https://keras.io/models/model/#methods.
+        This method is used to fit a given model.
+        All of the parameters are directly delegated the keras model
+        fit or fit_generator method.
+        See https://keras.io/models/model/#methods.
+        If a generator is supplied, the fit_generator method of the
+        respective keras model will be invoked.
+        Otherwise the fit method is used.
 
-        Parameters
-        -------------------
-        generator : None or generator
-            Optional generator to use for the fitting. If None is supplied,
-            the model utilizes keras.models.Model.fit.
-            The generator must adhere to the following signature:
-            `generator(inputs, outputs, batch_size, sample_weight=None,
-            shuffle=False)`.
-            See :func:`janggo_fit_generator`.
-        use_multiprocessing : bool
-            Whether to use multiprocessing to process the batches. See
-            keras.models.Model.fit_generator. Default: True.
-        workers : int
-            Number of workers in `use_multiprocessing=True` mode. Default: 1.
+        Janggo provides a readily available generator.
+        See :func:`janggo_fit_generator`.
+
+        Generally, generators need to adhere to the following signature:
+        `generator(inputs, outputs, batch_size, sample_weight=None,
+        shuffle=False)`.
+
+        Examples
+        --------
+        Variant 1: Use `fit` without a generator
+
+        .. code-block:: python
+
+          model.fit(DATA, LABELS)
+
+        Variant 2: Use `fit` with a generator
+
+        .. code-block:: python
+
+          from janggo import janggo_fit_generator
+
+          model.fit(DATA, LABELS, generator=janggo_fit_generator)
         """
 
         inputs = self.__convert_data(inputs)
@@ -352,7 +394,7 @@ class Janggo(object):
         self.logger.info('#' * 40)
 
         self.save()
-        self.save_hyper(hyper_params)
+        self._save_hyper(hyper_params)
 
         self.logger.info("Training finished after %1.3f s",
                          time.time() - self.timer)
@@ -369,19 +411,35 @@ class Janggo(object):
 
         """Predict targets.
 
-        Parameters
-        -------------------
-        generator : None or generator
-            Optional generator to use for the fitting. If None is supplied,
-            the model utilizes keras.models.Model.fit.
-            The generator must adhere to the following signature:
-            `generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
-            See :func:`janggo_fit_generator`.
-        use_multiprocessing : bool
-            Whether to use multiprocessing to process the batches. See
-            keras.models.Model.fit_generator. Default: True.
-        workers : int
-            Number of workers in `use_multiprocessing=True` mode. Default: 1.
+        This method predicts the targets.
+        All of the parameters are directly delegated the keras model
+        predict or predict_generator method.
+        See https://keras.io/models/model/#methods.
+        If a generator is supplied, the `predict_generator` method of the
+        respective keras model will be invoked.
+        Otherwise the `predict` method is used.
+
+        Janggo provides a readily available generator for this method
+        See :func:`janggo_predict_generator`.
+
+        Generally, generators need to adhere to the following signature:
+        `generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
+
+        Examples
+        --------
+        Variant 1: Use `predict` without a generator
+
+        .. code-block:: python
+
+          model.predict(DATA)
+
+        Variant 2: Use `predict` with a generator
+
+        .. code-block:: python
+
+          from janggo import janggo_predict_generator
+
+          model.predict(DATA, generator=janggo_predict_generator)
         """
 
         inputs = self.__convert_data(inputs)
@@ -439,22 +497,38 @@ class Janggo(object):
                  generator=None,
                  use_multiprocessing=True,
                  workers=1):
-        """Evaluate metrics and losses.
+        """Evaluate the model performance.
 
-        Parameters
-        -------------------
-        generator : None or generator
-            Optional generator to use for the fitting. If None is supplied,
-            the model utilizes keras.models.Model.fit.
-            The generator must adhere to the following signature:
-            `generator(inputs, outputs, batch_size,
-            sample_weight=None, shuffle=False)`.
-            See :func:`janggo_fit_generator`.
-        use_multiprocessing : bool
-            Whether to use multiprocessing to process the batches. See
-            keras.models.Model.fit_generator. Default: True.
-        workers : int
-            Number of workers in `use_multiprocessing=True` mode. Default: 1.
+        This method is used to evaluate a given model.
+        All of the parameters are directly delegated the keras model
+        `evaluate` or `evaluate_generator` method.
+        See https://keras.io/models/model/#methods.
+        If a generator is supplied, the `evaluate_generator` method of the
+        respective keras model will be invoked.
+        Otherwise the `evaluate` method is used.
+
+        Janggo provides a readily available generator.
+        See :func:`janggo_fit_generator`.
+
+        Generally, generators need to adhere to the following signature:
+        `generator(inputs, outputs, batch_size, sample_weight=None,
+        shuffle=False)`.
+
+        Examples
+        --------
+        Variant 1: Use `evaluate` without a generator
+
+        .. code-block:: python
+
+          model.evaluate(DATA, LABELS)
+
+        Variant 2: Use `evaluate` with a generator
+
+        .. code-block:: python
+
+          from janggo import janggo_fit_generator
+
+          model.evaluate(DATA, LABELS, generator=janggo_fit_generator)
         """
 
         inputs = self.__convert_data(inputs)
@@ -543,3 +617,37 @@ class Janggo(object):
             # which for compatibility reasons we just pass through
             c_data = data
         return c_data
+
+    @staticmethod
+    def _storage_path(name, outputdir):
+        """Returns the path to the model storage file."""
+        if not os.path.exists(os.path.join(outputdir, "models")):
+            os.mkdir(os.path.join(outputdir, "models"))
+        filename = os.path.join(outputdir, 'models', '{}.h5'.format(name))
+        return filename
+
+    def _save_hyper(self, hyper_params, filename=None):
+        """This method attaches the hyper parameters to an hdf5 file.
+
+        This method is supposed to be used after model training.
+        It attaches the hyper parameter, e.g. epochs, batch_size, etc.
+        to the hdf5 file that contains the model weights.
+        The hyper parameters are added as attributes to the
+        group 'model_weights'
+
+        Parameters
+        ----------
+        hyper_parameters : dict
+            Dictionary that contains the hyper parameters.
+        filename : str
+            Filename of the hdf5 file. This file must already exist.
+        """
+        if not filename:
+            filename = self._storage_path(self.name, self.outputdir)
+
+        content = h5py.File(filename, 'r+')
+        weights = content['model_weights']
+        for key in hyper_params:
+            if hyper_params[key]:
+                weights.attrs[key] = hyper_params[key]
+        content.close()
