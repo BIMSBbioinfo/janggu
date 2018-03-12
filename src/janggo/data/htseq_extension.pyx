@@ -3,123 +3,22 @@ import os
 import h5py
 
 import numpy
-# cimport numpy
+
 from HTSeq import GenomicInterval
-from HTSeq import GenomicArray
-from HTSeq import ChromVector
 
 strand_plus = "+"
 strand_minus = "-"
 strand_nostrand = "."
-if int(sys.version[0]) < 3:
-    maxint = sys.maxint
-else:
-    maxint = sys.maxsize
-
-class BlgChromVector(ChromVector):
-    """BlgChromVector extends HTSeq.ChromVector.
-
-    It acts as a dataset for holding 1-dimensional data. For instance,
-    coverage along a chromosome.
-    The extension allows to reload previously established numpy memory maps
-    as well as hdf5 stored datasets.
-
-    Note
-    ----
-    If the dataset is too large to be loaded into the memory of the process,
-    we suggest to utilize hdf5 storage of the data. Otherwise, one can
-    directly load the dataset as a numpy array.
-    """
-
-    @classmethod
-    def create(cls, iv, typecode, storage,
-               memmap_dir="", overwrite=False):
-        """Create a BlgChromVector.
-
-        Parameters
-        ----------
-        iv : HTSeq.GenomicInterval
-            Chromosome properties, including length, used for allocating the
-            dataset.
-        typecode : str
-            Datatype.
-        storage : str
-            Storage type can be 'step', 'ndarray', 'memmap' or 'hdf5'.
-            The first three behave similarly as described in HTSeq.ChromVector.
-            The latter two can be used to reload pre-determined genome-wide
-            scores (e.g. coverage tracks), to avoid having to establish
-            this information each time.
-        memmap_dir : str
-            Directory in which to store the cachefiles. Used only with
-            'memmap' and 'hdf5'. Default: "".
-        overwrite : bool
-            Overwrite the cachefiles. Default: False.
-        """
-
-        ncv = cls()
-        ncv.iv = iv
-        ncv._storage = storage
-        # TODO: Test whether offset works properly
-        ncv.offset = iv.start
-        ncv.is_vector_of_sets = False
-
-        f = os.path.join(memmap_dir,
-            iv.chrom + iv.strand + ".{}".format('h5' if storage == 'hdf5'
-                                                else 'nmm'))
-
-        if storage == "hdf5":
-            print(f)
-            f = h5py.File(f, 'w' if overwrite else 'a', driver='core')
-            if ncv.iv.chrom in f.keys():
-                ncv.array = f.get(ncv.iv.chrom)
-            else:
-                ncv.array = f.create_dataset(ncv.iv.chrom, shape=(iv.length, ),
-                                             dtype=typecode)
-        elif storage == 'memmap' and overwrite == False and os.path.exists(f):
-            ncv.array = numpy.memmap(shape=(iv.length, ), dtype=typecode,
-                                     filename=f,
-                                     mode='r+')
-        else:
-            #ncv = cls()
-            ncv_ = ChromVector.create(iv, typecode,
-                                     storage, memmap_dir=memmap_dir)
-
-            ncv.array = ncv_.array
-
-        return ncv
 
 
-    def __getitem__(self, index):
-        ret = ChromVector.__getitem__(self, index)
-
-        if isinstance(ret, ChromVector):
-            v = BlgChromVector()
-            v.iv = ret.iv
-            v.array = ret.array
-            v.offset = ret.offset
-            v.is_vector_of_sets = ret.is_vector_of_sets
-            v._storage = ret._storage
-            return v
-        else:
-            return ret
-
-    def sum(self):
-        return sum(list(self))
-
-
-class BlgGenomicArray(GenomicArray):
-    """BlgGenomicArray extends HTSeq.GenomicArray.
+class GenomicArray(object):
+    """GenomicArray stores multi-dimensional genomic information.
 
     It acts as a dataset for holding genomic data. For instance,
-    coverage along an entire genome composed of arbitrary length chromosomes.
-    The extension allows to reload previously established numpy memory maps
-    as well as hdf5 stored datasets.
-
-    Note
-    ----
-    If the dataset is too large to be loaded into the memory of the process,
-    we suggest to utilize hdf5 storage of the data. Otherwise, one can
-    directly load the dataset as a numpy array.
+    coverage along an entire genome composed of arbitrary length chromosomes
+    as well as for multiple cell-types and conditions simultaneously.
+    Inspired by the HTSeq analog, the array can hold the data in different
+    storage modes, including ndarray, memmap or hdf5.
 
     Parameters
     ----------
@@ -128,53 +27,223 @@ class BlgGenomicArray(GenomicArray):
         as values.
     stranded : bool
         Consider stranded profiles. Default: True.
+    conditions : list(str) or None
+        List of cell-type or condition labels associated with the corresponding
+        array dimensions. Default: None means a one-dimensional array is produced.
     typecode : str
         Datatype. Default: 'd'.
     storage : str
-        Storage type can be 'step', 'ndarray', 'memmap' or 'hdf5'.
-        The first three behave similarly as described in HTSeq.ChromVector.
-        The latter two can be used to reload pre-determined genome-wide
-        scores (e.g. coverage tracks), to avoid having to establish
-        this information each time. Default: 'step'
+        Storage type can be 'ndarray', 'memmap' or 'hdf5'.
+        The first loads the data into a numpy array directly, while
+        the latter two can be used to fetch the data from disk.
     memmap_dir : str
         Directory in which to store the cachefiles. Used only with
         'memmap' and 'hdf5'. Default: "".
-    overwrite : bool
-        Overwrite the cachefiles. Default: False.
     """
 
-    def __init__(self, chroms, stranded=True, typecode='d',
-                 storage='step', memmap_dir="", overwrite=False):
+        def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
 
-        self.overwrite = overwrite
+            self.shape = (chrlen, 2 if stranded else 1, len(conditions))
 
-        GenomicArray.__init__(self, chroms, stranded=stranded,
-                              typecode=typecode, storage=storage,
-                              memmap_dir=memmap_dir)
+        def __setitem__(self, interval, value):
+            pass
 
-    def add_chrom(self, chrom, length=maxint, start_index=0):
-        """Adds a chromosome track."""
-        if length == maxint:
-            iv = GenomicInterval(chrom, start_index, maxint, ".")
-        else:
-            iv = GenomicInterval(chrom, start_index, start_index + length, ".")
+        def __getitem__(self, interval):
+            pass
 
-        if self.stranded:
-            self.chrom_vectors[chrom] = {}
-            iv.strand = "+"
-            self.chrom_vectors[chrom][strand_plus] = \
-                BlgChromVector.create(iv, self.typecode,
-                                     self.storage, memmap_dir=self.memmap_dir,
-                                     overwrite=self.overwrite)
-            iv = iv.copy()
-            iv.strand = "-"
-            self.chrom_vectors[chrom][strand_minus] = \
-                BlgChromVector.create(iv, self.typecode,
-                                     self.storage, memmap_dir=self.memmap_dir,
-                                     overwrite=self.overwrite)
-        else:
-            self.chrom_vectors[chrom] = {
-                strand_nostrand:
-                    BlgChromVector.create(iv, self.typecode, self.storage,
-                                         overwrite=self.overwrite,
-                                         memmap_dir=self.memmap_dir)}
+
+class Hdf5GenomicArray(object):
+    """GenomicArray stores multi-dimensional genomic information.
+
+    It acts as a dataset for holding genomic data. For instance,
+    coverage along an entire genome composed of arbitrary length chromosomes
+    as well as for multiple cell-types and conditions simultaneously.
+    Inspired by the HTSeq analog, the array can hold the data in different
+    storage modes, including ndarray, memmap or hdf5.
+
+    Parameters
+    ----------
+    chroms : dict
+     Dictionary with chromosome names as keys and chromosome lengths
+     as values.
+    stranded : bool
+     Consider stranded profiles. Default: True.
+    conditions : list(str) or None
+     List of cell-type or condition labels associated with the corresponding
+     array dimensions. Default: None means a one-dimensional array is produced.
+    typecode : str
+     Datatype. Default: 'd'.
+    storage : str
+     Storage type can be 'ndarray', 'memmap' or 'hdf5'.
+     The first loads the data into a numpy array directly, while
+     the latter two can be used to fetch the data from disk.
+    memmap_dir : str
+     Directory in which to store the cachefiles. Used only with
+     'memmap' and 'hdf5'. Default: "".
+    """
+
+    def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
+                 memmap_dir="", readonly=True):
+        super(Hdf5GenomicArray, self).__init__(chroms, stranded, conditions, typecode)
+
+        self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"),
+                      'r' if readonly else 'r+')
+
+        # one dataset per chrom
+        if not readonly:
+            for chrom in chroms:
+                self.handle.create_dataset(chrom, self.shape, dtype=typecode)
+
+    def __setitem__(self, interval, condition, value):
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        dset = self.handle.get(chr)
+        dset[start:end, 1 if strand=='-' else 0, condition] = value
+
+    def __getitem__(self, index):
+        # GenomicInterval
+        interval = index
+
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        return self.handle.get(chr)[start:end, :, :]
+
+
+class NDArrayGenomicArray(object):
+    """GenomicArray stores multi-dimensional genomic information.
+
+    It acts as a dataset for holding genomic data. For instance,
+    coverage along an entire genome composed of arbitrary length chromosomes
+    as well as for multiple cell-types and conditions simultaneously.
+    Inspired by the HTSeq analog, the array can hold the data in different
+    storage modes, including ndarray, memmap or hdf5.
+
+    Parameters
+    ----------
+    chroms : dict
+     Dictionary with chromosome names as keys and chromosome lengths
+     as values.
+    stranded : bool
+     Consider stranded profiles. Default: True.
+    conditions : list(str) or None
+     List of cell-type or condition labels associated with the corresponding
+     array dimensions. Default: None means a one-dimensional array is produced.
+    typecode : str
+     Datatype. Default: 'd'.
+    storage : str
+     Storage type can be 'ndarray', 'memmap' or 'hdf5'.
+     The first loads the data into a numpy array directly, while
+     the latter two can be used to fetch the data from disk.
+    memmap_dir : str
+     Directory in which to store the cachefiles. Used only with
+     'memmap' and 'hdf5'. Default: "".
+    """
+
+    def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
+        super(NDArrayGenomicArray, self).__init__(chroms, stranded, conditions, typecode)
+
+        self.handle = {chrom: np.empty(shape=self.shape, dtype=typecode) for chrom in chroms}
+
+    def __setitem__(self, interval, condition, value):
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        self.handle[chr][start:end, 1 if strand=='-' else 0, condition] = value
+
+    def __getitem__(self, index):
+        # GenomicInterval
+        interval = index
+
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        return self.handle[chr][start:end, :, :]
+
+
+class MemmapGenomicArray(object):
+    """GenomicArray stores multi-dimensional genomic information.
+
+    It acts as a dataset for holding genomic data. For instance,
+    coverage along an entire genome composed of arbitrary length chromosomes
+    as well as for multiple cell-types and conditions simultaneously.
+    Inspired by the HTSeq analog, the array can hold the data in different
+    storage modes, including ndarray, memmap or hdf5.
+
+    Parameters
+    ----------
+    chroms : dict
+     Dictionary with chromosome names as keys and chromosome lengths
+     as values.
+    stranded : bool
+     Consider stranded profiles. Default: True.
+    conditions : list(str) or None
+     List of cell-type or condition labels associated with the corresponding
+     array dimensions. Default: None means a one-dimensional array is produced.
+    typecode : str
+     Datatype. Default: 'd'.
+    storage : str
+     Storage type can be 'ndarray', 'memmap' or 'hdf5'.
+     The first loads the data into a numpy array directly, while
+     the latter two can be used to fetch the data from disk.
+    memmap_dir : str
+     Directory in which to store the cachefiles. Used only with
+     'memmap' and 'hdf5'. Default: "".
+    """
+
+    def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
+                 memmap_dir="", readonly=True):
+        super(MemmapGenomicArray, self).__init__(chroms, stranded, conditions, typecode)
+
+        self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"),
+                      'r' if readonly else 'r+')
+
+        # one dataset per chrom
+        if not readonly:
+            for chrom in chroms:
+                self.handle.create_dataset(chrom, self.shape, dtype=typecode)
+
+    def __setitem__(self, interval, condition, value):
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        dset = self.handle.get(chr)
+        dset[strand, start:end, condition] = value
+
+    def __getitem__(self, index):
+        # GenomicInterval
+        interval = index
+
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        return self.handle.get(chr)[start:end, :, :]
+
+    def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
+        super(NDArrayGenomicArray, self).__init__(chroms, stranded, conditions, typecode)
+
+        self.handle = {chrom: np.memmap(shape=self.shape, dtype=typecode) for chrom in chroms}
+
+    def __setitem__(self, interval, condition, value):
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        self.handle[chr][start:end, 1 if strand=='-' else 0, condition] = value
+
+    def __getitem__(self, index):
+        # GenomicInterval
+        interval = index
+
+        chr = interval.chrom
+        start = interval.start
+        end = interval.end
+        strand = interval.strand
+        return self.handle[chr][start:end, :, :]
