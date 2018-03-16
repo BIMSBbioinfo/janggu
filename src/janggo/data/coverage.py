@@ -3,11 +3,12 @@ import os
 
 import numpy as np
 import pyBigWig
-from HTSeq import BAM_Reader
+import pysam
+from HTSeq import GenomicInterval
 
 from janggo.data.data import Dataset
 from janggo.data.genomic_indexer import BlgGenomicIndexer
-from janggo.data.htseq_extension import BlgGenomicArray
+from janggo.data.genomicarray import create_genomic_array
 
 
 class CoverageDataset(Dataset):
@@ -31,8 +32,7 @@ class CoverageDataset(Dataset):
         Number of flanking regions to take into account. Default: 4.
     stranded : boolean
         Consider strandedness of coverage. Default: True.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
+
 
     Attributes
     -----------
@@ -47,48 +47,26 @@ class CoverageDataset(Dataset):
         Number of flanking regions to take into account. Default: 4.
     stranded : boolean
         Consider strandedness of coverage. Default: True.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
+
     """
 
     _flank = None
 
     def __init__(self, name, covers,
-                 samplenames,
                  gindexer,  # indices of pointing to region start
                  flank=4,  # flanking region to consider
-                 stranded=True,  # strandedness to consider
-                 cachedir=None):
+                 stranded=True  # strandedness to consider
+                 ):
 
         self.covers = covers
-        self.samplenames = samplenames
         self.gindexer = gindexer
         self.flank = flank
         self.stranded = stranded
-        self.cachedir = cachedir
 
         Dataset.__init__(self, '{}'.format(name))
 
-    @staticmethod
-    def _cacheexists(memmap_dir, chroms, stranded, storage):
-        """Returns if the cachefiles exist."""
-
-        if storage == 'memmap' or storage == 'hdf5':
-            suffix = 'nmm' if storage == 'memmap' else 'h5'
-
-            paths = [os.path.join(memmap_dir, '{}{}.{}'.format(x[0], x[1],
-                                                               suffix))
-                     for x in
-                     itertools.product(chroms, ['-', '+'] if stranded
-                                       else ['.'])]
-            files_exist = [os.path.exists(p) for p in paths]
-        else:
-            files_exist = [False]
-
-        return files_exist
-
     @classmethod
-    def create_from_bam(cls, name, bamfiles, regions, genomesize,
+    def create_from_bam(cls, name, bamfiles, regions, genomesize=None,
                         samplenames=None,
                         resolution=50, stride=50,
                         flank=4, stranded=True, storage='hdf5',
@@ -138,37 +116,43 @@ class CoverageDataset(Dataset):
         if not samplenames:
             samplenames = bamfiles
 
-        covers = []
-        for sample_file in bamfiles:
-            if storage in ['memmap', 'hdf5']:
-                memmap_dir = os.path.join(cachedir, name,
-                                          os.path.basename(sample_file))
-                if not os.path.exists(memmap_dir):
-                    os.makedirs(memmap_dir)
-            else:
-                memmap_dir = ''
+        if not genomesize:
+            header = pysam.AlignmentFile(bamfiles[0], 'r')
+            genomesize = {}
+            for chrom, length in zip(header.references, header.lengths):
+                genomesize[chrom] = length
 
-            nmms = cls._cacheexists(memmap_dir, genomesize.keys(), stranded,
-                                    storage)
-
-            cover = BlgGenomicArray(genomesize, stranded=stranded,
-                                    storage=storage, memmap_dir=memmap_dir,
-                                    overwrite=overwrite)
-
-            if all(nmms) and not overwrite:
-                print('Reload BlgGenomicArray from {}'.format(memmap_dir))
-            else:
+        def bam_loader(cover, files):
+            print("load from bam")
+            for i, sample_file in enumerate(files):
                 print('Counting from {}'.format(sample_file))
-                aln_file = BAM_Reader(sample_file)
+                aln_file = pysam.AlignmentFile(sample_file, 'rb')
+                for chrom in genomesize:
+                    print(chrom)
+                    array = np.zeros((genomesize[chrom], 2), dtype='int16')
+                    
+                    for aln in aln_file.fetch(chrom):
+                        array[aln.query_alignment_start, 
+                              1 if aln.is_reverse else 0] += 1
+                    cover[GenomicInterval(aln.reference_name, 0,
+                                          genomesize[chrom], '+'), i] = array[:, 0]
+                    cover[GenomicInterval(aln.reference_name, 0,
+                                          genomesize[chrom], '-'), i] = array[:, 1]
 
-                for aln in aln_file:
-                    if aln.aligned:
-                        cover[aln.iv.start_d_as_pos] += 1
+            return cover
 
-            covers.append(cover)
+        memmap_dir = os.path.join(cachedir, name)
+        # At the moment, we treat the information contained
+        # in each bw-file as unstranded
+        cover = create_genomic_array(genomesize, stranded=False,
+                                     storage=storage, memmap_dir=memmap_dir,
+                                     conditions = samplenames,
+                                     overwrite=overwrite,
+                                     typecode='int16',
+                                     loader=bam_loader,
+                                     loader_args=(bamfiles,))
 
-        return cls(name, covers, samplenames, gindexer, flank,
-                   stranded, cachedir)
+        return cls(name, cover, gindexer, flank, stranded)
 
     @classmethod
     def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize,
@@ -219,47 +203,38 @@ class CoverageDataset(Dataset):
         if not samplenames:
             samplenames = bigwigfiles
 
-        covers = []
-        for sample_file in bigwigfiles:
-            if storage in ['memmap', 'hdf5']:
-                memmap_dir = os.path.join(cachedir, name,
-                                          os.path.basename(sample_file))
-                if not os.path.exists(memmap_dir):
-                    os.makedirs(memmap_dir)
-            else:
-                memmap_dir = ''
-
-            nmms = cls._cacheexists(memmap_dir, genomesize.keys(), False,
-                                    storage)
-
-            # At the moment, we treat the information contained
-            # in each bw-file as unstranded
-            cover = BlgGenomicArray(genomesize, stranded=False,
-                                    storage=storage, memmap_dir=memmap_dir,
-                                    overwrite=overwrite)
-
-            if all(nmms) and not overwrite:
-                pass
-            else:
+        def bigwig_loader(cover, bigwigfiles, gindexer):
+            print("load from bigwig")
+            for i, sample_file in enumerate(bigwigfiles):
+                print('processing from {}'.format(sample_file))
                 bwfile = pyBigWig.open(sample_file)
 
-                for i in range(len(gindexer)):
-                    interval = gindexer[i]
-                    cover[interval.start_as_pos] += \
+                for j in range(len(gindexer)):
+                    interval = gindexer[j]
+                    cover[interval.start_as_pos, i] = \
                         np.sum(bwfile.values(interval.chrom,
-                                             int(interval.start),
-                                             int(interval.end)))
+                                            int(interval.start),
+                                            int(interval.end)))
+            return cover
 
-            covers.append(cover)
+        # At the moment, we treat the information contained
+        # in each bw-file as unstranded
+        memmap_dir = os.path.join(cachedir, name)
 
-        return cls(name, covers, samplenames, gindexer, flank, False, cachedir)
+        cover = create_genomic_array(genomesize, stranded=False,
+                             storage=storage, memmap_dir=memmap_dir,
+                             conditions = samplenames,
+                             overwrite=overwrite,
+                             loader=bigwig_loader,
+                             loader_args=(bigwigfiles, gindexer))
+
+        return cls(name, cover, gindexer, flank, False)
 
     def __repr__(self):  # pragma: no cover
         return "CoverageDataset('{}', ".format(self.name) \
                + "<BlgGenomicArray>, " \
                + "<BlgGenomicIndexer>, " \
-               + "flank={}, stranded={}, ".format(self.flank, self.stranded) \
-               + "cachedir={})".format(self.cachedir)
+               + "flank={}, stranded={})".format(self.flank, self.stranded)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -317,7 +292,7 @@ class CoverageDataset(Dataset):
     def shape(self):
         """Shape of the dataset"""
         return (len(self), 2 if self.stranded else 1,
-                2*self.flank + 1, len(self.covers))
+                2*self.flank + 1, len(self.covers.conditions))
 
     @property
     def flank(self):

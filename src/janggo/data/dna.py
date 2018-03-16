@@ -5,7 +5,7 @@ from HTSeq import GenomicInterval
 
 from janggo.data.data import Dataset
 from janggo.data.genomic_indexer import BlgGenomicIndexer
-from janggo.data.htseq_extension import BlgGenomicArray
+from janggo.data.genomicarray import create_genomic_array
 from janggo.utils import as_onehot
 from janggo.utils import complement_index
 from janggo.utils import dna2ind
@@ -30,7 +30,7 @@ class DnaDataset(Dataset):
     -----------
     name : str
         Name of the dataset
-    garray : :class:`BlgGenomicArray`
+    garray : :class:`GenomicArray`
         A genomic array that holds the sequence data.
     gindxer : :class:`BlgGenomicIndexer`
         A genomic index mapper that translates an integer index to a
@@ -47,7 +47,7 @@ class DnaDataset(Dataset):
     -----------
     name : str
         Name of the dataset
-    garray : :class:`BlgGenomicArray`
+    garray : :class:`GenomicArray`
         A genomic array that holds the sequence data.
     gindxer : :class:`BlgGenomicIndexer`
         A genomic index mapper that translates an integer index to a
@@ -96,45 +96,10 @@ class DnaDataset(Dataset):
         for seq in seqs:
             chromlens[seq.id] = len(seq) - order + 1
 
-        # Check if storage mode is compatible and if memory maps already exist
-        if not (storage == 'memmap' or storage == 'ndarray' or
-                storage == 'hdf5'):
-            raise Exception('storage must be memmap, ndarray or hdf5')
-
-        filename = '_'.join([os.path.basename(fasta) for fasta in fastafile])
-        if storage == 'memmap':
-            cachedir = os.path.join(cachedir, name,
-                                    os.path.basename(filename))
-            if not os.path.exists(cachedir):
-                os.makedirs(cachedir)
-
-            paths = [os.path.join(cachedir, '{}..nmm'.format(x))
-                     for x in iter(chromlens)]
-            nmms = [os.path.exists(p) for p in paths]
-        elif storage == 'hdf5':
-            cachedir = os.path.join(cachedir, name,
-                                    os.path.basename(filename))
-            if not os.path.exists(cachedir):
-                os.makedirs(cachedir)
-
-            paths = [os.path.join(cachedir, '{}..h5'.format(x))
-                     for x in iter(chromlens)]
-            nmms = [os.path.exists(p) for p in paths]
-        else:
-            nmms = [False]
-            cachedir = ''
-
-        garray = BlgGenomicArray(chromlens, stranded=False,
-                                 typecode='int16',
-                                 storage=storage, memmap_dir=cachedir,
-                                 overwrite=overwrite)
-
-        if all(nmms) and not overwrite:
-            print('Reload BlgGenomicArray from {}'.format(cachedir))
-        else:
-            # Convert sequences to index array
+        def dna_loader(cover, seqs, order):
             print('Convert sequences to index array')
             for seq in seqs:
+                print("processing {} ...".format(seq.id))
                 interval = GenomicInterval(seq.id, 0,
                                            len(seq) - order + 1, '.')
 
@@ -145,9 +110,20 @@ class DnaDataset(Dataset):
                     filter_ = np.asarray([pow(4, i) for i in range(order)])
                     dna = np.convolve(dna, filter_, mode='valid')
 
-                garray[interval] = dna
+                cover[interval, 0] = dna
 
-        return garray
+        # At the moment, we treat the information contained
+        # in each bw-file as unstranded
+
+        cover = create_genomic_array(chromlens, stranded=False,
+                                     storage=storage,
+                                     memmap_dir=os.path.join(cachedir, name),
+                                     overwrite=overwrite,
+                                     typecode='int8',
+                                     loader=dna_loader,
+                                     loader_args=(seqs, order))
+
+        return cover
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions,
@@ -286,10 +262,10 @@ class DnaDataset(Dataset):
             # Computing the forward or reverse complement of the
             # sequence, depending on the strand flag.
             if interval.strand in ['.', '+']:
-                idna[i] = np.fromiter(self.garray[interval], dtype='int16')
+                idna[i] = np.fromiter(self.garray[interval, 0], dtype='int16')
             else:
                 idna[i] = np.asarray(
-                    [self._rcindex[val] for val in self.garray[interval]])[::-1]
+                    [self._rcindex[val] for val in self.garray[interval, 0]])[::-1]
 
         return idna
 
