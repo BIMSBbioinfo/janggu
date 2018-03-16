@@ -1,8 +1,10 @@
 """Utilities for janggo.data """
 
 from collections import defaultdict
+import os
 
 import numpy as np
+import pandas as pd
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
@@ -124,3 +126,43 @@ def complement_permmatrix(order):
         jdx = complement_index(idx, order)
         perm[jdx, idx] = 1
     return perm
+
+
+def get_genome_size(refgenome='hg19', outputdir='./', skipRandom=True):
+    """Get genome size.
+
+    This function loads the genome size for a specified reference genome
+    into a dict. The reference genome sizes are obtained from
+    UCSC genome browser.
+
+    Parameters
+    ----------
+    refgenome : str
+        Reference genome name. Default: 'hg19'.
+    outputdir : str
+        Directory in which the downloaded *.chrom.sizes file will be stored.
+    skipRandom : True
+
+    Returns
+    -------
+    dict()
+        Dictionary with chromosome names as keys and their respective lengths
+        as values.
+    """
+
+    outputfile = os.path.join(outputdir, '{}.chrom.sizes'.format(refgenome))
+    if not os.path.exists(outputfile):
+
+        urlpath = 'http://hgdownload.cse.ucsc.edu/goldenPath/{}/bigZips/{}.chrom.sizes'.format(refgenome, refgenome)
+
+        # From the md5sum.txt we extract the
+        print("Downloading {}".format(urlpath))
+        urlcleanup()
+        urlretrieve(urlpath.format(refgenome), outputfile)
+
+    content = pd.read_csv(outputfile, sep='\t', names=['chr', 'length'],
+                          index_col='chr')
+    if skipRandom:
+        fltr = [True if len(name.split('_')) <= 1 else False for name in content.index]
+        content = content[fltr]
+    return content.to_dict()['length']
