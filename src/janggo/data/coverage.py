@@ -7,7 +7,7 @@ import pysam
 from HTSeq import GenomicInterval
 
 from janggo.data.data import Dataset
-from janggo.data.genomic_indexer import BlgGenomicIndexer
+from janggo.data.genomic_indexer import GenomicIndexer
 from janggo.data.genomicarray import create_genomic_array
 
 
@@ -25,7 +25,7 @@ class CoverageDataset(Dataset):
         Name of the dataset
     covers : :class:`BlgGenomicArray`
         A genomic array that holds the coverage data
-    gindxer : :class:`BlgGenomicIndexer`
+    gindxer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -40,7 +40,7 @@ class CoverageDataset(Dataset):
         Name of the dataset
     covers : :class:`BlgGenomicArray`
         A genomic array that holds the coverage data
-    gindxer : :class:`BlgGenomicIndexer`
+    gindxer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -107,8 +107,8 @@ class CoverageDataset(Dataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = BlgGenomicIndexer.create_from_file(regions, resolution,
-                                                      stride)
+        gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                      stepsize)
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -194,8 +194,8 @@ class CoverageDataset(Dataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = BlgGenomicIndexer.create_from_file(regions, resolution,
-                                                      stride)
+        gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                      stepsize)
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -233,7 +233,7 @@ class CoverageDataset(Dataset):
     def __repr__(self):  # pragma: no cover
         return "CoverageDataset('{}', ".format(self.name) \
                + "<BlgGenomicArray>, " \
-               + "<BlgGenomicIndexer>, " \
+               + "<GenomicIndexer>, " \
                + "flank={}, stranded={})".format(self.flank, self.stranded)
 
     def __getitem__(self, idxs):

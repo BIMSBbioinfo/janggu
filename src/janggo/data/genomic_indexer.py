@@ -4,10 +4,10 @@ from HTSeq import GenomicInterval
 from HTSeq import GFF_Reader
 
 
-class BlgGenomicIndexer(object):
-    """BlgGenomicIndexer maps genomic positions to the respective indices
+class GenomicIndexer(object):
+    """GenomicIndexer maps genomic positions to the respective indices
 
-    Indexing a BlgGenomicIndexer object returns a GenomicInterval
+    Indexing a GenomicIndexer object returns a GenomicInterval
     for the associated index.
 
     Parameters
@@ -31,7 +31,7 @@ class BlgGenomicIndexer(object):
     def create_from_file(cls, regions, resolution, stride):
         """Creates a BlgGenomicIndexer object.
 
-        This method constructs a BlgGenomicIndexer from
+        This method constructs a GenomicIndexer from
         a given BED or GFF file.
         """
 

@@ -4,7 +4,7 @@ import numpy as np
 from HTSeq import GenomicInterval
 
 from janggo.data.data import Dataset
-from janggo.data.genomic_indexer import BlgGenomicIndexer
+from janggo.data.genomic_indexer import GenomicIndexer
 from janggo.data.genomicarray import create_genomic_array
 from janggo.utils import as_onehot
 from janggo.utils import complement_index
@@ -32,7 +32,7 @@ class DnaDataset(Dataset):
         Name of the dataset
     garray : :class:`GenomicArray`
         A genomic array that holds the sequence data.
-    gindxer : :class:`BlgGenomicIndexer`
+    gindxer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -49,7 +49,7 @@ class DnaDataset(Dataset):
         Name of the dataset
     garray : :class:`GenomicArray`
         A genomic array that holds the sequence data.
-    gindxer : :class:`BlgGenomicIndexer`
+    gindxer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
@@ -161,7 +161,7 @@ class DnaDataset(Dataset):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = BlgGenomicIndexer.create_from_file(regions, reglen, stride)
+        gindexer = GenomicIndexer.create_from_file(regions, reglen, stepsize)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
                                          cachedir=cachedir,
@@ -218,7 +218,7 @@ class DnaDataset(Dataset):
         flank = 0
         stride = 1
 
-        gindexer = BlgGenomicIndexer(reglen, stride)
+        gindexer = GenomicIndexer(reglen, stepsize)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
         gindexer.inregionidx = [0]*len(lens)

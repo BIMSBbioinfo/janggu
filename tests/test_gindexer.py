@@ -4,28 +4,28 @@ import numpy as np
 import pkg_resources
 import pytest
 
-from janggo.data import BlgGenomicIndexer
+from janggo.data import GenomicIndexer
 
 
 def test_gindexer_errors():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     with pytest.raises(ValueError):
-        BlgGenomicIndexer.create_from_file(os.path.join(data_path,
+        GenomicIndexer.create_from_file(os.path.join(data_path,
                                                         'regions.bed'),
-                                           resolution=0, stride=50)
+                                           binsize=0, stepsize=50)
 
     with pytest.raises(ValueError):
-        BlgGenomicIndexer.create_from_file(os.path.join(data_path,
+        GenomicIndexer.create_from_file(os.path.join(data_path,
                                                         'regions.bed'),
-                                           resolution=10, stride=0)
+                                           binsize=10, stepsize=0)
 
 
 def test_gindexer_merged():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    gi = BlgGenomicIndexer.create_from_file(
-        os.path.join(data_path, 'regions.bed'), resolution=200, stride=50)
+    gi = GenomicIndexer.create_from_file(
+        os.path.join(data_path, 'regions.bed'), binsize=200, stepsize=50)
     np.testing.assert_equal(len(gi), 14344)
 
     np.testing.assert_equal(len(gi.idx_by_chrom(include='chr1')), 14344)
@@ -46,8 +46,8 @@ def test_gindexer_merged():
 def test_gindexer_indiv():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    gi = BlgGenomicIndexer.create_from_file(
-        os.path.join(data_path, 'indiv_regions.bed'), resolution=200, stride=50)
+    gi = GenomicIndexer.create_from_file(
+        os.path.join(data_path, 'indiv_regions.bed'), binsize=200, stepsize=50)
     np.testing.assert_equal(len(gi), 14344)
 
     np.testing.assert_equal(len(gi.idx_by_chrom(include='chr1')), 14344)
