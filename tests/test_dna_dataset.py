@@ -16,7 +16,7 @@ from janggo.utils import sequences_from_fasta
 
 reglen = 200
 flank = 150
-stride = 50
+stepsize = 50
 
 
 # adopted from secomo
@@ -40,7 +40,7 @@ def datalen(bed_file):
     reglens = 0
     reader = BED_Reader(bed_file)
     for reg in reader:
-        reglens += (reg.iv.end - reg.iv.start - reglen + stride)//stride
+        reglens += (reg.iv.end - reg.iv.start - reglen + stepsize)//stepsize
     return reglens
 
 
@@ -239,7 +239,7 @@ def test_dna_dataset_sanity(tmpdir):
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                          storage='ndarray',
-                                         regions=bed_file, stride=0)
+                                         regions=bed_file, stepsize=0)
 
     with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome=refgenome,
@@ -251,20 +251,12 @@ def test_dna_dataset_sanity(tmpdir):
                                            'genome.fa', 'chr1..nmm'))
 
     DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                     storage='memmap',
-                                     regions=bed_file, order=1,
-                                     cachedir=tmpdir.strpath)
-
-    assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
-                                       'chr1..nmm'))
-
-    DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                      storage='hdf5',
                                      regions=bed_file, order=1,
                                      cachedir=tmpdir.strpath)
 
-    assert os.path.exists(os.path.join(tmpdir.strpath, 'train', 'genome.fa',
-                                       'chr1..h5'))
+    assert os.path.exists(os.path.join(tmpdir.strpath, 'train',
+                                       'storage.unstranded.h5'))
 
 
 def test_read_dna_from_fasta_order_1(tmpdir):

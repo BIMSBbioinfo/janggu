@@ -943,12 +943,11 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
 /* RaiseException.proto */
 static void __Pyx_Raise(PyObject *type, PyObject *value, PyObject *tb, PyObject *cause);
 
-/* PyCFunctionFastCall.proto */
-#if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
-#else
-#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
-#endif
+/* SliceObject.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(
+        PyObject* obj, Py_ssize_t cstart, Py_ssize_t cstop,
+        PyObject** py_start, PyObject** py_stop, PyObject** py_slice,
+        int has_cstart, int has_cstop, int wraparound);
 
 /* PyFunctionFastCall.proto */
 #if CYTHON_FAST_PYCALL
@@ -961,6 +960,13 @@ static PyObject *__Pyx_PyFunction_FastCallDict(PyObject *func, PyObject **args, 
 #endif
 #endif
 
+/* PyCFunctionFastCall.proto */
+#if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject *__Pyx_PyCFunction_FastCall(PyObject *func, PyObject **args, Py_ssize_t nargs);
+#else
+#define __Pyx_PyCFunction_FastCall(func, args, nargs)  (assert(0), NULL)
+#endif
+
 /* PyObjectCallMethO.proto */
 #if CYTHON_COMPILING_IN_CPYTHON
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject *arg);
@@ -968,13 +974,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallMethO(PyObject *func, PyObject
 
 /* PyObjectCallOneArg.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyObject_CallOneArg(PyObject *func, PyObject *arg);
-
-/* PyObjectCallNoArg.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
-#else
-#define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
-#endif
 
 /* ListCompAppend.proto */
 #if CYTHON_USE_PYLIST_INTERNALS && CYTHON_ASSUME_SAFE_MACROS
@@ -991,6 +990,13 @@ static CYTHON_INLINE int __Pyx_ListComp_Append(PyObject* list, PyObject* x) {
 }
 #else
 #define __Pyx_ListComp_Append(L,x) PyList_Append(L,x)
+#endif
+
+/* PyObjectCallNoArg.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
+#else
+#define __Pyx_PyObject_CallNoArg(func) __Pyx_PyObject_Call(func, __pyx_empty_tuple, NULL)
 #endif
 
 /* Import.proto */
@@ -1094,6 +1100,16 @@ static void __Pyx_AddTraceback(const char *funcname, int c_line,
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
 
+/* Print.proto */
+static int __Pyx_Print(PyObject*, PyObject *, int);
+#if CYTHON_COMPILING_IN_PYPY || PY_MAJOR_VERSION >= 3
+static PyObject* __pyx_print = 0;
+static PyObject* __pyx_print_kwargs = 0;
+#endif
+
+/* PrintOne.proto */
+static int __Pyx_PrintOne(PyObject* stream, PyObject *o);
+
 /* CIntFromPy.proto */
 static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
 
@@ -1135,14 +1151,15 @@ static const char __pyx_k_r[] = "r";
 static const char __pyx_k_w[] = "w";
 static const char __pyx_k_x[] = "x";
 static const char __pyx_k__4[] = "";
-static const char __pyx_k__5[] = "*";
-static const char __pyx_k_da[] = "da";
 static const char __pyx_k_os[] = "os";
 static const char __pyx_k_doc[] = "__doc__";
 static const char __pyx_k_end[] = "end";
+static const char __pyx_k_int[] = "int";
 static const char __pyx_k_lzf[] = "lzf";
 static const char __pyx_k_sys[] = "sys";
 static const char __pyx_k_File[] = "File";
+static const char __pyx_k_data[] = "data";
+static const char __pyx_k_file[] = "file";
 static const char __pyx_k_h5py[] = "h5py";
 static const char __pyx_k_hdf5[] = "hdf5";
 static const char __pyx_k_init[] = "__init__";
@@ -1156,32 +1173,36 @@ static const char __pyx_k_attrs[] = "attrs";
 static const char __pyx_k_chrom[] = "chrom";
 static const char __pyx_k_close[] = "close";
 static const char __pyx_k_dtype[] = "dtype";
-static const char __pyx_k_empty[] = "empty";
 static const char __pyx_k_index[] = "index";
 static const char __pyx_k_numpy[] = "numpy";
+static const char __pyx_k_print[] = "print";
 static const char __pyx_k_shape[] = "shape";
 static const char __pyx_k_start[] = "start";
+static const char __pyx_k_stdio[] = "stdio";
 static const char __pyx_k_super[] = "super";
 static const char __pyx_k_value[] = "value";
+static const char __pyx_k_zeros[] = "zeros";
 static const char __pyx_k_chroms[] = "chroms";
-static const char __pyx_k_chunks[] = "chunks";
+static const char __pyx_k_create[] = "create {}";
+static const char __pyx_k_driver[] = "driver";
 static const char __pyx_k_exists[] = "exists";
+static const char __pyx_k_format[] = "format";
 static const char __pyx_k_handle[] = "handle";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_loader[] = "loader";
 static const char __pyx_k_module[] = "__module__";
 static const char __pyx_k_object[] = "object";
+static const char __pyx_k_reload[] = "reload {}";
 static const char __pyx_k_sample[] = "sample";
 static const char __pyx_k_setter[] = "setter";
 static const char __pyx_k_strand[] = "strand";
 static const char __pyx_k_string[] = "string_";
-static const char __pyx_k_compute[] = "compute";
 static const char __pyx_k_getitem[] = "__getitem__";
 static const char __pyx_k_ndarray[] = "ndarray";
 static const char __pyx_k_prepare[] = "__prepare__";
 static const char __pyx_k_setitem[] = "__setitem__";
 static const char __pyx_k_storage[] = "storage";
-static const char __pyx_k_exist_ok[] = "exist_ok";
+static const char __pyx_k_filename[] = "filename";
 static const char __pyx_k_interval[] = "interval";
 static const char __pyx_k_makedirs[] = "makedirs";
 static const char __pyx_k_property[] = "property";
@@ -1193,11 +1214,9 @@ static const char __pyx_k_metaclass[] = "__metaclass__";
 static const char __pyx_k_overwrite[] = "overwrite";
 static const char __pyx_k_IndexError[] = "IndexError";
 static const char __pyx_k_conditions[] = "conditions";
-static const char __pyx_k_dask_array[] = "dask.array";
-static const char __pyx_k_from_array[] = "from_array";
 static const char __pyx_k_memmap_dir[] = "memmap_dir";
-static const char __pyx_k_storage_h5[] = "storage.h5";
 static const char __pyx_k_compression[] = "compression";
+static const char __pyx_k_condition_2[] = "_condition";
 static const char __pyx_k_loader_args[] = "loader_args";
 static const char __pyx_k_GenomicArray[] = "GenomicArray";
 static const char __pyx_k_NPGenomicArray[] = "NPGenomicArray";
@@ -1206,16 +1225,20 @@ static const char __pyx_k_GenomicInterval[] = "GenomicInterval";
 static const char __pyx_k_HDF5GenomicArray[] = "HDF5GenomicArray";
 static const char __pyx_k_cline_in_traceback[] = "cline_in_traceback";
 static const char __pyx_k_GenomicArray___init[] = "GenomicArray.__init__";
+static const char __pyx_k_storage_stranded_h5[] = "storage.stranded.h5";
 static const char __pyx_k_create_genomic_array[] = "create_genomic_array";
 static const char __pyx_k_NPGenomicArray___init[] = "NPGenomicArray.__init__";
+static const char __pyx_k_storage_unstranded_h5[] = "storage.unstranded.h5";
 static const char __pyx_k_GenomicArray___getitem[] = "GenomicArray.__getitem__";
 static const char __pyx_k_GenomicArray___setitem[] = "GenomicArray.__setitem__";
+static const char __pyx_k_GenomicArray_condition[] = "GenomicArray.condition";
 static const char __pyx_k_HDF5GenomicArray___init[] = "HDF5GenomicArray.__init__";
 static const char __pyx_k_janggo_data_genomicarray[] = "janggo.data.genomicarray";
-static const char __pyx_k_HDF5GenomicArray_condition[] = "HDF5GenomicArray.condition";
 static const char __pyx_k_Index_must_be_a_GenomicInterval[] = "Index must be a GenomicInterval and a condition index";
-static const char __pyx_k_GenomicArray_stores_multi_dimens[] = "GenomicArray stores multi-dimensional genomic information.\n\n    It acts as a dataset for holding genomic data. For instance,\n    coverage along an entire genome composed of arbitrary length chromosomes\n    as well as for multiple cell-types and conditions simultaneously.\n    Inspired by the HTSeq analog, the array can hold the data in different\n    storage modes, including ndarray, memmap or hdf5.\n\n    Parameters\n    ----------\n    chroms : dict\n        Dictionary with chromosome names as keys and chromosome lengths\n        as values.\n    stranded : bool\n        Consider stranded profiles. Default: True.\n    conditions : list(str) or None\n        List of cell-type or condition labels associated with the corresponding\n        array dimensions. Default: None means a one-dimensional array is produced.\n    typecode : str\n        Datatype. Default: 'd'.\n    storage : str\n        Storage type can be 'ndarray', 'memmap' or 'hdf5'.\n        The first loads the data into a numpy array directly, while\n        the latter two can be used to fetch the data from disk.\n    memmap_dir : str\n        Directory in which to store the cachefiles. Used only with\n        'memmap' and 'hdf5'. Default: \"\".\n    ";
+static const char __pyx_k_GenomicArray_stores_multi_dimens[] = "GenomicArray stores multi-dimensional genomic information.\n\n    It acts as a dataset for holding genomic data. For instance,\n    coverage along an entire genome composed of arbitrary length chromosomes\n    as well as for multiple cell-types and conditions simultaneously.\n    Inspired by the HTSeq analog, the array can hold the data in different\n    storage modes, including ndarray, memmap or hdf5.\n\n    Parameters\n    ----------\n    chroms : dict\n        Dictionary with chromosome names as keys and chromosome lengths\n        as values.\n    stranded : bool\n        Consider stranded profiles. Default: True.\n    conditions : list(str) or None\n        List of cell-type or condition labels associated with the corresponding\n        array dimensions. Default: None means a one-dimensional array is produced.\n    typecode : str\n        Datatype. Default: 'd'.\n    storage : str\n        Storage type can be 'ndarray' or 'hdf5'.\n        The first loads the data into a numpy array directly, while\n        the latter two can be used to fetch the data from disk.\n    memmap_dir : str\n        Directory in which to store the cachefiles. Used only with\n        'memmap' and 'hdf5'. Default: \"\".\n    ";
+static const char __pyx_k_Storage_type_must_be_hdf5_or_nda[] = "Storage type must be 'hdf5' or 'ndarray'";
 static const char __pyx_k_src_janggo_data_genomicarray_pyx[] = "src/janggo/data/genomicarray.pyx";
+static const char __pyx_k_Index_must_be_a_GenomicInterval_2[] = "Index must be a GenomicInterval";
 static const char __pyx_k_GenomicArray_stores_multi_dimens_2[] = "GenomicArray stores multi-dimensional genomic information.\n\n    It acts as a dataset for holding genomic data. For instance,\n    coverage along an entire genome composed of arbitrary length chromosomes\n    as well as for multiple cell-types and conditions simultaneously.\n    Inspired by the HTSeq analog, the array can hold the data in different\n    storage modes, including ndarray, memmap or hdf5.\n\n    Parameters\n    ----------\n    chroms : dict\n     Dictionary with chromosome names as keys and chromosome lengths\n     as values.\n    stranded : bool\n     Consider stranded profiles. Default: True.\n    conditions : list(str) or None\n     List of cell-type or condition labels associated with the corresponding\n     array dimensions. Default: None means a one-dimensional array is produced.\n    typecode : str\n     Datatype. Default: 'd'.\n    storage : str\n     Storage type can be 'ndarray', 'memmap' or 'hdf5'.\n     The first loads the data into a numpy array directly, while\n     the latter two can be used to fetch the data from disk.\n    memmap_dir : str\n     Directory in which to store the cachefiles. Used only with\n     'memmap' and 'hdf5'. Default: \"\".\n    ";
 static PyObject *__pyx_kp_s_;
 static PyObject *__pyx_n_s_File;
@@ -1223,41 +1246,42 @@ static PyObject *__pyx_n_s_GenomicArray;
 static PyObject *__pyx_n_s_GenomicArray___getitem;
 static PyObject *__pyx_n_s_GenomicArray___init;
 static PyObject *__pyx_n_s_GenomicArray___setitem;
+static PyObject *__pyx_n_s_GenomicArray_condition;
 static PyObject *__pyx_kp_s_GenomicArray_stores_multi_dimens;
 static PyObject *__pyx_kp_s_GenomicArray_stores_multi_dimens_2;
 static PyObject *__pyx_n_s_GenomicInterval;
 static PyObject *__pyx_n_s_HDF5GenomicArray;
 static PyObject *__pyx_n_s_HDF5GenomicArray___init;
-static PyObject *__pyx_n_s_HDF5GenomicArray_condition;
 static PyObject *__pyx_n_s_HTSeq;
 static PyObject *__pyx_n_s_IndexError;
 static PyObject *__pyx_kp_s_Index_must_be_a_GenomicInterval;
+static PyObject *__pyx_kp_s_Index_must_be_a_GenomicInterval_2;
 static PyObject *__pyx_n_s_NPGenomicArray;
 static PyObject *__pyx_n_s_NPGenomicArray___init;
+static PyObject *__pyx_kp_s_Storage_type_must_be_hdf5_or_nda;
 static PyObject *__pyx_kp_s__4;
-static PyObject *__pyx_n_s__5;
 static PyObject *__pyx_n_s_attrs;
 static PyObject *__pyx_n_s_chrom;
 static PyObject *__pyx_n_s_chroms;
-static PyObject *__pyx_n_s_chunks;
 static PyObject *__pyx_n_s_cline_in_traceback;
 static PyObject *__pyx_n_s_close;
 static PyObject *__pyx_n_s_compression;
-static PyObject *__pyx_n_s_compute;
 static PyObject *__pyx_n_s_condition;
+static PyObject *__pyx_n_s_condition_2;
 static PyObject *__pyx_n_s_conditions;
+static PyObject *__pyx_kp_s_create;
 static PyObject *__pyx_n_s_create_dataset;
 static PyObject *__pyx_n_s_create_genomic_array;
 static PyObject *__pyx_n_s_d;
-static PyObject *__pyx_n_s_da;
-static PyObject *__pyx_n_s_dask_array;
+static PyObject *__pyx_n_s_data;
 static PyObject *__pyx_n_s_doc;
+static PyObject *__pyx_n_s_driver;
 static PyObject *__pyx_n_s_dtype;
-static PyObject *__pyx_n_s_empty;
 static PyObject *__pyx_n_s_end;
-static PyObject *__pyx_n_s_exist_ok;
 static PyObject *__pyx_n_s_exists;
-static PyObject *__pyx_n_s_from_array;
+static PyObject *__pyx_n_s_file;
+static PyObject *__pyx_n_s_filename;
+static PyObject *__pyx_n_s_format;
 static PyObject *__pyx_n_s_getitem;
 static PyObject *__pyx_n_s_h5py;
 static PyObject *__pyx_n_s_handle;
@@ -1265,6 +1289,7 @@ static PyObject *__pyx_n_s_hdf5;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_index;
 static PyObject *__pyx_n_s_init;
+static PyObject *__pyx_n_s_int;
 static PyObject *__pyx_n_s_interval;
 static PyObject *__pyx_n_s_janggo_data_genomicarray;
 static PyObject *__pyx_n_s_join;
@@ -1283,9 +1308,11 @@ static PyObject *__pyx_n_s_os;
 static PyObject *__pyx_n_s_overwrite;
 static PyObject *__pyx_n_s_path;
 static PyObject *__pyx_n_s_prepare;
+static PyObject *__pyx_n_s_print;
 static PyObject *__pyx_n_s_property;
 static PyObject *__pyx_n_s_qualname;
 static PyObject *__pyx_n_s_r;
+static PyObject *__pyx_kp_s_reload;
 static PyObject *__pyx_n_s_sample;
 static PyObject *__pyx_n_s_self;
 static PyObject *__pyx_n_s_setitem;
@@ -1293,8 +1320,10 @@ static PyObject *__pyx_n_s_setter;
 static PyObject *__pyx_n_s_shape;
 static PyObject *__pyx_kp_s_src_janggo_data_genomicarray_pyx;
 static PyObject *__pyx_n_s_start;
+static PyObject *__pyx_n_s_stdio;
 static PyObject *__pyx_n_s_storage;
-static PyObject *__pyx_kp_s_storage_h5;
+static PyObject *__pyx_kp_s_storage_stranded_h5;
+static PyObject *__pyx_kp_s_storage_unstranded_h5;
 static PyObject *__pyx_n_s_strand;
 static PyObject *__pyx_n_s_stranded;
 static PyObject *__pyx_n_s_string;
@@ -1305,20 +1334,21 @@ static PyObject *__pyx_n_s_typecode;
 static PyObject *__pyx_n_s_value;
 static PyObject *__pyx_n_s_w;
 static PyObject *__pyx_n_s_x;
-static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, CYTHON_UNUSED PyObject *__pyx_v_conditions, CYTHON_UNUSED PyObject *__pyx_v_typecode); /* proto */
+static PyObject *__pyx_n_s_zeros;
+static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_conditions, CYTHON_UNUSED PyObject *__pyx_v_typecode); /* proto */
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_2__setitem__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_index, PyObject *__pyx_v_value); /* proto */
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_4__getitem__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_index); /* proto */
+static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_6condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_8condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_conditions); /* proto */
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_conditions, PyObject *__pyx_v_typecode, PyObject *__pyx_v_memmap_dir, PyObject *__pyx_v_overwrite, PyObject *__pyx_v_loader, PyObject *__pyx_v_loader_args); /* proto */
-static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray_2condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self); /* proto */
-static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray_4condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_conditions); /* proto */
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_conditions, PyObject *__pyx_v_typecode, PyObject *__pyx_v_loader, PyObject *__pyx_v_loader_args); /* proto */
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_conditions, PyObject *__pyx_v_typecode, PyObject *__pyx_v_storage, PyObject *__pyx_v_memmap_dir, PyObject *__pyx_v_overwrite, PyObject *__pyx_v_loader, PyObject *__pyx_v_loader_args); /* proto */
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_2;
-static PyObject *__pyx_int_1048576;
 static PyObject *__pyx_tuple__2;
 static PyObject *__pyx_tuple__3;
+static PyObject *__pyx_tuple__5;
 static PyObject *__pyx_tuple__6;
 static PyObject *__pyx_tuple__7;
 static PyObject *__pyx_tuple__9;
@@ -1326,8 +1356,8 @@ static PyObject *__pyx_tuple__10;
 static PyObject *__pyx_tuple__12;
 static PyObject *__pyx_tuple__14;
 static PyObject *__pyx_tuple__16;
-static PyObject *__pyx_tuple__17;
-static PyObject *__pyx_tuple__19;
+static PyObject *__pyx_tuple__18;
+static PyObject *__pyx_tuple__20;
 static PyObject *__pyx_tuple__21;
 static PyObject *__pyx_tuple__23;
 static PyObject *__pyx_tuple__24;
@@ -1335,17 +1365,17 @@ static PyObject *__pyx_codeobj__8;
 static PyObject *__pyx_codeobj__11;
 static PyObject *__pyx_codeobj__13;
 static PyObject *__pyx_codeobj__15;
-static PyObject *__pyx_codeobj__18;
-static PyObject *__pyx_codeobj__20;
+static PyObject *__pyx_codeobj__17;
+static PyObject *__pyx_codeobj__19;
 static PyObject *__pyx_codeobj__22;
 static PyObject *__pyx_codeobj__25;
 
-/* "janggo/data/genomicarray.pyx":42
- *     handle = None
+/* "janggo/data/genomicarray.pyx":41
+ *     _condition = None
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):             # <<<<<<<<<<<<<<
  *         self.stranded = stranded
- * 
+ *         if not conditions:
  */
 
 /* Python wrapper */
@@ -1356,7 +1386,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_1__init__(
   PyObject *__pyx_v_self = 0;
   CYTHON_UNUSED PyObject *__pyx_v_chroms = 0;
   PyObject *__pyx_v_stranded = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_conditions = 0;
+  PyObject *__pyx_v_conditions = 0;
   CYTHON_UNUSED PyObject *__pyx_v_typecode = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
@@ -1393,7 +1423,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_1__init__(
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chroms)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 5, 1); __PYX_ERR(0, 41, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -1415,7 +1445,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_1__init__(
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 41, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -1439,7 +1469,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_1__init__(
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 41, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1452,42 +1482,92 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_1__init__(
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, CYTHON_UNUSED PyObject *__pyx_v_conditions, CYTHON_UNUSED PyObject *__pyx_v_typecode) {
+static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_conditions, CYTHON_UNUSED PyObject *__pyx_v_typecode) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
+  int __pyx_t_1;
+  int __pyx_t_2;
+  PyObject *__pyx_t_3 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
+  __Pyx_INCREF(__pyx_v_conditions);
 
-  /* "janggo/data/genomicarray.pyx":43
+  /* "janggo/data/genomicarray.pyx":42
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
  *         self.stranded = stranded             # <<<<<<<<<<<<<<
- * 
- *     def __setitem__(self, index, value):
+ *         if not conditions:
+ *             conditions = ['sample']
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_stranded, __pyx_v_stranded) < 0) __PYX_ERR(0, 43, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_stranded, __pyx_v_stranded) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
 
-  /* "janggo/data/genomicarray.pyx":42
- *     handle = None
+  /* "janggo/data/genomicarray.pyx":43
+ *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
+ *         self.stranded = stranded
+ *         if not conditions:             # <<<<<<<<<<<<<<
+ *             conditions = ['sample']
+ * 
+ */
+  __pyx_t_1 = __Pyx_PyObject_IsTrue(__pyx_v_conditions); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_t_2 = ((!__pyx_t_1) != 0);
+  if (__pyx_t_2) {
+
+    /* "janggo/data/genomicarray.pyx":44
+ *         self.stranded = stranded
+ *         if not conditions:
+ *             conditions = ['sample']             # <<<<<<<<<<<<<<
+ * 
+ *         self.condition = conditions
+ */
+    __pyx_t_3 = PyList_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 44, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_INCREF(__pyx_n_s_sample);
+    __Pyx_GIVEREF(__pyx_n_s_sample);
+    PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_sample);
+    __Pyx_DECREF_SET(__pyx_v_conditions, __pyx_t_3);
+    __pyx_t_3 = 0;
+
+    /* "janggo/data/genomicarray.pyx":43
+ *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
+ *         self.stranded = stranded
+ *         if not conditions:             # <<<<<<<<<<<<<<
+ *             conditions = ['sample']
+ * 
+ */
+  }
+
+  /* "janggo/data/genomicarray.pyx":46
+ *             conditions = ['sample']
+ * 
+ *         self.condition = conditions             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_condition, __pyx_v_conditions) < 0) __PYX_ERR(0, 46, __pyx_L1_error)
+
+  /* "janggo/data/genomicarray.pyx":41
+ *     _condition = None
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):             # <<<<<<<<<<<<<<
  *         self.stranded = stranded
- * 
+ *         if not conditions:
  */
 
   /* function exit code */
   __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_3);
   __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_conditions);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "janggo/data/genomicarray.pyx":45
- *         self.stranded = stranded
+/* "janggo/data/genomicarray.pyx":49
+ * 
  * 
  *     def __setitem__(self, index, value):             # <<<<<<<<<<<<<<
  *         interval = index[0]
@@ -1530,17 +1610,17 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_3__setitem
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_index)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__setitem__", 1, 3, 3, 1); __PYX_ERR(0, 45, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__setitem__", 1, 3, 3, 1); __PYX_ERR(0, 49, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_value)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__setitem__", 1, 3, 3, 2); __PYX_ERR(0, 45, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__setitem__", 1, 3, 3, 2); __PYX_ERR(0, 49, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__setitem__") < 0)) __PYX_ERR(0, 45, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__setitem__") < 0)) __PYX_ERR(0, 49, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 3) {
       goto __pyx_L5_argtuple_error;
@@ -1555,7 +1635,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_3__setitem
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__setitem__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 45, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__setitem__", 1, 3, 3, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 49, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.__setitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1580,156 +1660,166 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_2__setitem
   PyObject *__pyx_t_1 = NULL;
   int __pyx_t_2;
   int __pyx_t_3;
-  PyObject *__pyx_t_4 = NULL;
+  int __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
+  PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("__setitem__", 0);
 
-  /* "janggo/data/genomicarray.pyx":46
+  /* "janggo/data/genomicarray.pyx":50
  * 
  *     def __setitem__(self, index, value):
  *         interval = index[0]             # <<<<<<<<<<<<<<
  *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):
+ *         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
  */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_index, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_index, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 50, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_interval = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "janggo/data/genomicarray.pyx":47
+  /* "janggo/data/genomicarray.pyx":51
  *     def __setitem__(self, index, value):
  *         interval = index[0]
  *         condition = index[1]             # <<<<<<<<<<<<<<
- *         if isinstance(interval, GenomicInterval):
+ *         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
  *             chrom = interval.chrom
  */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_index, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 47, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_index, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_condition = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "janggo/data/genomicarray.pyx":48
+  /* "janggo/data/genomicarray.pyx":52
  *         interval = index[0]
  *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):             # <<<<<<<<<<<<<<
+ *         if isinstance(interval, GenomicInterval) and isinstance(condition, int):             # <<<<<<<<<<<<<<
  *             chrom = interval.chrom
  *             start = interval.start
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 48, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 52, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_IsInstance(__pyx_v_interval, __pyx_t_1); if (unlikely(__pyx_t_2 == ((int)-1))) __PYX_ERR(0, 48, __pyx_L1_error)
+  __pyx_t_3 = PyObject_IsInstance(__pyx_v_interval, __pyx_t_1); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 52, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_3 = (__pyx_t_2 != 0);
-  if (__pyx_t_3) {
+  __pyx_t_4 = (__pyx_t_3 != 0);
+  if (__pyx_t_4) {
+  } else {
+    __pyx_t_2 = __pyx_t_4;
+    goto __pyx_L4_bool_binop_done;
+  }
+  __pyx_t_4 = PyInt_Check(__pyx_v_condition); 
+  __pyx_t_3 = (__pyx_t_4 != 0);
+  __pyx_t_2 = __pyx_t_3;
+  __pyx_L4_bool_binop_done:;
+  if (__pyx_t_2) {
 
-    /* "janggo/data/genomicarray.pyx":49
+    /* "janggo/data/genomicarray.pyx":53
  *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):
+ *         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
  *             chrom = interval.chrom             # <<<<<<<<<<<<<<
  *             start = interval.start
  *             end = interval.end
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_chrom); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 49, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_chrom); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_chrom = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":50
- *         if isinstance(interval, GenomicInterval):
+    /* "janggo/data/genomicarray.pyx":54
+ *         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
  *             chrom = interval.chrom
  *             start = interval.start             # <<<<<<<<<<<<<<
  *             end = interval.end
  *             strand = interval.strand
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 50, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 54, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_start = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":51
+    /* "janggo/data/genomicarray.pyx":55
  *             chrom = interval.chrom
  *             start = interval.start
  *             end = interval.end             # <<<<<<<<<<<<<<
  *             strand = interval.strand
  *             self.handle[chrom][start:end, 1 if self.stranded and strand=='-' else 0, condition] = value
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_end); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 51, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_end); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 55, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_end = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":52
+    /* "janggo/data/genomicarray.pyx":56
  *             start = interval.start
  *             end = interval.end
  *             strand = interval.strand             # <<<<<<<<<<<<<<
  *             self.handle[chrom][start:end, 1 if self.stranded and strand=='-' else 0, condition] = value
  *         else:
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_strand); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 52, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_strand); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 56, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_strand = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":53
+    /* "janggo/data/genomicarray.pyx":57
  *             end = interval.end
  *             strand = interval.strand
  *             self.handle[chrom][start:end, 1 if self.stranded and strand=='-' else 0, condition] = value             # <<<<<<<<<<<<<<
  *         else:
  *             raise IndexError("Index must be a GenomicInterval and a condition index")
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = PyObject_GetItem(__pyx_t_1, __pyx_v_chrom); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
+    __pyx_t_5 = PyObject_GetItem(__pyx_t_1, __pyx_v_chrom); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PySlice_New(__pyx_v_start, __pyx_v_end, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 53, __pyx_L1_error)
+    __pyx_t_1 = PySlice_New(__pyx_v_start, __pyx_v_end, Py_None); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 57, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_stranded); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    if (__pyx_t_2) {
-    } else {
-      __pyx_t_3 = __pyx_t_2;
-      goto __pyx_L4_bool_binop_done;
-    }
-    __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_strand, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __pyx_t_3 = __pyx_t_2;
-    __pyx_L4_bool_binop_done:;
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_stranded); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_7); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     if (__pyx_t_3) {
+    } else {
+      __pyx_t_2 = __pyx_t_3;
+      goto __pyx_L6_bool_binop_done;
+    }
+    __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_strand, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __pyx_t_2 = __pyx_t_3;
+    __pyx_L6_bool_binop_done:;
+    if (__pyx_t_2) {
       __Pyx_INCREF(__pyx_int_1);
-      __pyx_t_5 = __pyx_int_1;
+      __pyx_t_6 = __pyx_int_1;
     } else {
       __Pyx_INCREF(__pyx_int_0);
-      __pyx_t_5 = __pyx_int_0;
+      __pyx_t_6 = __pyx_int_0;
     }
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
+    __pyx_t_7 = PyTuple_New(3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_1);
-    PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
-    __Pyx_GIVEREF(__pyx_t_5);
-    PyTuple_SET_ITEM(__pyx_t_6, 1, __pyx_t_5);
+    PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1);
+    __Pyx_GIVEREF(__pyx_t_6);
+    PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_6);
     __Pyx_INCREF(__pyx_v_condition);
     __Pyx_GIVEREF(__pyx_v_condition);
-    PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_v_condition);
+    PyTuple_SET_ITEM(__pyx_t_7, 2, __pyx_v_condition);
     __pyx_t_1 = 0;
-    __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_t_4, __pyx_t_6, __pyx_v_value) < 0)) __PYX_ERR(0, 53, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
+    __pyx_t_6 = 0;
+    if (unlikely(PyObject_SetItem(__pyx_t_5, __pyx_t_7, __pyx_v_value) < 0)) __PYX_ERR(0, 57, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "janggo/data/genomicarray.pyx":48
+    /* "janggo/data/genomicarray.pyx":52
  *         interval = index[0]
  *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):             # <<<<<<<<<<<<<<
+ *         if isinstance(interval, GenomicInterval) and isinstance(condition, int):             # <<<<<<<<<<<<<<
  *             chrom = interval.chrom
  *             start = interval.start
  */
     goto __pyx_L3;
   }
 
-  /* "janggo/data/genomicarray.pyx":55
+  /* "janggo/data/genomicarray.pyx":59
  *             self.handle[chrom][start:end, 1 if self.stranded and strand=='-' else 0, condition] = value
  *         else:
  *             raise IndexError("Index must be a GenomicInterval and a condition index")             # <<<<<<<<<<<<<<
@@ -1737,16 +1827,16 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_2__setitem
  *     def __getitem__(self, index):
  */
   /*else*/ {
-    __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_IndexError, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 55, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_Raise(__pyx_t_6, 0, 0, 0);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __PYX_ERR(0, 55, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_Call(__pyx_builtin_IndexError, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 59, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_Raise(__pyx_t_7, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __PYX_ERR(0, 59, __pyx_L1_error)
   }
   __pyx_L3:;
 
-  /* "janggo/data/genomicarray.pyx":45
- *         self.stranded = stranded
+  /* "janggo/data/genomicarray.pyx":49
+ * 
  * 
  *     def __setitem__(self, index, value):             # <<<<<<<<<<<<<<
  *         interval = index[0]
@@ -1758,9 +1848,9 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_2__setitem
   goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_4);
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
+  __Pyx_XDECREF(__pyx_t_7);
   __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.__setitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
@@ -1775,12 +1865,12 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_2__setitem
   return __pyx_r;
 }
 
-/* "janggo/data/genomicarray.pyx":57
+/* "janggo/data/genomicarray.pyx":61
  *             raise IndexError("Index must be a GenomicInterval and a condition index")
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
- *         interval = index[0]
- *         condition = index[1]
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):
  */
 
 /* Python wrapper */
@@ -1816,11 +1906,11 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_5__getitem
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_index)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, 1); __PYX_ERR(0, 57, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, 1); __PYX_ERR(0, 61, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__getitem__") < 0)) __PYX_ERR(0, 57, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__getitem__") < 0)) __PYX_ERR(0, 61, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -1833,7 +1923,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_5__getitem
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 57, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__getitem__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 61, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.__getitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1848,244 +1938,150 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_5__getitem
 
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_4__getitem__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_index) {
   PyObject *__pyx_v_interval = NULL;
-  PyObject *__pyx_v_condition = NULL;
   PyObject *__pyx_v_chrom = NULL;
   PyObject *__pyx_v_start = NULL;
   PyObject *__pyx_v_end = NULL;
-  PyObject *__pyx_v_strand = NULL;
+  CYTHON_UNUSED PyObject *__pyx_v_strand = NULL;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
   int __pyx_t_2;
   int __pyx_t_3;
   PyObject *__pyx_t_4 = NULL;
-  PyObject *__pyx_t_5 = NULL;
-  PyObject *__pyx_t_6 = NULL;
-  PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("__getitem__", 0);
 
-  /* "janggo/data/genomicarray.pyx":58
- * 
+  /* "janggo/data/genomicarray.pyx":63
  *     def __getitem__(self, index):
- *         interval = index[0]             # <<<<<<<<<<<<<<
- *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):
- */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_index, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 58, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_interval = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "janggo/data/genomicarray.pyx":59
- *     def __getitem__(self, index):
- *         interval = index[0]
- *         condition = index[1]             # <<<<<<<<<<<<<<
- *         if isinstance(interval, GenomicInterval):
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):             # <<<<<<<<<<<<<<
+ *             interval = index
  *             chrom = interval.chrom
  */
-  __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_index, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 59, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_v_condition = __pyx_t_1;
-  __pyx_t_1 = 0;
-
-  /* "janggo/data/genomicarray.pyx":60
- *         interval = index[0]
- *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):             # <<<<<<<<<<<<<<
- *             chrom = interval.chrom
- *             start = interval.start
- */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 60, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyObject_IsInstance(__pyx_v_interval, __pyx_t_1); if (unlikely(__pyx_t_2 == ((int)-1))) __PYX_ERR(0, 60, __pyx_L1_error)
+  __pyx_t_2 = PyObject_IsInstance(__pyx_v_index, __pyx_t_1); if (unlikely(__pyx_t_2 == ((int)-1))) __PYX_ERR(0, 63, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "janggo/data/genomicarray.pyx":61
- *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):
+    /* "janggo/data/genomicarray.pyx":64
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):
+ *             interval = index             # <<<<<<<<<<<<<<
+ *             chrom = interval.chrom
+ *             start = interval.start
+ */
+    __Pyx_INCREF(__pyx_v_index);
+    __pyx_v_interval = __pyx_v_index;
+
+    /* "janggo/data/genomicarray.pyx":65
+ *         if isinstance(index, GenomicInterval):
+ *             interval = index
  *             chrom = interval.chrom             # <<<<<<<<<<<<<<
  *             start = interval.start
  *             end = interval.end
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_chrom); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 61, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_chrom); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_chrom = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":62
- *         if isinstance(interval, GenomicInterval):
+    /* "janggo/data/genomicarray.pyx":66
+ *             interval = index
  *             chrom = interval.chrom
  *             start = interval.start             # <<<<<<<<<<<<<<
  *             end = interval.end
  *             strand = interval.strand
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 62, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_start); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 66, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_start = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":63
+    /* "janggo/data/genomicarray.pyx":67
  *             chrom = interval.chrom
  *             start = interval.start
  *             end = interval.end             # <<<<<<<<<<<<<<
  *             strand = interval.strand
- *             return da.from_array(self.handle[chrom], chunks=1024**2)[start:end, 1 if self.stranded and strand=='-' else 0, condition].compute()
+ * 
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_end); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 63, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_end); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_end = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":64
+    /* "janggo/data/genomicarray.pyx":68
  *             start = interval.start
  *             end = interval.end
  *             strand = interval.strand             # <<<<<<<<<<<<<<
- *             return da.from_array(self.handle[chrom], chunks=1024**2)[start:end, 1 if self.stranded and strand=='-' else 0, condition].compute()
- *         else:
+ * 
+ *             return self.handle[chrom][start:end]
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_strand); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 64, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_interval, __pyx_n_s_strand); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 68, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_strand = __pyx_t_1;
     __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":65
- *             end = interval.end
+    /* "janggo/data/genomicarray.pyx":70
  *             strand = interval.strand
- *             return da.from_array(self.handle[chrom], chunks=1024**2)[start:end, 1 if self.stranded and strand=='-' else 0, condition].compute()             # <<<<<<<<<<<<<<
+ * 
+ *             return self.handle[chrom][start:end]             # <<<<<<<<<<<<<<
  *         else:
- *             raise IndexError("Index must be a GenomicInterval and a condition index")
+ *             raise IndexError("Index must be a GenomicInterval")
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_da); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_from_array); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __pyx_t_6 = PyObject_GetItem(__pyx_t_4, __pyx_v_chrom); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_GIVEREF(__pyx_t_6);
-    PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6);
-    __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_chunks, __pyx_int_1048576) < 0) __PYX_ERR(0, 65, __pyx_L1_error)
-    __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, __pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_7);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = PySlice_New(__pyx_v_start, __pyx_v_end, Py_None); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_stranded); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    if (__pyx_t_2) {
-    } else {
-      __pyx_t_3 = __pyx_t_2;
-      goto __pyx_L4_bool_binop_done;
-    }
-    __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_strand, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __pyx_t_3 = __pyx_t_2;
-    __pyx_L4_bool_binop_done:;
-    if (__pyx_t_3) {
-      __Pyx_INCREF(__pyx_int_1);
-      __pyx_t_4 = __pyx_int_1;
-    } else {
-      __Pyx_INCREF(__pyx_int_0);
-      __pyx_t_4 = __pyx_int_0;
-    }
-    __pyx_t_5 = PyTuple_New(3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_GIVEREF(__pyx_t_6);
-    PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_6);
-    __Pyx_GIVEREF(__pyx_t_4);
-    PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_4);
-    __Pyx_INCREF(__pyx_v_condition);
-    __Pyx_GIVEREF(__pyx_v_condition);
-    PyTuple_SET_ITEM(__pyx_t_5, 2, __pyx_v_condition);
-    __pyx_t_6 = 0;
-    __pyx_t_4 = 0;
-    __pyx_t_4 = PyObject_GetItem(__pyx_t_7, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_compute); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 65, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __pyx_t_4 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_4)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_4);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
-      }
-    }
-    if (__pyx_t_4) {
-      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    } else {
-      __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 65, __pyx_L1_error)
-    }
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_4 = PyObject_GetItem(__pyx_t_1, __pyx_v_chrom); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 70, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_4);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __Pyx_PyObject_GetSlice(__pyx_t_4, 0, 0, &__pyx_v_start, &__pyx_v_end, NULL, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __pyx_r = __pyx_t_1;
     __pyx_t_1 = 0;
     goto __pyx_L0;
 
-    /* "janggo/data/genomicarray.pyx":60
- *         interval = index[0]
- *         condition = index[1]
- *         if isinstance(interval, GenomicInterval):             # <<<<<<<<<<<<<<
+    /* "janggo/data/genomicarray.pyx":63
+ *     def __getitem__(self, index):
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):             # <<<<<<<<<<<<<<
+ *             interval = index
  *             chrom = interval.chrom
- *             start = interval.start
  */
   }
 
-  /* "janggo/data/genomicarray.pyx":67
- *             return da.from_array(self.handle[chrom], chunks=1024**2)[start:end, 1 if self.stranded and strand=='-' else 0, condition].compute()
+  /* "janggo/data/genomicarray.pyx":72
+ *             return self.handle[chrom][start:end]
  *         else:
- *             raise IndexError("Index must be a GenomicInterval and a condition index")             # <<<<<<<<<<<<<<
+ *             raise IndexError("Index must be a GenomicInterval")             # <<<<<<<<<<<<<<
  * 
- * 
+ *     @property
  */
   /*else*/ {
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_IndexError, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 67, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_IndexError, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 72, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __PYX_ERR(0, 67, __pyx_L1_error)
+    __PYX_ERR(0, 72, __pyx_L1_error)
   }
 
-  /* "janggo/data/genomicarray.pyx":57
+  /* "janggo/data/genomicarray.pyx":61
  *             raise IndexError("Index must be a GenomicInterval and a condition index")
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
- *         interval = index[0]
- *         condition = index[1]
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):
  */
 
   /* function exit code */
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_1);
   __Pyx_XDECREF(__pyx_t_4);
-  __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_6);
-  __Pyx_XDECREF(__pyx_t_7);
   __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.__getitem__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_v_interval);
-  __Pyx_XDECREF(__pyx_v_condition);
   __Pyx_XDECREF(__pyx_v_chrom);
   __Pyx_XDECREF(__pyx_v_start);
   __Pyx_XDECREF(__pyx_v_end);
@@ -2095,7 +2091,174 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_4__getitem
   return __pyx_r;
 }
 
-/* "janggo/data/genomicarray.pyx":100
+/* "janggo/data/genomicarray.pyx":75
+ * 
+ *     @property
+ *     def condition(self):             # <<<<<<<<<<<<<<
+ *         return self._condition
+ * 
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_7condition(PyObject *__pyx_self, PyObject *__pyx_v_self); /*proto*/
+static char __pyx_doc_6janggo_4data_12genomicarray_12GenomicArray_6condition[] = "GenomicArray.condition(self)";
+static PyMethodDef __pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_7condition = {"condition", (PyCFunction)__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_7condition, METH_O, __pyx_doc_6janggo_4data_12genomicarray_12GenomicArray_6condition};
+static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_7condition(PyObject *__pyx_self, PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("condition (wrapper)", 0);
+  __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_6condition(__pyx_self, ((PyObject *)__pyx_v_self));
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_6condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  PyObject *__pyx_t_1 = NULL;
+  __Pyx_RefNannySetupContext("condition", 0);
+
+  /* "janggo/data/genomicarray.pyx":76
+ *     @property
+ *     def condition(self):
+ *         return self._condition             # <<<<<<<<<<<<<<
+ * 
+ *     @condition.setter
+ */
+  __Pyx_XDECREF(__pyx_r);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_condition_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 76, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_r = __pyx_t_1;
+  __pyx_t_1 = 0;
+  goto __pyx_L0;
+
+  /* "janggo/data/genomicarray.pyx":75
+ * 
+ *     @property
+ *     def condition(self):             # <<<<<<<<<<<<<<
+ *         return self._condition
+ * 
+ */
+
+  /* function exit code */
+  __pyx_L1_error:;
+  __Pyx_XDECREF(__pyx_t_1);
+  __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.condition", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "janggo/data/genomicarray.pyx":79
+ * 
+ *     @condition.setter
+ *     def condition(self, conditions):             # <<<<<<<<<<<<<<
+ *         self._condition = conditions
+ * 
+ */
+
+/* Python wrapper */
+static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_9condition(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static char __pyx_doc_6janggo_4data_12genomicarray_12GenomicArray_8condition[] = "GenomicArray.condition(self, conditions)";
+static PyMethodDef __pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_9condition = {"condition", (PyCFunction)__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_9condition, METH_VARARGS|METH_KEYWORDS, __pyx_doc_6janggo_4data_12genomicarray_12GenomicArray_8condition};
+static PyObject *__pyx_pw_6janggo_4data_12genomicarray_12GenomicArray_9condition(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyObject *__pyx_v_self = 0;
+  PyObject *__pyx_v_conditions = 0;
+  PyObject *__pyx_r = 0;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("condition (wrapper)", 0);
+  {
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_self,&__pyx_n_s_conditions,0};
+    PyObject* values[2] = {0,0};
+    if (unlikely(__pyx_kwds)) {
+      Py_ssize_t kw_args;
+      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
+      switch (pos_args) {
+        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+        CYTHON_FALLTHROUGH;
+        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+        CYTHON_FALLTHROUGH;
+        case  0: break;
+        default: goto __pyx_L5_argtuple_error;
+      }
+      kw_args = PyDict_Size(__pyx_kwds);
+      switch (pos_args) {
+        case  0:
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_self)) != 0)) kw_args--;
+        else goto __pyx_L5_argtuple_error;
+        CYTHON_FALLTHROUGH;
+        case  1:
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_conditions)) != 0)) kw_args--;
+        else {
+          __Pyx_RaiseArgtupleInvalid("condition", 1, 2, 2, 1); __PYX_ERR(0, 79, __pyx_L3_error)
+        }
+      }
+      if (unlikely(kw_args > 0)) {
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "condition") < 0)) __PYX_ERR(0, 79, __pyx_L3_error)
+      }
+    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
+      goto __pyx_L5_argtuple_error;
+    } else {
+      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
+      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
+    }
+    __pyx_v_self = values[0];
+    __pyx_v_conditions = values[1];
+  }
+  goto __pyx_L4_argument_unpacking_done;
+  __pyx_L5_argtuple_error:;
+  __Pyx_RaiseArgtupleInvalid("condition", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 79, __pyx_L3_error)
+  __pyx_L3_error:;
+  __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.condition", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_RefNannyFinishContext();
+  return NULL;
+  __pyx_L4_argument_unpacking_done:;
+  __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_8condition(__pyx_self, __pyx_v_self, __pyx_v_conditions);
+
+  /* function exit code */
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+static PyObject *__pyx_pf_6janggo_4data_12genomicarray_12GenomicArray_8condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_conditions) {
+  PyObject *__pyx_r = NULL;
+  __Pyx_RefNannyDeclarations
+  __Pyx_RefNannySetupContext("condition", 0);
+
+  /* "janggo/data/genomicarray.pyx":80
+ *     @condition.setter
+ *     def condition(self, conditions):
+ *         self._condition = conditions             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_condition_2, __pyx_v_conditions) < 0) __PYX_ERR(0, 80, __pyx_L1_error)
+
+  /* "janggo/data/genomicarray.pyx":79
+ * 
+ *     @condition.setter
+ *     def condition(self, conditions):             # <<<<<<<<<<<<<<
+ *         self._condition = conditions
+ * 
+ */
+
+  /* function exit code */
+  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
+  goto __pyx_L0;
+  __pyx_L1_error:;
+  __Pyx_AddTraceback("janggo.data.genomicarray.GenomicArray.condition", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __pyx_r = NULL;
+  __pyx_L0:;
+  __Pyx_XGIVEREF(__pyx_r);
+  __Pyx_RefNannyFinishContext();
+  return __pyx_r;
+}
+
+/* "janggo/data/genomicarray.pyx":114
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
@@ -2128,7 +2291,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__ini
     values[4] = ((PyObject *)((PyObject*)__pyx_n_s_d));
     values[5] = ((PyObject *)((PyObject*)__pyx_kp_s__4));
 
-    /* "janggo/data/genomicarray.pyx":101
+    /* "janggo/data/genomicarray.pyx":115
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
  *                  memmap_dir="", overwrite=False, loader=None, loader_args=None):             # <<<<<<<<<<<<<<
@@ -2172,7 +2335,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__ini
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chroms)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 9, 1); __PYX_ERR(0, 100, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 9, 1); __PYX_ERR(0, 114, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -2218,7 +2381,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__ini
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 100, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 114, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -2254,7 +2417,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__ini
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 100, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 114, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("janggo.data.genomicarray.HDF5GenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2262,7 +2425,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__ini
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init__(__pyx_self, __pyx_v_self, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_memmap_dir, __pyx_v_overwrite, __pyx_v_loader, __pyx_v_loader_args);
 
-  /* "janggo/data/genomicarray.pyx":100
+  /* "janggo/data/genomicarray.pyx":114
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
@@ -2276,6 +2439,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__ini
 }
 
 static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init__(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_chroms, PyObject *__pyx_v_stranded, PyObject *__pyx_v_conditions, PyObject *__pyx_v_typecode, PyObject *__pyx_v_memmap_dir, PyObject *__pyx_v_overwrite, PyObject *__pyx_v_loader, PyObject *__pyx_v_loader_args) {
+  PyObject *__pyx_v_filename = NULL;
   PyObject *__pyx_v_chrom = NULL;
   PyObject *__pyx_v_shape = NULL;
   PyObject *__pyx_v_x = NULL;
@@ -2294,19 +2458,20 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
   Py_ssize_t __pyx_t_11;
   PyObject *(*__pyx_t_12)(PyObject *);
   Py_ssize_t __pyx_t_13;
+  PyObject *__pyx_t_14 = NULL;
+  PyObject *__pyx_t_15 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
-  __Pyx_INCREF(__pyx_v_conditions);
 
-  /* "janggo/data/genomicarray.pyx":102
+  /* "janggo/data/genomicarray.pyx":116
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
  *                  memmap_dir="", overwrite=False, loader=None, loader_args=None):
  *         super(HDF5GenomicArray, self).__init__(chroms, stranded,             # <<<<<<<<<<<<<<
  *                                                conditions, typecode)
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_HDF5GenomicArray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_HDF5GenomicArray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
@@ -2314,19 +2479,19 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
   __Pyx_GIVEREF(__pyx_v_self);
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_init); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 102, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_init); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 116, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "janggo/data/genomicarray.pyx":103
+  /* "janggo/data/genomicarray.pyx":117
  *                  memmap_dir="", overwrite=False, loader=None, loader_args=None):
  *         super(HDF5GenomicArray, self).__init__(chroms, stranded,
  *                                                conditions, typecode)             # <<<<<<<<<<<<<<
  * 
- *         if not conditions:
+ *         filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'
  */
   __pyx_t_2 = NULL;
   __pyx_t_4 = 0;
@@ -2343,7 +2508,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[5] = {__pyx_t_2, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
@@ -2351,13 +2516,13 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[5] = {__pyx_t_2, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(4+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(4+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 116, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_2) {
       __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2); __pyx_t_2 = NULL;
@@ -2374,101 +2539,213 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
     __Pyx_INCREF(__pyx_v_typecode);
     __Pyx_GIVEREF(__pyx_v_typecode);
     PyTuple_SET_ITEM(__pyx_t_5, 3+__pyx_t_4, __pyx_v_typecode);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 102, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 116, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "janggo/data/genomicarray.pyx":105
+  /* "janggo/data/genomicarray.pyx":119
  *                                                conditions, typecode)
  * 
- *         if not conditions:             # <<<<<<<<<<<<<<
- *             conditions = ['sample']
- * 
+ *         filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'             # <<<<<<<<<<<<<<
+ *         if not os.path.exists(memmap_dir):
+ *             os.makedirs(memmap_dir)
  */
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_conditions); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 105, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_stranded); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 119, __pyx_L1_error)
+  if (__pyx_t_6) {
+    __Pyx_INCREF(__pyx_kp_s_storage_stranded_h5);
+    __pyx_t_1 = __pyx_kp_s_storage_stranded_h5;
+  } else {
+    __Pyx_INCREF(__pyx_kp_s_storage_unstranded_h5);
+    __pyx_t_1 = __pyx_kp_s_storage_unstranded_h5;
+  }
+  __pyx_v_filename = __pyx_t_1;
+  __pyx_t_1 = 0;
+
+  /* "janggo/data/genomicarray.pyx":120
+ * 
+ *         filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'
+ *         if not os.path.exists(memmap_dir):             # <<<<<<<<<<<<<<
+ *             os.makedirs(memmap_dir)
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
+ */
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_exists); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_5 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_3);
+    if (likely(__pyx_t_5)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
+      __Pyx_INCREF(__pyx_t_5);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
+    }
+  }
+  if (!__pyx_t_5) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_memmap_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_memmap_dir};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_memmap_dir};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else
+    #endif
+    {
+      __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 120, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      __Pyx_INCREF(__pyx_v_memmap_dir);
+      __Pyx_GIVEREF(__pyx_v_memmap_dir);
+      PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_v_memmap_dir);
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_7 = ((!__pyx_t_6) != 0);
   if (__pyx_t_7) {
 
-    /* "janggo/data/genomicarray.pyx":106
- * 
- *         if not conditions:
- *             conditions = ['sample']             # <<<<<<<<<<<<<<
- * 
- *         if not os.path.exists(os.path.join(memmap_dir, "storage.h5")) or overwrite:
+    /* "janggo/data/genomicarray.pyx":121
+ *         filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'
+ *         if not os.path.exists(memmap_dir):
+ *             os.makedirs(memmap_dir)             # <<<<<<<<<<<<<<
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
+ *             print('create {}'.format(os.path.join(memmap_dir, filename)))
  */
-    __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 106, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_INCREF(__pyx_n_s_sample);
-    __Pyx_GIVEREF(__pyx_n_s_sample);
-    PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_sample);
-    __Pyx_DECREF_SET(__pyx_v_conditions, __pyx_t_1);
-    __pyx_t_1 = 0;
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 121, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_makedirs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 121, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_3 = NULL;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_3)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_3);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_3) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_memmap_dir); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_memmap_dir};
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_memmap_dir};
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+      } else
+      #endif
+      {
+        __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 121, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __pyx_t_3 = NULL;
+        __Pyx_INCREF(__pyx_v_memmap_dir);
+        __Pyx_GIVEREF(__pyx_v_memmap_dir);
+        PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_memmap_dir);
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 121, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":105
- *                                                conditions, typecode)
+    /* "janggo/data/genomicarray.pyx":120
  * 
- *         if not conditions:             # <<<<<<<<<<<<<<
- *             conditions = ['sample']
- * 
+ *         filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'
+ *         if not os.path.exists(memmap_dir):             # <<<<<<<<<<<<<<
+ *             os.makedirs(memmap_dir)
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
  */
   }
 
-  /* "janggo/data/genomicarray.pyx":108
- *             conditions = ['sample']
- * 
- *         if not os.path.exists(os.path.join(memmap_dir, "storage.h5")) or overwrite:             # <<<<<<<<<<<<<<
- *             os.makedirs(memmap_dir, exist_ok=True)
- *             self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'w')
+  /* "janggo/data/genomicarray.pyx":122
+ *         if not os.path.exists(memmap_dir):
+ *             os.makedirs(memmap_dir)
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:             # <<<<<<<<<<<<<<
+ *             print('create {}'.format(os.path.join(memmap_dir, filename)))
+ *             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 108, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_exists); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 108, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_path); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 108, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_join); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_exists); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 122, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __pyx_t_8 = NULL;
   __pyx_t_4 = 0;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
-    __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_2);
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
+    __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_3);
     if (likely(__pyx_t_8)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
       __Pyx_INCREF(__pyx_t_8);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __Pyx_DECREF_SET(__pyx_t_3, function);
       __pyx_t_4 = 1;
     }
   }
   #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_memmap_dir, __pyx_kp_s_storage_h5};
-    __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+  if (PyFunction_Check(__pyx_t_3)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_memmap_dir, __pyx_v_filename};
+    __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_GOTREF(__pyx_t_5);
   } else
   #endif
   #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_memmap_dir, __pyx_kp_s_storage_h5};
-    __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_8, __pyx_v_memmap_dir, __pyx_v_filename};
+    __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
     __Pyx_GOTREF(__pyx_t_5);
   } else
   #endif
   {
-    __pyx_t_9 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 108, __pyx_L1_error)
+    __pyx_t_9 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 122, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     if (__pyx_t_8) {
       __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
@@ -2476,61 +2753,61 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
     __Pyx_INCREF(__pyx_v_memmap_dir);
     __Pyx_GIVEREF(__pyx_v_memmap_dir);
     PyTuple_SET_ITEM(__pyx_t_9, 0+__pyx_t_4, __pyx_v_memmap_dir);
-    __Pyx_INCREF(__pyx_kp_s_storage_h5);
-    __Pyx_GIVEREF(__pyx_kp_s_storage_h5);
-    PyTuple_SET_ITEM(__pyx_t_9, 1+__pyx_t_4, __pyx_kp_s_storage_h5);
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 108, __pyx_L1_error)
+    __Pyx_INCREF(__pyx_v_filename);
+    __Pyx_GIVEREF(__pyx_v_filename);
+    PyTuple_SET_ITEM(__pyx_t_9, 1+__pyx_t_4, __pyx_v_filename);
+    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   }
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = NULL;
-  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-    if (likely(__pyx_t_2)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-      __Pyx_INCREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_3)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_3, function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
     }
   }
-  if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
+  if (!__pyx_t_3) {
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_5};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (PyFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_5};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_5};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     } else
     #endif
     {
-      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 108, __pyx_L1_error)
+      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_2); __pyx_t_2 = NULL;
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_GIVEREF(__pyx_t_5);
       PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_5);
       __pyx_t_5 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_9, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 108, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_9, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     }
   }
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 122, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_10 = ((!__pyx_t_6) != 0);
   if (!__pyx_t_10) {
@@ -2538,310 +2815,268 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
     __pyx_t_7 = __pyx_t_10;
     goto __pyx_L5_bool_binop_done;
   }
-  __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_overwrite); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 108, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_overwrite); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 122, __pyx_L1_error)
   __pyx_t_7 = __pyx_t_10;
   __pyx_L5_bool_binop_done:;
   if (__pyx_t_7) {
 
-    /* "janggo/data/genomicarray.pyx":109
- * 
- *         if not os.path.exists(os.path.join(memmap_dir, "storage.h5")) or overwrite:
- *             os.makedirs(memmap_dir, exist_ok=True)             # <<<<<<<<<<<<<<
- *             self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'w')
+    /* "janggo/data/genomicarray.pyx":123
+ *             os.makedirs(memmap_dir)
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
+ *             print('create {}'.format(os.path.join(memmap_dir, filename)))             # <<<<<<<<<<<<<<
+ *             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
  * 
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_makedirs); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 109, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 109, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_INCREF(__pyx_v_memmap_dir);
-    __Pyx_GIVEREF(__pyx_v_memmap_dir);
-    PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_memmap_dir);
-    __pyx_t_9 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 109, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_9);
-    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_exist_ok, Py_True) < 0) __PYX_ERR(0, 109, __pyx_L1_error)
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, __pyx_t_9); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 109, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-    /* "janggo/data/genomicarray.pyx":110
- *         if not os.path.exists(os.path.join(memmap_dir, "storage.h5")) or overwrite:
- *             os.makedirs(memmap_dir, exist_ok=True)
- *             self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'w')             # <<<<<<<<<<<<<<
- * 
- *             for chrom in chroms:
- */
-    __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_h5py); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 110, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_9);
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_File); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 110, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 110, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_create, __pyx_n_s_format); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_join); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 110, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 123, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_path); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 123, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = NULL;
-    __pyx_t_4 = 0;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
-      __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_3);
-      if (likely(__pyx_t_2)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_3);
-        __Pyx_INCREF(__pyx_t_2);
-        __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_3, function);
-        __pyx_t_4 = 1;
-      }
-    }
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_memmap_dir, __pyx_kp_s_storage_h5};
-      __pyx_t_9 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 110, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_9);
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
-      PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_memmap_dir, __pyx_kp_s_storage_h5};
-      __pyx_t_9 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 110, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-      __Pyx_GOTREF(__pyx_t_9);
-    } else
-    #endif
-    {
-      __pyx_t_8 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 110, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      if (__pyx_t_2) {
-        __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_2); __pyx_t_2 = NULL;
-      }
-      __Pyx_INCREF(__pyx_v_memmap_dir);
-      __Pyx_GIVEREF(__pyx_v_memmap_dir);
-      PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_4, __pyx_v_memmap_dir);
-      __Pyx_INCREF(__pyx_kp_s_storage_h5);
-      __Pyx_GIVEREF(__pyx_kp_s_storage_h5);
-      PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_4, __pyx_kp_s_storage_h5);
-      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_8, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 110, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    }
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_join); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 123, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_3 = NULL;
     __pyx_t_4 = 0;
-    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_1))) {
-      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_1);
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_5);
       if (likely(__pyx_t_3)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
         __Pyx_INCREF(__pyx_t_3);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_1, function);
+        __Pyx_DECREF_SET(__pyx_t_5, function);
         __pyx_t_4 = 1;
       }
     }
     #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_1)) {
-      PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_t_9, __pyx_n_s_w};
-      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
+    if (PyFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_memmap_dir, __pyx_v_filename};
+      __pyx_t_9 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 123, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_9);
     } else
     #endif
     #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
-      PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_t_9, __pyx_n_s_w};
-      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_memmap_dir, __pyx_v_filename};
+      __pyx_t_9 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 123, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_9);
     } else
     #endif
     {
-      __pyx_t_8 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 110, __pyx_L1_error)
+      __pyx_t_8 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 123, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
       if (__pyx_t_3) {
         __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_3); __pyx_t_3 = NULL;
       }
-      __Pyx_GIVEREF(__pyx_t_9);
-      PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_4, __pyx_t_9);
+      __Pyx_INCREF(__pyx_v_memmap_dir);
+      __Pyx_GIVEREF(__pyx_v_memmap_dir);
+      PyTuple_SET_ITEM(__pyx_t_8, 0+__pyx_t_4, __pyx_v_memmap_dir);
+      __Pyx_INCREF(__pyx_v_filename);
+      __Pyx_GIVEREF(__pyx_v_filename);
+      PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_4, __pyx_v_filename);
+      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 123, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_9);
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_5 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_2);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_2, function);
+      }
+    }
+    if (!__pyx_t_5) {
+      __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_9); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 123, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+    } else {
+      #if CYTHON_FAST_PYCALL
+      if (PyFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_9};
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 123, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      } else
+      #endif
+      #if CYTHON_FAST_PYCCALL
+      if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+        PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_9};
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 123, __pyx_L1_error)
+        __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      } else
+      #endif
+      {
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 123, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5); __pyx_t_5 = NULL;
+        __Pyx_GIVEREF(__pyx_t_9);
+        PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_9);
+        __pyx_t_9 = 0;
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_8, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 123, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      }
+    }
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    if (__Pyx_PrintOne(0, __pyx_t_1) < 0) __PYX_ERR(0, 123, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "janggo/data/genomicarray.pyx":124
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
+ *             print('create {}'.format(os.path.join(memmap_dir, filename)))
+ *             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')             # <<<<<<<<<<<<<<
+ * 
+ *             for chrom in chroms:
+ */
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_h5py); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_File); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_9);
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_path); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_5);
+    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_join); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 124, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_9);
+    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __pyx_t_5 = NULL;
+    __pyx_t_4 = 0;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_9))) {
+      __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_9);
+      if (likely(__pyx_t_5)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_9);
+        __Pyx_INCREF(__pyx_t_5);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_9, function);
+        __pyx_t_4 = 1;
+      }
+    }
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_9)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_memmap_dir, __pyx_v_filename};
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_9, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_2);
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_9)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_memmap_dir, __pyx_v_filename};
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_9, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __Pyx_GOTREF(__pyx_t_2);
+    } else
+    #endif
+    {
+      __pyx_t_3 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      if (__pyx_t_5) {
+        __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5); __pyx_t_5 = NULL;
+      }
+      __Pyx_INCREF(__pyx_v_memmap_dir);
+      __Pyx_GIVEREF(__pyx_v_memmap_dir);
+      PyTuple_SET_ITEM(__pyx_t_3, 0+__pyx_t_4, __pyx_v_memmap_dir);
+      __Pyx_INCREF(__pyx_v_filename);
+      __Pyx_GIVEREF(__pyx_v_filename);
+      PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_4, __pyx_v_filename);
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    }
+    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    __pyx_t_9 = NULL;
+    __pyx_t_4 = 0;
+    if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_8))) {
+      __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_8);
+      if (likely(__pyx_t_9)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_8);
+        __Pyx_INCREF(__pyx_t_9);
+        __Pyx_INCREF(function);
+        __Pyx_DECREF_SET(__pyx_t_8, function);
+        __pyx_t_4 = 1;
+      }
+    }
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_8)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_9, __pyx_t_2, __pyx_n_s_w};
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
+      PyObject *__pyx_temp[3] = {__pyx_t_9, __pyx_t_2, __pyx_n_s_w};
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_3 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      if (__pyx_t_9) {
+        __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_9); __pyx_t_9 = NULL;
+      }
+      __Pyx_GIVEREF(__pyx_t_2);
+      PyTuple_SET_ITEM(__pyx_t_3, 0+__pyx_t_4, __pyx_t_2);
       __Pyx_INCREF(__pyx_n_s_w);
       __Pyx_GIVEREF(__pyx_n_s_w);
-      PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_4, __pyx_n_s_w);
-      __pyx_t_9 = 0;
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_8, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 110, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_4, __pyx_n_s_w);
+      __pyx_t_2 = 0;
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 124, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_handle, __pyx_t_1) < 0) __PYX_ERR(0, 124, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_handle, __pyx_t_5) < 0) __PYX_ERR(0, 110, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "janggo/data/genomicarray.pyx":112
- *             self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'w')
+    /* "janggo/data/genomicarray.pyx":126
+ *             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
  * 
  *             for chrom in chroms:             # <<<<<<<<<<<<<<
- *                 shape = (chroms[chrom], 2 if stranded else 1, len(conditions))
- *                 self.handle.create_dataset(chrom, shape, dtype=typecode, compression='lzf')
+ *                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
+ *                 self.handle.create_dataset(chrom, shape,
  */
     if (likely(PyList_CheckExact(__pyx_v_chroms)) || PyTuple_CheckExact(__pyx_v_chroms)) {
-      __pyx_t_5 = __pyx_v_chroms; __Pyx_INCREF(__pyx_t_5); __pyx_t_11 = 0;
+      __pyx_t_1 = __pyx_v_chroms; __Pyx_INCREF(__pyx_t_1); __pyx_t_11 = 0;
       __pyx_t_12 = NULL;
     } else {
-      __pyx_t_11 = -1; __pyx_t_5 = PyObject_GetIter(__pyx_v_chroms); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 112, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_12 = Py_TYPE(__pyx_t_5)->tp_iternext; if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 112, __pyx_L1_error)
-    }
-    for (;;) {
-      if (likely(!__pyx_t_12)) {
-        if (likely(PyList_CheckExact(__pyx_t_5))) {
-          if (__pyx_t_11 >= PyList_GET_SIZE(__pyx_t_5)) break;
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_1 = PyList_GET_ITEM(__pyx_t_5, __pyx_t_11); __Pyx_INCREF(__pyx_t_1); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 112, __pyx_L1_error)
-          #else
-          __pyx_t_1 = PySequence_ITEM(__pyx_t_5, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_1);
-          #endif
-        } else {
-          if (__pyx_t_11 >= PyTuple_GET_SIZE(__pyx_t_5)) break;
-          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_1 = PyTuple_GET_ITEM(__pyx_t_5, __pyx_t_11); __Pyx_INCREF(__pyx_t_1); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 112, __pyx_L1_error)
-          #else
-          __pyx_t_1 = PySequence_ITEM(__pyx_t_5, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 112, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_1);
-          #endif
-        }
-      } else {
-        __pyx_t_1 = __pyx_t_12(__pyx_t_5);
-        if (unlikely(!__pyx_t_1)) {
-          PyObject* exc_type = PyErr_Occurred();
-          if (exc_type) {
-            if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(0, 112, __pyx_L1_error)
-          }
-          break;
-        }
-        __Pyx_GOTREF(__pyx_t_1);
-      }
-      __Pyx_XDECREF_SET(__pyx_v_chrom, __pyx_t_1);
-      __pyx_t_1 = 0;
-
-      /* "janggo/data/genomicarray.pyx":113
- * 
- *             for chrom in chroms:
- *                 shape = (chroms[chrom], 2 if stranded else 1, len(conditions))             # <<<<<<<<<<<<<<
- *                 self.handle.create_dataset(chrom, shape, dtype=typecode, compression='lzf')
- *             self.handle.attrs['conditions'] = [numpy.string_(x) for x in conditions]
- */
-      __pyx_t_1 = PyObject_GetItem(__pyx_v_chroms, __pyx_v_chrom); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 113, __pyx_L1_error)
+      __pyx_t_11 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_chroms); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_stranded); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 113, __pyx_L1_error)
-      if (__pyx_t_7) {
-        __Pyx_INCREF(__pyx_int_2);
-        __pyx_t_8 = __pyx_int_2;
-      } else {
-        __Pyx_INCREF(__pyx_int_1);
-        __pyx_t_8 = __pyx_int_1;
-      }
-      __pyx_t_13 = PyObject_Length(__pyx_v_conditions); if (unlikely(__pyx_t_13 == ((Py_ssize_t)-1))) __PYX_ERR(0, 113, __pyx_L1_error)
-      __pyx_t_9 = PyInt_FromSsize_t(__pyx_t_13); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 113, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 113, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_GIVEREF(__pyx_t_1);
-      PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
-      __Pyx_GIVEREF(__pyx_t_8);
-      PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_8);
-      __Pyx_GIVEREF(__pyx_t_9);
-      PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_t_9);
-      __pyx_t_1 = 0;
-      __pyx_t_8 = 0;
-      __pyx_t_9 = 0;
-      __Pyx_XDECREF_SET(__pyx_v_shape, ((PyObject*)__pyx_t_3));
-      __pyx_t_3 = 0;
-
-      /* "janggo/data/genomicarray.pyx":114
- *             for chrom in chroms:
- *                 shape = (chroms[chrom], 2 if stranded else 1, len(conditions))
- *                 self.handle.create_dataset(chrom, shape, dtype=typecode, compression='lzf')             # <<<<<<<<<<<<<<
- *             self.handle.attrs['conditions'] = [numpy.string_(x) for x in conditions]
- * 
- */
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 114, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_create_dataset); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 114, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 114, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __Pyx_INCREF(__pyx_v_chrom);
-      __Pyx_GIVEREF(__pyx_v_chrom);
-      PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_chrom);
-      __Pyx_INCREF(__pyx_v_shape);
-      __Pyx_GIVEREF(__pyx_v_shape);
-      PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_shape);
-      __pyx_t_8 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 114, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 114, __pyx_L1_error)
-      if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_compression, __pyx_n_s_lzf) < 0) __PYX_ERR(0, 114, __pyx_L1_error)
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_3, __pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 114, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-
-      /* "janggo/data/genomicarray.pyx":112
- *             self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'w')
- * 
- *             for chrom in chroms:             # <<<<<<<<<<<<<<
- *                 shape = (chroms[chrom], 2 if stranded else 1, len(conditions))
- *                 self.handle.create_dataset(chrom, shape, dtype=typecode, compression='lzf')
- */
-    }
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-
-    /* "janggo/data/genomicarray.pyx":115
- *                 shape = (chroms[chrom], 2 if stranded else 1, len(conditions))
- *                 self.handle.create_dataset(chrom, shape, dtype=typecode, compression='lzf')
- *             self.handle.attrs['conditions'] = [numpy.string_(x) for x in conditions]             # <<<<<<<<<<<<<<
- * 
- *             # invoke the loader
- */
-    __pyx_t_5 = PyList_New(0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 115, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    if (likely(PyList_CheckExact(__pyx_v_conditions)) || PyTuple_CheckExact(__pyx_v_conditions)) {
-      __pyx_t_1 = __pyx_v_conditions; __Pyx_INCREF(__pyx_t_1); __pyx_t_11 = 0;
-      __pyx_t_12 = NULL;
-    } else {
-      __pyx_t_11 = -1; __pyx_t_1 = PyObject_GetIter(__pyx_v_conditions); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_12 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_12 = Py_TYPE(__pyx_t_1)->tp_iternext; if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 126, __pyx_L1_error)
     }
     for (;;) {
       if (likely(!__pyx_t_12)) {
         if (likely(PyList_CheckExact(__pyx_t_1))) {
           if (__pyx_t_11 >= PyList_GET_SIZE(__pyx_t_1)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_8 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_11); __Pyx_INCREF(__pyx_t_8); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 115, __pyx_L1_error)
+          __pyx_t_8 = PyList_GET_ITEM(__pyx_t_1, __pyx_t_11); __Pyx_INCREF(__pyx_t_8); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 126, __pyx_L1_error)
           #else
-          __pyx_t_8 = PySequence_ITEM(__pyx_t_1, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
+          __pyx_t_8 = PySequence_ITEM(__pyx_t_1, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 126, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_8);
           #endif
         } else {
           if (__pyx_t_11 >= PyTuple_GET_SIZE(__pyx_t_1)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_8 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_11); __Pyx_INCREF(__pyx_t_8); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 115, __pyx_L1_error)
+          __pyx_t_8 = PyTuple_GET_ITEM(__pyx_t_1, __pyx_t_11); __Pyx_INCREF(__pyx_t_8); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 126, __pyx_L1_error)
           #else
-          __pyx_t_8 = PySequence_ITEM(__pyx_t_1, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
+          __pyx_t_8 = PySequence_ITEM(__pyx_t_1, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 126, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_8);
           #endif
         }
@@ -2851,7 +3086,213 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
           PyObject* exc_type = PyErr_Occurred();
           if (exc_type) {
             if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(0, 115, __pyx_L1_error)
+            else __PYX_ERR(0, 126, __pyx_L1_error)
+          }
+          break;
+        }
+        __Pyx_GOTREF(__pyx_t_8);
+      }
+      __Pyx_XDECREF_SET(__pyx_v_chrom, __pyx_t_8);
+      __pyx_t_8 = 0;
+
+      /* "janggo/data/genomicarray.pyx":127
+ * 
+ *             for chrom in chroms:
+ *                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))             # <<<<<<<<<<<<<<
+ *                 self.handle.create_dataset(chrom, shape,
+ *                                            dtype=typecode, compression='lzf',
+ */
+      __pyx_t_8 = PyObject_GetItem(__pyx_v_chroms, __pyx_v_chrom); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_stranded); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 127, __pyx_L1_error)
+      if (__pyx_t_7) {
+        __Pyx_INCREF(__pyx_int_2);
+        __pyx_t_3 = __pyx_int_2;
+      } else {
+        __Pyx_INCREF(__pyx_int_1);
+        __pyx_t_3 = __pyx_int_1;
+      }
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_condition); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_13 = PyObject_Length(__pyx_t_2); if (unlikely(__pyx_t_13 == ((Py_ssize_t)-1))) __PYX_ERR(0, 127, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __pyx_t_2 = PyInt_FromSsize_t(__pyx_t_13); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __pyx_t_9 = PyTuple_New(3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 127, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_9);
+      __Pyx_GIVEREF(__pyx_t_8);
+      PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8);
+      __Pyx_GIVEREF(__pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_3);
+      __Pyx_GIVEREF(__pyx_t_2);
+      PyTuple_SET_ITEM(__pyx_t_9, 2, __pyx_t_2);
+      __pyx_t_8 = 0;
+      __pyx_t_3 = 0;
+      __pyx_t_2 = 0;
+      __Pyx_XDECREF_SET(__pyx_v_shape, ((PyObject*)__pyx_t_9));
+      __pyx_t_9 = 0;
+
+      /* "janggo/data/genomicarray.pyx":128
+ *             for chrom in chroms:
+ *                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
+ *                 self.handle.create_dataset(chrom, shape,             # <<<<<<<<<<<<<<
+ *                                            dtype=typecode, compression='lzf',
+ *                                            data=numpy.zeros(shape))
+ */
+      __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 128, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_9);
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_create_dataset); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 128, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 128, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_9);
+      __Pyx_INCREF(__pyx_v_chrom);
+      __Pyx_GIVEREF(__pyx_v_chrom);
+      PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_v_chrom);
+      __Pyx_INCREF(__pyx_v_shape);
+      __Pyx_GIVEREF(__pyx_v_shape);
+      PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_v_shape);
+
+      /* "janggo/data/genomicarray.pyx":129
+ *                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
+ *                 self.handle.create_dataset(chrom, shape,
+ *                                            dtype=typecode, compression='lzf',             # <<<<<<<<<<<<<<
+ *                                            data=numpy.zeros(shape))
+ *             self.handle.attrs['conditions'] = [numpy.string_(x) for x in self.condition]
+ */
+      __pyx_t_3 = __Pyx_PyDict_NewPresized(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 129, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_compression, __pyx_n_s_lzf) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+
+      /* "janggo/data/genomicarray.pyx":130
+ *                 self.handle.create_dataset(chrom, shape,
+ *                                            dtype=typecode, compression='lzf',
+ *                                            data=numpy.zeros(shape))             # <<<<<<<<<<<<<<
+ *             self.handle.attrs['conditions'] = [numpy.string_(x) for x in self.condition]
+ * 
+ */
+      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 130, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_14);
+      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+      __pyx_t_5 = NULL;
+      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_14))) {
+        __pyx_t_5 = PyMethod_GET_SELF(__pyx_t_14);
+        if (likely(__pyx_t_5)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_14);
+          __Pyx_INCREF(__pyx_t_5);
+          __Pyx_INCREF(function);
+          __Pyx_DECREF_SET(__pyx_t_14, function);
+        }
+      }
+      if (!__pyx_t_5) {
+        __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_14, __pyx_v_shape); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 130, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+      } else {
+        #if CYTHON_FAST_PYCALL
+        if (PyFunction_Check(__pyx_t_14)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_shape};
+          __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_14, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+          __Pyx_GOTREF(__pyx_t_8);
+        } else
+        #endif
+        #if CYTHON_FAST_PYCCALL
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_14)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_shape};
+          __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_14, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
+          __Pyx_GOTREF(__pyx_t_8);
+        } else
+        #endif
+        {
+          __pyx_t_15 = PyTuple_New(1+1); if (unlikely(!__pyx_t_15)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_15);
+          __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_15, 0, __pyx_t_5); __pyx_t_5 = NULL;
+          __Pyx_INCREF(__pyx_v_shape);
+          __Pyx_GIVEREF(__pyx_v_shape);
+          PyTuple_SET_ITEM(__pyx_t_15, 0+1, __pyx_v_shape);
+          __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_14, __pyx_t_15, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 130, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_8);
+          __Pyx_DECREF(__pyx_t_15); __pyx_t_15 = 0;
+        }
+      }
+      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_data, __pyx_t_8) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+      /* "janggo/data/genomicarray.pyx":128
+ *             for chrom in chroms:
+ *                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
+ *                 self.handle.create_dataset(chrom, shape,             # <<<<<<<<<<<<<<
+ *                                            dtype=typecode, compression='lzf',
+ *                                            data=numpy.zeros(shape))
+ */
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_9, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 128, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+      /* "janggo/data/genomicarray.pyx":126
+ *             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
+ * 
+ *             for chrom in chroms:             # <<<<<<<<<<<<<<
+ *                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
+ *                 self.handle.create_dataset(chrom, shape,
+ */
+    }
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+
+    /* "janggo/data/genomicarray.pyx":131
+ *                                            dtype=typecode, compression='lzf',
+ *                                            data=numpy.zeros(shape))
+ *             self.handle.attrs['conditions'] = [numpy.string_(x) for x in self.condition]             # <<<<<<<<<<<<<<
+ * 
+ *             # invoke the loader
+ */
+    __pyx_t_1 = PyList_New(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 131, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_condition); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    if (likely(PyList_CheckExact(__pyx_t_8)) || PyTuple_CheckExact(__pyx_t_8)) {
+      __pyx_t_3 = __pyx_t_8; __Pyx_INCREF(__pyx_t_3); __pyx_t_11 = 0;
+      __pyx_t_12 = NULL;
+    } else {
+      __pyx_t_11 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __pyx_t_12 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 131, __pyx_L1_error)
+    }
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    for (;;) {
+      if (likely(!__pyx_t_12)) {
+        if (likely(PyList_CheckExact(__pyx_t_3))) {
+          if (__pyx_t_11 >= PyList_GET_SIZE(__pyx_t_3)) break;
+          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+          __pyx_t_8 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_11); __Pyx_INCREF(__pyx_t_8); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 131, __pyx_L1_error)
+          #else
+          __pyx_t_8 = PySequence_ITEM(__pyx_t_3, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_8);
+          #endif
+        } else {
+          if (__pyx_t_11 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
+          #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
+          __pyx_t_8 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_11); __Pyx_INCREF(__pyx_t_8); __pyx_t_11++; if (unlikely(0 < 0)) __PYX_ERR(0, 131, __pyx_L1_error)
+          #else
+          __pyx_t_8 = PySequence_ITEM(__pyx_t_3, __pyx_t_11); __pyx_t_11++; if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_8);
+          #endif
+        }
+      } else {
+        __pyx_t_8 = __pyx_t_12(__pyx_t_3);
+        if (unlikely(!__pyx_t_8)) {
+          PyObject* exc_type = PyErr_Occurred();
+          if (exc_type) {
+            if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
+            else __PYX_ERR(0, 131, __pyx_L1_error)
           }
           break;
         }
@@ -2859,101 +3300,101 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
       }
       __Pyx_XDECREF_SET(__pyx_v_x, __pyx_t_8);
       __pyx_t_8 = 0;
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 115, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_string); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 115, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 131, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_3 = NULL;
-      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_9))) {
-        __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_9);
-        if (likely(__pyx_t_3)) {
-          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_9);
-          __Pyx_INCREF(__pyx_t_3);
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_string); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 131, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_2);
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+      __pyx_t_9 = NULL;
+      if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
+        __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_2);
+        if (likely(__pyx_t_9)) {
+          PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+          __Pyx_INCREF(__pyx_t_9);
           __Pyx_INCREF(function);
-          __Pyx_DECREF_SET(__pyx_t_9, function);
+          __Pyx_DECREF_SET(__pyx_t_2, function);
         }
       }
-      if (!__pyx_t_3) {
-        __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_9, __pyx_v_x); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
+      if (!__pyx_t_9) {
+        __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_x); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
       } else {
         #if CYTHON_FAST_PYCALL
-        if (PyFunction_Check(__pyx_t_9)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_x};
-          __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_9, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        if (PyFunction_Check(__pyx_t_2)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_v_x};
+          __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
           __Pyx_GOTREF(__pyx_t_8);
         } else
         #endif
         #if CYTHON_FAST_PYCCALL
-        if (__Pyx_PyFastCFunction_Check(__pyx_t_9)) {
-          PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_x};
-          __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_9, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
-          __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+        if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+          PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_v_x};
+          __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
           __Pyx_GOTREF(__pyx_t_8);
         } else
         #endif
         {
-          __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 115, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_2);
-          __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3); __pyx_t_3 = NULL;
+          __pyx_t_14 = PyTuple_New(1+1); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 131, __pyx_L1_error)
+          __Pyx_GOTREF(__pyx_t_14);
+          __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_14, 0, __pyx_t_9); __pyx_t_9 = NULL;
           __Pyx_INCREF(__pyx_v_x);
           __Pyx_GIVEREF(__pyx_v_x);
-          PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_v_x);
-          __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_2, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
+          PyTuple_SET_ITEM(__pyx_t_14, 0+1, __pyx_v_x);
+          __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_14, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_8);
-          __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+          __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
         }
       }
-      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-      if (unlikely(__Pyx_ListComp_Append(__pyx_t_5, (PyObject*)__pyx_t_8))) __PYX_ERR(0, 115, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+      if (unlikely(__Pyx_ListComp_Append(__pyx_t_1, (PyObject*)__pyx_t_8))) __PYX_ERR(0, 131, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
     }
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 115, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_attrs); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 115, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 131, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_attrs); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 131, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_t_8, __pyx_n_s_conditions, __pyx_t_5) < 0)) __PYX_ERR(0, 115, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    if (unlikely(PyObject_SetItem(__pyx_t_8, __pyx_n_s_conditions, __pyx_t_1) < 0)) __PYX_ERR(0, 131, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-    /* "janggo/data/genomicarray.pyx":118
+    /* "janggo/data/genomicarray.pyx":134
  * 
  *             # invoke the loader
  *             if loader:             # <<<<<<<<<<<<<<
  *                 loader(self, *loader_args)
  *             self.handle.close()
  */
-    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_loader); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 118, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_loader); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 134, __pyx_L1_error)
     if (__pyx_t_7) {
 
-      /* "janggo/data/genomicarray.pyx":119
+      /* "janggo/data/genomicarray.pyx":135
  *             # invoke the loader
  *             if loader:
  *                 loader(self, *loader_args)             # <<<<<<<<<<<<<<
  *             self.handle.close()
- * 
+ *         print('reload {}'.format(os.path.join(memmap_dir, filename)))
  */
-      __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 119, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_5);
+      __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 135, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_1);
       __Pyx_INCREF(__pyx_v_self);
       __Pyx_GIVEREF(__pyx_v_self);
-      PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_self);
-      __pyx_t_8 = __Pyx_PySequence_Tuple(__pyx_v_loader_args); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 119, __pyx_L1_error)
+      PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self);
+      __pyx_t_8 = __Pyx_PySequence_Tuple(__pyx_v_loader_args); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_1 = PyNumber_Add(__pyx_t_5, __pyx_t_8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 119, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_1);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_v_loader, __pyx_t_1, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 119, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
+      __pyx_t_3 = PyNumber_Add(__pyx_t_1, __pyx_t_8); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 135, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_v_loader, __pyx_t_3, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 135, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-      /* "janggo/data/genomicarray.pyx":118
+      /* "janggo/data/genomicarray.pyx":134
  * 
  *             # invoke the loader
  *             if loader:             # <<<<<<<<<<<<<<
@@ -2962,74 +3403,185 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
  */
     }
 
-    /* "janggo/data/genomicarray.pyx":120
+    /* "janggo/data/genomicarray.pyx":136
  *             if loader:
  *                 loader(self, *loader_args)
  *             self.handle.close()             # <<<<<<<<<<<<<<
- * 
- *         self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'r')
+ *         print('reload {}'.format(os.path.join(memmap_dir, filename)))
+ *         self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',
  */
-    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 120, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 136, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_close); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 136, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_close); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 120, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = NULL;
-    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
-      __pyx_t_1 = PyMethod_GET_SELF(__pyx_t_5);
-      if (likely(__pyx_t_1)) {
-        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
-        __Pyx_INCREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __pyx_t_3 = NULL;
+    if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
+      __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_1);
+      if (likely(__pyx_t_3)) {
+        PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+        __Pyx_INCREF(__pyx_t_3);
         __Pyx_INCREF(function);
-        __Pyx_DECREF_SET(__pyx_t_5, function);
+        __Pyx_DECREF_SET(__pyx_t_1, function);
       }
     }
-    if (__pyx_t_1) {
-      __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 120, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    if (__pyx_t_3) {
+      __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 136, __pyx_L1_error)
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     } else {
-      __pyx_t_8 = __Pyx_PyObject_CallNoArg(__pyx_t_5); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 120, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_PyObject_CallNoArg(__pyx_t_1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 136, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
 
-    /* "janggo/data/genomicarray.pyx":108
- *             conditions = ['sample']
- * 
- *         if not os.path.exists(os.path.join(memmap_dir, "storage.h5")) or overwrite:             # <<<<<<<<<<<<<<
- *             os.makedirs(memmap_dir, exist_ok=True)
- *             self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'w')
+    /* "janggo/data/genomicarray.pyx":122
+ *         if not os.path.exists(memmap_dir):
+ *             os.makedirs(memmap_dir)
+ *         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:             # <<<<<<<<<<<<<<
+ *             print('create {}'.format(os.path.join(memmap_dir, filename)))
+ *             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
  */
   }
 
-  /* "janggo/data/genomicarray.pyx":122
+  /* "janggo/data/genomicarray.pyx":137
+ *                 loader(self, *loader_args)
  *             self.handle.close()
- * 
- *         self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'r')             # <<<<<<<<<<<<<<
- * 
- *     @property
+ *         print('reload {}'.format(os.path.join(memmap_dir, filename)))             # <<<<<<<<<<<<<<
+ *         self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',
+ *                                 driver='stdio')
  */
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_h5py); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_File); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_reload, __pyx_n_s_format); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_path); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 122, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 137, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_join); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_9);
+  __pyx_t_14 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_path); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 137, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_14);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_14, __pyx_n_s_join); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 137, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+  __pyx_t_14 = NULL;
+  __pyx_t_4 = 0;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
+    __pyx_t_14 = PyMethod_GET_SELF(__pyx_t_2);
+    if (likely(__pyx_t_14)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_14);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_2, function);
+      __pyx_t_4 = 1;
+    }
+  }
+  #if CYTHON_FAST_PYCALL
+  if (PyFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_14, __pyx_v_memmap_dir, __pyx_v_filename};
+    __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 137, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
+    __Pyx_GOTREF(__pyx_t_3);
+  } else
+  #endif
+  #if CYTHON_FAST_PYCCALL
+  if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
+    PyObject *__pyx_temp[3] = {__pyx_t_14, __pyx_v_memmap_dir, __pyx_v_filename};
+    __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 137, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_14); __pyx_t_14 = 0;
+    __Pyx_GOTREF(__pyx_t_3);
+  } else
+  #endif
+  {
+    __pyx_t_9 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 137, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_9);
+    if (__pyx_t_14) {
+      __Pyx_GIVEREF(__pyx_t_14); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_14); __pyx_t_14 = NULL;
+    }
+    __Pyx_INCREF(__pyx_v_memmap_dir);
+    __Pyx_GIVEREF(__pyx_v_memmap_dir);
+    PyTuple_SET_ITEM(__pyx_t_9, 0+__pyx_t_4, __pyx_v_memmap_dir);
+    __Pyx_INCREF(__pyx_v_filename);
+    __Pyx_GIVEREF(__pyx_v_filename);
+    PyTuple_SET_ITEM(__pyx_t_9, 1+__pyx_t_4, __pyx_v_filename);
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_9, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 137, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_3);
+    __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+  }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_2 = NULL;
+  if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_1))) {
+    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_1);
+    if (likely(__pyx_t_2)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
+      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_1, function);
+    }
+  }
+  if (!__pyx_t_2) {
+    __pyx_t_8 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 137, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_8);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_1)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_3};
+      __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 137, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_2, __pyx_t_3};
+      __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 137, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 137, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_9);
+      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_2); __pyx_t_2 = NULL;
+      __Pyx_GIVEREF(__pyx_t_3);
+      PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_3);
+      __pyx_t_3 = 0;
+      __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_9, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 137, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_8);
+      __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  if (__Pyx_PrintOne(0, __pyx_t_8) < 0) __PYX_ERR(0, 137, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+
+  /* "janggo/data/genomicarray.pyx":138
+ *             self.handle.close()
+ *         print('reload {}'.format(os.path.join(memmap_dir, filename)))
+ *         self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',             # <<<<<<<<<<<<<<
+ *                                 driver='stdio')
+ * 
+ */
+  __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_h5py); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_File); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_os); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_9);
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_path); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_join); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_9);
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = NULL;
   __pyx_t_4 = 0;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_9))) {
-    __pyx_t_2 = PyMethod_GET_SELF(__pyx_t_9);
-    if (likely(__pyx_t_2)) {
+    __pyx_t_3 = PyMethod_GET_SELF(__pyx_t_9);
+    if (likely(__pyx_t_3)) {
       PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_9);
-      __Pyx_INCREF(__pyx_t_2);
+      __Pyx_INCREF(__pyx_t_3);
       __Pyx_INCREF(function);
       __Pyx_DECREF_SET(__pyx_t_9, function);
       __pyx_t_4 = 1;
@@ -3037,88 +3589,91 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
   }
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_9)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_memmap_dir, __pyx_kp_s_storage_h5};
-    __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_9, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_5);
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_memmap_dir, __pyx_v_filename};
+    __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_9, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_8);
   } else
   #endif
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_9)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_2, __pyx_v_memmap_dir, __pyx_kp_s_storage_h5};
-    __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_9, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __Pyx_GOTREF(__pyx_t_5);
+    PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_v_memmap_dir, __pyx_v_filename};
+    __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_9, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+    __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
+    __Pyx_GOTREF(__pyx_t_8);
   } else
   #endif
   {
-    __pyx_t_3 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (__pyx_t_2) {
-      __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2); __pyx_t_2 = NULL;
+    __pyx_t_2 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    if (__pyx_t_3) {
+      __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3); __pyx_t_3 = NULL;
     }
     __Pyx_INCREF(__pyx_v_memmap_dir);
     __Pyx_GIVEREF(__pyx_v_memmap_dir);
-    PyTuple_SET_ITEM(__pyx_t_3, 0+__pyx_t_4, __pyx_v_memmap_dir);
-    __Pyx_INCREF(__pyx_kp_s_storage_h5);
-    __Pyx_GIVEREF(__pyx_kp_s_storage_h5);
-    PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_4, __pyx_kp_s_storage_h5);
-    __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_3, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+    PyTuple_SET_ITEM(__pyx_t_2, 0+__pyx_t_4, __pyx_v_memmap_dir);
+    __Pyx_INCREF(__pyx_v_filename);
+    __Pyx_GIVEREF(__pyx_v_filename);
+    PyTuple_SET_ITEM(__pyx_t_2, 1+__pyx_t_4, __pyx_v_filename);
+    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_2, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 138, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = NULL;
-  __pyx_t_4 = 0;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_1))) {
-    __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_1);
-    if (likely(__pyx_t_9)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_1);
-      __Pyx_INCREF(__pyx_t_9);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_1, function);
-      __pyx_t_4 = 1;
-    }
-  }
-  #if CYTHON_FAST_PYCALL
-  if (PyFunction_Check(__pyx_t_1)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_9, __pyx_t_5, __pyx_n_s_r};
-    __pyx_t_8 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  } else
-  #endif
-  #if CYTHON_FAST_PYCCALL
-  if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
-    PyObject *__pyx_temp[3] = {__pyx_t_9, __pyx_t_5, __pyx_n_s_r};
-    __pyx_t_8 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_4, 2+__pyx_t_4); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  } else
-  #endif
-  {
-    __pyx_t_3 = PyTuple_New(2+__pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    if (__pyx_t_9) {
-      __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_9); __pyx_t_9 = NULL;
-    }
-    __Pyx_GIVEREF(__pyx_t_5);
-    PyTuple_SET_ITEM(__pyx_t_3, 0+__pyx_t_4, __pyx_t_5);
-    __Pyx_INCREF(__pyx_n_s_r);
-    __Pyx_GIVEREF(__pyx_n_s_r);
-    PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_4, __pyx_n_s_r);
-    __pyx_t_5 = 0;
-    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 122, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_8);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  }
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_handle, __pyx_t_8) < 0) __PYX_ERR(0, 122, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_9);
+  __Pyx_GIVEREF(__pyx_t_8);
+  PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8);
+  __Pyx_INCREF(__pyx_n_s_r);
+  __Pyx_GIVEREF(__pyx_n_s_r);
+  PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_n_s_r);
+  __pyx_t_8 = 0;
 
-  /* "janggo/data/genomicarray.pyx":100
+  /* "janggo/data/genomicarray.pyx":139
+ *         print('reload {}'.format(os.path.join(memmap_dir, filename)))
+ *         self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',
+ *                                 driver='stdio')             # <<<<<<<<<<<<<<
+ * 
+ *         self.condition = self.handle.attrs['conditions']
+ */
+  __pyx_t_8 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 139, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  if (PyDict_SetItem(__pyx_t_8, __pyx_n_s_driver, __pyx_n_s_stdio) < 0) __PYX_ERR(0, 139, __pyx_L1_error)
+
+  /* "janggo/data/genomicarray.pyx":138
+ *             self.handle.close()
+ *         print('reload {}'.format(os.path.join(memmap_dir, filename)))
+ *         self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',             # <<<<<<<<<<<<<<
+ *                                 driver='stdio')
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_9, __pyx_t_8); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_handle, __pyx_t_2) < 0) __PYX_ERR(0, 138, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "janggo/data/genomicarray.pyx":141
+ *                                 driver='stdio')
+ * 
+ *         self.condition = self.handle.attrs['conditions']             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_attrs); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_8);
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_2 = PyObject_GetItem(__pyx_t_8, __pyx_n_s_conditions); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 141, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_condition, __pyx_t_2) < 0) __PYX_ERR(0, 141, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+
+  /* "janggo/data/genomicarray.pyx":114
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
@@ -3136,204 +3691,21 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray___init
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_8);
   __Pyx_XDECREF(__pyx_t_9);
+  __Pyx_XDECREF(__pyx_t_14);
+  __Pyx_XDECREF(__pyx_t_15);
   __Pyx_AddTraceback("janggo.data.genomicarray.HDF5GenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
+  __Pyx_XDECREF(__pyx_v_filename);
   __Pyx_XDECREF(__pyx_v_chrom);
   __Pyx_XDECREF(__pyx_v_shape);
   __Pyx_XDECREF(__pyx_v_x);
-  __Pyx_XDECREF(__pyx_v_conditions);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "janggo/data/genomicarray.pyx":125
- * 
- *     @property
- *     def condition(self):             # <<<<<<<<<<<<<<
- *         return self.handle.attrs['conditions']
- * 
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_3condition(PyObject *__pyx_self, PyObject *__pyx_v_self); /*proto*/
-static char __pyx_doc_6janggo_4data_12genomicarray_16HDF5GenomicArray_2condition[] = "HDF5GenomicArray.condition(self)";
-static PyMethodDef __pyx_mdef_6janggo_4data_12genomicarray_16HDF5GenomicArray_3condition = {"condition", (PyCFunction)__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_3condition, METH_O, __pyx_doc_6janggo_4data_12genomicarray_16HDF5GenomicArray_2condition};
-static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_3condition(PyObject *__pyx_self, PyObject *__pyx_v_self) {
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("condition (wrapper)", 0);
-  __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray_2condition(__pyx_self, ((PyObject *)__pyx_v_self));
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray_2condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("condition", 0);
-
-  /* "janggo/data/genomicarray.pyx":126
- *     @property
- *     def condition(self):
- *         return self.handle.attrs['conditions']             # <<<<<<<<<<<<<<
- * 
- *     @condition.setter
- */
-  __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_attrs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyObject_GetItem(__pyx_t_2, __pyx_n_s_conditions); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 126, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_r = __pyx_t_1;
-  __pyx_t_1 = 0;
-  goto __pyx_L0;
-
-  /* "janggo/data/genomicarray.pyx":125
- * 
- *     @property
- *     def condition(self):             # <<<<<<<<<<<<<<
- *         return self.handle.attrs['conditions']
- * 
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("janggo.data.genomicarray.HDF5GenomicArray.condition", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "janggo/data/genomicarray.pyx":129
- * 
- *     @condition.setter
- *     def condition(self, conditions):             # <<<<<<<<<<<<<<
- *         self.handle.attrs['conditions'] = conditions
- * 
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_5condition(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6janggo_4data_12genomicarray_16HDF5GenomicArray_4condition[] = "HDF5GenomicArray.condition(self, conditions)";
-static PyMethodDef __pyx_mdef_6janggo_4data_12genomicarray_16HDF5GenomicArray_5condition = {"condition", (PyCFunction)__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_5condition, METH_VARARGS|METH_KEYWORDS, __pyx_doc_6janggo_4data_12genomicarray_16HDF5GenomicArray_4condition};
-static PyObject *__pyx_pw_6janggo_4data_12genomicarray_16HDF5GenomicArray_5condition(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  PyObject *__pyx_v_self = 0;
-  PyObject *__pyx_v_conditions = 0;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("condition (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_self,&__pyx_n_s_conditions,0};
-    PyObject* values[2] = {0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_self)) != 0)) kw_args--;
-        else goto __pyx_L5_argtuple_error;
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_conditions)) != 0)) kw_args--;
-        else {
-          __Pyx_RaiseArgtupleInvalid("condition", 1, 2, 2, 1); __PYX_ERR(0, 129, __pyx_L3_error)
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "condition") < 0)) __PYX_ERR(0, 129, __pyx_L3_error)
-      }
-    } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
-      goto __pyx_L5_argtuple_error;
-    } else {
-      values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-      values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-    }
-    __pyx_v_self = values[0];
-    __pyx_v_conditions = values[1];
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("condition", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 129, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("janggo.data.genomicarray.HDF5GenomicArray.condition", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray_4condition(__pyx_self, __pyx_v_self, __pyx_v_conditions);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_6janggo_4data_12genomicarray_16HDF5GenomicArray_4condition(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_self, PyObject *__pyx_v_conditions) {
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  PyObject *__pyx_t_1 = NULL;
-  PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("condition", 0);
-
-  /* "janggo/data/genomicarray.pyx":130
- *     @condition.setter
- *     def condition(self, conditions):
- *         self.handle.attrs['conditions'] = conditions             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_handle); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 130, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_attrs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 130, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (unlikely(PyObject_SetItem(__pyx_t_2, __pyx_n_s_conditions, __pyx_v_conditions) < 0)) __PYX_ERR(0, 130, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "janggo/data/genomicarray.pyx":129
- * 
- *     @condition.setter
- *     def condition(self, conditions):             # <<<<<<<<<<<<<<
- *         self.handle.attrs['conditions'] = conditions
- * 
- */
-
-  /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_1);
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("janggo.data.genomicarray.HDF5GenomicArray.condition", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "janggo/data/genomicarray.pyx":163
+/* "janggo/data/genomicarray.pyx":174
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
@@ -3363,7 +3735,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_14NPGenomicArray_1__init_
     values[3] = ((PyObject *)((PyObject *)Py_None));
     values[4] = ((PyObject *)((PyObject*)__pyx_n_s_d));
 
-    /* "janggo/data/genomicarray.pyx":164
+    /* "janggo/data/genomicarray.pyx":175
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
  *                  loader=None, loader_args=None):             # <<<<<<<<<<<<<<
@@ -3402,7 +3774,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_14NPGenomicArray_1__init_
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_chroms)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, 1); __PYX_ERR(0, 163, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, 1); __PYX_ERR(0, 174, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
@@ -3436,7 +3808,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_14NPGenomicArray_1__init_
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 163, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__init__") < 0)) __PYX_ERR(0, 174, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -3466,7 +3838,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_14NPGenomicArray_1__init_
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 163, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__init__", 0, 2, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 174, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("janggo.data.genomicarray.NPGenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -3474,7 +3846,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_14NPGenomicArray_1__init_
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__(__pyx_self, __pyx_v_self, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_loader, __pyx_v_loader_args);
 
-  /* "janggo/data/genomicarray.pyx":163
+  /* "janggo/data/genomicarray.pyx":174
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
@@ -3496,28 +3868,26 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
   PyObject *__pyx_t_3 = NULL;
   int __pyx_t_4;
   PyObject *__pyx_t_5 = NULL;
-  int __pyx_t_6;
-  int __pyx_t_7;
-  Py_ssize_t __pyx_t_8;
-  PyObject *(*__pyx_t_9)(PyObject *);
-  PyObject *__pyx_t_10 = NULL;
+  Py_ssize_t __pyx_t_6;
+  PyObject *(*__pyx_t_7)(PyObject *);
+  PyObject *__pyx_t_8 = NULL;
+  PyObject *__pyx_t_9 = NULL;
+  int __pyx_t_10;
   PyObject *__pyx_t_11 = NULL;
   Py_ssize_t __pyx_t_12;
   PyObject *__pyx_t_13 = NULL;
-  PyObject *__pyx_t_14 = NULL;
   __Pyx_RefNannySetupContext("__init__", 0);
-  __Pyx_INCREF(__pyx_v_conditions);
 
-  /* "janggo/data/genomicarray.pyx":166
+  /* "janggo/data/genomicarray.pyx":177
  *                  loader=None, loader_args=None):
  * 
  *         super(NPGenomicArray, self).__init__(chroms, stranded,             # <<<<<<<<<<<<<<
  *                                              conditions, typecode)
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_NPGenomicArray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_NPGenomicArray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 166, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 177, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
@@ -3525,19 +3895,19 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
   __Pyx_GIVEREF(__pyx_v_self);
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_v_self);
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 166, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_builtin_super, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 177, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_init); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 166, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_init); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 177, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "janggo/data/genomicarray.pyx":167
+  /* "janggo/data/genomicarray.pyx":178
  * 
  *         super(NPGenomicArray, self).__init__(chroms, stranded,
  *                                              conditions, typecode)             # <<<<<<<<<<<<<<
  * 
- *         if not conditions:
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],
  */
   __pyx_t_2 = NULL;
   __pyx_t_4 = 0;
@@ -3554,7 +3924,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
   #if CYTHON_FAST_PYCALL
   if (PyFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[5] = {__pyx_t_2, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode};
-    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
@@ -3562,13 +3932,13 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
   #if CYTHON_FAST_PYCCALL
   if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
     PyObject *__pyx_temp[5] = {__pyx_t_2, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode};
-    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_4, 4+__pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
     __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else
   #endif
   {
-    __pyx_t_5 = PyTuple_New(4+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(4+__pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 177, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     if (__pyx_t_2) {
       __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2); __pyx_t_2 = NULL;
@@ -3585,109 +3955,65 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
     __Pyx_INCREF(__pyx_v_typecode);
     __Pyx_GIVEREF(__pyx_v_typecode);
     PyTuple_SET_ITEM(__pyx_t_5, 3+__pyx_t_4, __pyx_v_typecode);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 166, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 177, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "janggo/data/genomicarray.pyx":169
+  /* "janggo/data/genomicarray.pyx":180
  *                                              conditions, typecode)
  * 
- *         if not conditions:             # <<<<<<<<<<<<<<
- *             conditions = ['sample']
- *         self.conditions = conditions
- */
-  __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_conditions); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 169, __pyx_L1_error)
-  __pyx_t_7 = ((!__pyx_t_6) != 0);
-  if (__pyx_t_7) {
-
-    /* "janggo/data/genomicarray.pyx":170
- * 
- *         if not conditions:
- *             conditions = ['sample']             # <<<<<<<<<<<<<<
- *         self.conditions = conditions
- * 
- */
-    __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_1);
-    __Pyx_INCREF(__pyx_n_s_sample);
-    __Pyx_GIVEREF(__pyx_n_s_sample);
-    PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_sample);
-    __Pyx_DECREF_SET(__pyx_v_conditions, __pyx_t_1);
-    __pyx_t_1 = 0;
-
-    /* "janggo/data/genomicarray.pyx":169
- *                                              conditions, typecode)
- * 
- *         if not conditions:             # <<<<<<<<<<<<<<
- *             conditions = ['sample']
- *         self.conditions = conditions
- */
-  }
-
-  /* "janggo/data/genomicarray.pyx":171
- *         if not conditions:
- *             conditions = ['sample']
- *         self.conditions = conditions             # <<<<<<<<<<<<<<
- * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],
- */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_conditions, __pyx_v_conditions) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
-
-  /* "janggo/data/genomicarray.pyx":173
- *         self.conditions = conditions
- * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  */
   { /* enter inner scope */
-    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 173, __pyx_L6_error)
+    __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L5_error)
     __Pyx_GOTREF(__pyx_t_1);
 
-    /* "janggo/data/genomicarray.pyx":176
+    /* "janggo/data/genomicarray.pyx":183
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  *                                           dtype=typecode) for chrom in chroms}             # <<<<<<<<<<<<<<
  * 
  *         # invoke the loader
  */
     if (likely(PyList_CheckExact(__pyx_v_chroms)) || PyTuple_CheckExact(__pyx_v_chroms)) {
-      __pyx_t_3 = __pyx_v_chroms; __Pyx_INCREF(__pyx_t_3); __pyx_t_8 = 0;
-      __pyx_t_9 = NULL;
+      __pyx_t_3 = __pyx_v_chroms; __Pyx_INCREF(__pyx_t_3); __pyx_t_6 = 0;
+      __pyx_t_7 = NULL;
     } else {
-      __pyx_t_8 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_chroms); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 176, __pyx_L6_error)
+      __pyx_t_6 = -1; __pyx_t_3 = PyObject_GetIter(__pyx_v_chroms); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 183, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_9 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 176, __pyx_L6_error)
+      __pyx_t_7 = Py_TYPE(__pyx_t_3)->tp_iternext; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L5_error)
     }
     for (;;) {
-      if (likely(!__pyx_t_9)) {
+      if (likely(!__pyx_t_7)) {
         if (likely(PyList_CheckExact(__pyx_t_3))) {
-          if (__pyx_t_8 >= PyList_GET_SIZE(__pyx_t_3)) break;
+          if (__pyx_t_6 >= PyList_GET_SIZE(__pyx_t_3)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_5 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_8); __Pyx_INCREF(__pyx_t_5); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 176, __pyx_L6_error)
+          __pyx_t_5 = PyList_GET_ITEM(__pyx_t_3, __pyx_t_6); __Pyx_INCREF(__pyx_t_5); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 183, __pyx_L5_error)
           #else
-          __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L6_error)
+          __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 183, __pyx_L5_error)
           __Pyx_GOTREF(__pyx_t_5);
           #endif
         } else {
-          if (__pyx_t_8 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
+          if (__pyx_t_6 >= PyTuple_GET_SIZE(__pyx_t_3)) break;
           #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-          __pyx_t_5 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_8); __Pyx_INCREF(__pyx_t_5); __pyx_t_8++; if (unlikely(0 < 0)) __PYX_ERR(0, 176, __pyx_L6_error)
+          __pyx_t_5 = PyTuple_GET_ITEM(__pyx_t_3, __pyx_t_6); __Pyx_INCREF(__pyx_t_5); __pyx_t_6++; if (unlikely(0 < 0)) __PYX_ERR(0, 183, __pyx_L5_error)
           #else
-          __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_8); __pyx_t_8++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 176, __pyx_L6_error)
+          __pyx_t_5 = PySequence_ITEM(__pyx_t_3, __pyx_t_6); __pyx_t_6++; if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 183, __pyx_L5_error)
           __Pyx_GOTREF(__pyx_t_5);
           #endif
         }
       } else {
-        __pyx_t_5 = __pyx_t_9(__pyx_t_3);
+        __pyx_t_5 = __pyx_t_7(__pyx_t_3);
         if (unlikely(!__pyx_t_5)) {
           PyObject* exc_type = PyErr_Occurred();
           if (exc_type) {
             if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-            else __PYX_ERR(0, 176, __pyx_L6_error)
+            else __PYX_ERR(0, 183, __pyx_L5_error)
           }
           break;
         }
@@ -3696,97 +4022,100 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
       __Pyx_XDECREF_SET(__pyx_7genexpr__pyx_v_chrom, __pyx_t_5);
       __pyx_t_5 = 0;
 
-      /* "janggo/data/genomicarray.pyx":173
- *         self.conditions = conditions
+      /* "janggo/data/genomicarray.pyx":180
+ *                                              conditions, typecode)
  * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  */
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 173, __pyx_L6_error)
+      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 180, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 173, __pyx_L6_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 173, __pyx_L6_error)
+      __pyx_t_5 = __Pyx_PyDict_NewPresized(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 180, __pyx_L5_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_10 = PyObject_GetItem(__pyx_v_chroms, __pyx_7genexpr__pyx_v_chrom); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 173, __pyx_L6_error)
-      __Pyx_GOTREF(__pyx_t_10);
+      __pyx_t_8 = PyObject_GetItem(__pyx_v_chroms, __pyx_7genexpr__pyx_v_chrom); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 180, __pyx_L5_error)
+      __Pyx_GOTREF(__pyx_t_8);
 
-      /* "janggo/data/genomicarray.pyx":174
+      /* "janggo/data/genomicarray.pyx":181
  * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],
  *                                                  2 if stranded else 1,             # <<<<<<<<<<<<<<
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  *                                           dtype=typecode) for chrom in chroms}
  */
-      __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_stranded); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 174, __pyx_L6_error)
-      if (__pyx_t_7) {
+      __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_stranded); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 181, __pyx_L5_error)
+      if (__pyx_t_10) {
         __Pyx_INCREF(__pyx_int_2);
-        __pyx_t_11 = __pyx_int_2;
+        __pyx_t_9 = __pyx_int_2;
       } else {
         __Pyx_INCREF(__pyx_int_1);
-        __pyx_t_11 = __pyx_int_1;
+        __pyx_t_9 = __pyx_int_1;
       }
 
-      /* "janggo/data/genomicarray.pyx":175
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],
+      /* "janggo/data/genomicarray.pyx":182
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),             # <<<<<<<<<<<<<<
+ *                                                  len(self.condition)),             # <<<<<<<<<<<<<<
  *                                           dtype=typecode) for chrom in chroms}
  * 
  */
-      __pyx_t_12 = PyObject_Length(__pyx_v_conditions); if (unlikely(__pyx_t_12 == ((Py_ssize_t)-1))) __PYX_ERR(0, 175, __pyx_L6_error)
-      __pyx_t_13 = PyInt_FromSsize_t(__pyx_t_12); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 175, __pyx_L6_error)
-      __Pyx_GOTREF(__pyx_t_13);
+      __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_self, __pyx_n_s_condition); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 182, __pyx_L5_error)
+      __Pyx_GOTREF(__pyx_t_11);
+      __pyx_t_12 = PyObject_Length(__pyx_t_11); if (unlikely(__pyx_t_12 == ((Py_ssize_t)-1))) __PYX_ERR(0, 182, __pyx_L5_error)
+      __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
+      __pyx_t_11 = PyInt_FromSsize_t(__pyx_t_12); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 182, __pyx_L5_error)
+      __Pyx_GOTREF(__pyx_t_11);
 
-      /* "janggo/data/genomicarray.pyx":173
- *         self.conditions = conditions
+      /* "janggo/data/genomicarray.pyx":180
+ *                                              conditions, typecode)
  * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  */
-      __pyx_t_14 = PyTuple_New(3); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 173, __pyx_L6_error)
-      __Pyx_GOTREF(__pyx_t_14);
-      __Pyx_GIVEREF(__pyx_t_10);
-      PyTuple_SET_ITEM(__pyx_t_14, 0, __pyx_t_10);
+      __pyx_t_13 = PyTuple_New(3); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 180, __pyx_L5_error)
+      __Pyx_GOTREF(__pyx_t_13);
+      __Pyx_GIVEREF(__pyx_t_8);
+      PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_8);
+      __Pyx_GIVEREF(__pyx_t_9);
+      PyTuple_SET_ITEM(__pyx_t_13, 1, __pyx_t_9);
       __Pyx_GIVEREF(__pyx_t_11);
-      PyTuple_SET_ITEM(__pyx_t_14, 1, __pyx_t_11);
-      __Pyx_GIVEREF(__pyx_t_13);
-      PyTuple_SET_ITEM(__pyx_t_14, 2, __pyx_t_13);
-      __pyx_t_10 = 0;
+      PyTuple_SET_ITEM(__pyx_t_13, 2, __pyx_t_11);
+      __pyx_t_8 = 0;
+      __pyx_t_9 = 0;
       __pyx_t_11 = 0;
-      __pyx_t_13 = 0;
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_shape, __pyx_t_14) < 0) __PYX_ERR(0, 173, __pyx_L6_error)
-      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_shape, __pyx_t_13) < 0) __PYX_ERR(0, 180, __pyx_L5_error)
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
 
-      /* "janggo/data/genomicarray.pyx":176
+      /* "janggo/data/genomicarray.pyx":183
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  *                                           dtype=typecode) for chrom in chroms}             # <<<<<<<<<<<<<<
  * 
  *         # invoke the loader
  */
-      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 173, __pyx_L6_error)
+      if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_v_typecode) < 0) __PYX_ERR(0, 180, __pyx_L5_error)
 
-      /* "janggo/data/genomicarray.pyx":173
- *         self.conditions = conditions
+      /* "janggo/data/genomicarray.pyx":180
+ *                                              conditions, typecode)
  * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  */
-      __pyx_t_14 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 173, __pyx_L6_error)
-      __Pyx_GOTREF(__pyx_t_14);
+      __pyx_t_13 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_5); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 180, __pyx_L5_error)
+      __Pyx_GOTREF(__pyx_t_13);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      if (unlikely(PyDict_SetItem(__pyx_t_1, (PyObject*)__pyx_7genexpr__pyx_v_chrom, (PyObject*)__pyx_t_14))) __PYX_ERR(0, 173, __pyx_L6_error)
-      __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+      if (unlikely(PyDict_SetItem(__pyx_t_1, (PyObject*)__pyx_7genexpr__pyx_v_chrom, (PyObject*)__pyx_t_13))) __PYX_ERR(0, 180, __pyx_L5_error)
+      __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
 
-      /* "janggo/data/genomicarray.pyx":176
+      /* "janggo/data/genomicarray.pyx":183
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  *                                           dtype=typecode) for chrom in chroms}             # <<<<<<<<<<<<<<
  * 
  *         # invoke the loader
@@ -3794,57 +4123,57 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
     }
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_XDECREF(__pyx_7genexpr__pyx_v_chrom); __pyx_7genexpr__pyx_v_chrom = 0;
-    goto __pyx_L9_exit_scope;
-    __pyx_L6_error:;
+    goto __pyx_L8_exit_scope;
+    __pyx_L5_error:;
     __Pyx_XDECREF(__pyx_7genexpr__pyx_v_chrom); __pyx_7genexpr__pyx_v_chrom = 0;
     goto __pyx_L1_error;
-    __pyx_L9_exit_scope:;
+    __pyx_L8_exit_scope:;
   } /* exit inner scope */
 
-  /* "janggo/data/genomicarray.pyx":173
- *         self.conditions = conditions
+  /* "janggo/data/genomicarray.pyx":180
+ *                                              conditions, typecode)
  * 
- *         self.handle = {chrom: numpy.empty(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
+ *         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],             # <<<<<<<<<<<<<<
  *                                                  2 if stranded else 1,
- *                                                  len(conditions)),
+ *                                                  len(self.condition)),
  */
-  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_handle, __pyx_t_1) < 0) __PYX_ERR(0, 173, __pyx_L1_error)
+  if (__Pyx_PyObject_SetAttrStr(__pyx_v_self, __pyx_n_s_handle, __pyx_t_1) < 0) __PYX_ERR(0, 180, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "janggo/data/genomicarray.pyx":179
+  /* "janggo/data/genomicarray.pyx":186
  * 
  *         # invoke the loader
  *         if loader:             # <<<<<<<<<<<<<<
  *             loader(self, *loader_args)
  * 
  */
-  __pyx_t_7 = __Pyx_PyObject_IsTrue(__pyx_v_loader); if (unlikely(__pyx_t_7 < 0)) __PYX_ERR(0, 179, __pyx_L1_error)
-  if (__pyx_t_7) {
+  __pyx_t_10 = __Pyx_PyObject_IsTrue(__pyx_v_loader); if (unlikely(__pyx_t_10 < 0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  if (__pyx_t_10) {
 
-    /* "janggo/data/genomicarray.pyx":180
+    /* "janggo/data/genomicarray.pyx":187
  *         # invoke the loader
  *         if loader:
  *             loader(self, *loader_args)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-    __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 180, __pyx_L1_error)
+    __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 187, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_INCREF(__pyx_v_self);
     __Pyx_GIVEREF(__pyx_v_self);
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_v_self);
-    __pyx_t_3 = __Pyx_PySequence_Tuple(__pyx_v_loader_args); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PySequence_Tuple(__pyx_v_loader_args); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_14 = PyNumber_Add(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 180, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_14);
+    __pyx_t_13 = PyNumber_Add(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 187, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_13);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_v_loader, __pyx_t_14, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 180, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_v_loader, __pyx_t_13, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
+    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-    /* "janggo/data/genomicarray.pyx":179
+    /* "janggo/data/genomicarray.pyx":186
  * 
  *         # invoke the loader
  *         if loader:             # <<<<<<<<<<<<<<
@@ -3853,7 +4182,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
  */
   }
 
-  /* "janggo/data/genomicarray.pyx":163
+  /* "janggo/data/genomicarray.pyx":174
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
@@ -3869,31 +4198,30 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_14NPGenomicArray___init__
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
   __Pyx_XDECREF(__pyx_t_5);
-  __Pyx_XDECREF(__pyx_t_10);
+  __Pyx_XDECREF(__pyx_t_8);
+  __Pyx_XDECREF(__pyx_t_9);
   __Pyx_XDECREF(__pyx_t_11);
   __Pyx_XDECREF(__pyx_t_13);
-  __Pyx_XDECREF(__pyx_t_14);
   __Pyx_AddTraceback("janggo.data.genomicarray.NPGenomicArray.__init__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
   __pyx_L0:;
   __Pyx_XDECREF(__pyx_7genexpr__pyx_v_chrom);
-  __Pyx_XDECREF(__pyx_v_conditions);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-/* "janggo/data/genomicarray.pyx":183
+/* "janggo/data/genomicarray.pyx":190
  * 
  * 
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',             # <<<<<<<<<<<<<<
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  */
 
 /* Python wrapper */
 static PyObject *__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static char __pyx_doc_6janggo_4data_12genomicarray_create_genomic_array[] = "create_genomic_array(chroms, stranded=True, conditions=None, typecode='d', storage='hdf5', memmap_dir='', overwrite=False, loader=None, loader_args=None)";
+static char __pyx_doc_6janggo_4data_12genomicarray_create_genomic_array[] = "create_genomic_array(chroms, stranded=True, conditions=None, typecode='int', storage='hdf5', memmap_dir='', overwrite=False, loader=None, loader_args=None)";
 static PyMethodDef __pyx_mdef_6janggo_4data_12genomicarray_1create_genomic_array = {"create_genomic_array", (PyCFunction)__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array, METH_VARARGS|METH_KEYWORDS, __pyx_doc_6janggo_4data_12genomicarray_create_genomic_array};
 static PyObject *__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyObject *__pyx_v_chroms = 0;
@@ -3913,21 +4241,21 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array(PyO
     PyObject* values[9] = {0,0,0,0,0,0,0,0,0};
     values[1] = ((PyObject *)Py_True);
     values[2] = ((PyObject *)Py_None);
-    values[3] = ((PyObject *)__pyx_n_s_d);
+    values[3] = ((PyObject *)__pyx_n_s_int);
     values[4] = ((PyObject *)__pyx_n_s_hdf5);
     values[5] = ((PyObject *)__pyx_kp_s__4);
 
-    /* "janggo/data/genomicarray.pyx":184
+    /* "janggo/data/genomicarray.pyx":191
  * 
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
  *                          storage='hdf5', memmap_dir="", overwrite=False,             # <<<<<<<<<<<<<<
  *                          loader=None, loader_args=None):
  *     if storage == 'hdf5':
  */
     values[6] = ((PyObject *)Py_False);
 
-    /* "janggo/data/genomicarray.pyx":185
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',
+    /* "janggo/data/genomicarray.pyx":192
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):             # <<<<<<<<<<<<<<
  *     if storage == 'hdf5':
@@ -4015,7 +4343,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array(PyO
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "create_genomic_array") < 0)) __PYX_ERR(0, 183, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "create_genomic_array") < 0)) __PYX_ERR(0, 190, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -4052,7 +4380,7 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array(PyO
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("create_genomic_array", 0, 1, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 183, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("create_genomic_array", 0, 1, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 190, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("janggo.data.genomicarray.create_genomic_array", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -4060,10 +4388,10 @@ static PyObject *__pyx_pw_6janggo_4data_12genomicarray_1create_genomic_array(PyO
   __pyx_L4_argument_unpacking_done:;
   __pyx_r = __pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(__pyx_self, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_storage, __pyx_v_memmap_dir, __pyx_v_overwrite, __pyx_v_loader, __pyx_v_loader_args);
 
-  /* "janggo/data/genomicarray.pyx":183
+  /* "janggo/data/genomicarray.pyx":190
  * 
  * 
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',             # <<<<<<<<<<<<<<
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  */
@@ -4084,17 +4412,17 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
   PyObject *__pyx_t_6 = NULL;
   __Pyx_RefNannySetupContext("create_genomic_array", 0);
 
-  /* "janggo/data/genomicarray.pyx":186
+  /* "janggo/data/genomicarray.pyx":193
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  *     if storage == 'hdf5':             # <<<<<<<<<<<<<<
  *         return HDF5GenomicArray(chroms, stranded, conditions, typecode,
  *                                 memmap_dir, overwrite, loader, loader_args)
  */
-  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_hdf5, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 186, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_hdf5, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 193, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "janggo/data/genomicarray.pyx":187
+    /* "janggo/data/genomicarray.pyx":194
  *                          loader=None, loader_args=None):
  *     if storage == 'hdf5':
  *         return HDF5GenomicArray(chroms, stranded, conditions, typecode,             # <<<<<<<<<<<<<<
@@ -4102,10 +4430,10 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
  *     elif storage == 'ndarray':
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_HDF5GenomicArray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 187, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_HDF5GenomicArray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 194, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
 
-    /* "janggo/data/genomicarray.pyx":188
+    /* "janggo/data/genomicarray.pyx":195
  *     if storage == 'hdf5':
  *         return HDF5GenomicArray(chroms, stranded, conditions, typecode,
  *                                 memmap_dir, overwrite, loader, loader_args)             # <<<<<<<<<<<<<<
@@ -4127,7 +4455,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[9] = {__pyx_t_4, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_memmap_dir, __pyx_v_overwrite, __pyx_v_loader, __pyx_v_loader_args};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 8+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 8+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 194, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
@@ -4135,13 +4463,13 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[9] = {__pyx_t_4, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_memmap_dir, __pyx_v_overwrite, __pyx_v_loader, __pyx_v_loader_args};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 8+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 8+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 194, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
     #endif
     {
-      __pyx_t_6 = PyTuple_New(8+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 187, __pyx_L1_error)
+      __pyx_t_6 = PyTuple_New(8+__pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 194, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       if (__pyx_t_4) {
         __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -4170,7 +4498,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
       __Pyx_INCREF(__pyx_v_loader_args);
       __Pyx_GIVEREF(__pyx_v_loader_args);
       PyTuple_SET_ITEM(__pyx_t_6, 7+__pyx_t_5, __pyx_v_loader_args);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 187, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 194, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
@@ -4179,7 +4507,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "janggo/data/genomicarray.pyx":186
+    /* "janggo/data/genomicarray.pyx":193
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  *     if storage == 'hdf5':             # <<<<<<<<<<<<<<
@@ -4188,30 +4516,33 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
  */
   }
 
-  /* "janggo/data/genomicarray.pyx":189
+  /* "janggo/data/genomicarray.pyx":196
  *         return HDF5GenomicArray(chroms, stranded, conditions, typecode,
  *                                 memmap_dir, overwrite, loader, loader_args)
  *     elif storage == 'ndarray':             # <<<<<<<<<<<<<<
  *         return NPGenomicArray(chroms, stranded, conditions, typecode,
  *                               loader, loader_args)
  */
-  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_ndarray, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 189, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_storage, __pyx_n_s_ndarray, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 196, __pyx_L1_error)
   if (__pyx_t_1) {
 
-    /* "janggo/data/genomicarray.pyx":190
+    /* "janggo/data/genomicarray.pyx":197
  *                                 memmap_dir, overwrite, loader, loader_args)
  *     elif storage == 'ndarray':
  *         return NPGenomicArray(chroms, stranded, conditions, typecode,             # <<<<<<<<<<<<<<
  *                               loader, loader_args)
+ *     else:
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_NPGenomicArray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 190, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_NPGenomicArray); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 197, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
 
-    /* "janggo/data/genomicarray.pyx":191
+    /* "janggo/data/genomicarray.pyx":198
  *     elif storage == 'ndarray':
  *         return NPGenomicArray(chroms, stranded, conditions, typecode,
  *                               loader, loader_args)             # <<<<<<<<<<<<<<
+ *     else:
+ *         raise Exception("Storage type must be 'hdf5' or 'ndarray'")
  */
     __pyx_t_6 = NULL;
     __pyx_t_5 = 0;
@@ -4228,7 +4559,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[7] = {__pyx_t_6, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_loader, __pyx_v_loader_args};
-      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 6+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 6+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 197, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
@@ -4236,13 +4567,13 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[7] = {__pyx_t_6, __pyx_v_chroms, __pyx_v_stranded, __pyx_v_conditions, __pyx_v_typecode, __pyx_v_loader, __pyx_v_loader_args};
-      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 6+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_5, 6+__pyx_t_5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 197, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_2);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(6+__pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 190, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(6+__pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 197, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       if (__pyx_t_6) {
         __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_6); __pyx_t_6 = NULL;
@@ -4265,7 +4596,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
       __Pyx_INCREF(__pyx_v_loader_args);
       __Pyx_GIVEREF(__pyx_v_loader_args);
       PyTuple_SET_ITEM(__pyx_t_4, 5+__pyx_t_5, __pyx_v_loader_args);
-      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 197, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
@@ -4274,7 +4605,7 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
     __pyx_t_2 = 0;
     goto __pyx_L0;
 
-    /* "janggo/data/genomicarray.pyx":189
+    /* "janggo/data/genomicarray.pyx":196
  *         return HDF5GenomicArray(chroms, stranded, conditions, typecode,
  *                                 memmap_dir, overwrite, loader, loader_args)
  *     elif storage == 'ndarray':             # <<<<<<<<<<<<<<
@@ -4283,17 +4614,28 @@ static PyObject *__pyx_pf_6janggo_4data_12genomicarray_create_genomic_array(CYTH
  */
   }
 
-  /* "janggo/data/genomicarray.pyx":183
+  /* "janggo/data/genomicarray.pyx":200
+ *                               loader, loader_args)
+ *     else:
+ *         raise Exception("Storage type must be 'hdf5' or 'ndarray'")             # <<<<<<<<<<<<<<
+ */
+  /*else*/ {
+    __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)(&((PyTypeObject*)PyExc_Exception)[0])), __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 200, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_2);
+    __Pyx_Raise(__pyx_t_2, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+    __PYX_ERR(0, 200, __pyx_L1_error)
+  }
+
+  /* "janggo/data/genomicarray.pyx":190
  * 
  * 
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',             # <<<<<<<<<<<<<<
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  */
 
   /* function exit code */
-  __pyx_r = Py_None; __Pyx_INCREF(Py_None);
-  goto __pyx_L0;
   __pyx_L1_error:;
   __Pyx_XDECREF(__pyx_t_2);
   __Pyx_XDECREF(__pyx_t_3);
@@ -4350,41 +4692,42 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_GenomicArray___getitem, __pyx_k_GenomicArray___getitem, sizeof(__pyx_k_GenomicArray___getitem), 0, 0, 1, 1},
   {&__pyx_n_s_GenomicArray___init, __pyx_k_GenomicArray___init, sizeof(__pyx_k_GenomicArray___init), 0, 0, 1, 1},
   {&__pyx_n_s_GenomicArray___setitem, __pyx_k_GenomicArray___setitem, sizeof(__pyx_k_GenomicArray___setitem), 0, 0, 1, 1},
+  {&__pyx_n_s_GenomicArray_condition, __pyx_k_GenomicArray_condition, sizeof(__pyx_k_GenomicArray_condition), 0, 0, 1, 1},
   {&__pyx_kp_s_GenomicArray_stores_multi_dimens, __pyx_k_GenomicArray_stores_multi_dimens, sizeof(__pyx_k_GenomicArray_stores_multi_dimens), 0, 0, 1, 0},
   {&__pyx_kp_s_GenomicArray_stores_multi_dimens_2, __pyx_k_GenomicArray_stores_multi_dimens_2, sizeof(__pyx_k_GenomicArray_stores_multi_dimens_2), 0, 0, 1, 0},
   {&__pyx_n_s_GenomicInterval, __pyx_k_GenomicInterval, sizeof(__pyx_k_GenomicInterval), 0, 0, 1, 1},
   {&__pyx_n_s_HDF5GenomicArray, __pyx_k_HDF5GenomicArray, sizeof(__pyx_k_HDF5GenomicArray), 0, 0, 1, 1},
   {&__pyx_n_s_HDF5GenomicArray___init, __pyx_k_HDF5GenomicArray___init, sizeof(__pyx_k_HDF5GenomicArray___init), 0, 0, 1, 1},
-  {&__pyx_n_s_HDF5GenomicArray_condition, __pyx_k_HDF5GenomicArray_condition, sizeof(__pyx_k_HDF5GenomicArray_condition), 0, 0, 1, 1},
   {&__pyx_n_s_HTSeq, __pyx_k_HTSeq, sizeof(__pyx_k_HTSeq), 0, 0, 1, 1},
   {&__pyx_n_s_IndexError, __pyx_k_IndexError, sizeof(__pyx_k_IndexError), 0, 0, 1, 1},
   {&__pyx_kp_s_Index_must_be_a_GenomicInterval, __pyx_k_Index_must_be_a_GenomicInterval, sizeof(__pyx_k_Index_must_be_a_GenomicInterval), 0, 0, 1, 0},
+  {&__pyx_kp_s_Index_must_be_a_GenomicInterval_2, __pyx_k_Index_must_be_a_GenomicInterval_2, sizeof(__pyx_k_Index_must_be_a_GenomicInterval_2), 0, 0, 1, 0},
   {&__pyx_n_s_NPGenomicArray, __pyx_k_NPGenomicArray, sizeof(__pyx_k_NPGenomicArray), 0, 0, 1, 1},
   {&__pyx_n_s_NPGenomicArray___init, __pyx_k_NPGenomicArray___init, sizeof(__pyx_k_NPGenomicArray___init), 0, 0, 1, 1},
+  {&__pyx_kp_s_Storage_type_must_be_hdf5_or_nda, __pyx_k_Storage_type_must_be_hdf5_or_nda, sizeof(__pyx_k_Storage_type_must_be_hdf5_or_nda), 0, 0, 1, 0},
   {&__pyx_kp_s__4, __pyx_k__4, sizeof(__pyx_k__4), 0, 0, 1, 0},
-  {&__pyx_n_s__5, __pyx_k__5, sizeof(__pyx_k__5), 0, 0, 1, 1},
   {&__pyx_n_s_attrs, __pyx_k_attrs, sizeof(__pyx_k_attrs), 0, 0, 1, 1},
   {&__pyx_n_s_chrom, __pyx_k_chrom, sizeof(__pyx_k_chrom), 0, 0, 1, 1},
   {&__pyx_n_s_chroms, __pyx_k_chroms, sizeof(__pyx_k_chroms), 0, 0, 1, 1},
-  {&__pyx_n_s_chunks, __pyx_k_chunks, sizeof(__pyx_k_chunks), 0, 0, 1, 1},
   {&__pyx_n_s_cline_in_traceback, __pyx_k_cline_in_traceback, sizeof(__pyx_k_cline_in_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_close, __pyx_k_close, sizeof(__pyx_k_close), 0, 0, 1, 1},
   {&__pyx_n_s_compression, __pyx_k_compression, sizeof(__pyx_k_compression), 0, 0, 1, 1},
-  {&__pyx_n_s_compute, __pyx_k_compute, sizeof(__pyx_k_compute), 0, 0, 1, 1},
   {&__pyx_n_s_condition, __pyx_k_condition, sizeof(__pyx_k_condition), 0, 0, 1, 1},
+  {&__pyx_n_s_condition_2, __pyx_k_condition_2, sizeof(__pyx_k_condition_2), 0, 0, 1, 1},
   {&__pyx_n_s_conditions, __pyx_k_conditions, sizeof(__pyx_k_conditions), 0, 0, 1, 1},
+  {&__pyx_kp_s_create, __pyx_k_create, sizeof(__pyx_k_create), 0, 0, 1, 0},
   {&__pyx_n_s_create_dataset, __pyx_k_create_dataset, sizeof(__pyx_k_create_dataset), 0, 0, 1, 1},
   {&__pyx_n_s_create_genomic_array, __pyx_k_create_genomic_array, sizeof(__pyx_k_create_genomic_array), 0, 0, 1, 1},
   {&__pyx_n_s_d, __pyx_k_d, sizeof(__pyx_k_d), 0, 0, 1, 1},
-  {&__pyx_n_s_da, __pyx_k_da, sizeof(__pyx_k_da), 0, 0, 1, 1},
-  {&__pyx_n_s_dask_array, __pyx_k_dask_array, sizeof(__pyx_k_dask_array), 0, 0, 1, 1},
+  {&__pyx_n_s_data, __pyx_k_data, sizeof(__pyx_k_data), 0, 0, 1, 1},
   {&__pyx_n_s_doc, __pyx_k_doc, sizeof(__pyx_k_doc), 0, 0, 1, 1},
+  {&__pyx_n_s_driver, __pyx_k_driver, sizeof(__pyx_k_driver), 0, 0, 1, 1},
   {&__pyx_n_s_dtype, __pyx_k_dtype, sizeof(__pyx_k_dtype), 0, 0, 1, 1},
-  {&__pyx_n_s_empty, __pyx_k_empty, sizeof(__pyx_k_empty), 0, 0, 1, 1},
   {&__pyx_n_s_end, __pyx_k_end, sizeof(__pyx_k_end), 0, 0, 1, 1},
-  {&__pyx_n_s_exist_ok, __pyx_k_exist_ok, sizeof(__pyx_k_exist_ok), 0, 0, 1, 1},
   {&__pyx_n_s_exists, __pyx_k_exists, sizeof(__pyx_k_exists), 0, 0, 1, 1},
-  {&__pyx_n_s_from_array, __pyx_k_from_array, sizeof(__pyx_k_from_array), 0, 0, 1, 1},
+  {&__pyx_n_s_file, __pyx_k_file, sizeof(__pyx_k_file), 0, 0, 1, 1},
+  {&__pyx_n_s_filename, __pyx_k_filename, sizeof(__pyx_k_filename), 0, 0, 1, 1},
+  {&__pyx_n_s_format, __pyx_k_format, sizeof(__pyx_k_format), 0, 0, 1, 1},
   {&__pyx_n_s_getitem, __pyx_k_getitem, sizeof(__pyx_k_getitem), 0, 0, 1, 1},
   {&__pyx_n_s_h5py, __pyx_k_h5py, sizeof(__pyx_k_h5py), 0, 0, 1, 1},
   {&__pyx_n_s_handle, __pyx_k_handle, sizeof(__pyx_k_handle), 0, 0, 1, 1},
@@ -4392,6 +4735,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_index, __pyx_k_index, sizeof(__pyx_k_index), 0, 0, 1, 1},
   {&__pyx_n_s_init, __pyx_k_init, sizeof(__pyx_k_init), 0, 0, 1, 1},
+  {&__pyx_n_s_int, __pyx_k_int, sizeof(__pyx_k_int), 0, 0, 1, 1},
   {&__pyx_n_s_interval, __pyx_k_interval, sizeof(__pyx_k_interval), 0, 0, 1, 1},
   {&__pyx_n_s_janggo_data_genomicarray, __pyx_k_janggo_data_genomicarray, sizeof(__pyx_k_janggo_data_genomicarray), 0, 0, 1, 1},
   {&__pyx_n_s_join, __pyx_k_join, sizeof(__pyx_k_join), 0, 0, 1, 1},
@@ -4410,9 +4754,11 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_overwrite, __pyx_k_overwrite, sizeof(__pyx_k_overwrite), 0, 0, 1, 1},
   {&__pyx_n_s_path, __pyx_k_path, sizeof(__pyx_k_path), 0, 0, 1, 1},
   {&__pyx_n_s_prepare, __pyx_k_prepare, sizeof(__pyx_k_prepare), 0, 0, 1, 1},
+  {&__pyx_n_s_print, __pyx_k_print, sizeof(__pyx_k_print), 0, 0, 1, 1},
   {&__pyx_n_s_property, __pyx_k_property, sizeof(__pyx_k_property), 0, 0, 1, 1},
   {&__pyx_n_s_qualname, __pyx_k_qualname, sizeof(__pyx_k_qualname), 0, 0, 1, 1},
   {&__pyx_n_s_r, __pyx_k_r, sizeof(__pyx_k_r), 0, 0, 1, 1},
+  {&__pyx_kp_s_reload, __pyx_k_reload, sizeof(__pyx_k_reload), 0, 0, 1, 0},
   {&__pyx_n_s_sample, __pyx_k_sample, sizeof(__pyx_k_sample), 0, 0, 1, 1},
   {&__pyx_n_s_self, __pyx_k_self, sizeof(__pyx_k_self), 0, 0, 1, 1},
   {&__pyx_n_s_setitem, __pyx_k_setitem, sizeof(__pyx_k_setitem), 0, 0, 1, 1},
@@ -4420,8 +4766,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_shape, __pyx_k_shape, sizeof(__pyx_k_shape), 0, 0, 1, 1},
   {&__pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_k_src_janggo_data_genomicarray_pyx, sizeof(__pyx_k_src_janggo_data_genomicarray_pyx), 0, 0, 1, 0},
   {&__pyx_n_s_start, __pyx_k_start, sizeof(__pyx_k_start), 0, 0, 1, 1},
+  {&__pyx_n_s_stdio, __pyx_k_stdio, sizeof(__pyx_k_stdio), 0, 0, 1, 1},
   {&__pyx_n_s_storage, __pyx_k_storage, sizeof(__pyx_k_storage), 0, 0, 1, 1},
-  {&__pyx_kp_s_storage_h5, __pyx_k_storage_h5, sizeof(__pyx_k_storage_h5), 0, 0, 1, 0},
+  {&__pyx_kp_s_storage_stranded_h5, __pyx_k_storage_stranded_h5, sizeof(__pyx_k_storage_stranded_h5), 0, 0, 1, 0},
+  {&__pyx_kp_s_storage_unstranded_h5, __pyx_k_storage_unstranded_h5, sizeof(__pyx_k_storage_unstranded_h5), 0, 0, 1, 0},
   {&__pyx_n_s_strand, __pyx_k_strand, sizeof(__pyx_k_strand), 0, 0, 1, 1},
   {&__pyx_n_s_stranded, __pyx_k_stranded, sizeof(__pyx_k_stranded), 0, 0, 1, 1},
   {&__pyx_n_s_string, __pyx_k_string, sizeof(__pyx_k_string), 0, 0, 1, 1},
@@ -4432,13 +4780,14 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_value, __pyx_k_value, sizeof(__pyx_k_value), 0, 0, 1, 1},
   {&__pyx_n_s_w, __pyx_k_w, sizeof(__pyx_k_w), 0, 0, 1, 1},
   {&__pyx_n_s_x, __pyx_k_x, sizeof(__pyx_k_x), 0, 0, 1, 1},
+  {&__pyx_n_s_zeros, __pyx_k_zeros, sizeof(__pyx_k_zeros), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_object = __Pyx_GetBuiltinName(__pyx_n_s_object); if (!__pyx_builtin_object) __PYX_ERR(0, 11, __pyx_L1_error)
-  __pyx_builtin_property = __Pyx_GetBuiltinName(__pyx_n_s_property); if (!__pyx_builtin_property) __PYX_ERR(0, 124, __pyx_L1_error)
-  __pyx_builtin_IndexError = __Pyx_GetBuiltinName(__pyx_n_s_IndexError); if (!__pyx_builtin_IndexError) __PYX_ERR(0, 55, __pyx_L1_error)
-  __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_n_s_super); if (!__pyx_builtin_super) __PYX_ERR(0, 102, __pyx_L1_error)
+  __pyx_builtin_object = __Pyx_GetBuiltinName(__pyx_n_s_object); if (!__pyx_builtin_object) __PYX_ERR(0, 9, __pyx_L1_error)
+  __pyx_builtin_property = __Pyx_GetBuiltinName(__pyx_n_s_property); if (!__pyx_builtin_property) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_builtin_IndexError = __Pyx_GetBuiltinName(__pyx_n_s_IndexError); if (!__pyx_builtin_IndexError) __PYX_ERR(0, 59, __pyx_L1_error)
+  __pyx_builtin_super = __Pyx_GetBuiltinName(__pyx_n_s_super); if (!__pyx_builtin_super) __PYX_ERR(0, 116, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -4448,143 +4797,152 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "janggo/data/genomicarray.pyx":55
+  /* "janggo/data/genomicarray.pyx":59
  *             self.handle[chrom][start:end, 1 if self.stranded and strand=='-' else 0, condition] = value
  *         else:
  *             raise IndexError("Index must be a GenomicInterval and a condition index")             # <<<<<<<<<<<<<<
  * 
  *     def __getitem__(self, index):
  */
-  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_Index_must_be_a_GenomicInterval); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 55, __pyx_L1_error)
+  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_Index_must_be_a_GenomicInterval); if (unlikely(!__pyx_tuple__2)) __PYX_ERR(0, 59, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "janggo/data/genomicarray.pyx":67
- *             return da.from_array(self.handle[chrom], chunks=1024**2)[start:end, 1 if self.stranded and strand=='-' else 0, condition].compute()
+  /* "janggo/data/genomicarray.pyx":72
+ *             return self.handle[chrom][start:end]
  *         else:
- *             raise IndexError("Index must be a GenomicInterval and a condition index")             # <<<<<<<<<<<<<<
+ *             raise IndexError("Index must be a GenomicInterval")             # <<<<<<<<<<<<<<
  * 
- * 
+ *     @property
  */
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_s_Index_must_be_a_GenomicInterval); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 67, __pyx_L1_error)
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_s_Index_must_be_a_GenomicInterval_2); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 72, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "janggo/data/genomicarray.pyx":11
+  /* "janggo/data/genomicarray.pyx":200
+ *                               loader, loader_args)
+ *     else:
+ *         raise Exception("Storage type must be 'hdf5' or 'ndarray'")             # <<<<<<<<<<<<<<
+ */
+  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_Storage_type_must_be_hdf5_or_nda); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 200, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__5);
+  __Pyx_GIVEREF(__pyx_tuple__5);
+
+  /* "janggo/data/genomicarray.pyx":9
  * 
  * 
  * class GenomicArray(object):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_builtin_object); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_builtin_object); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "janggo/data/genomicarray.pyx":42
- *     handle = None
+  /* "janggo/data/genomicarray.pyx":41
+ *     _condition = None
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):             # <<<<<<<<<<<<<<
  *         self.stranded = stranded
- * 
+ *         if not conditions:
  */
-  __pyx_tuple__7 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_tuple__7 = PyTuple_Pack(5, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
-  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(5, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_init, 42, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) __PYX_ERR(0, 42, __pyx_L1_error)
-  __pyx_tuple__9 = PyTuple_Pack(3, ((PyObject *)Py_True), ((PyObject *)Py_None), ((PyObject*)__pyx_n_s_d)); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(5, 0, 5, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_init, 41, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) __PYX_ERR(0, 41, __pyx_L1_error)
+  __pyx_tuple__9 = PyTuple_Pack(3, ((PyObject *)Py_True), ((PyObject *)Py_None), ((PyObject*)__pyx_n_s_d)); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
 
-  /* "janggo/data/genomicarray.pyx":45
- *         self.stranded = stranded
+  /* "janggo/data/genomicarray.pyx":49
+ * 
  * 
  *     def __setitem__(self, index, value):             # <<<<<<<<<<<<<<
  *         interval = index[0]
  *         condition = index[1]
  */
-  __pyx_tuple__10 = PyTuple_Pack(9, __pyx_n_s_self, __pyx_n_s_index, __pyx_n_s_value, __pyx_n_s_interval, __pyx_n_s_condition, __pyx_n_s_chrom, __pyx_n_s_start, __pyx_n_s_end, __pyx_n_s_strand); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_tuple__10 = PyTuple_Pack(9, __pyx_n_s_self, __pyx_n_s_index, __pyx_n_s_value, __pyx_n_s_interval, __pyx_n_s_condition, __pyx_n_s_chrom, __pyx_n_s_start, __pyx_n_s_end, __pyx_n_s_strand); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(3, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_setitem, 45, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(3, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_setitem, 49, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 49, __pyx_L1_error)
 
-  /* "janggo/data/genomicarray.pyx":57
+  /* "janggo/data/genomicarray.pyx":61
  *             raise IndexError("Index must be a GenomicInterval and a condition index")
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
- *         interval = index[0]
- *         condition = index[1]
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):
  */
-  __pyx_tuple__12 = PyTuple_Pack(8, __pyx_n_s_self, __pyx_n_s_index, __pyx_n_s_interval, __pyx_n_s_condition, __pyx_n_s_chrom, __pyx_n_s_start, __pyx_n_s_end, __pyx_n_s_strand); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_tuple__12 = PyTuple_Pack(7, __pyx_n_s_self, __pyx_n_s_index, __pyx_n_s_interval, __pyx_n_s_chrom, __pyx_n_s_start, __pyx_n_s_end, __pyx_n_s_strand); if (unlikely(!__pyx_tuple__12)) __PYX_ERR(0, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__12);
   __Pyx_GIVEREF(__pyx_tuple__12);
-  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(2, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_getitem, 57, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_codeobj__13 = (PyObject*)__Pyx_PyCode_New(2, 0, 7, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__12, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_getitem, 61, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__13)) __PYX_ERR(0, 61, __pyx_L1_error)
 
-  /* "janggo/data/genomicarray.pyx":100
+  /* "janggo/data/genomicarray.pyx":75
+ * 
+ *     @property
+ *     def condition(self):             # <<<<<<<<<<<<<<
+ *         return self._condition
+ * 
+ */
+  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__14);
+  __Pyx_GIVEREF(__pyx_tuple__14);
+  __pyx_codeobj__15 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__14, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_condition, 75, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__15)) __PYX_ERR(0, 75, __pyx_L1_error)
+
+  /* "janggo/data/genomicarray.pyx":79
+ * 
+ *     @condition.setter
+ *     def condition(self, conditions):             # <<<<<<<<<<<<<<
+ *         self._condition = conditions
+ * 
+ */
+  __pyx_tuple__16 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_conditions); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__16);
+  __Pyx_GIVEREF(__pyx_tuple__16);
+  __pyx_codeobj__17 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__16, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_condition, 79, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__17)) __PYX_ERR(0, 79, __pyx_L1_error)
+
+  /* "janggo/data/genomicarray.pyx":114
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
  *                  memmap_dir="", overwrite=False, loader=None, loader_args=None):
  *         super(HDF5GenomicArray, self).__init__(chroms, stranded,
  */
-  __pyx_tuple__14 = PyTuple_Pack(12, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite, __pyx_n_s_loader, __pyx_n_s_loader_args, __pyx_n_s_chrom, __pyx_n_s_shape, __pyx_n_s_x); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 100, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__14);
-  __Pyx_GIVEREF(__pyx_tuple__14);
-  __pyx_codeobj__15 = (PyObject*)__Pyx_PyCode_New(9, 0, 12, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__14, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_init, 100, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__15)) __PYX_ERR(0, 100, __pyx_L1_error)
-  __pyx_tuple__16 = PyTuple_Pack(7, ((PyObject *)Py_True), ((PyObject *)Py_None), ((PyObject*)__pyx_n_s_d), ((PyObject*)__pyx_kp_s__4), ((PyObject *)Py_False), ((PyObject *)Py_None), ((PyObject *)Py_None)); if (unlikely(!__pyx_tuple__16)) __PYX_ERR(0, 100, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__16);
-  __Pyx_GIVEREF(__pyx_tuple__16);
+  __pyx_tuple__18 = PyTuple_Pack(13, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite, __pyx_n_s_loader, __pyx_n_s_loader_args, __pyx_n_s_filename, __pyx_n_s_chrom, __pyx_n_s_shape, __pyx_n_s_x); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__18);
+  __Pyx_GIVEREF(__pyx_tuple__18);
+  __pyx_codeobj__19 = (PyObject*)__Pyx_PyCode_New(9, 0, 13, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__18, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_init, 114, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__19)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __pyx_tuple__20 = PyTuple_Pack(7, ((PyObject *)Py_True), ((PyObject *)Py_None), ((PyObject*)__pyx_n_s_d), ((PyObject*)__pyx_kp_s__4), ((PyObject *)Py_False), ((PyObject *)Py_None), ((PyObject *)Py_None)); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 114, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__20);
+  __Pyx_GIVEREF(__pyx_tuple__20);
 
-  /* "janggo/data/genomicarray.pyx":125
- * 
- *     @property
- *     def condition(self):             # <<<<<<<<<<<<<<
- *         return self.handle.attrs['conditions']
- * 
- */
-  __pyx_tuple__17 = PyTuple_Pack(1, __pyx_n_s_self); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 125, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__17);
-  __Pyx_GIVEREF(__pyx_tuple__17);
-  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(1, 0, 1, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_condition, 125, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 125, __pyx_L1_error)
-
-  /* "janggo/data/genomicarray.pyx":129
- * 
- *     @condition.setter
- *     def condition(self, conditions):             # <<<<<<<<<<<<<<
- *         self.handle.attrs['conditions'] = conditions
- * 
- */
-  __pyx_tuple__19 = PyTuple_Pack(2, __pyx_n_s_self, __pyx_n_s_conditions); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 129, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
-  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(2, 0, 2, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_condition, 129, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 129, __pyx_L1_error)
-
-  /* "janggo/data/genomicarray.pyx":163
+  /* "janggo/data/genomicarray.pyx":174
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
  *                  loader=None, loader_args=None):
  * 
  */
-  __pyx_tuple__21 = PyTuple_Pack(8, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode, __pyx_n_s_loader, __pyx_n_s_loader_args, __pyx_n_s_chrom); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_tuple__21 = PyTuple_Pack(8, __pyx_n_s_self, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode, __pyx_n_s_loader, __pyx_n_s_loader_args, __pyx_n_s_chrom); if (unlikely(!__pyx_tuple__21)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__21);
   __Pyx_GIVEREF(__pyx_tuple__21);
-  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(7, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_init, 163, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 163, __pyx_L1_error)
-  __pyx_tuple__23 = PyTuple_Pack(5, ((PyObject *)Py_True), ((PyObject *)Py_None), ((PyObject*)__pyx_n_s_d), ((PyObject *)Py_None), ((PyObject *)Py_None)); if (unlikely(!__pyx_tuple__23)) __PYX_ERR(0, 163, __pyx_L1_error)
+  __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(7, 0, 8, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_init, 174, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) __PYX_ERR(0, 174, __pyx_L1_error)
+  __pyx_tuple__23 = PyTuple_Pack(5, ((PyObject *)Py_True), ((PyObject *)Py_None), ((PyObject*)__pyx_n_s_d), ((PyObject *)Py_None), ((PyObject *)Py_None)); if (unlikely(!__pyx_tuple__23)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__23);
   __Pyx_GIVEREF(__pyx_tuple__23);
 
-  /* "janggo/data/genomicarray.pyx":183
+  /* "janggo/data/genomicarray.pyx":190
  * 
  * 
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',             # <<<<<<<<<<<<<<
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  */
-  __pyx_tuple__24 = PyTuple_Pack(9, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode, __pyx_n_s_storage, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite, __pyx_n_s_loader, __pyx_n_s_loader_args); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_tuple__24 = PyTuple_Pack(9, __pyx_n_s_chroms, __pyx_n_s_stranded, __pyx_n_s_conditions, __pyx_n_s_typecode, __pyx_n_s_storage, __pyx_n_s_memmap_dir, __pyx_n_s_overwrite, __pyx_n_s_loader, __pyx_n_s_loader_args); if (unlikely(!__pyx_tuple__24)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__24);
   __Pyx_GIVEREF(__pyx_tuple__24);
-  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(9, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_create_genomic_array, 183, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 183, __pyx_L1_error)
+  __pyx_codeobj__25 = (PyObject*)__Pyx_PyCode_New(9, 0, 9, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__24, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_src_janggo_data_genomicarray_pyx, __pyx_n_s_create_genomic_array, 190, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__25)) __PYX_ERR(0, 190, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4597,7 +4955,6 @@ static int __Pyx_InitGlobals(void) {
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_2 = PyInt_FromLong(2); if (unlikely(!__pyx_int_2)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_1048576 = PyInt_FromLong(1048576L); if (unlikely(!__pyx_int_1048576)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -4659,7 +5016,6 @@ static int __pyx_pymod_exec_genomicarray(PyObject *__pyx_pyinit_module)
   PyObject *__pyx_t_5 = NULL;
   PyObject *__pyx_t_6 = NULL;
   PyObject *__pyx_t_7 = NULL;
-  PyObject *__pyx_t_8 = NULL;
   __Pyx_RefNannyDeclarations
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   if (__pyx_m && __pyx_m == __pyx_pyinit_module) return 0;
@@ -4792,7 +5148,7 @@ static int __pyx_pymod_exec_genomicarray(PyObject *__pyx_pyinit_module)
  * import h5py
  * 
  * import numpy             # <<<<<<<<<<<<<<
- * import dask.array as da
+ * from HTSeq import GenomicInterval
  * 
  */
   __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 5, __pyx_L1_error)
@@ -4803,333 +5159,324 @@ static int __pyx_pymod_exec_genomicarray(PyObject *__pyx_pyinit_module)
   /* "janggo/data/genomicarray.pyx":6
  * 
  * import numpy
- * import dask.array as da             # <<<<<<<<<<<<<<
- * 
- * from HTSeq import GenomicInterval
- */
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_INCREF(__pyx_n_s__5);
-  __Pyx_GIVEREF(__pyx_n_s__5);
-  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s__5);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_dask_array, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 6, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_da, __pyx_t_2) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-  /* "janggo/data/genomicarray.pyx":8
- * import dask.array as da
- * 
  * from HTSeq import GenomicInterval             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 8, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(__pyx_n_s_GenomicInterval);
   __Pyx_GIVEREF(__pyx_n_s_GenomicInterval);
-  PyList_SET_ITEM(__pyx_t_2, 0, __pyx_n_s_GenomicInterval);
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_HTSeq, __pyx_t_2, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 8, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_ImportFrom(__pyx_t_1, __pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 8, __pyx_L1_error)
+  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_GenomicInterval);
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_HTSeq, __pyx_t_1, -1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_GenomicInterval, __pyx_t_2) < 0) __PYX_ERR(0, 8, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_GenomicInterval); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_GenomicInterval, __pyx_t_1) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "janggo/data/genomicarray.pyx":11
+  /* "janggo/data/genomicarray.pyx":9
  * 
  * 
  * class GenomicArray(object):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_t_1 = __Pyx_CalculateMetaclass(NULL, __pyx_tuple__6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_Py3MetaclassPrepare(__pyx_t_1, __pyx_tuple__6, __pyx_n_s_GenomicArray, __pyx_n_s_GenomicArray, (PyObject *) NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_kp_s_GenomicArray_stores_multi_dimens); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CalculateMetaclass(NULL, __pyx_tuple__6); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_1 = __Pyx_Py3MetaclassPrepare(__pyx_t_2, __pyx_tuple__6, __pyx_n_s_GenomicArray, __pyx_n_s_GenomicArray, (PyObject *) NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_kp_s_GenomicArray_stores_multi_dimens); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 9, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
 
-  /* "janggo/data/genomicarray.pyx":40
+  /* "janggo/data/genomicarray.pyx":38
  *         'memmap' and 'hdf5'. Default: "".
  *     """
  *     handle = None             # <<<<<<<<<<<<<<
+ *     _condition = None
+ * 
+ */
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_handle, Py_None) < 0) __PYX_ERR(0, 38, __pyx_L1_error)
+
+  /* "janggo/data/genomicarray.pyx":39
+ *     """
+ *     handle = None
+ *     _condition = None             # <<<<<<<<<<<<<<
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
  */
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s_handle, Py_None) < 0) __PYX_ERR(0, 40, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_condition_2, Py_None) < 0) __PYX_ERR(0, 39, __pyx_L1_error)
 
-  /* "janggo/data/genomicarray.pyx":42
- *     handle = None
+  /* "janggo/data/genomicarray.pyx":41
+ *     _condition = None
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):             # <<<<<<<<<<<<<<
  *         self.stranded = stranded
- * 
+ *         if not conditions:
  */
-  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_1__init__, 0, __pyx_n_s_GenomicArray___init, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__8)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_1__init__, 0, __pyx_n_s_GenomicArray___init, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__8)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_3, __pyx_tuple__9);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s_init, __pyx_t_3) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_init, __pyx_t_3) < 0) __PYX_ERR(0, 41, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "janggo/data/genomicarray.pyx":45
- *         self.stranded = stranded
+  /* "janggo/data/genomicarray.pyx":49
+ * 
  * 
  *     def __setitem__(self, index, value):             # <<<<<<<<<<<<<<
  *         interval = index[0]
  *         condition = index[1]
  */
-  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_3__setitem__, 0, __pyx_n_s_GenomicArray___setitem, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 45, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_3__setitem__, 0, __pyx_n_s_GenomicArray___setitem, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__11)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s_setitem, __pyx_t_3) < 0) __PYX_ERR(0, 45, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_setitem, __pyx_t_3) < 0) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "janggo/data/genomicarray.pyx":57
+  /* "janggo/data/genomicarray.pyx":61
  *             raise IndexError("Index must be a GenomicInterval and a condition index")
  * 
  *     def __getitem__(self, index):             # <<<<<<<<<<<<<<
- *         interval = index[0]
- *         condition = index[1]
+ *         # for now lets ignore everything except for chrom, start and end.
+ *         if isinstance(index, GenomicInterval):
  */
-  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_5__getitem__, 0, __pyx_n_s_GenomicArray___getitem, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__13)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 57, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_5__getitem__, 0, __pyx_n_s_GenomicArray___getitem, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__13)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 61, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyObject_SetItem(__pyx_t_2, __pyx_n_s_getitem, __pyx_t_3) < 0) __PYX_ERR(0, 57, __pyx_L1_error)
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_getitem, __pyx_t_3) < 0) __PYX_ERR(0, 61, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "janggo/data/genomicarray.pyx":11
+  /* "janggo/data/genomicarray.pyx":75
+ * 
+ *     @property
+ *     def condition(self):             # <<<<<<<<<<<<<<
+ *         return self._condition
+ * 
+ */
+  __pyx_t_3 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_7condition, 0, __pyx_n_s_GenomicArray_condition, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__15)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 75, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+
+  /* "janggo/data/genomicarray.pyx":74
+ *             raise IndexError("Index must be a GenomicInterval")
+ * 
+ *     @property             # <<<<<<<<<<<<<<
+ *     def condition(self):
+ *         return self._condition
+ */
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __Pyx_GIVEREF(__pyx_t_3);
+  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3);
+  __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_builtin_property, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_condition, __pyx_t_3) < 0) __PYX_ERR(0, 75, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "janggo/data/genomicarray.pyx":78
+ *         return self._condition
+ * 
+ *     @condition.setter             # <<<<<<<<<<<<<<
+ *     def condition(self, conditions):
+ *         self._condition = conditions
+ */
+  __pyx_t_4 = PyObject_GetItem(__pyx_t_1, __pyx_n_s_condition);
+  if (unlikely(!__pyx_t_4)) {
+    PyErr_Clear();
+    __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_condition);
+  }
+  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_setter); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 78, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+
+  /* "janggo/data/genomicarray.pyx":79
+ * 
+ *     @condition.setter
+ *     def condition(self, conditions):             # <<<<<<<<<<<<<<
+ *         self._condition = conditions
+ * 
+ */
+  __pyx_t_4 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_12GenomicArray_9condition, 0, __pyx_n_s_GenomicArray_condition, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__17)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 79, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_6 = NULL;
+  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
+    __pyx_t_6 = PyMethod_GET_SELF(__pyx_t_5);
+    if (likely(__pyx_t_6)) {
+      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_5);
+      __Pyx_INCREF(__pyx_t_6);
+      __Pyx_INCREF(function);
+      __Pyx_DECREF_SET(__pyx_t_5, function);
+    }
+  }
+  if (!__pyx_t_6) {
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    __Pyx_GOTREF(__pyx_t_3);
+  } else {
+    #if CYTHON_FAST_PYCALL
+    if (PyFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    } else
+    #endif
+    #if CYTHON_FAST_PYCCALL
+    if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
+      PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+      __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+    } else
+    #endif
+    {
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 78, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_7);
+      __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
+      __Pyx_GIVEREF(__pyx_t_4);
+      PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_4);
+      __pyx_t_4 = 0;
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 78, __pyx_L1_error)
+      __Pyx_GOTREF(__pyx_t_3);
+      __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    }
+  }
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
+  if (PyObject_SetItem(__pyx_t_1, __pyx_n_s_condition, __pyx_t_3) < 0) __PYX_ERR(0, 79, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+
+  /* "janggo/data/genomicarray.pyx":9
  * 
  * 
  * class GenomicArray(object):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_t_3 = __Pyx_Py3ClassCreate(__pyx_t_1, __pyx_n_s_GenomicArray, __pyx_tuple__6, __pyx_t_2, NULL, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_Py3ClassCreate(__pyx_t_2, __pyx_n_s_GenomicArray, __pyx_tuple__6, __pyx_t_1, NULL, 0, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_GenomicArray, __pyx_t_3) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_GenomicArray, __pyx_t_3) < 0) __PYX_ERR(0, 9, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "janggo/data/genomicarray.pyx":70
+  /* "janggo/data/genomicarray.pyx":84
  * 
  * 
  * class HDF5GenomicArray(GenomicArray):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
-  __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_1, __pyx_t_2, __pyx_n_s_HDF5GenomicArray, __pyx_n_s_HDF5GenomicArray, (PyObject *) NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_kp_s_GenomicArray_stores_multi_dimens_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 70, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_2);
+  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2);
+  __pyx_t_2 = 0;
+  __pyx_t_2 = __Pyx_CalculateMetaclass(NULL, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 84, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_2, __pyx_t_1, __pyx_n_s_HDF5GenomicArray, __pyx_n_s_HDF5GenomicArray, (PyObject *) NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_kp_s_GenomicArray_stores_multi_dimens_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 84, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
 
-  /* "janggo/data/genomicarray.pyx":100
+  /* "janggo/data/genomicarray.pyx":114
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
  *                  memmap_dir="", overwrite=False, loader=None, loader_args=None):
  *         super(HDF5GenomicArray, self).__init__(chroms, stranded,
  */
-  __pyx_t_4 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__init__, 0, __pyx_n_s_HDF5GenomicArray___init, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__15)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 100, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_tuple__16);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_init, __pyx_t_4) < 0) __PYX_ERR(0, 100, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "janggo/data/genomicarray.pyx":125
- * 
- *     @property
- *     def condition(self):             # <<<<<<<<<<<<<<
- *         return self.handle.attrs['conditions']
- * 
- */
-  __pyx_t_4 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_16HDF5GenomicArray_3condition, 0, __pyx_n_s_HDF5GenomicArray_condition, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__18)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 125, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-
-  /* "janggo/data/genomicarray.pyx":124
- *         self.handle = h5py.File(os.path.join(memmap_dir, "storage.h5"), 'r')
- * 
- *     @property             # <<<<<<<<<<<<<<
- *     def condition(self):
- *         return self.handle.attrs['conditions']
- */
-  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 124, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_16HDF5GenomicArray_1__init__, 0, __pyx_n_s_HDF5GenomicArray___init, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__19)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 114, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __Pyx_GIVEREF(__pyx_t_4);
-  PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4);
-  __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_builtin_property, __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 124, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_condition, __pyx_t_4) < 0) __PYX_ERR(0, 125, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "janggo/data/genomicarray.pyx":128
- *         return self.handle.attrs['conditions']
- * 
- *     @condition.setter             # <<<<<<<<<<<<<<
- *     def condition(self, conditions):
- *         self.handle.attrs['conditions'] = conditions
- */
-  __pyx_t_5 = PyObject_GetItem(__pyx_t_3, __pyx_n_s_condition);
-  if (unlikely(!__pyx_t_5)) {
-    PyErr_Clear();
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_condition);
-  }
-  if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 128, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_setter); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 128, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_6);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_tuple__20);
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_init, __pyx_t_5) < 0) __PYX_ERR(0, 114, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "janggo/data/genomicarray.pyx":129
- * 
- *     @condition.setter
- *     def condition(self, conditions):             # <<<<<<<<<<<<<<
- *         self.handle.attrs['conditions'] = conditions
- * 
- */
-  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_16HDF5GenomicArray_5condition, 0, __pyx_n_s_HDF5GenomicArray_condition, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 129, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_7 = NULL;
-  if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
-    __pyx_t_7 = PyMethod_GET_SELF(__pyx_t_6);
-    if (likely(__pyx_t_7)) {
-      PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
-      __Pyx_INCREF(__pyx_t_7);
-      __Pyx_INCREF(function);
-      __Pyx_DECREF_SET(__pyx_t_6, function);
-    }
-  }
-  if (!__pyx_t_7) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 128, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_GOTREF(__pyx_t_4);
-  } else {
-    #if CYTHON_FAST_PYCALL
-    if (PyFunction_Check(__pyx_t_6)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 128, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    } else
-    #endif
-    #if CYTHON_FAST_PYCCALL
-    if (__Pyx_PyFastCFunction_Check(__pyx_t_6)) {
-      PyObject *__pyx_temp[2] = {__pyx_t_7, __pyx_t_5};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_6, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 128, __pyx_L1_error)
-      __Pyx_XDECREF(__pyx_t_7); __pyx_t_7 = 0;
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    } else
-    #endif
-    {
-      __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 128, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_8);
-      __Pyx_GIVEREF(__pyx_t_7); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_7); __pyx_t_7 = NULL;
-      __Pyx_GIVEREF(__pyx_t_5);
-      PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_5);
-      __pyx_t_5 = 0;
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 128, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_4);
-      __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    }
-  }
-  __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_condition, __pyx_t_4) < 0) __PYX_ERR(0, 129, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-
-  /* "janggo/data/genomicarray.pyx":70
+  /* "janggo/data/genomicarray.pyx":84
  * 
  * 
  * class HDF5GenomicArray(GenomicArray):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_t_4 = __Pyx_Py3ClassCreate(__pyx_t_1, __pyx_n_s_HDF5GenomicArray, __pyx_t_2, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_HDF5GenomicArray, __pyx_t_4) < 0) __PYX_ERR(0, 70, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = __Pyx_Py3ClassCreate(__pyx_t_2, __pyx_n_s_HDF5GenomicArray, __pyx_t_1, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 84, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_HDF5GenomicArray, __pyx_t_5) < 0) __PYX_ERR(0, 84, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "janggo/data/genomicarray.pyx":133
+  /* "janggo/data/genomicarray.pyx":144
  * 
  * 
  * class NPGenomicArray(GenomicArray):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_GenomicArray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 144, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __Pyx_GIVEREF(__pyx_t_2);
-  PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2);
-  __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_CalculateMetaclass(NULL, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 144, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_2, __pyx_t_1, __pyx_n_s_NPGenomicArray, __pyx_n_s_NPGenomicArray, (PyObject *) NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_kp_s_GenomicArray_stores_multi_dimens_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 133, __pyx_L1_error)
+  __Pyx_GIVEREF(__pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
+  __pyx_t_1 = 0;
+  __pyx_t_1 = __Pyx_CalculateMetaclass(NULL, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 144, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_3 = __Pyx_Py3MetaclassPrepare(__pyx_t_1, __pyx_t_2, __pyx_n_s_NPGenomicArray, __pyx_n_s_NPGenomicArray, (PyObject *) NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_kp_s_GenomicArray_stores_multi_dimens_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 144, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
 
-  /* "janggo/data/genomicarray.pyx":163
+  /* "janggo/data/genomicarray.pyx":174
  *     """
  * 
  *     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
  *                  loader=None, loader_args=None):
  * 
  */
-  __pyx_t_4 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_14NPGenomicArray_1__init__, 0, __pyx_n_s_NPGenomicArray___init, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__22)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 163, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_4, __pyx_tuple__23);
-  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_init, __pyx_t_4) < 0) __PYX_ERR(0, 163, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = __Pyx_CyFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_14NPGenomicArray_1__init__, 0, __pyx_n_s_NPGenomicArray___init, NULL, __pyx_n_s_janggo_data_genomicarray, __pyx_d, ((PyObject *)__pyx_codeobj__22)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 174, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_tuple__23);
+  if (PyObject_SetItem(__pyx_t_3, __pyx_n_s_init, __pyx_t_5) < 0) __PYX_ERR(0, 174, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-  /* "janggo/data/genomicarray.pyx":133
+  /* "janggo/data/genomicarray.pyx":144
  * 
  * 
  * class NPGenomicArray(GenomicArray):             # <<<<<<<<<<<<<<
  *     """GenomicArray stores multi-dimensional genomic information.
  * 
  */
-  __pyx_t_4 = __Pyx_Py3ClassCreate(__pyx_t_2, __pyx_n_s_NPGenomicArray, __pyx_t_1, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 133, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_NPGenomicArray, __pyx_t_4) < 0) __PYX_ERR(0, 133, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_5 = __Pyx_Py3ClassCreate(__pyx_t_1, __pyx_n_s_NPGenomicArray, __pyx_t_2, __pyx_t_3, NULL, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 144, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_5);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_NPGenomicArray, __pyx_t_5) < 0) __PYX_ERR(0, 144, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "janggo/data/genomicarray.pyx":183
+  /* "janggo/data/genomicarray.pyx":190
  * 
  * 
- * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='d',             # <<<<<<<<<<<<<<
+ * def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',             # <<<<<<<<<<<<<<
  *                          storage='hdf5', memmap_dir="", overwrite=False,
  *                          loader=None, loader_args=None):
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_1create_genomic_array, NULL, __pyx_n_s_janggo_data_genomicarray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 183, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_create_genomic_array, __pyx_t_1) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_6janggo_4data_12genomicarray_1create_genomic_array, NULL, __pyx_n_s_janggo_data_genomicarray); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 190, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_create_genomic_array, __pyx_t_2) < 0) __PYX_ERR(0, 190, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "janggo/data/genomicarray.pyx":1
  * import sys             # <<<<<<<<<<<<<<
  * import os
  * import h5py
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) __PYX_ERR(0, 1, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /*--- Wrapped vars code ---*/
 
@@ -5142,7 +5489,6 @@ static int __pyx_pymod_exec_genomicarray(PyObject *__pyx_pyinit_module)
   __Pyx_XDECREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_7);
-  __Pyx_XDECREF(__pyx_t_8);
   if (__pyx_m) {
     if (__pyx_d) {
       __Pyx_AddTraceback("init janggo.data.genomicarray", 0, __pyx_lineno, __pyx_filename);
@@ -5790,28 +6136,102 @@ bad:
 }
 #endif
 
-/* PyCFunctionFastCall */
-  #if CYTHON_FAST_PYCCALL
-static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
-    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
-    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
-    PyObject *self = PyCFunction_GET_SELF(func);
-    int flags = PyCFunction_GET_FLAGS(func);
-    assert(PyCFunction_Check(func));
-    assert(METH_FASTCALL == (flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_KEYWORDS)));
-    assert(nargs >= 0);
-    assert(nargs == 0 || args != NULL);
-    /* _PyCFunction_FastCallDict() must not be called with an exception set,
-       because it may clear it (directly or indirectly) and so the
-       caller loses its exception */
-    assert(!PyErr_Occurred());
-    if ((PY_VERSION_HEX < 0x030700A0) || unlikely(flags & METH_KEYWORDS)) {
-        return (*((__Pyx_PyCFunctionFastWithKeywords)meth)) (self, args, nargs, NULL);
-    } else {
-        return (*((__Pyx_PyCFunctionFast)meth)) (self, args, nargs);
+/* SliceObject */
+  static CYTHON_INLINE PyObject* __Pyx_PyObject_GetSlice(PyObject* obj,
+        Py_ssize_t cstart, Py_ssize_t cstop,
+        PyObject** _py_start, PyObject** _py_stop, PyObject** _py_slice,
+        int has_cstart, int has_cstop, CYTHON_UNUSED int wraparound) {
+#if CYTHON_USE_TYPE_SLOTS
+    PyMappingMethods* mp;
+#if PY_MAJOR_VERSION < 3
+    PySequenceMethods* ms = Py_TYPE(obj)->tp_as_sequence;
+    if (likely(ms && ms->sq_slice)) {
+        if (!has_cstart) {
+            if (_py_start && (*_py_start != Py_None)) {
+                cstart = __Pyx_PyIndex_AsSsize_t(*_py_start);
+                if ((cstart == (Py_ssize_t)-1) && PyErr_Occurred()) goto bad;
+            } else
+                cstart = 0;
+        }
+        if (!has_cstop) {
+            if (_py_stop && (*_py_stop != Py_None)) {
+                cstop = __Pyx_PyIndex_AsSsize_t(*_py_stop);
+                if ((cstop == (Py_ssize_t)-1) && PyErr_Occurred()) goto bad;
+            } else
+                cstop = PY_SSIZE_T_MAX;
+        }
+        if (wraparound && unlikely((cstart < 0) | (cstop < 0)) && likely(ms->sq_length)) {
+            Py_ssize_t l = ms->sq_length(obj);
+            if (likely(l >= 0)) {
+                if (cstop < 0) {
+                    cstop += l;
+                    if (cstop < 0) cstop = 0;
+                }
+                if (cstart < 0) {
+                    cstart += l;
+                    if (cstart < 0) cstart = 0;
+                }
+            } else {
+                if (!PyErr_ExceptionMatches(PyExc_OverflowError))
+                    goto bad;
+                PyErr_Clear();
+            }
+        }
+        return ms->sq_slice(obj, cstart, cstop);
     }
-}
 #endif
+    mp = Py_TYPE(obj)->tp_as_mapping;
+    if (likely(mp && mp->mp_subscript))
+#endif
+    {
+        PyObject* result;
+        PyObject *py_slice, *py_start, *py_stop;
+        if (_py_slice) {
+            py_slice = *_py_slice;
+        } else {
+            PyObject* owned_start = NULL;
+            PyObject* owned_stop = NULL;
+            if (_py_start) {
+                py_start = *_py_start;
+            } else {
+                if (has_cstart) {
+                    owned_start = py_start = PyInt_FromSsize_t(cstart);
+                    if (unlikely(!py_start)) goto bad;
+                } else
+                    py_start = Py_None;
+            }
+            if (_py_stop) {
+                py_stop = *_py_stop;
+            } else {
+                if (has_cstop) {
+                    owned_stop = py_stop = PyInt_FromSsize_t(cstop);
+                    if (unlikely(!py_stop)) {
+                        Py_XDECREF(owned_start);
+                        goto bad;
+                    }
+                } else
+                    py_stop = Py_None;
+            }
+            py_slice = PySlice_New(py_start, py_stop, Py_None);
+            Py_XDECREF(owned_start);
+            Py_XDECREF(owned_stop);
+            if (unlikely(!py_slice)) goto bad;
+        }
+#if CYTHON_USE_TYPE_SLOTS
+        result = mp->mp_subscript(obj, py_slice);
+#else
+        result = PyObject_GetItem(obj, py_slice);
+#endif
+        if (!_py_slice) {
+            Py_DECREF(py_slice);
+        }
+        return result;
+    }
+    PyErr_Format(PyExc_TypeError,
+        "'%.200s' object is unsliceable", Py_TYPE(obj)->tp_name);
+bad:
+    return NULL;
+}
 
 /* PyFunctionFastCall */
   #if CYTHON_FAST_PYCALL
@@ -5931,6 +6351,29 @@ done:
     return result;
 }
 #endif
+#endif
+
+/* PyCFunctionFastCall */
+  #if CYTHON_FAST_PYCCALL
+static CYTHON_INLINE PyObject * __Pyx_PyCFunction_FastCall(PyObject *func_obj, PyObject **args, Py_ssize_t nargs) {
+    PyCFunctionObject *func = (PyCFunctionObject*)func_obj;
+    PyCFunction meth = PyCFunction_GET_FUNCTION(func);
+    PyObject *self = PyCFunction_GET_SELF(func);
+    int flags = PyCFunction_GET_FLAGS(func);
+    assert(PyCFunction_Check(func));
+    assert(METH_FASTCALL == (flags & ~(METH_CLASS | METH_STATIC | METH_COEXIST | METH_KEYWORDS)));
+    assert(nargs >= 0);
+    assert(nargs == 0 || args != NULL);
+    /* _PyCFunction_FastCallDict() must not be called with an exception set,
+       because it may clear it (directly or indirectly) and so the
+       caller loses its exception */
+    assert(!PyErr_Occurred());
+    if ((PY_VERSION_HEX < 0x030700A0) || unlikely(flags & METH_KEYWORDS)) {
+        return (*((__Pyx_PyCFunctionFastWithKeywords)meth)) (self, args, nargs, NULL);
+    } else {
+        return (*((__Pyx_PyCFunctionFast)meth)) (self, args, nargs);
+    }
+}
 #endif
 
 /* PyObjectCallMethO */
@@ -7063,6 +7506,149 @@ bad:
                                      little, !is_unsigned);
     }
 }
+
+/* Print */
+        #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
+static PyObject *__Pyx_GetStdout(void) {
+    PyObject *f = PySys_GetObject((char *)"stdout");
+    if (!f) {
+        PyErr_SetString(PyExc_RuntimeError, "lost sys.stdout");
+    }
+    return f;
+}
+static int __Pyx_Print(PyObject* f, PyObject *arg_tuple, int newline) {
+    int i;
+    if (!f) {
+        if (!(f = __Pyx_GetStdout()))
+            return -1;
+    }
+    Py_INCREF(f);
+    for (i=0; i < PyTuple_GET_SIZE(arg_tuple); i++) {
+        PyObject* v;
+        if (PyFile_SoftSpace(f, 1)) {
+            if (PyFile_WriteString(" ", f) < 0)
+                goto error;
+        }
+        v = PyTuple_GET_ITEM(arg_tuple, i);
+        if (PyFile_WriteObject(v, f, Py_PRINT_RAW) < 0)
+            goto error;
+        if (PyString_Check(v)) {
+            char *s = PyString_AsString(v);
+            Py_ssize_t len = PyString_Size(v);
+            if (len > 0) {
+                switch (s[len-1]) {
+                    case ' ': break;
+                    case '\f': case '\r': case '\n': case '\t': case '\v':
+                        PyFile_SoftSpace(f, 0);
+                        break;
+                    default:  break;
+                }
+            }
+        }
+    }
+    if (newline) {
+        if (PyFile_WriteString("\n", f) < 0)
+            goto error;
+        PyFile_SoftSpace(f, 0);
+    }
+    Py_DECREF(f);
+    return 0;
+error:
+    Py_DECREF(f);
+    return -1;
+}
+#else
+static int __Pyx_Print(PyObject* stream, PyObject *arg_tuple, int newline) {
+    PyObject* kwargs = 0;
+    PyObject* result = 0;
+    PyObject* end_string;
+    if (unlikely(!__pyx_print)) {
+        __pyx_print = PyObject_GetAttr(__pyx_b, __pyx_n_s_print);
+        if (!__pyx_print)
+            return -1;
+    }
+    if (stream) {
+        kwargs = PyDict_New();
+        if (unlikely(!kwargs))
+            return -1;
+        if (unlikely(PyDict_SetItem(kwargs, __pyx_n_s_file, stream) < 0))
+            goto bad;
+        if (!newline) {
+            end_string = PyUnicode_FromStringAndSize(" ", 1);
+            if (unlikely(!end_string))
+                goto bad;
+            if (PyDict_SetItem(kwargs, __pyx_n_s_end, end_string) < 0) {
+                Py_DECREF(end_string);
+                goto bad;
+            }
+            Py_DECREF(end_string);
+        }
+    } else if (!newline) {
+        if (unlikely(!__pyx_print_kwargs)) {
+            __pyx_print_kwargs = PyDict_New();
+            if (unlikely(!__pyx_print_kwargs))
+                return -1;
+            end_string = PyUnicode_FromStringAndSize(" ", 1);
+            if (unlikely(!end_string))
+                return -1;
+            if (PyDict_SetItem(__pyx_print_kwargs, __pyx_n_s_end, end_string) < 0) {
+                Py_DECREF(end_string);
+                return -1;
+            }
+            Py_DECREF(end_string);
+        }
+        kwargs = __pyx_print_kwargs;
+    }
+    result = PyObject_Call(__pyx_print, arg_tuple, kwargs);
+    if (unlikely(kwargs) && (kwargs != __pyx_print_kwargs))
+        Py_DECREF(kwargs);
+    if (!result)
+        return -1;
+    Py_DECREF(result);
+    return 0;
+bad:
+    if (kwargs != __pyx_print_kwargs)
+        Py_XDECREF(kwargs);
+    return -1;
+}
+#endif
+
+/* PrintOne */
+        #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
+static int __Pyx_PrintOne(PyObject* f, PyObject *o) {
+    if (!f) {
+        if (!(f = __Pyx_GetStdout()))
+            return -1;
+    }
+    Py_INCREF(f);
+    if (PyFile_SoftSpace(f, 0)) {
+        if (PyFile_WriteString(" ", f) < 0)
+            goto error;
+    }
+    if (PyFile_WriteObject(o, f, Py_PRINT_RAW) < 0)
+        goto error;
+    if (PyFile_WriteString("\n", f) < 0)
+        goto error;
+    Py_DECREF(f);
+    return 0;
+error:
+    Py_DECREF(f);
+    return -1;
+    /* the line below is just to avoid C compiler
+     * warnings about unused functions */
+    return __Pyx_Print(f, NULL, 0);
+}
+#else
+static int __Pyx_PrintOne(PyObject* stream, PyObject *o) {
+    int res;
+    PyObject* arg_tuple = PyTuple_Pack(1, o);
+    if (unlikely(!arg_tuple))
+        return -1;
+    res = __Pyx_Print(stream, arg_tuple, 1);
+    Py_DECREF(arg_tuple);
+    return res;
+}
+#endif
 
 /* CIntFromPyVerify */
         #define __PYX_VERIFY_RETURN_INT(target_type, func_type, func_value)\

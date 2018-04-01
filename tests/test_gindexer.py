@@ -12,13 +12,13 @@ def test_gindexer_errors():
 
     with pytest.raises(ValueError):
         GenomicIndexer.create_from_file(os.path.join(data_path,
-                                                        'regions.bed'),
-                                           binsize=0, stepsize=50)
+                                                     'regions.bed'),
+                                        binsize=0, stepsize=50)
 
     with pytest.raises(ValueError):
         GenomicIndexer.create_from_file(os.path.join(data_path,
-                                                        'regions.bed'),
-                                           binsize=10, stepsize=0)
+                                                     'regions.bed'),
+                                        binsize=10, stepsize=0)
 
 
 def test_gindexer_merged():

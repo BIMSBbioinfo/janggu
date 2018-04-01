@@ -1,4 +1,3 @@
-import itertools
 import os
 
 import numpy as np
@@ -55,8 +54,7 @@ class CoverageDataset(Dataset):
     def __init__(self, name, covers,
                  gindexer,  # indices of pointing to region start
                  flank=4,  # flanking region to consider
-                 stranded=True  # strandedness to consider
-                 ):
+                 stranded=True):  # strandedness to consider
 
         self.covers = covers
         self.gindexer = gindexer
@@ -68,8 +66,10 @@ class CoverageDataset(Dataset):
     @classmethod
     def create_from_bam(cls, name, bamfiles, regions, genomesize=None,
                         samplenames=None,
-                        resolution=50, stride=50,
-                        flank=4, stranded=True, storage='hdf5',
+                        min_mapq=None,
+                        binsize=50, stepsize=50,
+                        flank=150, storage='hdf5',
+                        dtype='int',
                         overwrite=False,
                         cachedir=None):
         """Create a CoverageDataset class from a bam-file (or files).
@@ -88,14 +88,13 @@ class CoverageDataset(Dataset):
         samplenames : list
             List of samplenames. Default: None means that the filenames
             are used as samplenames as well.
-        resolution : int
-            Resolution in basepairs. Default: 50.
-        stride : int
-            Stride in basepairs. This defines the step size for traversing
+        binsize : int
+            Binsize in basepairs. Default: 50.
+        stepsize : int
+            Stepsize in basepairs. This defines the step size for traversing
             the genome. Default: 50.
         flank : int
-            Adjacent flanking bins to use, where the bin size is determined
-            by the resolution. Default: 4.
+            Adjacent flanking size to extend in basepairs. Default: 150.
         stranded : boolean
             Consider strandedness of coverage. Default: True.
         storage : str
@@ -107,14 +106,16 @@ class CoverageDataset(Dataset):
             Directory in which the cachefiles are located. Default: None.
         """
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                      stepsize)
+        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize)
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
 
         if not samplenames:
             samplenames = bamfiles
+
+        if not min_mapq:
+            min_mapq = 0
 
         if not genomesize:
             header = pysam.AlignmentFile(bamfiles[0], 'r')
@@ -128,37 +129,54 @@ class CoverageDataset(Dataset):
                 print('Counting from {}'.format(sample_file))
                 aln_file = pysam.AlignmentFile(sample_file, 'rb')
                 for chrom in genomesize:
-                    print(chrom)
-                    array = np.zeros((genomesize[chrom], 2), dtype='int16')
-                    
-                    for aln in aln_file.fetch(chrom):
-                        array[aln.query_alignment_start, 
-                              1 if aln.is_reverse else 0] += 1
-                    cover[GenomicInterval(aln.reference_name, 0,
-                                          genomesize[chrom], '+'), i] = array[:, 0]
-                    cover[GenomicInterval(aln.reference_name, 0,
-                                          genomesize[chrom], '-'), i] = array[:, 1]
+
+                    array = np.zeros((genomesize[chrom], 2), dtype=dtype)
+
+                    try:
+                        it_ = aln_file.fetch(chrom)
+                    except ValueError:
+                        print("Contig '{}' abscent in bam".format(chrom))
+                        continue
+                    for aln in it_:
+                        if aln.mapq < min_mapq:
+                            continue
+
+                        if aln.is_reverse:
+                            array[aln.reference_end - 1 if aln.reference_end
+                                  else aln.reference_start, 1] += 1
+                        else:
+                            array[aln.reference_start, 0] += 1
+
+                    cover[GenomicInterval(chrom, 0, genomesize[chrom],
+                                          '+'), i] = array[:, 0]
+                    cover[GenomicInterval(chrom, 0, genomesize[chrom],
+                                          '-'), i] = array[:, 1]
 
             return cover
 
-        memmap_dir = os.path.join(cachedir, name)
+        if cachedir:
+            memmap_dir = os.path.join(cachedir, name)
+        else:
+            memmap_dir = None
+
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        cover = create_genomic_array(genomesize, stranded=False,
+        cover = create_genomic_array(genomesize, stranded=True,
                                      storage=storage, memmap_dir=memmap_dir,
-                                     conditions = samplenames,
+                                     conditions=samplenames,
                                      overwrite=overwrite,
-                                     typecode='int16',
+                                     typecode=dtype,
                                      loader=bam_loader,
                                      loader_args=(bamfiles,))
 
-        return cls(name, cover, gindexer, flank, stranded)
+        return cls(name, cover, gindexer, flank, stranded=True)
 
     @classmethod
     def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize,
                            samplenames=None,
-                           resolution=50, stride=50,
+                           binsize=50, stepsize=50,
                            flank=4, storage='hdf5',
+                           dtype='int',
                            overwrite=False,
                            cachedir=None):
         """Create a CoverageDataset class from a bigwig-file (or files).
@@ -177,14 +195,14 @@ class CoverageDataset(Dataset):
         samplenames : list
             List of samplenames. Default: None means that the filenames
             are used as samplenames as well.
-        resolution : int
-            Resolution in basepairs. Default: 50.
-        stride : int
-            Stride in basepairs. This defines the step size for traversing
+        binsize : int
+            binsize in basepairs. Default: 50.
+        stepsize : int
+            stepsize in basepairs. This defines the step size for traversing
             the genome. Default: 50.
         flank : int
             Adjacent flanking bins to use, where the bin size is determined
-            by the resolution. Default: 4.
+            by the binsize. Default: 4.
         storage : str
             Storage mode for storing the coverage data can be
             'step', 'ndarray', 'memmap' or 'hdf5'. Default: 'hdf5'.
@@ -195,7 +213,7 @@ class CoverageDataset(Dataset):
         """
 
         gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                      stepsize)
+                                                   stepsize)
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -206,29 +224,32 @@ class CoverageDataset(Dataset):
         def bigwig_loader(cover, bigwigfiles, gindexer):
             print("load from bigwig")
             for i, sample_file in enumerate(bigwigfiles):
-                print('processing from {}'.format(sample_file))
                 bwfile = pyBigWig.open(sample_file)
 
                 for j in range(len(gindexer)):
                     interval = gindexer[j]
                     cover[interval.start_as_pos, i] = \
                         np.sum(bwfile.values(interval.chrom,
-                                            int(interval.start),
-                                            int(interval.end)))
+                                             int(interval.start),
+                                             int(interval.end)))
             return cover
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        memmap_dir = os.path.join(cachedir, name)
+        if cachedir:
+            memmap_dir = os.path.join(cachedir, name)
+        else:
+            memmap_dir = None
 
         cover = create_genomic_array(genomesize, stranded=False,
-                             storage=storage, memmap_dir=memmap_dir,
-                             conditions = samplenames,
-                             overwrite=overwrite,
-                             loader=bigwig_loader,
-                             loader_args=(bigwigfiles, gindexer))
+                                     storage=storage, memmap_dir=memmap_dir,
+                                     conditions=samplenames,
+                                     overwrite=overwrite,
+                                     typecode=dtype,
+                                     loader=bigwig_loader,
+                                     loader_args=(bigwigfiles, gindexer))
 
-        return cls(name, cover, gindexer, flank, False)
+        return cls(name, cover, gindexer, flank, stranded=False)
 
     def __repr__(self):  # pragma: no cover
         return "CoverageDataset('{}', ".format(self.name) \
@@ -249,33 +270,19 @@ class CoverageDataset(Dataset):
             raise IndexError('CoverageDataset.__getitem__: '
                              + 'index must be iterable')
 
-        data = np.empty((len(idxs), 2 if self.stranded else 1,
-                         1 + 2*self.flank, len(self.covers)))
+        data = np.empty((len(idxs),) + self.shape[1:])
 
-        sign = ['+', '-']
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
-            for iflank in range(-self.flank, self.flank + 1):
-                try:
-                    for istrand in range(2 if self.stranded else 1):
 
-                        pinterval = interval.copy()
+            pinterval = interval.copy()
 
-                        pinterval.start = interval.start + \
-                            iflank * self.gindexer.stride
+            pinterval.start = interval.start - self.flank
 
-                        pinterval.end = interval.end + \
-                            iflank * self.gindexer.stride
+            pinterval.end = interval.end + self.flank
 
-                        pinterval.strand = sign[istrand] \
-                            if self.stranded else '.'
+            data[i] = np.asarray(self.covers[pinterval])
 
-                        for icov, cover in enumerate(self.covers):
-                            data[i, istrand, iflank+self.flank, icov] = \
-                                cover[pinterval].sum()
-
-                except IndexError:
-                    data[i, :, iflank+self.flank, :] = 0
             if interval.strand == '-':
                 # if the region is on the negative strand,
                 # flip the order  of the coverage track
@@ -291,8 +298,9 @@ class CoverageDataset(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        return (len(self), 2 if self.stranded else 1,
-                2*self.flank + 1, len(self.covers.conditions))
+        return (len(self),
+                2*self.flank + self.gindexer.binsize,
+                2 if self.stranded else 1, len(self.covers.condition))
 
     @property
     def flank(self):

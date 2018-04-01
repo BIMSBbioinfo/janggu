@@ -1,7 +1,8 @@
 """Utilities for janggo.data """
 
-from collections import defaultdict
 import os
+import sys
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,11 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+
+if sys.version_info[0] < 3:
+    from urllib import urlcleanup, urlretrieve
+else:
+    from urllib.request import urlcleanup, urlretrieve
 
 
 def sequences_from_fasta(fasta):
@@ -128,7 +134,7 @@ def complement_permmatrix(order):
     return perm
 
 
-def get_genome_size(refgenome='hg19', outputdir='./', skipRandom=True):
+def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     """Get genome size.
 
     This function loads the genome size for a specified reference genome
@@ -162,7 +168,7 @@ def get_genome_size(refgenome='hg19', outputdir='./', skipRandom=True):
 
     content = pd.read_csv(outputfile, sep='\t', names=['chr', 'length'],
                           index_col='chr')
-    if skipRandom:
+    if skip_random:
         fltr = [True if len(name.split('_')) <= 1 else False for name in content.index]
         content = content[fltr]
     return content.to_dict()['length']

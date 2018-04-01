@@ -99,17 +99,18 @@ class DnaDataset(Dataset):
         def dna_loader(cover, seqs, order):
             print('Convert sequences to index array')
             for seq in seqs:
-                print("processing {} ...".format(seq.id))
                 interval = GenomicInterval(seq.id, 0,
                                            len(seq) - order + 1, '.')
 
-                dna = np.asarray(dna2ind(seq), dtype='int16')
+                dna = np.asarray(dna2ind(seq), dtype='int')
 
                 if order > 1:
                     # for higher order motifs, this part is used
                     filter_ = np.asarray([pow(4, i) for i in range(order)])
                     dna = np.convolve(dna, filter_, mode='valid')
 
+                print(dna.shape)
+                print(dna)
                 cover[interval, 0] = dna
 
         # At the moment, we treat the information contained
@@ -119,7 +120,7 @@ class DnaDataset(Dataset):
                                      storage=storage,
                                      memmap_dir=os.path.join(cachedir, name),
                                      overwrite=overwrite,
-                                     typecode='int8',
+                                     typecode='int',
                                      loader=dna_loader,
                                      loader_args=(seqs, order))
 
@@ -127,7 +128,7 @@ class DnaDataset(Dataset):
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions,
-                              stride=50, reglen=200,
+                              stepsize=50, reglen=200,
                               flank=150, order=1, storage='hdf5',
                               cachedir='', overwrite=False):
         """Create a DnaDataset class from a reference genome.
@@ -145,8 +146,8 @@ class DnaDataset(Dataset):
             BED- or GFF-filename.
         reglen : int
             Region length in basepairs to be considered. Default: 200.
-        stride : int
-            Stride in basepairs for traversing the genome. Default: 50.
+        stepsize : int
+            stepsize in basepairs for traversing the genome. Default: 50.
         flank : int
             Flanking regions in basepairs to be extended up and downstream.
             Default: 150.
@@ -216,7 +217,7 @@ class DnaDataset(Dataset):
 
         reglen = lens[0]
         flank = 0
-        stride = 1
+        stepsize = 1
 
         gindexer = GenomicIndexer(reglen, stepsize)
         gindexer.chrs = chroms
@@ -251,7 +252,7 @@ class DnaDataset(Dataset):
         """
 
         # for each index read use the adaptor indices to retrieve the seq.
-        idna = np.empty((len(idxs), self.gindexer.resolution +
+        idna = np.empty((len(idxs), self.gindexer.binsize +
                          2*self.flank - self.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
@@ -262,10 +263,10 @@ class DnaDataset(Dataset):
             # Computing the forward or reverse complement of the
             # sequence, depending on the strand flag.
             if interval.strand in ['.', '+']:
-                idna[i] = np.fromiter(self.garray[interval, 0], dtype='int16')
+                idna[i] = np.asarray(self.garray[interval][:, 0, 0])
             else:
                 idna[i] = np.asarray(
-                    [self._rcindex[val] for val in self.garray[interval, 0]])[::-1]
+                    [self._rcindex[val] for val in self.garray[interval][:, 0, 0]])[::-1]
 
         return idna
 
@@ -295,7 +296,7 @@ class DnaDataset(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        return (len(self), pow(4, self.order), self.gindexer.resolution +
+        return (len(self), pow(4, self.order), self.gindexer.binsize +
                 2*self.flank - self.order + 1, 1)
 
     @property

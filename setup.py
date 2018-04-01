@@ -101,9 +101,11 @@ setup(
         'Biopython',
         'keras',
         'htseq',
+        'pysam',
         'sklearn',
         'h5py',
-        'pyBigWig'
+        'pyBigWig',
+        'urllib3'
     ],
     extras_require={
         "tf": ['tensorflow'],
