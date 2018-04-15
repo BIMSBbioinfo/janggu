@@ -51,7 +51,7 @@ def test_janggo_instance(tmpdir):
     ctcf = TabDataset('ctcf', filename=csvfile)
 
     @inputlayer
-    @outputlayer
+    @outputdense
     def _cnn_model(inputs, inp, oup, params):
         layer = Flatten()(inputs())
         output = Dense(params[0])(layer)
@@ -93,7 +93,7 @@ def test_janggo_train_predict_option1(tmpdir):
                            samplenames=['random'])
 
     @inputlayer
-    @outputlayer
+    @outputdense
     def test_model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
@@ -313,7 +313,7 @@ def test_janggo_train_predict_option6(tmpdir):
                            samplenames=['random'])
 
     @inputlayer
-    @outputlayer
+    @outputdense
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
