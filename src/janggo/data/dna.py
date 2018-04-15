@@ -217,11 +217,12 @@ class DnaDataset(Dataset):
         flank = 0
         stepsize = 1
 
-        gindexer = GenomicIndexer(reglen, stepsize)
+        gindexer = GenomicIndexer(reglen, stepsize, 1)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
         gindexer.inregionidx = [0]*len(lens)
         gindexer.strand = ['.']*len(lens)
+        gindexer.rel_end = [reglen + 2*flank]*len(lens)
 
         return cls(name, garray, gindexer, flank, order)
 
