@@ -62,7 +62,7 @@ class Complement(Layer):
         super(Complement, self).build(input_shape)
 
     def call(self, inputs):
-        return tf.einsum('ij,bjsc->bisc', self.rcmatrix, inputs)
+        return tf.einsum('ij,bsjc->bsic', self.rcmatrix, inputs)
 
     def get_config(self):
         config = {'order': self.order}
