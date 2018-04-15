@@ -174,7 +174,7 @@ class CoverageDataset(Dataset):
                            binsize=200, stepsize=50,
                            resolution=50,
                            flank=0, storage='hdf5',
-                           dtype='int',
+                           dtype='float32',
                            overwrite=False,
                            cachedir=None):
         """Create a CoverageDataset class from a bigwig-file (or files).
@@ -212,7 +212,7 @@ class CoverageDataset(Dataset):
             'ndarray' or 'hdf5'. Default: 'hdf5'.
         dtype : str
             Typecode to define the datatype to be used for storage.
-            Default: 'int'.
+            Default: 'float32'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         cachedir : str or None
@@ -239,7 +239,6 @@ class CoverageDataset(Dataset):
                 bwfile = pyBigWig.open(sample_file)
 
                 for interval in gindexer:
-                    # interval = gindexer[j]
                     cover[interval.start_as_pos, i] = \
                         np.mean(
                             bwfile.values(
