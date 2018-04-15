@@ -168,16 +168,17 @@ class CoverageDataset(Dataset):
                                      conditions=samplenames,
                                      overwrite=overwrite,
                                      typecode=dtype,
-                                     loader=bam_loader,
+                                     loader=_bam_loader,
                                      loader_args=(bamfiles,))
 
         return cls(name, cover, gindexer, flank, stranded=True)
 
     @classmethod
-    def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize,
+    def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize=None,
                            samplenames=None,
-                           binsize=50, stepsize=50,
-                           flank=4, storage='hdf5',
+                           binsize=200, stepsize=50,
+                           resolution=50,
+                           flank=150, storage='hdf5',
                            dtype='int',
                            overwrite=False,
                            cachedir=None):
@@ -215,7 +216,12 @@ class CoverageDataset(Dataset):
         """
 
         gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                   stepsize)
+                                                   stepsize,
+                                                   resolution=resolution)
+
+        # automatically determine genomesize from largest region
+        if not genomesize:
+            genomesize = get_genome_size_from_bed(regions)
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -231,9 +237,11 @@ class CoverageDataset(Dataset):
                 for j in range(len(gindexer)):
                     interval = gindexer[j]
                     cover[interval.start_as_pos, i] = \
-                        np.sum(bwfile.values(interval.chrom,
-                                             int(interval.start),
-                                             int(interval.end)))
+                        np.mean(
+                            bwfile.values(
+                                interval.chrom,
+                                int(interval.start*gindexer.resolution),
+                                int(interval.end*gindexer.resolution)))
             return cover
 
         # At the moment, we treat the information contained
@@ -242,6 +250,9 @@ class CoverageDataset(Dataset):
             memmap_dir = os.path.join(cachedir, name)
         else:
             memmap_dir = None
+
+        for chrom in genomesize:
+            genomesize[chrom] //= resolution
 
         cover = create_genomic_array(genomesize, stranded=False,
                                      storage=storage, memmap_dir=memmap_dir,
@@ -409,7 +420,8 @@ class CoverageDataset(Dataset):
     def shape(self):
         """Shape of the dataset"""
         return (len(self),
-                2*self.flank + self.gindexer.binsize,
+                (2*self.flank +
+                 self.gindexer.binsize) // self.gindexer.resolution,
                 2 if self.stranded else 1, len(self.covers.condition))
 
     @property
