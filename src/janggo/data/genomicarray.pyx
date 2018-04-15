@@ -44,6 +44,7 @@ class GenomicArray(object):
             conditions = ['sample']
 
         self.condition = conditions
+        self.typecode = typecode
 
 
     def __setitem__(self, index, value):
@@ -126,8 +127,9 @@ class HDF5GenomicArray(GenomicArray):
             for chrom in chroms:
                 shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
                 self.handle.create_dataset(chrom, shape,
-                                           dtype=typecode, compression='lzf',
-                                           data=numpy.zeros(shape))
+                                           dtype=self.typecode, compression='lzf',
+                                           data=numpy.zeros(shape, dtype=self.typecode))
+
             self.handle.attrs['conditions'] = [numpy.string_(x) for x in self.condition]
 
             # invoke the loader
@@ -180,7 +182,7 @@ class NPGenomicArray(GenomicArray):
         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],
                                                  2 if stranded else 1,
                                                  len(self.condition)),
-                                          dtype=typecode) for chrom in chroms}
+                                          dtype=self.typecode) for chrom in chroms}
 
         # invoke the loader
         if loader:
