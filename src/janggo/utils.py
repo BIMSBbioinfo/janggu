@@ -10,6 +10,8 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from HTSeq import BED_Reader
+from HTSeq import GFF_Reader
 
 if sys.version_info[0] < 3:
     from urllib import urlcleanup, urlretrieve
@@ -172,3 +174,39 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
         fltr = [True if len(name.split('_')) <= 1 else False for name in content.index]
         content = content[fltr]
     return content.to_dict()['length']
+
+
+def get_genome_size_from_bed(bedfile):
+    """Get genome size.
+
+    This function loads the genome size for a specified reference genome
+    into a dict. The reference genome sizes are obtained from
+    UCSC genome browser.
+
+    Parameters
+    ----------
+    bedfile : str
+        Bed or GFF file containing the regions of interest
+
+    Returns
+    -------
+    dict()
+        Dictionary with chromosome names as keys and their respective lengths
+        as values.
+    """
+
+    if isinstance(bedfile, str) and bedfile.endswith('.bed'):
+        regions_ = BED_Reader(bedfile)
+    elif isinstance(bedfile, str) and (bedfile.endswith('.gff') or
+				       bedfile.endswith('.gtf')):
+        regions_ = GFF_Reader(bedfile)
+    else:
+        raise Exception('Regions must be a bed, gff or gtf-file.')
+
+    gsize = {}
+    for region in regions_:
+        if region.iv.chrom not in gsize:
+            gsize[region.iv.chrom] = region.iv.end
+        elif gsize[region.iv.chrom] < region.iv.end:
+            gsize[region.iv.chrom] = region.iv.end
+    return gsize
