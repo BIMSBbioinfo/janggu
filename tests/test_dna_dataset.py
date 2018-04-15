@@ -19,7 +19,6 @@ flank = 150
 stepsize = 50
 
 
-# adopted from secomo
 def _seqToOneHot(seqs):
     onehots = []
     for seq in seqs:
@@ -30,9 +29,9 @@ def _seqToOneHot(seqs):
 def _getOneHotSeq(seq):
     m = len(seq.alphabet.letters)
     n = len(seq)
-    result = np.zeros((1, m, n, 1), dtype="float32")
+    result = np.zeros((1, n, m, 1), dtype="float32")
     for i in range(len(seq)):
-        result[0, NMAP[seq[i]], i, 0] = 1
+        result[0, i, NMAP[seq[i]], 0] = 1
     return result
 
 
@@ -70,12 +69,14 @@ def dna_templ(order):
     # actual shape of DNA
     dna = data[indices]
     # this is the actual numpy array
-    np.testing.assert_equal(dna.shape, (len(indices), pow(4, order),
-                                        reglen + 2*flank - order + 1, 1))
+    np.testing.assert_equal(dna.shape, (len(indices),
+                                        reglen + 2*flank - order + 1,
+                                        pow(4, order), 1))
 
     # this is the bwdataset
-    np.testing.assert_equal(data.shape, (len(data), pow(4, order),
-                                         reglen + 2*flank - order + 1, 1))
+    np.testing.assert_equal(data.shape, (len(data),
+                                         reglen + 2*flank - order + 1,
+                                         pow(4, order), 1))
 
     # Check length
     np.testing.assert_equal(len(data), datalen(bed_merged))
@@ -107,11 +108,13 @@ def test_read_ranges_from_file():
 
     # actual shape of DNA
     dna = data[indices]
-    np.testing.assert_equal(dna.shape, (len(indices), pow(4, order),
-                                        reglen + 2*flank - order + 1, 1))
+    np.testing.assert_equal(dna.shape, (len(indices),
+                                        reglen + 2*flank - order + 1,
+                                        pow(4, order), 1))
 
-    np.testing.assert_equal(data.shape, (len(data), pow(4, order),
-                                         reglen + 2*flank - order + 1, 1))
+    np.testing.assert_equal(data.shape, (len(data),
+                                         reglen + 2*flank - order + 1,
+                                         pow(4, order), 1))
 
 
 def test_dna_dims_order_1():
@@ -268,36 +271,36 @@ def test_read_dna_from_fasta_order_1(tmpdir):
                                         order=order)
 
     np.testing.assert_equal(len(data), 4)
-    np.testing.assert_equal(data.shape, (len(data), pow(4, order), 200, 1))
-    np.testing.assert_equal(data[0].shape, (1, 4, 200, 1))
+    np.testing.assert_equal(data.shape, (len(data), 200, pow(4, order), 1))
+    np.testing.assert_equal(data[0].shape, (1, 200, 4, 1))
 
     # correctness of the first sequence - uppercase
     # cacagcagag
-    np.testing.assert_equal(data[0][0, 0, :5, 0], np.asarray([0, 1, 0, 1, 0]))
-    np.testing.assert_equal(data[0][0, 1, :5, 0], np.asarray([1, 0, 1, 0, 0]))
-    np.testing.assert_equal(data[0][0, 3, :5, 0], np.asarray([0, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[0][0, 2, :5, 0], np.asarray([0, 0, 0, 0, 1]))
+    np.testing.assert_equal(data[0][0, :5, 0, 0], np.asarray([0, 1, 0, 1, 0]))
+    np.testing.assert_equal(data[0][0, :5, 1, 0], np.asarray([1, 0, 1, 0, 0]))
+    np.testing.assert_equal(data[0][0, :5, 3, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[0][0, :5, 2, 0], np.asarray([0, 0, 0, 0, 1]))
 
     # correctness of the second sequence - uppercase
     # cncact
-    np.testing.assert_equal(data[1][0, 0, :5, 0], np.asarray([0, 0, 0, 1, 0]))
-    np.testing.assert_equal(data[1][0, 1, :5, 0], np.asarray([1, 0, 1, 0, 1]))
-    np.testing.assert_equal(data[1][0, 2, :5, 0], np.asarray([0, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[1][0, 3, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[1][0, :5, 0, 0], np.asarray([0, 0, 0, 1, 0]))
+    np.testing.assert_equal(data[1][0, :5, 1, 0], np.asarray([1, 0, 1, 0, 1]))
+    np.testing.assert_equal(data[1][0, :5, 2, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[1][0, :5, 3, 0], np.asarray([0, 0, 0, 0, 0]))
 
     # correctness of the third sequence - lowercase
     # aagtta
-    np.testing.assert_equal(data[2][0, 0, :5, 0], np.asarray([1, 1, 0, 0, 0]))
-    np.testing.assert_equal(data[2][0, 1, :5, 0], np.asarray([0, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[2][0, 2, :5, 0], np.asarray([0, 0, 1, 0, 0]))
-    np.testing.assert_equal(data[2][0, 3, :5, 0], np.asarray([0, 0, 0, 1, 1]))
+    np.testing.assert_equal(data[2][0, :5, 0, 0], np.asarray([1, 1, 0, 0, 0]))
+    np.testing.assert_equal(data[2][0, :5, 1, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[2][0, :5, 2, 0], np.asarray([0, 0, 1, 0, 0]))
+    np.testing.assert_equal(data[2][0, :5, 3, 0], np.asarray([0, 0, 0, 1, 1]))
 
     # correctness of the third sequence - lowercase
     # cnaagt
-    np.testing.assert_equal(data[3][0, 0, :5, 0], np.asarray([0, 0, 1, 1, 0]))
-    np.testing.assert_equal(data[3][0, 1, :5, 0], np.asarray([1, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[3][0, 2, :5, 0], np.asarray([0, 0, 0, 0, 1]))
-    np.testing.assert_equal(data[3][0, 3, :5, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[3][0, :5, 0, 0], np.asarray([0, 0, 1, 1, 0]))
+    np.testing.assert_equal(data[3][0, :5, 1, 0], np.asarray([1, 0, 0, 0, 0]))
+    np.testing.assert_equal(data[3][0, :5, 2, 0], np.asarray([0, 0, 0, 0, 1]))
+    np.testing.assert_equal(data[3][0, :5, 3, 0], np.asarray([0, 0, 0, 0, 0]))
 
 
 def test_read_dna_from_fasta_order_2(tmpdir):
@@ -310,41 +313,41 @@ def test_read_dna_from_fasta_order_2(tmpdir):
                                         cachedir=tmpdir.strpath)
 
     np.testing.assert_equal(len(data), 4)
-    np.testing.assert_equal(data.shape, (len(data), 16, 199, 1))
+    np.testing.assert_equal(data.shape, (len(data),  199, 16, 1))
 
     # correctness of the first sequence - uppercase
     # cacagc
-    np.testing.assert_equal(data[0][0, 4, 0, 0], 1)
+    np.testing.assert_equal(data[0][0, 0, 4, 0], 1)
     np.testing.assert_equal(data[0][0, 1, 1, 0], 1)
-    np.testing.assert_equal(data[0][0, 4, 2, 0], 1)
-    np.testing.assert_equal(data[0][0, 2, 3, 0], 1)
-    np.testing.assert_equal(data[0][0, 9, 4, 0], 1)
-    np.testing.assert_equal(data[0][:, :, :5, :].sum(), 5)
+    np.testing.assert_equal(data[0][0, 2, 4, 0], 1)
+    np.testing.assert_equal(data[0][0, 3, 2, 0], 1)
+    np.testing.assert_equal(data[0][0, 4, 9, 0], 1)
+    np.testing.assert_equal(data[0][:, :5, :, :].sum(), 5)
 
     # correctness of the second sequence - uppercase
     # cncact
     # np.testing.assert_equal(data[0][5, 0, 0], 1)
     # np.testing.assert_equal(data[0][2, 1, 0], 1)
-    np.testing.assert_equal(data[1][0, 4, 2, 0], 1)
-    np.testing.assert_equal(data[1][0, 1, 3, 0], 1)
-    np.testing.assert_equal(data[1][0, 7, 4, 0], 1)
-    np.testing.assert_equal(data[1][:, :, :5, :].sum(), 3)
+    np.testing.assert_equal(data[1][0, 2, 4, 0], 1)
+    np.testing.assert_equal(data[1][0, 3, 1, 0], 1)
+    np.testing.assert_equal(data[1][0, 4, 7, 0], 1)
+    np.testing.assert_equal(data[1][:, :5, :, :].sum(), 3)
 
     # correctness of the third sequence - lowercase
     # aagtta
     np.testing.assert_equal(data[2][0, 0, 0, 0], 1)
-    np.testing.assert_equal(data[2][0, 2, 1, 0], 1)
-    np.testing.assert_equal(data[2][0, 11, 2, 0], 1)
-    np.testing.assert_equal(data[2][0, 15, 3, 0], 1)
-    np.testing.assert_equal(data[2][0, 12, 4, 0], 1)
-    np.testing.assert_equal(data[2][0, :, :5, :].sum(), 5)
+    np.testing.assert_equal(data[2][0, 1, 2, 0], 1)
+    np.testing.assert_equal(data[2][0, 2, 11, 0], 1)
+    np.testing.assert_equal(data[2][0, 3, 15, 0], 1)
+    np.testing.assert_equal(data[2][0, 4, 12, 0], 1)
+    np.testing.assert_equal(data[2][0, :5, :, :].sum(), 5)
 
     # correctness of the third sequence - lowercase
     # cnaagt
-    np.testing.assert_equal(data[3][0, 0, 2, 0], 1)
-    np.testing.assert_equal(data[3][0, 2, 3, 0], 1)
-    np.testing.assert_equal(data[3][0, 11, 4, 0], 1)
-    np.testing.assert_equal(data[3][0, :, :5, :].sum(), 3)
+    np.testing.assert_equal(data[3][0, 2, 0, 0], 1)
+    np.testing.assert_equal(data[3][0, 3, 2, 0], 1)
+    np.testing.assert_equal(data[3][0, 4, 11, 0], 1)
+    np.testing.assert_equal(data[3][0, :5, :, :].sum(), 3)
 
 
 def test_stemcell_onehot_identity():
@@ -371,15 +374,16 @@ def _dna_with_region_strandedness(order):
                                             order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
-    rdna_layer = Reverse(2)(dna_in)
+    rdna_layer = Reverse(axis=1)(dna_in)
     rcdna_layer = Complement(order)(rdna_layer)
     mod = Model(dna_in, rcdna_layer)
 
     dna = data[[0, 1]]
     rcdna = mod.predict(data)
 
-    np.testing.assert_equal(data.shape, (2, pow(4, order),
-                                         reglen + 2*flank - order + 1, 1))
+    np.testing.assert_equal(data.shape, (2,
+                                         reglen + 2*flank - order + 1,
+                                         pow(4, order), 1))
     np.testing.assert_equal(dna.shape, rcdna.shape)
 
     np.testing.assert_equal(data[0], rcdna[1:2])
