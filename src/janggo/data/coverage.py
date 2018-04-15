@@ -116,18 +116,20 @@ class CoverageDataset(Dataset):
 
         if not genomesize:
             header = pysam.AlignmentFile(bamfiles[0], 'r')
-            genomesize = {}
+            gsize = {}
             for chrom, length in zip(header.references, header.lengths):
-                genomesize[chrom] = length
+                gsize[chrom] = length
+        else:
+            gsize = genomesize.copy()
 
         def _bam_loader(cover, files):
             print("load from bam")
             for i, sample_file in enumerate(files):
                 print('Counting from {}'.format(sample_file))
                 aln_file = pysam.AlignmentFile(sample_file, 'rb')
-                for chrom in genomesize:
+                for chrom in gsize:
 
-                    array = np.zeros((genomesize[chrom], 2), dtype=dtype)
+                    array = np.zeros((gsize[chrom], 2), dtype=dtype)
 
                     try:
                         it_ = aln_file.fetch(chrom)
@@ -144,9 +146,9 @@ class CoverageDataset(Dataset):
                         else:
                             array[aln.reference_start, 0] += 1
 
-                    cover[GenomicInterval(chrom, 0, genomesize[chrom],
+                    cover[GenomicInterval(chrom, 0, gsize[chrom],
                                           '+'), i] = array[:, 0]
-                    cover[GenomicInterval(chrom, 0, genomesize[chrom],
+                    cover[GenomicInterval(chrom, 0, gsize[chrom],
                                           '-'), i] = array[:, 1]
 
             return cover
@@ -158,7 +160,7 @@ class CoverageDataset(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        cover = create_genomic_array(genomesize, stranded=True,
+        cover = create_genomic_array(gsize, stranded=True,
                                      storage=storage, memmap_dir=memmap_dir,
                                      conditions=samplenames,
                                      overwrite=overwrite,
@@ -225,7 +227,9 @@ class CoverageDataset(Dataset):
 
         # automatically determine genomesize from largest region
         if not genomesize:
-            genomesize = get_genome_size_from_bed(regions)
+            gsize = get_genome_size_from_bed(regions)
+        else:
+            gsize = genomesize.copy()
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -252,10 +256,10 @@ class CoverageDataset(Dataset):
         else:
             memmap_dir = None
 
-        for chrom in genomesize:
-            genomesize[chrom] //= resolution
+        for chrom in gsize:
+            gsize[chrom] //= resolution
 
-        cover = create_genomic_array(genomesize, stranded=False,
+        cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, memmap_dir=memmap_dir,
                                      conditions=samplenames,
                                      overwrite=overwrite,
@@ -323,7 +327,9 @@ class CoverageDataset(Dataset):
 
         # automatically determine genomesize from largest region
         if not genomesize:
-            genomesize = get_genome_size_from_bed(regions)
+            gsize = get_genome_size_from_bed(regions)
+        else:
+            gsize = genomesize.copy()
 
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
@@ -360,16 +366,16 @@ class CoverageDataset(Dataset):
         else:
             memmap_dir = None
 
-        for chrom in genomesize:
-            genomesize[chrom] //= resolution
+        for chrom in gsize:
+            gsize[chrom] //= resolution
 
-        cover = create_genomic_array(genomesize, stranded=False,
+        cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, memmap_dir=memmap_dir,
                                      conditions=samplenames,
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_bed_loader,
-                                     loader_args=(bedfiles, genomesize))
+                                     loader_args=(bedfiles, gsize))
 
         return cls(name, cover, gindexer, flank, stranded=False, padding_value=-1)
 
