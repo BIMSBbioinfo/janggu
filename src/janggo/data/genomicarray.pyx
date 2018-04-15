@@ -125,7 +125,7 @@ class HDF5GenomicArray(GenomicArray):
             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
 
             for chrom in chroms:
-                shape = (chroms[chrom], 2 if stranded else 1, len(self.condition))
+                shape = (chroms[chrom] + 1, 2 if stranded else 1, len(self.condition))
                 self.handle.create_dataset(chrom, shape,
                                            dtype=self.typecode, compression='lzf',
                                            data=numpy.zeros(shape, dtype=self.typecode))
@@ -179,7 +179,7 @@ class NPGenomicArray(GenomicArray):
         super(NPGenomicArray, self).__init__(chroms, stranded,
                                              conditions, typecode)
 
-        self.handle = {chrom: numpy.zeros(shape=(chroms[chrom],
+        self.handle = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
                                                  2 if stranded else 1,
                                                  len(self.condition)),
                                           dtype=self.typecode) for chrom in chroms}
