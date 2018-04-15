@@ -33,10 +33,6 @@ class EvaluatorList(object):
                  batch_size=None, generator=None,
                  use_multiprocessing=False):
 
-        if len(outputs.shape) > 2:
-            raise Exception("EvaluatorList expects a 2D output numpy array."
-                            + "Given shape={}".format(outputs.shape))
-
         model_path = os.path.join(self.path, 'models')
         if self.filter:
             model_path = os.path.join(self.path, 'models',
@@ -64,6 +60,8 @@ class EvaluatorList(object):
                     use_multiprocessing=use_multiprocessing)
             else:
                 predicted = None
+
+            print("Evaluating {}".format(stored_model))
 
             # pass the prediction on the individual evaluators
             for evaluator in self.evaluators:
@@ -131,9 +129,11 @@ class Evaluator:
     """Evaluator interface."""
 
     __metaclass__ = ABCMeta
+    _reshape = None
 
-    def __init__(self):
-        pass
+    def __init__(self, reshaper):
+        if reshaper:
+            self._reshape = reshaper
 
     @abstractmethod
     def evaluate(self, model, inputs, outputs=None, predicted=None,
@@ -167,6 +167,14 @@ class Evaluator:
         """Default method for dumping the evaluation results to a storage"""
         pass
 
+    def reshape(self, data):
+        """Reshape the dataset to make it compatible with the
+        evaluation method.
+        """
+        if self._reshape:
+            return self._reshape(data[:])
+
+        return data
 
 def dump_json(basename, results):
     """Method that dumps the results in a json file.
@@ -264,9 +272,9 @@ def f1_score(ytrue, ypred):
 
 class ScoreEvaluator(Evaluator):
 
-    def __init__(self, score_name, score_fct, dumper=dump_json):
+    def __init__(self, score_name, score_fct, dumper=dump_json, reshaper=None):
         # append the path by a folder 'AUC'
-        super(ScoreEvaluator, self).__init__()
+        super(ScoreEvaluator, self).__init__(reshaper)
         self.results = dict()
         self._dumper = dumper
         self.score_name = score_name
@@ -281,16 +289,21 @@ class ScoreEvaluator(Evaluator):
         if not datatags:
             datatags = []
         items = []
-        for idx in range(outputs.shape[1]):
+        _out = self.reshape(outputs)
+        _pre = self.reshape(predicted)
 
-            score = self.score_fct(outputs[:, idx], predicted[:, idx])
+        for idx in range(_out.shape[1]):
+
+            score = self.score_fct(_out[:, idx], _pre[:, idx])
 
             tags = []
-            tags.append(outputs.samplenames[idx])
+            if hasattr(outputs, "samplenames"):
+                tags.append(str(outputs.samplenames[idx]))
 
             items.append({'date': str(datetime.datetime.utcnow()),
                           self.score_name: score,
                           'datatags': tags})
+
         self.results[model.name] = items
 
     def dump(self, path):
