@@ -15,9 +15,11 @@ class GenomicIndexer(object):
     regions : str
         Bed- or GFF-filename.
     binsize : int
-        Interval size in basepairs.
+        Interval size in bins.
     stepsize : int
-        stepsize (step size) for traversing the genome in basepairs.
+        stepsize (step size) for traversing the region.
+    resolution : int
+        resolution in base pairs.
     """
 
     _stepsize = None
@@ -26,13 +28,31 @@ class GenomicIndexer(object):
     offsets = None
     inregionidx = None
     strand = None
+    rel_end = None
 
     @classmethod
-    def create_from_file(cls, regions, binsize, stepsize):
+    def create_from_file(cls, regions, binsize, stepsize, resolution=1,
+                         fixed_size_batches=True):
         """Creates a GenomicIndexer object.
 
         This method constructs a GenomicIndexer from
         a given BED or GFF file.
+
+        Parameters
+        ----------
+        regions : str
+            Path to a BED or GFF file.
+        binsize : int
+            Binsize in base pairs.
+        stepsize : int
+            Stepsize in base pairs.
+        resolution : int
+            Resolution in base pairs. This is used to aggregate
+            a signal, e.g. by averaging. Note that binsize and stepsize should
+            a multiple of the resolution.
+        fixed_size_batches : bool
+            Indicates that all regions must be equally long, as given by
+            the binsize. If False, variable region lengths are allowed.
         """
 
         if isinstance(regions, str) and regions.endswith('.bed'):
@@ -43,46 +63,61 @@ class GenomicIndexer(object):
         else:
             raise Exception('Regions must be a bed, gff or gtf-file.')
 
-        gind = cls(binsize, stepsize)
+        gind = cls(binsize, stepsize, resolution)
 
         chrs = []
         offsets = []
         inregionidx = []
         strand = []
+        rel_end = []
         for reg in regions_:
-            reglen = (reg.iv.end - reg.iv.start -
-                      binsize + stepsize) // stepsize
+            if stepsize <= binsize:
+                val = (reg.iv.end - reg.iv.start - binsize + stepsize)
+            else:
+                val = (reg.iv.end - reg.iv.start)
+            reglen = val // stepsize
             chrs += [reg.iv.chrom] * reglen
             offsets += [reg.iv.start] * reglen
+            rel_end += [binsize] * reglen
             strand += [reg.iv.strand] * reglen
             inregionidx += range(reglen)
+            # if there is a variable length fragment at the end,
+            # we record the remaining fragment length
+            if not fixed_size_batches and val % stepsize > 0:
+                chrs += [reg.iv.chrom]
+                offsets += [reg.iv.start]
+                rel_end += [val - (val//stepsize) * stepsize]
+                strand += [reg.iv.strand]
+                inregionidx += [reglen]
 
         gind.chrs = chrs
         gind.offsets = offsets
         gind.inregionidx = inregionidx
         gind.strand = strand
+        gind.rel_end = rel_end
         return gind
-#        return cls(binsize, stepsize, chrs, offsets, inregionidx, strand)
 
-    def __init__(self, binsize, stepsize):
+    def __init__(self, binsize, stepsize, resolution):
 
         self.binsize = binsize
         self.stepsize = stepsize
+        self.resolution = resolution
 
     def __len__(self):
         return len(self.chrs)
 
     def __repr__(self):  # pragma: no cover
         return "GenomicIndexer(<regions>, " \
-            + "binsize={}, stepsize={})".format(self.binsize,
-                                                self.stepsize)
+            + "binsize={}, stepsize={}, resolution={})".format(self.binsize,
+                                                self.stepsize, self.resolution)
 
     def __getitem__(self, index):
         if isinstance(index, int):
-            start = self.offsets[index] + \
-                    self.inregionidx[index]*self.stepsize
+            start = (self.offsets[index] + \
+                    self.inregionidx[index]*self.stepsize) // self.resolution
+            end = start + self.rel_end[index] // self.resolution
             return GenomicInterval(self.chrs[index], start,
-                                   start + self.binsize, self.strand[index])
+                                   end, self.strand[index])
 
         raise IndexError('Index support only for "int". Given {}'.format(
             type(index)))
