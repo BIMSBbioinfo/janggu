@@ -115,7 +115,8 @@ class GenomicIndexer(object):
         if isinstance(index, int):
             start = (self.offsets[index] + \
                     self.inregionidx[index]*self.stepsize) // self.resolution
-            end = start + self.rel_end[index] // self.resolution
+            val = self.rel_end[index] // self.resolution
+            end = start + (val if val > 0 else 1)
             return GenomicInterval(self.chrs[index], start,
                                    end, self.strand[index])
 
