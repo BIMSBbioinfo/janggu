@@ -12,7 +12,7 @@ from janggo import Janggo
 from janggo import inputlayer
 from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
-from janggo import outputlayer
+from janggo import outputdense
 from janggo.cli import main
 from janggo.data import DnaDataset
 from janggo.data import NumpyDataset

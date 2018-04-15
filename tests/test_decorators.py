@@ -4,7 +4,7 @@ from keras.layers import Input
 from keras.models import Model
 
 from janggo import inputlayer
-from janggo import outputlayer
+from janggo import outputdense
 
 
 # ==========================================================
@@ -21,7 +21,7 @@ def make_dense_wo_decorator(input, inshapes, outshapes, params):
 
 # ==========================================================
 # Test without output decorator
-@outputlayer
+@outputdense
 def make_dense_w_top(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
@@ -44,7 +44,7 @@ def make_dense_w_bottom(input, inshapes, outshapes, params):
 # ==========================================================
 # Test without input and output decorator
 @inputlayer
-@outputlayer
+@outputdense
 def make_dense_w_topbottom(input, input_props, output_props, params):
     output = Dense(params)(input[0])
     return input, output
