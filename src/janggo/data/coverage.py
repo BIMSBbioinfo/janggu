@@ -415,6 +415,10 @@ class CoverageDataset(Dataset):
                 2 if self.stranded else 1, len(self.covers.condition))
 
     @property
+    def samplenames(self):
+        return self.covers.condition
+
+    @property
     def flank(self):
         """Flanking bins"""
         return self._flank
