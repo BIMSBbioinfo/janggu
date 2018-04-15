@@ -4,19 +4,21 @@ import numpy as np
 import pyBigWig
 import pysam
 from HTSeq import GenomicInterval
+from HTSeq import BED_Reader
+from HTSeq import GFF_Reader
 
 from janggo.data.data import Dataset
 from janggo.data.genomic_indexer import GenomicIndexer
 from janggo.data.genomicarray import create_genomic_array
+from janggo.utils import get_genome_size_from_bed
 
 
 class CoverageDataset(Dataset):
     """CoverageDataset class.
 
     This datastructure holds coverage information across the genome.
-    The coverage can conveniently fetched from a bam-file, a bigwig-file,
-    or a list of files. E.g. a list of bam-files.
-    For convenience, the
+    The coverage can conveniently fetched from a list of bam-files,
+    bigwig-file, bed-files or gff-files.
 
     Parameters
     -----------
@@ -250,6 +252,114 @@ class CoverageDataset(Dataset):
                                      loader_args=(bigwigfiles, gindexer))
 
         return cls(name, cover, gindexer, flank, stranded=False)
+
+
+    @classmethod
+    def create_from_bed(cls, name, bedfiles, regions, genomesize=None,
+                        samplenames=None,
+                        binsize=200, stepsize=50,
+                        resolution=50,
+                        flank=0, storage='hdf5',
+                        dtype='int',
+                        overwrite=False,
+                        cachedir=None):
+        """Create a CoverageDataset class from a bed-file (or files).
+
+        Parameters
+        -----------
+        name : str
+            Name of the dataset
+        bedfiles : str or list
+            bed-file or list of bed files.
+        regions : str
+            Bed-file defining the regions that comprise the dataset.
+        genomesize : dict or None
+            Dictionary containing the genome size. If `genomesize=None`,
+            the genome size is fetched from the regions defined by the bed-file.
+            Otherwise, the supplied genome size is used.
+        samplenames : list
+            List of samplenames. If `samplenames=None`, the filenames
+            are used as samplenames directly.
+        binsize : int
+            Binsize in basepairs. Default: 50.
+        stepsize : int
+            Stepsize in basepairs. This defines the step size for traversing
+            the genome. Default: 50.
+        resolution : int
+            Resolution in base pairs. This is used to collect the mean signal
+            over the window lengths defined by the resolution. Default: 50.
+            This value should be chosen to be divisible by binsize and stepsize.
+        flank : int
+            Flanking size in basepairs to extend the binsize with at both ends.
+            For example, if binsize=50 and flank=50 the total length of the window
+            amounts to 150 bp. Default: 150.
+        storage : str
+            Storage mode for storing the coverage data can be
+            'ndarray' or 'hdf5'. Default: 'hdf5'.
+        dtype : str
+            Typecode to define the datatype to be used for storage.
+            Default: 'int'.
+        overwrite : boolean
+            overwrite cachefiles. Default: False.
+        cachedir : str or None
+            Directory in which the cachefiles are located. Default: None.
+        """
+
+        gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                   stepsize,
+                                                   resolution=resolution)
+
+        # automatically determine genomesize from largest region
+        if not genomesize:
+            genomesize = get_genome_size_from_bed(regions)
+
+        if isinstance(bedfiles, str):
+            bedfiles = [bedfiles]
+
+        if not samplenames:
+            samplenames = bedfiles
+
+        def _bed_loader(cover, bedfiles, genomesize):
+            print("load from bed")
+            for i, sample_file in enumerate(bedfiles):
+                print(sample_file)
+                if isinstance(sample_file, str) and sample_file.endswith('.bed'):
+                    regions_ = BED_Reader(sample_file)
+                elif isinstance(regions, str) and (sample_file.endswith('.gff') or
+                                                   sample_file.endswith('.gtf')):
+                    regions_ = GFF_Reader(sample_file)
+                else:
+                    raise Exception('Regions must be a bed, gff or gtf-file.')
+
+                for region in regions_:
+                    region.iv.start //= resolution
+                    region.iv.end //= resolution
+                    if genomesize[region.iv.chrom] <= region.iv.start:
+                        print("Region {} outside of genome size - skipped".format(region.iv))
+                    else:
+                        cover[region.iv.start_as_pos, i] = \
+                        np.dtype(cover.typecode).type(region.score)
+            return cover
+
+        # At the moment, we treat the information contained
+        # in each bw-file as unstranded
+        if cachedir:
+            memmap_dir = os.path.join(cachedir, name)
+        else:
+            memmap_dir = None
+
+        for chrom in genomesize:
+            genomesize[chrom] //= resolution
+
+        cover = create_genomic_array(genomesize, stranded=False,
+                                     storage=storage, memmap_dir=memmap_dir,
+                                     conditions=samplenames,
+                                     overwrite=overwrite,
+                                     typecode=dtype,
+                                     loader=_bed_loader,
+                                     loader_args=(bedfiles, genomesize))
+
+        return cls(name, cover, gindexer, flank, stranded=False, padding_value=-1)
 
     def __repr__(self):  # pragma: no cover
         return "CoverageDataset('{}', ".format(self.name) \
