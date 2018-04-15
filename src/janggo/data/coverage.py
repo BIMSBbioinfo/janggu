@@ -58,7 +58,7 @@ class CoverageDataset(Dataset):
                         samplenames=None,
                         min_mapq=None,
                         binsize=50, stepsize=50,
-                        flank=150, storage='hdf5',
+                        flank=0, storage='hdf5',
                         dtype='int',
                         overwrite=False,
                         cachedir=None):
@@ -89,9 +89,8 @@ class CoverageDataset(Dataset):
             Stepsize in basepairs. This defines the step size for traversing
             the genome. Default: 50.
         flank : int
-            Flanking size in basepairs to extend the binsize with at both ends.
-            For example, if binsize=50 and flank=50 the total length of the window
-            amounts to 150 bp. Default: 150.
+            Flanking size increases the interval size at both ends by
+            flank base pairs. Default: 0
         storage : str
             Storage mode for storing the coverage data can be
             'ndarray' or 'hdf5'. Default: 'hdf5'.
@@ -174,7 +173,7 @@ class CoverageDataset(Dataset):
                            samplenames=None,
                            binsize=200, stepsize=50,
                            resolution=50,
-                           flank=150, storage='hdf5',
+                           flank=0, storage='hdf5',
                            dtype='int',
                            overwrite=False,
                            cachedir=None):
@@ -205,9 +204,9 @@ class CoverageDataset(Dataset):
             over the window lengths defined by the resolution. Default: 50.
             This value should be chosen to be divisible by binsize and stepsize.
         flank : int
-            Flanking size in basepairs to extend the binsize with at both ends.
-            For example, if binsize=50 and flank=50 the total length of the window
-            amounts to 150 bp. Default: 150.
+            Flanking size increases the interval size at both ends by
+            flank bins. Note that the binsize is defined by the resolution parameter.
+            Default: 0.
         storage : str
             Storage mode for storing the coverage data can be
             'ndarray' or 'hdf5'. Default: 'hdf5'.
@@ -304,9 +303,9 @@ class CoverageDataset(Dataset):
             over the window lengths defined by the resolution. Default: 50.
             This value should be chosen to be divisible by binsize and stepsize.
         flank : int
-            Flanking size in basepairs to extend the binsize with at both ends.
-            For example, if binsize=50 and flank=50 the total length of the window
-            amounts to 150 bp. Default: 150.
+            Flanking size increases the interval size at both ends by
+            flank bins. Note that the binsize is defined by the resolution parameter.
+            Default: 0.
         storage : str
             Storage mode for storing the coverage data can be
             'ndarray' or 'hdf5'. Default: 'hdf5'.
@@ -424,9 +423,9 @@ class CoverageDataset(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
+        blen = (self.gindexer.binsize) // self.gindexer.resolution
         return (len(self),
-                (2*self.flank +
-                 self.gindexer.binsize) // self.gindexer.resolution,
+                2*self.flank + (blen if blen > 0 else 1),
                 2 if self.stranded else 1, len(self.covers.condition))
 
     @property
