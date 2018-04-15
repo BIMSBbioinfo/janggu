@@ -33,22 +33,8 @@ class CoverageDataset(Dataset):
         Number of flanking regions to take into account. Default: 4.
     stranded : boolean
         Consider strandedness of coverage. Default: True.
-
-
-    Attributes
-    -----------
-    name : str
-        Name of the dataset
-    covers : :class:`BlgGenomicArray`
-        A genomic array that holds the coverage data
-    gindxer : :class:`GenomicIndexer`
-        A genomic index mapper that translates an integer index to a
-        genomic coordinate.
-    flank : int
-        Number of flanking regions to take into account. Default: 4.
-    stranded : boolean
-        Consider strandedness of coverage. Default: True.
-
+    padding_value : int or float
+        Padding value used to pad variable size fragments. Default: 0.
     """
 
     _flank = None
@@ -56,12 +42,14 @@ class CoverageDataset(Dataset):
     def __init__(self, name, covers,
                  gindexer,  # indices of pointing to region start
                  flank=4,  # flanking region to consider
-                 stranded=True):  # strandedness to consider
+                 stranded=True,  # strandedness to consider
+                 padding_value=0):  # padding value
 
         self.covers = covers
         self.gindexer = gindexer
         self.flank = flank
         self.stranded = stranded
+        self.padding_value = padding_value
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -392,6 +380,7 @@ class CoverageDataset(Dataset):
                              + 'index must be iterable')
 
         data = np.empty((len(idxs),) + self.shape[1:])
+        data.fill(self.padding_value)
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
@@ -402,7 +391,8 @@ class CoverageDataset(Dataset):
 
             pinterval.end = interval.end + self.flank
 
-            data[i] = np.asarray(self.covers[pinterval])
+            data[i, :(pinterval.end-pinterval.start), :, :] = \
+            np.asarray(self.covers[pinterval])
 
             if interval.strand == '-':
                 # if the region is on the negative strand,
