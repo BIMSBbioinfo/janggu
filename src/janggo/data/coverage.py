@@ -70,26 +70,34 @@ class CoverageDataset(Dataset):
             Name of the dataset
         bamfiles : str or list
             bam-file or list of bam files.
-        gindxer : pandas.DataFrame or str
-            bed-filename or content of a bed-file
-            (in terms of a pandas.DataFrame).
-        genomesize : dict
-            Dictionary containing the genome size.
+        regions : str
+            Bed-file defining the regions that comprise the dataset.
+        genomesize : dict or None
+            Dictionary containing the genome size. If `genomesize=None`,
+            the genome size
+            is fetched from the bam header. Otherwise, the supplied genome
+            size is used.
         samplenames : list
-            List of samplenames. Default: None means that the filenames
-            are used as samplenames as well.
+            List of samplenames. If `samplenames=None`, the filenames
+            are used as samplenames directly.
+        min_mapq : int
+            Minimal mapping quality. Reads with lower mapping quality are
+            discarded. If None, all reads are used.
         binsize : int
             Binsize in basepairs. Default: 50.
         stepsize : int
             Stepsize in basepairs. This defines the step size for traversing
             the genome. Default: 50.
         flank : int
-            Adjacent flanking size to extend in basepairs. Default: 150.
-        stranded : boolean
-            Consider strandedness of coverage. Default: True.
+            Flanking size in basepairs to extend the binsize with at both ends.
+            For example, if binsize=50 and flank=50 the total length of the window
+            amounts to 150 bp. Default: 150.
         storage : str
             Storage mode for storing the coverage data can be
-            'step', 'ndarray', 'memmap' or 'hdf5'. Default: 'hdf5'.
+            'ndarray' or 'hdf5'. Default: 'hdf5'.
+        dtype : str
+            Typecode to define the datatype to be used for storage.
+            Default: 'int'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         cachedir : str or None
@@ -113,7 +121,7 @@ class CoverageDataset(Dataset):
             for chrom, length in zip(header.references, header.lengths):
                 genomesize[chrom] = length
 
-        def bam_loader(cover, files):
+        def _bam_loader(cover, files):
             print("load from bam")
             for i, sample_file in enumerate(files):
                 print('Counting from {}'.format(sample_file))
@@ -178,25 +186,34 @@ class CoverageDataset(Dataset):
             Name of the dataset
         bigwigfiles : str or list
             bigwig-file or list of bigwig files.
-        gindxer : pandas.DataFrame or str
-            bed-filename or content of a bed-file
-            (in terms of a pandas.DataFrame).
-        genomesize : dict
-            Dictionary containing the genome size.
+        regions : str
+            Bed-file defining the regions that comprise the dataset.
+        genomesize : dict or None
+            Dictionary containing the genome size. If `genomesize=None`,
+            the genome size is fetched from the regions defined by the bed-file.
+            Otherwise, the supplied genome size is used.
         samplenames : list
-            List of samplenames. Default: None means that the filenames
-            are used as samplenames as well.
+            List of samplenames. If `samplenames=None`, the filenames
+            are used as samplenames directly.
         binsize : int
-            binsize in basepairs. Default: 50.
+            Binsize in basepairs. Default: 50.
         stepsize : int
-            stepsize in basepairs. This defines the step size for traversing
+            Stepsize in basepairs. This defines the step size for traversing
             the genome. Default: 50.
+        resolution : int
+            Resolution in base pairs. This is used to collect the mean signal
+            over the window lengths defined by the resolution. Default: 50.
+            This value should be chosen to be divisible by binsize and stepsize.
         flank : int
-            Adjacent flanking bins to use, where the bin size is determined
-            by the binsize. Default: 4.
+            Flanking size in basepairs to extend the binsize with at both ends.
+            For example, if binsize=50 and flank=50 the total length of the window
+            amounts to 150 bp. Default: 150.
         storage : str
             Storage mode for storing the coverage data can be
-            'step', 'ndarray', 'memmap' or 'hdf5'. Default: 'hdf5'.
+            'ndarray' or 'hdf5'. Default: 'hdf5'.
+        dtype : str
+            Typecode to define the datatype to be used for storage.
+            Default: 'int'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         cachedir : str or None
@@ -217,13 +234,13 @@ class CoverageDataset(Dataset):
         if not samplenames:
             samplenames = bigwigfiles
 
-        def bigwig_loader(cover, bigwigfiles, gindexer):
+        def _bigwig_loader(cover, bigwigfiles, gindexer):
             print("load from bigwig")
             for i, sample_file in enumerate(bigwigfiles):
                 bwfile = pyBigWig.open(sample_file)
 
-                for j in range(len(gindexer)):
-                    interval = gindexer[j]
+                for interval in gindexer:
+                    # interval = gindexer[j]
                     cover[interval.start_as_pos, i] = \
                         np.mean(
                             bwfile.values(
@@ -232,8 +249,6 @@ class CoverageDataset(Dataset):
                                 int(interval.end*gindexer.resolution)))
             return cover
 
-        # At the moment, we treat the information contained
-        # in each bw-file as unstranded
         if cachedir:
             memmap_dir = os.path.join(cachedir, name)
         else:
@@ -247,7 +262,7 @@ class CoverageDataset(Dataset):
                                      conditions=samplenames,
                                      overwrite=overwrite,
                                      typecode=dtype,
-                                     loader=bigwig_loader,
+                                     loader=_bigwig_loader,
                                      loader_args=(bigwigfiles, gindexer))
 
         return cls(name, cover, gindexer, flank, stranded=False)
@@ -362,7 +377,7 @@ class CoverageDataset(Dataset):
 
     def __repr__(self):  # pragma: no cover
         return "CoverageDataset('{}', ".format(self.name) \
-               + "<BlgGenomicArray>, " \
+               + "<GenomicArray>, " \
                + "<GenomicIndexer>, " \
                + "flank={}, stranded={})".format(self.flank, self.stranded)
 
