@@ -96,7 +96,7 @@ class DnaDataset(Dataset):
         for seq in seqs:
             chromlens[seq.id] = len(seq) - order + 1
 
-        def dna_loader(cover, seqs, order):
+        def _dna_loader(cover, seqs, order):
             print('Convert sequences to index array')
             for seq in seqs:
                 interval = GenomicInterval(seq.id, 0,
@@ -109,8 +109,6 @@ class DnaDataset(Dataset):
                     filter_ = np.asarray([pow(4, i) for i in range(order)])
                     dna = np.convolve(dna, filter_, mode='valid')
 
-                print(dna.shape)
-                print(dna)
                 cover[interval, 0] = dna
 
         # At the moment, we treat the information contained
@@ -121,7 +119,7 @@ class DnaDataset(Dataset):
                                      memmap_dir=os.path.join(cachedir, name),
                                      overwrite=overwrite,
                                      typecode='int',
-                                     loader=dna_loader,
+                                     loader=_dna_loader,
                                      loader_args=(seqs, order))
 
         return cover
@@ -252,7 +250,7 @@ class DnaDataset(Dataset):
         """
 
         # for each index read use the adaptor indices to retrieve the seq.
-        idna = np.empty((len(idxs), self.gindexer.binsize +
+        idna = np.zeros((len(idxs), self.gindexer.binsize +
                          2*self.flank - self.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
@@ -296,8 +294,8 @@ class DnaDataset(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        return (len(self), pow(4, self.order), self.gindexer.binsize +
-                2*self.flank - self.order + 1, 1)
+        return (len(self), self.gindexer.binsize +
+                2*self.flank - self.order + 1, pow(4, self.order),  1)
 
     @property
     def order(self):

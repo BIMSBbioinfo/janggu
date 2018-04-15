@@ -93,13 +93,13 @@ def as_onehot(idna, order):
     numpy.array
         One-hot representation of the batch. The dimension
         of the array is given by
-        `(batch_size, pow(4, order), sequence length, 1)`
+        `(batch_size, sequence length, pow(4, order), 1)`
     """
 
-    onehot = np.zeros((len(idna), pow(4, order),
-                       idna.shape[1], 1), dtype='int8')
+    onehot = np.zeros((len(idna),
+                       idna.shape[1], pow(4, order), 1), dtype='int8')
     for nuc in np.arange(pow(4, order)):
-        onehot[:, nuc, :, 0][idna == nuc] = 1
+        onehot[:, :, nuc, 0][idna == nuc] = 1
 
     return onehot
 

@@ -17,7 +17,7 @@ class Reverse(Layer):
         Axis which needs to be reversed. Default: 1.
     """
 
-    def __init__(self, axis=1, **kwargs):
+    def __init__(self, axis=0, **kwargs):
         self.axis = axis
         super(Reverse, self).__init__(**kwargs)
 
@@ -41,6 +41,9 @@ class Complement(Layer):
     from a given DNA sequences.
     The layer can be used with arbitrary one-hot representation
     orders.
+    The layer uses a permutation matrix that is multiplied
+    with the original input dataset in order to evaluate
+    the complementary sequence's one hot representation.
 
     Parameters
     ----------
