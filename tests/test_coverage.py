@@ -52,7 +52,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 1, 2, 1))
         cinterval = cvdata.gindexer[0]
         np.testing.assert_equal(
-            (interval.chrom, interval.start, interval.start + 1),
+            (interval.chrom, interval.start, interval.start+1),
             (cinterval.chrom, cinterval.start, cinterval.end))
 
         np.testing.assert_equal(cvdata.covers[interval].sum(), 2)
@@ -114,7 +114,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
                                 cvdata[:][0, :, :, :])
 
 
-def test_load_coveragedataset_bigwig_unstranded(tmpdir):
+def test_load_coveragedataset_bigwig_unstranded_resolution1_bin1(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
@@ -129,6 +129,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
     bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
 
     flank = 4
+    resolution = 1
     interval = GenomicInterval("chrIII", 217330, 217350, "+")
     cachedir = tmpdir.strpath
 
@@ -141,6 +142,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
             regions=bed_file,
             genomesize=gsize,
             binsize=1, stepsize=1,
+            resolution=resolution,
             flank=flank,
             storage=store,
             cachedir=cachedir)
@@ -150,6 +152,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
             regions=bed_file_unstranded,
             genomesize=gsize,
             binsize=1, stepsize=1,
+            resolution=resolution,
             flank=flank,
             storage=store,
             cachedir=cachedir)
@@ -158,8 +161,8 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 1, 1, 1))
         cinterval = cvdata.gindexer[0]
         np.testing.assert_equal(
-            (interval.chrom, interval.start,
-             interval.start + 1, interval.strand),
+            (interval.chrom, interval.start//resolution,
+             (interval.start + resolution)//resolution, interval.strand),
             (cinterval.chrom, cinterval.start,
              cinterval.end, cinterval.strand))
         # We observe twice the coverage here.
@@ -171,7 +174,12 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         # With the new GenomicArray, we obtain half the coverage,
         # because we only assign once per region. If a region gets assignments
         # multiple times, it overwrites the previous value.
-        np.testing.assert_equal(cvdata.covers[interval].sum(), 34)
+        piv = interval.copy()
+        piv.start //=resolution
+        piv.end = piv.start + 1
+        print(piv)
+        print(cvdata.covers[piv])
+        np.testing.assert_equal(cvdata.covers[piv].mean(), 1.)
         x = cvdata[3]
         np.testing.assert_equal(x.shape, (1, 2*flank + 1, 1, 1))
         np.testing.assert_equal(x[0, 2*flank, 0, 0], 2.0)
@@ -191,6 +199,107 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
         print((cvdata_bigwig_us[:] - cvdata[:20]).sum())
         np.testing.assert_equal(cvdata_bigwig_us[:], cvdata[:20])
 
+
+def test_load_coveragedataset_bigwig_unstranded_resolution50_bin1(tmpdir):
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
+    gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+
+    gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
+                            index_col='chr').to_dict()['length']
+
+    # gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "yeast.bed")
+    bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
+
+    flank = 4
+    resolution = 50
+    interval = GenomicInterval("chrIII", 217330, 217350, "+")
+    cachedir = tmpdir.strpath
+
+    for store in ['ndarray', 'hdf5']:
+        # base pair binsize
+        print(store)
+        cvdata_bigwig = CoverageDataset.create_from_bigwig(
+            "yeast_I_II_III.bw_res1_str",
+            bigwigfiles=bwfile_,
+            regions=bed_file,
+            genomesize=gsize,
+            binsize=1, stepsize=1,
+            resolution=resolution,
+            flank=flank,
+            storage=store,
+            cachedir=cachedir)
+        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
+            "yeast_I_II_III.bw_res1_unstr",
+            bigwigfiles=bwfile_,
+            regions=bed_file_unstranded,
+            genomesize=gsize,
+            binsize=1, stepsize=1,
+            resolution=resolution,
+            flank=flank,
+            storage=store,
+            cachedir=cachedir)
+        cvdata = cvdata_bigwig
+        np.testing.assert_equal(len(cvdata), 40)
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 1, 1, 1))
+        cinterval = cvdata.gindexer[0]
+        np.testing.assert_equal(
+            (interval.chrom, interval.start//resolution,
+             (interval.start + resolution)//resolution, interval.strand),
+            (cinterval.chrom, cinterval.start,
+             cinterval.end, cinterval.strand))
+        # We observe twice the coverage here.
+        # For an actual analysis, this is not desired.
+        # There one would have to make sure, that regions
+        # are non-self-overlapping to avoid double counting evidence.
+        # But for testing purposes this is ok.
+        # UPDATE:
+        # With the new GenomicArray, we obtain half the coverage,
+        # because we only assign once per region. If a region gets assignments
+        # multiple times, it overwrites the previous value.
+        piv = interval.copy()
+        piv.start //=resolution
+        piv.end = piv.start + 1
+        print(piv)
+        print(cvdata.covers[piv])
+        np.testing.assert_allclose(cvdata.covers[piv].sum(), 0.78)
+        x = cvdata[3]
+        np.testing.assert_equal(x.shape, (1, 2*flank + 1, 1, 1))
+
+        np.testing.assert_equal(cvdata[:].shape, cvdata.shape)
+        # testing forward and reverse complement
+        np.testing.assert_equal(cvdata[:][:20, :, :, 0],
+                                cvdata[:][20:, ::-1, ::-1, 0])
+        # Also check unstranded bed variant
+        for region in cvdata.gindexer:
+            print(region)
+        print(cvdata_bigwig_us[:].dtype)
+        print(cvdata[:].dtype)
+        print((cvdata_bigwig_us[:] - cvdata[:20]).sum())
+        np.testing.assert_equal(cvdata_bigwig_us[:], cvdata[:20])
+
+def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
+    gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+
+    gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
+                            index_col='chr').to_dict()['length']
+
+    # gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "yeast.bed")
+    bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
+
+    flank = 4
+    resolution = 1
+    interval = GenomicInterval("chrIII", 217330, 217350, "+")
+    cachedir = tmpdir.strpath
+
     for store in ['ndarray', 'hdf5']:
         # 20 bp binsize
         print(store)
@@ -200,6 +309,7 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
             regions=bed_file,
             genomesize=gsize,
             binsize=20, stepsize=20,
+            resolution=resolution,
             flank=flank,
             storage=store,
             cachedir=cachedir)
@@ -209,21 +319,96 @@ def test_load_coveragedataset_bigwig_unstranded(tmpdir):
             regions=bed_file_unstranded,
             genomesize=gsize,
             binsize=20, stepsize=20,
+            resolution=resolution,
             flank=flank,
             storage=store,
             cachedir=cachedir)
         cvdata = cvdata_bigwig
+        piv = interval.copy()
+        piv.start //=resolution
+        piv.end = piv.start + 1
         np.testing.assert_equal(len(cvdata), 2)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 20, 1, 1))
-        np.testing.assert_equal(cvdata.covers[interval].sum(), 34)
+        print(piv)
+        print(cvdata.covers[piv])
+        np.testing.assert_allclose(cvdata.covers[interval].sum(), 1.7)
         cinterval = cvdata.gindexer[0]
         np.testing.assert_equal(
-            (interval.chrom, interval.start, interval.end, interval.strand),
+            (interval.chrom, interval.start//resolution, interval.end//resolution, interval.strand),
             (cinterval.chrom, cinterval.start,
              cinterval.end, cinterval.strand))
         x = cvdata[0]
         np.testing.assert_equal(x.shape, (1, 2*flank + 20, 1, 1))
-        np.testing.assert_equal(x[0, flank, 0, 0], 34.0)
+        np.testing.assert_allclose(x[0, flank, 0, 0], 1.7)
+        # check if slicing works
+        np.testing.assert_equal(cvdata[:].shape, cvdata.shape)
+        # testing forward and reverse complement
+        np.testing.assert_equal(cvdata[:][0, :, :, 0],
+                                cvdata[:][1, ::-1, ::-1, 0])
+        # Also check unstranded bed variant
+        np.testing.assert_equal(cvdata_bigwig_us[:][0, :, :, :],
+                                cvdata[:][0, :, :, :])
+
+
+def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
+    gsfile_ = os.path.join(data_path, 'sacCer3.chrom.sizes')
+
+    gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
+                            index_col='chr').to_dict()['length']
+
+    # gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "yeast.bed")
+    bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
+
+    flank = 4
+    resolution = 10
+    interval = GenomicInterval("chrIII", 217330, 217350, "+")
+    cachedir = tmpdir.strpath
+
+    for store in ['ndarray', 'hdf5']:
+        # 20 bp binsize
+        print(store)
+        cvdata_bigwig = CoverageDataset.create_from_bigwig(
+            "yeast_I_II_III.bw_res20_str",
+            bigwigfiles=bwfile_,
+            regions=bed_file,
+            genomesize=gsize,
+            binsize=20, stepsize=20,
+            resolution=resolution,
+            flank=flank,
+            storage=store,
+            cachedir=cachedir)
+        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
+            "yeast_I_II_III.bw_res20_unstr",
+            bigwigfiles=bwfile_,
+            regions=bed_file_unstranded,
+            genomesize=gsize,
+            binsize=20, stepsize=20,
+            resolution=resolution,
+            flank=flank,
+            storage=store,
+            cachedir=cachedir)
+        cvdata = cvdata_bigwig
+        piv = interval.copy()
+        piv.start //=resolution
+        piv.end = piv.start + 1
+        np.testing.assert_equal(len(cvdata), 2)
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 2, 1, 1))
+        print(piv)
+        print(cvdata.covers[piv])
+        np.testing.assert_allclose(cvdata.covers[piv].sum(), 1.7)
+        cinterval = cvdata.gindexer[0]
+        np.testing.assert_equal(
+            (interval.chrom, interval.start//resolution, interval.end//resolution, interval.strand),
+            (cinterval.chrom, cinterval.start,
+             cinterval.end, cinterval.strand))
+        x = cvdata[0]
+        np.testing.assert_equal(x.shape, (1, 2*flank + 2, 1, 1))
+        np.testing.assert_allclose(x[0, flank, 0, 0], 1.7)
         # check if slicing works
         np.testing.assert_equal(cvdata[:].shape, cvdata.shape)
         # testing forward and reverse complement
