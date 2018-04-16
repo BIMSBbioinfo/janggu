@@ -216,6 +216,11 @@ def test_dna_dataset_sanity(tmpdir):
     refgenome = os.path.join(data_path, 'genome.fa')
 
     with pytest.raises(Exception):
+        # name must be a string
+        DnaDataset.create_from_refgenome(1.23, refgenome='',
+                                         storage='ndarray',
+                                         regions=bed_file, order=1)
+    with pytest.raises(Exception):
         DnaDataset.create_from_refgenome('train', refgenome='',
                                          storage='ndarray',
                                          regions=bed_file, order=1)
