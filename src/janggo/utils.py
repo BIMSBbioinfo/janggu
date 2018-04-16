@@ -13,7 +13,7 @@ from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
 
-if sys.version_info[0] < 3:
+if sys.version_info[0] < 3:  # pragma: no cover
     from urllib import urlcleanup, urlretrieve
 else:
     from urllib.request import urlcleanup, urlretrieve
@@ -159,8 +159,8 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     """
 
     outputfile = os.path.join(outputdir, '{}.chrom.sizes'.format(refgenome))
-    if not os.path.exists(outputfile):
-
+    if not os.path.exists(outputfile):  # pragma: no cover
+        # not part of unit tests, because this requires internet connection
         urlpath = 'http://hgdownload.cse.ucsc.edu/goldenPath/{}/bigZips/{}.chrom.sizes'.format(refgenome, refgenome)
 
         # From the md5sum.txt we extract the
