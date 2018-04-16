@@ -43,22 +43,6 @@ class DnaDataset(Dataset):
     cachedir : str or None
         Directory in which the cachefiles are located. Default: None.
 
-    Attributes
-    -----------
-    name : str
-        Name of the dataset
-    garray : :class:`GenomicArray`
-        A genomic array that holds the sequence data.
-    gindxer : :class:`GenomicIndexer`
-        A genomic index mapper that translates an integer index to a
-        genomic coordinate.
-    flank : int
-        Flanking regions in basepairs to be extended up and downstream.
-        Default: 150.
-    order : int
-        Order for the one-hot representation. Default: 1.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
     """
 
     _order = None
@@ -79,6 +63,11 @@ class DnaDataset(Dataset):
     def _make_genomic_array(name, fastafile, order, storage, cachedir='',
                             overwrite=False):
         """Create a genomic array or reload an existing one."""
+
+        # always use int 16 to store dna indices
+        # do not use int8 at the moment, because 'N' is encoded
+        # as -1024, which causes an underflow with int8.
+        dtype='int16'
 
         # Load sequences from refgenome
         seqs = []
@@ -102,7 +91,7 @@ class DnaDataset(Dataset):
                 interval = GenomicInterval(seq.id, 0,
                                            len(seq) - order + 1, '.')
 
-                dna = np.asarray(dna2ind(seq), dtype='int')
+                dna = np.asarray(dna2ind(seq), dtype=dtype)
 
                 if order > 1:
                     # for higher order motifs, this part is used
@@ -118,7 +107,7 @@ class DnaDataset(Dataset):
                                      storage=storage,
                                      memmap_dir=os.path.join(cachedir, name),
                                      overwrite=overwrite,
-                                     typecode='int',
+                                     typecode=dtype,
                                      loader=_dna_loader,
                                      loader_args=(seqs, order))
 
