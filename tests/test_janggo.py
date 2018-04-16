@@ -13,12 +13,16 @@ from janggo import inputlayer
 from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
 from janggo import outputdense
+from janggo import outputconv
 from janggo.cli import main
 from janggo.data import DnaDataset
 from janggo.data import NumpyDataset
 from janggo.data import TabDataset
+from janggo.data import CoverageDataset
 from janggo.data import input_props
 from janggo.data import output_props
+from janggo.layers import Complement
+from janggo.layers import Reverse
 from janggo.evaluation import EvaluatorList
 from janggo.evaluation import ScoreEvaluator
 from janggo.evaluation import accuracy
@@ -32,14 +36,11 @@ def test_main():
     main([])
 
 
-def test_janggo_instance(tmpdir):
-    """Test Janggo creation by shape and name."""
+def test_janggo_instance_dense(tmpdir):
+    """Test Janggo creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
     bed_file = os.path.join(data_path, 'regions.bed')
-    print(bed_file)
-    print(type(bed_file))
-    print(isinstance(bed_file, str))
-    print(bed_file.endswith('.bed'))
+
     csvfile = os.path.join(data_path, 'ctcf_sample.csv')
 
     refgenome = os.path.join(data_path, 'genome.fa')
@@ -53,7 +54,46 @@ def test_janggo_instance(tmpdir):
     @inputlayer
     @outputdense
     def _cnn_model(inputs, inp, oup, params):
-        layer = Flatten()(inputs())
+        layer = inputs['.']
+        layer = Complement(1)(layer)
+        layer = Reverse()(layer)
+        layer = Flatten()(layer)
+        output = Dense(params[0])(layer)
+        return inputs, output
+
+    with pytest.raises(Exception):
+        # due to No input name . defined
+        bwm = Janggo.create('dna_ctcf_HepG2-cnn',
+                            (_cnn_model, (2,)),
+                            inputp=input_props(dna),
+                            outputp=output_props(ctcf, 'sigmoid'),
+                            outputdir=tmpdir.strpath)
+
+    @inputlayer
+    @outputdense
+    def _cnn_model(inputs, inp, oup, params):
+        layer = inputs[list()]
+        layer = Complement(1)(layer)
+        layer = Reverse()(layer)
+        layer = Flatten()(layer)
+        output = Dense(params[0])(layer)
+        return inputs, output
+
+    with pytest.raises(Exception):
+        # due to Wrong type for indexing
+        bwm = Janggo.create('dna_ctcf_HepG2-cnn',
+                            (_cnn_model, (2,)),
+                            inputp=input_props(dna),
+                            outputp=output_props(ctcf, 'sigmoid'),
+                            outputdir=tmpdir.strpath)
+
+    @inputlayer
+    @outputdense
+    def _cnn_model(inputs, inp, oup, params):
+        layer = inputs()[0]
+        layer = Complement(1)(layer)
+        layer = Reverse()(layer)
+        layer = Flatten()(layer)
         output = Dense(params[0])(layer)
         return inputs, output
 
@@ -62,8 +102,94 @@ def test_janggo_instance(tmpdir):
         bwm = Janggo.create('dna_ctcf_HepG2.cnn',
                             (_cnn_model, (2,)),
                             inputp=input_props(dna),
-                            ouputp=output_props(ctcf, 'sigmoid'),
+                            outputp=output_props(ctcf, 'sigmoid'),
                             outputdir=tmpdir.strpath)
+    with pytest.raises(Exception):
+        # name with must be string
+        bwm = Janggo.create(12342134,
+                            (_cnn_model, (2,)),
+                            inputp=input_props(dna),
+                            outputp=output_props(ctcf, 'sigmoid'),
+                            outputdir=tmpdir.strpath)
+
+    bwm = Janggo.create('dna_ctcf_HepG2-cnn',
+                        (_cnn_model, (2,)),
+                        inputp=input_props(dna),
+                        outputp=output_props(ctcf, 'sigmoid'),
+                        outputdir=tmpdir.strpath)
+
+    @inputlayer
+    @outputdense
+    def _cnn_model(inputs, inp, oup, params):
+        layer = inputs[0]
+        layer = Complement(1)(layer)
+        layer = Reverse()(layer)
+        layer = Flatten()(layer)
+        output = Dense(params[0])(layer)
+        return inputs, output
+    bwm = Janggo.create('dna_ctcf_HepG2-cnn',
+                        (_cnn_model, (2,)),
+                        inputp=input_props(dna),
+                        outputp=output_props(ctcf, 'sigmoid'),
+                        outputdir=tmpdir.strpath)
+
+    @inputlayer
+    @outputdense
+    def _cnn_model(inputs, inp, oup, params):
+        layer = inputs['dna']
+        layer = Complement(1)(layer)
+        layer = Reverse()(layer)
+        layer = Flatten()(layer)
+        output = Dense(params[0])(layer)
+        return inputs, output
+    bwm = Janggo.create('dna_ctcf_HepG2-cnn',
+                        (_cnn_model, (2,)),
+                        inputp=input_props(dna),
+                        outputp=output_props(ctcf, 'sigmoid'),
+                        outputdir=tmpdir.strpath)
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+
+    bwm.save()
+    bwm.summary()
+
+    assert os.path.exists(storage)
+
+    Janggo.create_by_name('dna_ctcf_HepG2-cnn', outputdir=tmpdir.strpath)
+
+
+def test_janggo_instance_conv(tmpdir):
+    """Test Janggo creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    bed_file = os.path.join(data_path, 'regions.bed')
+
+    posfile = os.path.join(data_path, 'positive.bed')
+
+    refgenome = os.path.join(data_path, 'genome.fa')
+
+    dna = DnaDataset.create_from_refgenome('dna', refgenome=refgenome,
+                                           storage='ndarray',
+                                           regions=bed_file, order=1)
+
+    ctcf = CoverageDataset.create_from_bed(
+        "positives",
+        bedfiles=posfile,
+        regions=bed_file,
+        binsize=200, stepsize=50,
+        resolution=50,
+        flank=0,
+        dimmode='all',
+        storage='ndarray')
+
+    @inputlayer
+    @outputconv
+    def _cnn_model(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+        layer = Complement(1)(layer)
+        layer = Reverse()(layer)
+        return inputs, layer
+
     bwm = Janggo.create('dna_ctcf_HepG2-cnn',
                         (_cnn_model, (2,)),
                         inputp=input_props(dna),
@@ -74,6 +200,7 @@ def test_janggo_instance(tmpdir):
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
 
     bwm.save()
+    bwm.summary()
 
     assert os.path.exists(storage)
 
