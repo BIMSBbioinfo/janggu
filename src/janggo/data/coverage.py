@@ -355,8 +355,10 @@ class CoverageDataset(Dataset):
                     if genomesize[region.iv.chrom] <= region.iv.start:
                         print("Region {} outside of genome size - skipped".format(region.iv))
                     else:
+                        # if region score is not defined, take the mere
+                        # presence of a range as positive label.
                         cover[region.iv.start_as_pos, i] = \
-                        np.dtype(cover.typecode).type(region.score)
+                        np.dtype(dtype).type(region.score if region.score else 1)
             return cover
 
         # At the moment, we treat the information contained
