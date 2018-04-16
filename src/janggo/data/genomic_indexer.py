@@ -24,6 +24,7 @@ class GenomicIndexer(object):
 
     _stepsize = None
     _binsize = None
+    _resolution = None
     chrs = None
     offsets = None
     inregionidx = None
@@ -48,7 +49,7 @@ class GenomicIndexer(object):
             Stepsize in base pairs.
         resolution : int
             Resolution in base pairs. This is used to aggregate
-            a signal, e.g. by averaging. Note that binsize and stepsize should
+            a signal, e.g. by averaging. Note that stepsize must be
             a multiple of the resolution.
         fixed_size_batches : bool
             Indicates that all regions must be equally long, as given by
@@ -144,6 +145,17 @@ class GenomicIndexer(object):
         if value <= 0:
             raise ValueError('stepsize must be positive')
         self._stepsize = value
+
+    @property
+    def resolution(self):
+        """resolution property"""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, value):
+        if value <= 0 or (self.stepsize % value) > 0:
+            raise ValueError('Resolution must be positive and divisible by stepsize')
+        self._resolution = value
 
     def idx_by_chrom(self, include=None, exclude=None):
         """idx_by_chrom filters for chromosome ids.

@@ -19,7 +19,12 @@ def test_gindexer_errors():
         GenomicIndexer.create_from_file(os.path.join(data_path,
                                                      'regions.bed'),
                                         binsize=10, stepsize=0)
-
+    with pytest.raises(ValueError):
+        # due to resolution > stepsize
+        GenomicIndexer.create_from_file(os.path.join(data_path,
+                                                     'regions.bed'),
+                                        binsize=200, stepsize=50,
+                                        resolution=100)
 
 def test_gindexer_merged():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
