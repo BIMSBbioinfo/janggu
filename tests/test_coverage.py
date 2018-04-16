@@ -36,17 +36,16 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
             binsize=1, stepsize=1,
             flank=flank,
             storage=store,
-            cachedir=tmpdir.strpath)
+            cachedir=tmpdir.strpath if store == 'hdf5' else None)
 
         cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
-            genomesize=gsize,
             binsize=1, stepsize=1,
             flank=flank,
             storage=store,
-            cachedir=tmpdir.strpath)
+            cachedir=tmpdir.strpath if store == 'hdf5' else None)
 
         np.testing.assert_equal(len(cvdata), 40)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 1, 2, 1))
@@ -83,7 +82,6 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
-            genomesize=gsize,
             binsize=20, stepsize=20,
             flank=flank,
             storage=store,
@@ -145,17 +143,16 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin1(tmpdir):
             resolution=resolution,
             flank=flank,
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
         cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
             "yeast_I_II_III.bw_res1_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,
-            genomesize=gsize,
             binsize=1, stepsize=1,
             resolution=resolution,
             flank=flank,
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
         cvdata = cvdata_bigwig
         np.testing.assert_equal(len(cvdata), 40)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 1, 1, 1))
@@ -231,17 +228,16 @@ def test_load_coveragedataset_bigwig_unstranded_resolution50_bin1(tmpdir):
             resolution=resolution,
             flank=flank,
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
         cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
             "yeast_I_II_III.bw_res1_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,
-            genomesize=gsize,
             binsize=1, stepsize=1,
             resolution=resolution,
             flank=flank,
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
         cvdata = cvdata_bigwig
         np.testing.assert_equal(len(cvdata), 40)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 1, 1, 1))
@@ -307,7 +303,6 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
             "yeast_I_II_III.bw_res20_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
-            genomesize=gsize,
             binsize=20, stepsize=20,
             resolution=resolution,
             flank=flank,
@@ -378,7 +373,6 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
             "yeast_I_II_III.bed_res20_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
-            genomesize=gsize,
             binsize=20, stepsize=20,
             resolution=resolution,
             flank=flank,
@@ -426,7 +420,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
 
     bwfile_ = os.path.join(data_path, "indiv_regions.bed")
 
-    # gsize = content.to_dict()['length']
+    gsize = {'chr1':20000}
 
     bed_file = os.path.join(data_path, "regions.bed")
 
@@ -447,7 +441,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
             flank=flank,
             dimmode='all',
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
 
         cvdata = cvdata_bigwig
 
@@ -469,11 +463,12 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
             bedfiles=bwfile_,
             regions=bed_file,
             binsize=200, stepsize=50,
+            genomesize=gsize,
             resolution=resolution,
             flank=1,
             dimmode='first',
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
 
         cvdata = cvdata_bigwig
 
@@ -497,7 +492,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
             flank=0,
             dimmode='first',
             storage=store,
-            cachedir=cachedir)
+            cachedir=cachedir if store == 'hdf5' else None)
 
         cvdata = cvdata_bigwig
 
