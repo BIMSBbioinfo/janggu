@@ -236,7 +236,7 @@ class CoverageDataset(Dataset):
 
         # automatically determine genomesize from largest region
         if not genomesize:
-            gsize = get_genome_size_from_bed(regions)
+            gsize = get_genome_size_from_bed(regions, flank*resolution)
         else:
             gsize = genomesize.copy()
 
@@ -343,7 +343,7 @@ class CoverageDataset(Dataset):
 
         # automatically determine genomesize from largest region
         if not genomesize:
-            gsize = get_genome_size_from_bed(regions)
+            gsize = get_genome_size_from_bed(regions, flank*resolution)
         else:
             gsize = genomesize.copy()
 

@@ -176,7 +176,7 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     return content.to_dict()['length']
 
 
-def get_genome_size_from_bed(bedfile):
+def get_genome_size_from_bed(bedfile, flank):
     """Get genome size.
 
     This function loads the genome size for a specified reference genome
@@ -187,6 +187,8 @@ def get_genome_size_from_bed(bedfile):
     ----------
     bedfile : str
         Bed or GFF file containing the regions of interest
+    flank : int
+        Flank to increase the window sizes.
 
     Returns
     -------
@@ -206,7 +208,7 @@ def get_genome_size_from_bed(bedfile):
     gsize = {}
     for region in regions_:
         if region.iv.chrom not in gsize:
-            gsize[region.iv.chrom] = region.iv.end
-        elif gsize[region.iv.chrom] < region.iv.end:
-            gsize[region.iv.chrom] = region.iv.end
+            gsize[region.iv.chrom] = region.iv.end + flank
+        elif gsize[region.iv.chrom] < region.iv.end + flank:
+            gsize[region.iv.chrom] = region.iv.end + flank
     return gsize
