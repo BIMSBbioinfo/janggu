@@ -53,7 +53,7 @@ class CoverageDataset(Dataset):
         self.padding_value = padding_value
         self.dimmode = dimmode
 
-        Dataset.__init__(self, '{}'.format(name))
+        Dataset.__init__(self, name)
 
     @classmethod
     def create_from_bam(cls, name, bamfiles, regions, genomesize=None,
