@@ -41,15 +41,17 @@ class CoverageDataset(Dataset):
 
     def __init__(self, name, covers,
                  gindexer,  # indices of pointing to region start
-                 flank=4,  # flanking region to consider
-                 stranded=True,  # strandedness to consider
-                 padding_value=0):  # padding value
+                 flank,  # flanking region to consider
+                 stranded,  # strandedness to consider
+                 padding_value,
+                 dimmode):  # padding value
 
         self.covers = covers
         self.gindexer = gindexer
         self.flank = flank
         self.stranded = stranded
         self.padding_value = padding_value
+        self.dimmode = dimmode
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -168,7 +170,8 @@ class CoverageDataset(Dataset):
                                      loader=_bam_loader,
                                      loader_args=(bamfiles,))
 
-        return cls(name, cover, gindexer, flank, stranded=True)
+        return cls(name, cover, gindexer, flank, stranded=True,
+                   padding_value=0, dimmode='all')
 
     @classmethod
     def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize=None,
@@ -178,6 +181,7 @@ class CoverageDataset(Dataset):
                            flank=0, storage='hdf5',
                            dtype='float32',
                            overwrite=False,
+                           dimmode='all',
                            cachedir=None):
         """Create a CoverageDataset class from a bigwig-file (or files).
 
@@ -215,6 +219,11 @@ class CoverageDataset(Dataset):
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'float32'.
+        dimmode : str
+            Dimension mode can be 'first' or 'all'. If 'first', only
+            the first element of size resolution is used. Otherwise,
+            all elements of size resolution spanning the binsize are returned.
+            Default: 'all'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         cachedir : str or None
@@ -267,7 +276,8 @@ class CoverageDataset(Dataset):
                                      loader=_bigwig_loader,
                                      loader_args=(bigwigfiles, gindexer))
 
-        return cls(name, cover, gindexer, flank, stranded=False)
+        return cls(name, cover, gindexer, flank, stranded=False,
+                   padding_value=0, dimmode=dimmode)
 
 
     @classmethod
@@ -277,6 +287,7 @@ class CoverageDataset(Dataset):
                         resolution=50,
                         flank=0, storage='hdf5',
                         dtype='int',
+                        dimmode='all',
                         overwrite=False,
                         cachedir=None):
         """Create a CoverageDataset class from a bed-file (or files).
@@ -315,6 +326,11 @@ class CoverageDataset(Dataset):
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
+        dimmode : str
+            Dimension mode can be 'first' or 'all'. If 'first', only
+            the first element of size resolution is used. Otherwise,
+            all elements of size resolution spanning the binsize are returned.
+            Default: 'all'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         cachedir : str or None
@@ -379,7 +395,8 @@ class CoverageDataset(Dataset):
                                      loader=_bed_loader,
                                      loader_args=(bedfiles, gsize))
 
-        return cls(name, cover, gindexer, flank, stranded=False, padding_value=-1)
+        return cls(name, cover, gindexer, flank, stranded=False,
+                   padding_value=-1, dimmode=dimmode)
 
     def __repr__(self):  # pragma: no cover
         return "CoverageDataset('{}', ".format(self.name) \
@@ -410,10 +427,13 @@ class CoverageDataset(Dataset):
 
             pinterval.start = interval.start - self.flank
 
-            pinterval.end = interval.end + self.flank
+            if self.dimmode == 'all':
+                pinterval.end = interval.end + self.flank
+            elif self.dimmode == 'first':
+                pinterval.end = pinterval.start + 1
 
             data[i, :(pinterval.end-pinterval.start), :, :] = \
-            np.asarray(self.covers[pinterval])
+                    np.asarray(self.covers[pinterval])
 
             if interval.strand == '-':
                 # if the region is on the negative strand,
@@ -430,10 +450,13 @@ class CoverageDataset(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        blen = (self.gindexer.binsize) // self.gindexer.resolution
+        if self.dimmode == 'all':
+            blen = (self.gindexer.binsize) // self.gindexer.resolution
+            seqlen = 2*self.flank + (blen if blen > 0 else 1)
+        elif self.dimmode == 'first':
+            seqlen = 1
         return (len(self),
-                2*self.flank + (blen if blen > 0 else 1),
-                2 if self.stranded else 1, len(self.covers.condition))
+                seqlen, 2 if self.stranded else 1, len(self.covers.condition))
 
     @property
     def samplenames(self):

@@ -350,6 +350,8 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
                                 cvdata[:][0, :, :, :])
 
 
+
+
 def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
@@ -373,7 +375,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
         # 20 bp binsize
         print(store)
         cvdata_bigwig = CoverageDataset.create_from_bigwig(
-            "yeast_I_II_III.bw_res20_str",
+            "yeast_I_II_III.bed_res20_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
             genomesize=gsize,
@@ -417,3 +419,94 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
         # Also check unstranded bed variant
         np.testing.assert_equal(cvdata_bigwig_us[:][0, :, :, :],
                                 cvdata[:][0, :, :, :])
+
+
+def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "indiv_regions.bed")
+
+    # gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "regions.bed")
+
+    flank = 4
+    resolution = 50
+
+    cachedir = tmpdir.strpath
+
+    for store in ['ndarray', 'hdf5']:
+        # 20 bp binsize
+        print(store)
+        cvdata_bigwig = CoverageDataset.create_from_bed(
+            "yeast_I_II_III.bed_res20_str",
+            bedfiles=bwfile_,
+            regions=bed_file,
+            binsize=200, stepsize=50,
+            resolution=resolution,
+            flank=flank,
+            dimmode='all',
+            storage=store,
+            cachedir=cachedir)
+
+        cvdata = cvdata_bigwig
+
+        np.testing.assert_equal(len(cvdata), 14344)
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 4 + 2*4, 1, 1))
+        np.testing.assert_equal(cvdata[99].shape, (1, 12, 1, 1))
+        np.testing.assert_equal(cvdata[99].sum(), 10 + 11)
+
+        cinterval = cvdata.gindexer[99]
+        np.testing.assert_equal(('chr1', 111, 115),
+                                (cinterval.chrom, cinterval.start,
+                                 cinterval.end))
+
+        # with flank the label should be shifted. therefore, we do not
+        # find the score=10 at index 99, because the score value from the
+        # upstream position is returned.
+        cvdata_bigwig = CoverageDataset.create_from_bed(
+            "yeast_I_II_III.bed_res20_str",
+            bedfiles=bwfile_,
+            regions=bed_file,
+            binsize=200, stepsize=50,
+            resolution=resolution,
+            flank=1,
+            dimmode='first',
+            storage=store,
+            cachedir=cachedir)
+
+        cvdata = cvdata_bigwig
+
+        np.testing.assert_equal(len(cvdata), 14344)
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 1, 1))
+        np.testing.assert_equal(cvdata[99].shape, (1, 1, 1, 1))
+        np.testing.assert_equal(cvdata[99].sum(), 1)
+
+        cinterval = cvdata.gindexer[99]
+        np.testing.assert_equal(('chr1', 111, 115),
+                                (cinterval.chrom, cinterval.start,
+                                 cinterval.end))
+
+        # now use without flank, otherwise this would introduce a shift.
+        cvdata_bigwig = CoverageDataset.create_from_bed(
+            "yeast_I_II_III.bed_res20_str",
+            bedfiles=bwfile_,
+            regions=bed_file,
+            binsize=200, stepsize=50,
+            resolution=resolution,
+            flank=0,
+            dimmode='first',
+            storage=store,
+            cachedir=cachedir)
+
+        cvdata = cvdata_bigwig
+
+        np.testing.assert_equal(len(cvdata), 14344)
+        np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 1, 1))
+        np.testing.assert_equal(cvdata[99].shape, (1, 1, 1, 1))
+        np.testing.assert_equal(cvdata[99].sum(), 10)
+
+        cinterval = cvdata.gindexer[99]
+        np.testing.assert_equal(('chr1', 111, 115),
+                                (cinterval.chrom, cinterval.start,
+                                 cinterval.end))
