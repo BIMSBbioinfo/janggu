@@ -68,3 +68,33 @@ def test_gindexer_indiv():
     iv = gi[7]
     np.testing.assert_equal((iv.chrom, iv.start, iv.end, iv.strand),
                             ('chr1', 950, 1150, '.'))
+
+
+def test_gindexer_merged_variable_length_ranges():
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    # with fixed size
+    gi = GenomicIndexer.create_from_file(
+        os.path.join(data_path, 'regions.bed'), binsize=100000,
+        stepsize=100000)
+    np.testing.assert_equal(len(gi), 5+1)
+
+    iv = gi[0]
+    np.testing.assert_equal((iv.chrom, iv.start, iv.end, iv.strand),
+                            ('chr1', 600, 100600, '.'))
+    iv = gi[-1]
+    np.testing.assert_equal((iv.chrom, iv.start, iv.end, iv.strand),
+                            ('chr1', 570400, 670400, '.'))
+
+    # with variable size regions
+    gi = GenomicIndexer.create_from_file(
+        os.path.join(data_path, 'regions.bed'), binsize=100000,
+        stepsize=100000, fixed_size_batches=False)
+    np.testing.assert_equal(len(gi), 5+1+2)
+
+    iv = gi[0]
+    np.testing.assert_equal((iv.chrom, iv.start, iv.end, iv.strand),
+                            ('chr1', 600, 100600, '.'))
+    iv = gi[-1]
+    np.testing.assert_equal((iv.chrom, iv.start, iv.end, iv.strand),
+                            ('chr1', 670400, 724100, '.'))
