@@ -43,14 +43,14 @@ class Dataset:
         self._name = value
 
     @abstractmethod
-    def __getitem__(self, idxs):
+    def __getitem__(self, idxs):  # pragma: no cover
         pass
 
-    def __len__(self):
+    def __len__(self):  # pragma: no cover
         pass
 
     @abstractproperty
-    def shape(self):
+    def shape(self):  # pragma: no cover
         """Shape of the dataset"""
         pass
 
@@ -60,12 +60,12 @@ class Dataset:
         return len(self.shape)
 
 
-def input_props(bwdata):
+def input_props(data):
     """Extracts the shape of a provided Input-Dataset.
 
     Parameters
     ---------
-    bwdata : :class:`Dataset` or list(:class:`Dataset`)
+    data : :class:`Dataset` or list(:class:`Dataset`)
         Dataset or list(Dataset).
 
     Returns
@@ -74,27 +74,27 @@ def input_props(bwdata):
         Dictionary with dataset names as keys and the corrsponding
         shape as value.
     """
-    if isinstance(bwdata, Dataset):
-        bwdata = [bwdata]
+    if isinstance(data, Dataset):
+        data = [data]
 
-    if isinstance(bwdata, list):
-        data = {}
-        for bwdatum in bwdata:
-            shape = bwdatum.shape[1:]
+    if isinstance(data, list):
+        dataprops = {}
+        for datum in data:
+            shape = datum.shape[1:]
             if shape == ():
                 shape = (1,)
-            data[bwdatum.name] = {'shape': shape}
-        return data
+            dataprops[datum.name] = {'shape': shape}
+        return dataprops
     else:
-        raise Exception('inputSpace wrong argument: {}'.format(bwdata))
+        raise Exception('inputSpace wrong argument: {}'.format(data))
 
 
-def output_props(bwdata, activation='sigmoid'):
+def output_props(data, activation='sigmoid'):
     """Extracts the shape of a provided Output-Dataset.
 
     Parameters
     ---------
-    bwdata : :class:`Dataset` or list(:class:`Dataset`)
+    data : :class:`Dataset` or list(:class:`Dataset`)
         Dataset or list(Dataset).
     activation : str
         Output activation function. Default: 'sigmoid'.
@@ -105,17 +105,17 @@ def output_props(bwdata, activation='sigmoid'):
         Dictionary description of the network output.
     """
 
-    if isinstance(bwdata, Dataset):
-        bwdata = [bwdata]
+    if isinstance(data, Dataset):
+        data = [data]
 
-    if isinstance(bwdata, list):
-        data = {}
-        for bwdatum in bwdata:
-            shape = bwdatum.shape[1:]
+    if isinstance(data, list):
+        dataprops = {}
+        for datum in data:
+            shape = datum.shape[1:]
             if shape == ():
                 shape = (1,)
-            data[bwdatum.name] = {'shape': shape,
-                                  'activation': activation}
-        return data
+            dataprops[datum.name] = {'shape': shape,
+                                     'activation': activation}
+        return dataprops
     else:
-        raise Exception('outputSpace wrong argument: {}'.format(bwdata))
+        raise Exception('outputSpace wrong argument: {}'.format(data))
