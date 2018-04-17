@@ -26,6 +26,7 @@ pyvenv*/
 pip-log.txt
 
 # Unit test / coverage reports
+.pytest_cache
 .coverage
 .tox
 .coverage.*
@@ -64,3 +65,6 @@ docs/_build
 *.bak
 
 *.whl
+
+# Janggo output
+janggo_results
