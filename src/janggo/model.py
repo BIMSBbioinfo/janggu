@@ -220,7 +220,7 @@ class Janggo(object):
           model.compile(optimizer='adadelta', loss='binary_crossentropy')
         """
 
-        print('create Janggo model.')
+        print('create model')
         modelfct = modeldef[0]
         modelparams = modeldef[1]
 
