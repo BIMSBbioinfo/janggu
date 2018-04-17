@@ -200,7 +200,7 @@ def get_genome_size_from_bed(bedfile, flank):
     if isinstance(bedfile, str) and bedfile.endswith('.bed'):
         regions_ = BED_Reader(bedfile)
     elif isinstance(bedfile, str) and (bedfile.endswith('.gff') or
-				       bedfile.endswith('.gtf')):
+                                       bedfile.endswith('.gtf')):
         regions_ = GFF_Reader(bedfile)
     else:
         raise Exception('Regions must be a bed, gff or gtf-file.')

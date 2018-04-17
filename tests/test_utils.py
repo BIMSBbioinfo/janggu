@@ -1,7 +1,7 @@
-from os.path import join
 import pkg_resources
-import pytest
+
 from janggo.utils import get_genome_size
+
 
 def test_genome_size():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')

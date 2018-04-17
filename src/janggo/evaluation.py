@@ -48,6 +48,7 @@ def _input_dimension_match(model, inputs):
             return False
     return True
 
+
 def _output_dimension_match(model, outputs):
     if outputs is not None:
         if not isinstance(outputs, list):
@@ -85,7 +86,6 @@ class EvaluatorList(object):
         Filter to restrict the models which are being evaluated. The filter may
         be a substring of the model name of interest. Default: None.
     """
-
 
     def __init__(self, evaluators, path=None, model_filter=None):
 
@@ -138,7 +138,6 @@ class EvaluatorList(object):
             Indicates whether multiprocessing should be used for the evaluation.
             Default: False.
         """
-
 
         model_path = os.path.join(self.path, 'models')
         if self.filter:
@@ -232,6 +231,7 @@ class Evaluator:
             return self._reshape(data[:])
 
         return data
+
 
 def dump_json(basename, results):
     """Method that dumps the results in a json file.

@@ -12,23 +12,23 @@ from janggo import Janggo
 from janggo import inputlayer
 from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
-from janggo import outputdense
 from janggo import outputconv
+from janggo import outputdense
 from janggo.cli import main
+from janggo.data import CoverageDataset
 from janggo.data import DnaDataset
 from janggo.data import NumpyDataset
 from janggo.data import TabDataset
-from janggo.data import CoverageDataset
 from janggo.data import input_props
 from janggo.data import output_props
-from janggo.layers import Complement
-from janggo.layers import Reverse
 from janggo.evaluation import EvaluatorList
 from janggo.evaluation import ScoreEvaluator
 from janggo.evaluation import accuracy
 from janggo.evaluation import auprc
 from janggo.evaluation import auroc
 from janggo.evaluation import f1_score
+from janggo.layers import Complement
+from janggo.layers import Reverse
 
 
 def test_main():
@@ -475,7 +475,7 @@ def test_janggo_train_predict_option6(tmpdir):
 
     evaluators = EvaluatorList([auc_eval, prc_eval, acc_eval,
                                 f1_eval], path=tmpdir.strpath,
-                                model_filter='ptest')
+                               model_filter='ptest')
 
     # first I create fake inputs to provoke dimension
     inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))

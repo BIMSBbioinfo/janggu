@@ -67,7 +67,7 @@ class DnaDataset(Dataset):
         # always use int 16 to store dna indices
         # do not use int8 at the moment, because 'N' is encoded
         # as -1024, which causes an underflow with int8.
-        dtype='int16'
+        dtype = 'int16'
 
         # Load sequences from refgenome
         seqs = []
@@ -285,7 +285,7 @@ class DnaDataset(Dataset):
     def shape(self):
         """Shape of the dataset"""
         return (len(self), self.gindexer.binsize +
-                2*self.flank - self.order + 1, pow(4, self.order),  1)
+                2*self.flank - self.order + 1, pow(4, self.order), 1)
 
     @property
     def order(self):

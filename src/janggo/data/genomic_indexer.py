@@ -110,12 +110,13 @@ class GenomicIndexer(object):
     def __repr__(self):  # pragma: no cover
         return "GenomicIndexer(<regions>, " \
             + "binsize={}, stepsize={}, resolution={})".format(self.binsize,
-                                                self.stepsize, self.resolution)
+                                                               self.stepsize,
+                                                               self.resolution)
 
     def __getitem__(self, index):
         if isinstance(index, int):
-            start = (self.offsets[index] + \
-                    self.inregionidx[index]*self.stepsize) // self.resolution
+            start = (self.offsets[index] +
+                     self.inregionidx[index]*self.stepsize) // self.resolution
             val = self.rel_end[index] // self.resolution
             end = start + (val if val > 0 else 1)
             return GenomicInterval(self.chrs[index], start,

@@ -45,7 +45,7 @@ class Janggo(object):
         if not outputdir:  # pragma: no cover
             # this is excluded from the unit tests for which
             # only temporary directories should be used.
-            outputdir = os.join.path(os.path.expanduser("~"), 'janggo_results')
+            outputdir = os.path.join(os.path.expanduser("~"), 'janggo_results')
         self.outputdir = outputdir
 
         if not os.path.exists(outputdir):  # pragma: no cover

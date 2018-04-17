@@ -1,12 +1,12 @@
 import numpy as np
-from keras.layers import Dense
 from keras.layers import Conv2D
+from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 
 from janggo import inputlayer
-from janggo import outputdense
 from janggo import outputconv
+from janggo import outputdense
 
 
 # ==========================================================
@@ -58,11 +58,13 @@ def make_conv_wo_decorator(input, inshapes, outshapes, params):
              for name in inshapes]
     layer = Conv2D(params, (1, 1))(input[0])
     output = [Conv2D(outshapes[name]['shape'][-1],
-                     (6,4),
+                     (6, 4),
                      name=name,
                      activation=outshapes[name]['activation'])(layer)
               for name in outshapes]
     return input, output
+
+
 # ==========================================================
 # Test without output decorator
 @outputconv
@@ -80,7 +82,7 @@ def make_conv_w_bottom(input, inshapes, outshapes, params):
     input
     layer = Conv2D(params, (1, 1))(input[0])
     output = [Conv2D(outshapes[name]['shape'][-1],
-                     (6,4),
+                     (6, 4),
                      name=name,
                      activation=outshapes[name]['activation'])(layer)
               for name in outshapes]

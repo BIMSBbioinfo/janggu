@@ -14,7 +14,7 @@ def test_coverage_from_bam_sanity():
     bed_file = os.path.join(data_path, "yeast.bed")
 
     bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
-    cvdata = CoverageDataset.create_from_bam(
+    CoverageDataset.create_from_bam(
         'test',
         bamfiles=bamfile_,
         regions=bed_file,
@@ -24,7 +24,7 @@ def test_coverage_from_bam_sanity():
 
     with pytest.raises(Exception):
         # name must be a string
-        cvdata = CoverageDataset.create_from_bam(
+        CoverageDataset.create_from_bam(
             1.2,
             bamfiles=bamfile_,
             regions=bed_file,
@@ -32,7 +32,7 @@ def test_coverage_from_bam_sanity():
             storage='ndarray')
 
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bam(
+        CoverageDataset.create_from_bam(
             'test',
             bamfiles=bamfile_,
             regions=bed_file,
@@ -40,7 +40,7 @@ def test_coverage_from_bam_sanity():
             flank=-1,
             storage='ndarray')
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bam(
+        CoverageDataset.create_from_bam(
             'test',
             bamfiles=bamfile_,
             regions=bed_file,
@@ -48,7 +48,7 @@ def test_coverage_from_bam_sanity():
             flank=0,
             storage='ndarray')
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bam(
+        CoverageDataset.create_from_bam(
             'test',
             bamfiles=bamfile_,
             regions=bed_file,
@@ -62,7 +62,7 @@ def test_coverage_from_bigwig_sanity():
     bed_file = os.path.join(data_path, "yeast.bed")
 
     bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
-    cvdata = CoverageDataset.create_from_bigwig(
+    CoverageDataset.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
         regions=bed_file,
@@ -73,16 +73,15 @@ def test_coverage_from_bigwig_sanity():
 
     with pytest.raises(Exception):
         # name must be a string
-        cvdata = CoverageDataset.create_from_bigwig(
+        CoverageDataset.create_from_bigwig(
             1.2,
             bigwigfiles=bwfile_,
             regions=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
-        print(cvdata.name)
 
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bigwig(
+        CoverageDataset.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -90,7 +89,7 @@ def test_coverage_from_bigwig_sanity():
             flank=-1,
             storage='ndarray')
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bigwig(
+        CoverageDataset.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -98,7 +97,7 @@ def test_coverage_from_bigwig_sanity():
             flank=0,
             storage='ndarray')
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bigwig(
+        CoverageDataset.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -107,7 +106,7 @@ def test_coverage_from_bigwig_sanity():
             storage='ndarray')
     with pytest.raises(Exception):
         # resolution must be greater than stepsize
-        cvdata = CoverageDataset.create_from_bigwig(
+        CoverageDataset.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -122,7 +121,7 @@ def test_coverage_from_bed_sanity():
     bed_file = os.path.join(data_path, 'regions.bed')
 
     bwfile_ = os.path.join(data_path, "indiv_regions.bed")
-    cvdata = CoverageDataset.create_from_bed(
+    CoverageDataset.create_from_bed(
         'test',
         bedfiles=bwfile_,
         regions=bed_file,
@@ -133,7 +132,7 @@ def test_coverage_from_bed_sanity():
 
     with pytest.raises(Exception):
         # name must be a string
-        cvdata = CoverageDataset.create_from_bed(
+        CoverageDataset.create_from_bed(
             1.2,
             bedfiles=bwfile_,
             regions=bed_file,
@@ -141,7 +140,7 @@ def test_coverage_from_bed_sanity():
             storage='ndarray')
 
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bed(
+        CoverageDataset.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -149,7 +148,7 @@ def test_coverage_from_bed_sanity():
             flank=-1,
             storage='ndarray')
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bed(
+        CoverageDataset.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -157,7 +156,7 @@ def test_coverage_from_bed_sanity():
             flank=0,
             storage='ndarray')
     with pytest.raises(Exception):
-        cvdata = CoverageDataset.create_from_bed(
+        CoverageDataset.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -166,7 +165,7 @@ def test_coverage_from_bed_sanity():
             storage='ndarray')
     with pytest.raises(Exception):
         # resolution must be greater than stepsize
-        cvdata = CoverageDataset.create_from_bed(
+        CoverageDataset.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -177,12 +176,13 @@ def test_coverage_from_bed_sanity():
     with pytest.raises(Exception):
         csvfile = os.path.join(data_path, 'ctcf_sample.csv')
         # must be a bed file
-        cvdata = CoverageDataset.create_from_bed(
+        CoverageDataset.create_from_bed(
             'test',
             bedfiles=csvfile,
             regions=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
+
 
 def test_load_coveragedataset_bam_stranded(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
@@ -348,7 +348,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin1(tmpdir):
         # because we only assign once per region. If a region gets assignments
         # multiple times, it overwrites the previous value.
         piv = interval.copy()
-        piv.start //=resolution
+        piv.start //= resolution
         piv.end = piv.start + 1
         print(piv)
         print(cvdata.covers[piv])
@@ -373,7 +373,6 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin1(tmpdir):
         np.testing.assert_equal(cvdata_bigwig_us[:], cvdata[:20])
 
 
-
 def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
@@ -382,8 +381,6 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
 
     gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
                             index_col='chr').to_dict()['length']
-
-    # gsize = content.to_dict()['length']
 
     bed_file = os.path.join(data_path, "yeast.bed")
     bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
@@ -417,7 +414,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
             cachedir=cachedir)
         cvdata = cvdata_bigwig
         piv = interval.copy()
-        piv.start //=resolution
+        piv.start //= resolution
         piv.end = piv.start + 1
         np.testing.assert_equal(len(cvdata), 2)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 20, 1, 1))
@@ -442,8 +439,6 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
                                 cvdata[:][0, :, :, :])
 
 
-
-
 def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
@@ -452,8 +447,6 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
 
     gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
                             index_col='chr').to_dict()['length']
-
-    # gsize = content.to_dict()['length']
 
     bed_file = os.path.join(data_path, "yeast.bed")
     bed_file_unstranded = os.path.join(data_path, "yeast_unstranded.bed")
@@ -487,7 +480,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
             cachedir=cachedir)
         cvdata = cvdata_bigwig
         piv = interval.copy()
-        piv.start //=resolution
+        piv.start //= resolution
         piv.end = piv.start + 1
         np.testing.assert_equal(len(cvdata), 2)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 2*flank + 2, 1, 1))
@@ -517,7 +510,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
 
     bwfile_ = os.path.join(data_path, "indiv_regions.bed")
 
-    gsize = {'chr1':20000}
+    gsize = {'chr1': 20000}
 
     bed_file = os.path.join(data_path, "regions.bed")
 

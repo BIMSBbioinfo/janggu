@@ -3,8 +3,8 @@ import os
 import numpy as np
 import pyBigWig
 import pysam
-from HTSeq import GenomicInterval
 from HTSeq import BED_Reader
+from HTSeq import GenomicInterval
 from HTSeq import GFF_Reader
 
 from janggo.data.data import Dataset
@@ -279,7 +279,6 @@ class CoverageDataset(Dataset):
         return cls(name, cover, gindexer, flank, stranded=False,
                    padding_value=0, dimmode=dimmode)
 
-
     @classmethod
     def create_from_bed(cls, name, bedfiles, regions, genomesize=None,
                         samplenames=None,
@@ -374,7 +373,8 @@ class CoverageDataset(Dataset):
                         # if region score is not defined, take the mere
                         # presence of a range as positive label.
                         cover[region.iv.start_as_pos, i] = \
-                        np.dtype(dtype).type(region.score if region.score else 1)
+                            np.dtype(dtype).type(region.score if
+                                                 region.score else 1)
             return cover
 
         # At the moment, we treat the information contained
@@ -433,7 +433,7 @@ class CoverageDataset(Dataset):
                 pinterval.end = pinterval.start + 1
 
             data[i, :(pinterval.end-pinterval.start), :, :] = \
-                    np.asarray(self.covers[pinterval])
+                np.asarray(self.covers[pinterval])
 
             if interval.strand == '-':
                 # if the region is on the negative strand,

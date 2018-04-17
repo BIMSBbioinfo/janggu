@@ -8,8 +8,8 @@ Only the network body needs to be defined.
 """
 from functools import wraps
 
-from keras.layers import Dense
 from keras.layers import Conv2D
+from keras.layers import Dense
 from keras.layers import Input
 
 

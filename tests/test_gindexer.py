@@ -26,6 +26,7 @@ def test_gindexer_errors():
                                         binsize=200, stepsize=50,
                                         resolution=100)
 
+
 def test_gindexer_merged():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 

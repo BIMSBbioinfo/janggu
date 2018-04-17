@@ -5,6 +5,7 @@ handle missing values.
 import keras
 import keras.backend as K
 
+
 def binary_crossentropy_mv(y_true, y_pred):
     """binary_crossentropy missing value aware."""
     return K.switch(K.tf.is_nan(y_true),
