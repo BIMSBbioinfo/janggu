@@ -416,8 +416,8 @@ def test_janggo_train_predict_option5(tmpdir):
     acc_eval = ScoreEvaluator('accuracy', accuracy)
     f1_eval = ScoreEvaluator('F1', f1_score)
 
-    evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
-                                                f1_eval])
+    evaluators = EvaluatorList([auc_eval, prc_eval, acc_eval,
+                                f1_eval], path=tmpdir.strpath)
     evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
 
     for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
@@ -473,8 +473,9 @@ def test_janggo_train_predict_option6(tmpdir):
     acc_eval = ScoreEvaluator('accuracy', accuracy)
     f1_eval = ScoreEvaluator('F1', f1_score)
 
-    evaluators = EvaluatorList(tmpdir.strpath, [auc_eval, prc_eval, acc_eval,
-                                                f1_eval], model_filter='ptest')
+    evaluators = EvaluatorList([auc_eval, prc_eval, acc_eval,
+                                f1_eval], path=tmpdir.strpath,
+                                model_filter='ptest')
 
     # first I create fake inputs to provoke dimension
     inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))

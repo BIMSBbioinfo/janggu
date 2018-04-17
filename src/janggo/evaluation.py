@@ -17,21 +17,128 @@ from sklearn import metrics
 from janggo.model import Janggo
 
 
-class EvaluatorList(object):
+def _input_dimension_match(model, inputs):
+    """Check if input dimensions are matched"""
 
-    def __init__(self, path, evaluators, model_filter=None):
+    if not isinstance(inputs, list):
+        tmpinputs = [inputs]
+    else:
+        tmpinputs = inputs
+    cnt = 0
+    for layer in model.kerasmodel.layers:
+        if isinstance(layer, InputLayer):
+            cnt += 1
+
+    if cnt != len(tmpinputs):
+        # The number of input-layers is different
+        # from the number of provided inputs.
+        # Therefore, model and data are incompatible
+        return False
+    for input_ in tmpinputs:
+        # Check if input dimensions match between model specification
+        # and dataset
+        try:
+            layer = model.kerasmodel.get_layer(input_.name)
+            if not layer.input_shape[1:] == input_.shape[1:]:
+                # if the layer name is present but the dimensions
+                # are incorrect, we end up here.
+                return False
+        except ValueError:
+            # If the layer name is not present we end up here
+            return False
+    return True
+
+def _output_dimension_match(model, outputs):
+    if outputs is not None:
+        if not isinstance(outputs, list):
+            tmpoutputs = [outputs]
+        else:
+            tmpoutputs = outputs
+        # Check if output dims match between model spec and data
+        for output in tmpoutputs:
+            try:
+                layer = model.kerasmodel.get_layer(output.name)
+                if not layer.output_shape[1:] == output.shape[1:]:
+                    # if the layer name is present but the dimensions
+                    # are incorrect, we end up here.
+                    return False
+            except ValueError:
+                # If the layer name is not present we end up here
+                return False
+    return True
+
+
+class EvaluatorList(object):
+    """Evaluator class holds the individual evaluator objects.
+
+    The class facilitates evaluation for a set of evaluator objects
+    that have been attached to the list.
+
+    Parameters
+    ----------
+    evaluators : :class:`Evaluator` or list(Evaluators)
+        Evaluator object that are used to evaluate the results.
+    path : str or None
+        Path at which the models are looked up and the evaluation results
+        are stored. If None, the evaluation will be set to `~/janggo_results`.
+    model_filter : str or None
+        Filter to restrict the models which are being evaluated. The filter may
+        be a substring of the model name of interest. Default: None.
+    """
+
+
+    def __init__(self, evaluators, path=None, model_filter=None):
 
         # load the model names
-        self.path = path
-        self.output_dir = os.path.join(path, 'evaluation')
+        if not path:  # pragma: no cover
+            self.path = os.path.join(os.path.expanduser("~"), "janggo_results")
+        else:
+            self.path = path
+
+        self.output_dir = os.path.join(self.path, 'evaluation')
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
+
+        if not isinstance(evaluators, list):
+            # if only a single evaluator is attached, wrap it up as a list
+            evaluators = [evaluators]
         self.evaluators = evaluators
         self.filter = model_filter
 
     def evaluate(self, inputs, outputs=None, datatags=None,
                  batch_size=None, generator=None,
                  use_multiprocessing=False):
+        """Evaluation method.
+
+        evaluate runs the evaluation of every :class:`Evaluator` object
+        and every stored model that is found in the `<results>/models`
+        subfolder that is compatible with the input and output datasets.
+        Models that are incompatible due to requiring different dataset names
+        or dataset dimensions are skipped.
+
+        Parameters
+        ----------
+        inputs : :class:`Dataset` or list(Dataset)
+            Input dataset objects.
+        outputs : :class:`Dataset` or list(Dataset) or None
+            Output dataset objects. Evaluators might require target labels
+            or the evaluation, e.g. to compute the accuracy of a predictor.
+            outputs = None might be used if one seeks to examine the e.g.
+            feature activity distribution. Default: None.
+        datatags : str or list(str)
+            Tags to attach to the evaluation. For example,
+            datatags = ['trainingset']. Default: None.
+        batch_size : int or None
+            Batch size to use for the evaluation. Default: None means
+            a batch size of 32 is used.
+        generator : generator or None
+            Generator through which the evaluation should be performed.
+            If None, the evaluation happens without a generator.
+        use_multiprocessing : bool
+            Indicates whether multiprocessing should be used for the evaluation.
+            Default: False.
+        """
+
 
         model_path = os.path.join(self.path, 'models')
         if self.filter:
@@ -48,9 +155,9 @@ class EvaluatorList(object):
                 os.path.splitext(os.path.basename(stored_model))[0],
                 outputdir=self.path)
 
-            if not self._input_dimension_match(model, inputs):
+            if not _input_dimension_match(model, inputs):
                 continue
-            if not self._output_dimension_match(model, outputs):
+            if not _output_dimension_match(model, outputs):
                 continue
 
             if outputs:
@@ -69,56 +176,6 @@ class EvaluatorList(object):
                                    batch_size, use_multiprocessing)
 
         self.dump()
-
-    def _input_dimension_match(self, model, inputs):
-        """Check if input dimensions are matched"""
-
-        if not isinstance(inputs, list):
-            tmpinputs = [inputs]
-        else:
-            tmpinputs = inputs
-        cnt = 0
-        for layer in model.kerasmodel.layers:
-            if isinstance(layer, InputLayer):
-                cnt += 1
-
-        if cnt != len(tmpinputs):
-            # The number of input-layers is different
-            # from the number of provided inputs.
-            # Therefore, model and data are incompatible
-            return False
-        for input_ in tmpinputs:
-            # Check if input dimensions match between model specification
-            # and dataset
-            try:
-                layer = model.kerasmodel.get_layer(input_.name)
-                if not layer.input_shape[1:] == input_.shape[1:]:
-                    # if the layer name is present but the dimensions
-                    # are incorrect, we end up here.
-                    return False
-            except ValueError:
-                # If the layer name is not present we end up here
-                return False
-        return True
-
-    def _output_dimension_match(self, model, outputs):
-        if outputs is not None:
-            if not isinstance(outputs, list):
-                tmpoutputs = [outputs]
-            else:
-                tmpoutputs = outputs
-            # Check if output dims match between model spec and data
-            for output in tmpoutputs:
-                try:
-                    layer = model.kerasmodel.get_layer(output.name)
-                    if not layer.output_shape[1:] == output.shape[1:]:
-                        # if the layer name is present but the dimensions
-                        # are incorrect, we end up here.
-                        return False
-                except ValueError:
-                    # If the layer name is not present we end up here
-                    return False
-        return True
 
     def dump(self):
         for evaluator in self.evaluators:

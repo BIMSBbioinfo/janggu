@@ -37,14 +37,20 @@ class Janggo(object):
     _name = None
 
     def __init__(self, inputs, outputs, name,
-                 outputdir='janggo_results'):
+                 outputdir=None):
 
         self.name = name
         self.kerasmodel = Model(inputs, outputs, name)
 
+        if not outputdir:  # pragma: no cover
+            # this is excluded from the unit tests for which
+            # only temporary directories should be used.
+            outputdir = os.join.path(os.path.expanduser("~"), 'janggo_results')
         self.outputdir = outputdir
 
-        if not os.path.exists(outputdir):
+        if not os.path.exists(outputdir):  # pragma: no cover
+            # this is excluded from unit tests, because the testing
+            # framework always provides a directory
             os.makedirs(outputdir)
 
         if not os.path.exists(os.path.join(outputdir, 'logs')):
@@ -63,7 +69,7 @@ class Janggo(object):
         self.kerasmodel.summary(print_fn=self.logger.info)
 
     @classmethod
-    def create_by_name(cls, name, outputdir='janggo_results/'):
+    def create_by_name(cls, name, outputdir=None):
         """Creates a Janggo object by name.
 
         This option is usually used to load an already trained model.
@@ -73,7 +79,7 @@ class Janggo(object):
         name : str
             Name of the model.
         outputdir : str
-            Output directory. Default: 'janggo_results/'.
+            Output directory. Default: '~/janggo_results/'.
 
         Examples
         --------
@@ -96,6 +102,10 @@ class Janggo(object):
           # reload the model
           model = Janggo.create_by_name('test_model')
         """
+        if not outputdir:  # pragma: no cover
+            # this is excluded from the unit tests for which
+            # only temporary directories should be used.
+            outputdir = os.path.join(os.path.expanduser("~"), 'janggo_results')
         path = cls._storage_path(name, outputdir)
 
         model = load_model(path,
@@ -126,7 +136,7 @@ class Janggo(object):
         overwrite: bool
             Overwrite a stored model. Default: False.
         """
-        if not filename:
+        if not filename:  # pragma: no cover
             filename = self._storage_path(self.name, self.outputdir)
 
         self.logger.info("Save model %s", filename)
@@ -138,7 +148,7 @@ class Janggo(object):
 
     @classmethod
     def create(cls, name, modeldef, inputp=None, outputp=None,
-               outputdir='janggo_results/'):
+               outputdir=None):
         """Instantiate a Janggo model.
 
         This method instantiates a Janggo model with a given name
@@ -642,7 +652,7 @@ class Janggo(object):
         filename : str
             Filename of the hdf5 file. This file must already exist.
         """
-        if not filename:
+        if not filename:  # pragma: no cover
             filename = self._storage_path(self.name, self.outputdir)
 
         content = h5py.File(filename, 'r+')
