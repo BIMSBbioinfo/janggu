@@ -1,5 +1,6 @@
 """Janggo - deep learning for genomics"""
 
+import hashlib
 import logging
 import os
 import time
@@ -9,6 +10,7 @@ from keras import backend as K
 from keras.models import Model
 from keras.models import load_model
 
+from janggo.utils import get_parse_tree
 from janggo.layers import Complement
 from janggo.layers import Reverse
 
@@ -147,8 +149,8 @@ class Janggo(object):
         self.kerasmodel.summary()
 
     @classmethod
-    def create(cls, name, modeldef, inputp=None, outputp=None,
-               outputdir=None):
+    def create(cls, modeldef, inputp=None, outputp=None, name=None,
+               outputdir=None, modelzoo=None):
         """Instantiate a Janggo model.
 
         This method instantiates a Janggo model with a given name
@@ -157,22 +159,30 @@ class Janggo(object):
 
         Parameters
         -----------
-        name : str
-            Model name.
         modeldef : tuple
             Contains a function that defines a model template and
             additional model parameters.
-        inputp : dict
+        inputp : dict or None
             Dictionary containing dataset properties such as the input
             shapes. This argument can be determined using
             :func:`input_props` on the provided Input Datasets.
-        outputp : dict
+        outputp : dict or None
             Dictionary containing dataset properties such as the output
             shapes. This argument can be determined using
             :func:`output_props` on the provided training labels.
-        outputdir : str
+        name : str or None
+            Model name. If None, a model name will be generated automatically.
+            If a name is provided, it overwrites the automatically generated
+            model name.
+        outputdir : str or None
             Directory in which the log files, model parameters etc.
-            will be stored
+            will be stored.
+        modelzoo : str or None
+            Modelzoo defines the location of a python script that contains
+            the model definitions. If a modelzoo is provided, it will be checked
+            if the model definition has changed and a unique hash is generated
+            accordingly. If None, the hash is created without taking the function
+            definition into account.
 
         Examples
         --------
@@ -225,6 +235,22 @@ class Janggo(object):
         modelparams = modeldef[1]
 
         K.clear_session()
+        if not name:
+            if modelzoo:
+                parsetree = get_parse_tree(modelzoo)
+                # get dict(modelname: def)
+                name_ = str(parsetree[modelfct.__name__])
+            else:
+                name_ = modelfct.__name__
+
+            name_ += str(modelparams)
+
+            name_ = str(inputp) + str(outputp)
+            hasher = hashlib.md5()
+            hasher.update(name_.encode('utf-8'))
+            name = hasher.hexdigest()
+            print("Generated id: '{}' for {}".format(name, modelfct.__name__))
+
 
         inputs, outputs = modelfct(None, inputp, outputp, modelparams)
 

@@ -2,6 +2,8 @@
 
 import os
 import sys
+import parser
+import symbol
 from collections import defaultdict
 
 import numpy as np
@@ -212,3 +214,54 @@ def get_genome_size_from_bed(bedfile, flank):
         elif gsize[region.iv.chrom] < region.iv.end + flank:
             gsize[region.iv.chrom] = region.iv.end + flank
     return gsize
+
+
+def _get_name(ptree):
+    #if isinstance(ptree, list) and ptree[0] == symbol.parameters:
+    # symbols have changed in python 2 and 3
+    if isinstance(ptree, list) and \
+        ptree[0] in [symbol.parameters, symbol.funcdef]:
+        # return the modelname
+        return ptree[2][1]
+    elif isinstance(ptree, list):
+        for elem in ptree:
+            res = _get_name(elem)
+            if res:
+                return res
+    if not isinstance(ptree, list):
+        return None
+
+
+def get_parse_tree(modelzoo):
+    """Function parses the modelzoo.
+
+    This function parses the model tree. It returns a dictionary
+    with modelnames as keys and its respective definition as value.
+    The parsed model definitions will allow to create unique modelnames
+    whenever the model definition has changed.
+
+    Parameters
+    ----------
+    modelzoo : str
+        Python script containing the models.
+
+    Returns
+    -------
+    dict :
+        Dictionary containing modelnames as keys and modeldefinition as values.
+    """
+    content = open(modelzoo).read()
+    st = parser.suite(content)
+    stl = st.tolist()
+
+    parsetree = {}
+    for element in stl:
+        #if isinstance(element, list) and element[0] == symbol.small_stmt:
+        if isinstance(element, list) and \
+            element[0] in [symbol.small_stmt, symbol.stmt]:
+            fname = _get_name(element)
+            if fname:
+                print(fname)
+                parsetree[fname] = element
+
+    return parsetree
