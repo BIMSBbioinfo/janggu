@@ -4,10 +4,10 @@ from abc import abstractproperty
 
 
 class Dataset:
-    """Janggo Dataset interface.
+    """Dataset interface.
 
-    The Janggo dataset mimics a numpy array such that it can be
-    seamlessly used in conjunction with keras.
+    The Dataset class mimics a numpy array which allows
+    it to be directly supplied to keras.
 
     Parameters
     -----------
