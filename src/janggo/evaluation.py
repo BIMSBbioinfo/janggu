@@ -17,7 +17,7 @@ from sklearn import metrics
 from janggo.model import Janggo
 
 
-def _input_dimension_match(model, inputs):
+def _input_dimension_match(kerasmodel, inputs):
     """Check if input dimensions are matched"""
 
     if not isinstance(inputs, list):
@@ -25,7 +25,7 @@ def _input_dimension_match(model, inputs):
     else:
         tmpinputs = inputs
     cnt = 0
-    for layer in model.kerasmodel.layers:
+    for layer in kerasmodel.layers:
         if isinstance(layer, InputLayer):
             cnt += 1
 
@@ -38,8 +38,10 @@ def _input_dimension_match(model, inputs):
         # Check if input dimensions match between model specification
         # and dataset
         try:
-            layer = model.kerasmodel.get_layer(input_.name)
-            if not layer.input_shape[1:] == input_.shape[1:]:
+            layer = kerasmodel.get_layer(input_.name)
+
+            if not isinstance(layer, InputLayer) or \
+                not layer.input_shape[1:] == input_.shape[1:]:
                 # if the layer name is present but the dimensions
                 # are incorrect, we end up here.
                 return False
@@ -49,7 +51,7 @@ def _input_dimension_match(model, inputs):
     return True
 
 
-def _output_dimension_match(model, outputs):
+def _output_dimension_match(kerasmodel, outputs):
     if outputs is not None:
         if not isinstance(outputs, list):
             tmpoutputs = [outputs]
@@ -58,12 +60,14 @@ def _output_dimension_match(model, outputs):
         # Check if output dims match between model spec and data
         for output in tmpoutputs:
             try:
-                layer = model.kerasmodel.get_layer(output.name)
+                layer = kerasmodel.get_layer(output.name)
                 if not layer.output_shape[1:] == output.shape[1:]:
+                    print('dimension mismatch')
                     # if the layer name is present but the dimensions
                     # are incorrect, we end up here.
                     return False
             except ValueError:
+                print('name not found')
                 # If the layer name is not present we end up here
                 return False
     return True
@@ -154,9 +158,9 @@ class EvaluatorList(object):
                 os.path.splitext(os.path.basename(stored_model))[0],
                 outputdir=self.path)
 
-            if not _input_dimension_match(model, inputs):
+            if not _input_dimension_match(model.kerasmodel, inputs):
                 continue
-            if not _output_dimension_match(model, outputs):
+            if not _output_dimension_match(model.kerasmodel, outputs):
                 continue
 
             if outputs:
