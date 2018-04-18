@@ -10,9 +10,9 @@ from keras import backend as K
 from keras.models import Model
 from keras.models import load_model
 
-from janggo.utils import get_parse_tree
 from janggo.layers import Complement
 from janggo.layers import Reverse
+from janggo.utils import get_parse_tree
 
 
 class Janggo(object):
@@ -149,7 +149,7 @@ class Janggo(object):
         self.kerasmodel.summary()
 
     @classmethod
-    def create(cls, modeldef, inputp=None, outputp=None, name=None,
+    def create(cls, modeldef, modelparams=None, inputp=None, outputp=None, name=None,
                outputdir=None, modelzoo=None):
         """Instantiate a Janggo model.
 
@@ -159,16 +159,28 @@ class Janggo(object):
 
         Parameters
         -----------
-        modeldef : tuple
-            Contains a function that defines a model template and
-            additional model parameters.
+        modeldef : function
+            Python function that defines a model template of a neural network.
+            The function signature must adhere to the signature
+            `modeldef(inputs, inputp, outputp, modelparams)`
+            and is expected to return
+            `(input_tensor, output_tensor)` of the neural network.
+        modelparams : list or tuple or None
+            Additional model parameters that are passed along to modeldef
+            upon creation of the neural network. For instance,
+            this could contain number of neurons on each layer.
+            Default: None.
         inputp : dict or None
             Dictionary containing dataset properties such as the input
-            shapes. This argument can be determined using
+            shapes. It will be passed along to `modeldef` upon model creation
+            which allows janggo to infer the input dimensions automatically.
+            This argument can be determined using
             :func:`input_props` on the provided Input Datasets.
         outputp : dict or None
             Dictionary containing dataset properties such as the output
-            shapes. This argument can be determined using
+            shapes. It will be passed along to `modeldef` upon model creation
+            which allows janggo to infer the output dimensions automatically.
+            This argument can be determined using
             :func:`output_props` on the provided training labels.
         name : str or None
             Model name. If None, a model name will be generated automatically.
@@ -177,53 +189,80 @@ class Janggo(object):
         outputdir : str or None
             Directory in which the log files, model parameters etc.
             will be stored.
-        modelzoo : str or None
-            Modelzoo defines the location of a python script that contains
-            the model definitions. If a modelzoo is provided, it will be checked
-            if the model definition has changed and a unique hash is generated
-            accordingly. If None, the hash is created without taking the function
-            definition into account.
+        modelzoo : module, list of modules or None
+            Modelzoo defines python modules that contains
+            the neural network definitions.
+            If a modelzoo is provided, it is parsed in order to create a hash
+            for the function definitions. This in turn can be used to define
+            unique model names conveniently.
+            If None, the hash is created without taking the function
+            definition into account, but only the function name.
 
         Examples
         --------
-        Variant 1: Specify all layers manually
+        Variant 0: Use Janggo similar to keras.models.Model.
 
         .. code-block:: python
+          from keras.layers import Input
+          from keras.layers import Dense
 
           from janggo import Janggo
+
+          # define model using keras
+          in_ = Input(shape=(10,), name='ip')
+          output = Dense(1, activation='sigmoid', name='out')(in_)
+
+          The only difference is that you have to specify a model name.
+          model = Janggo(inputs=in_, outputs=output, name='test_model')
+
+        Variant 1: Specify a model using a model definition function.
+
+        .. code-block:: python
 
           def test_manual_model(inputs, inp, oup, params):
               in_ = Input(shape=(10,), name='ip')
               output = Dense(1, activation='sigmoid', name='out')(in_)
               return in_, output
 
-          model = Janggo.create(name='test_model', (test_manual_model, None))
+          # Defines the same model by invoking the definition function
+          # and the create constructor.
+          model = Janggo.create(modeldef=test_manual_model, name='test_model')
 
         Variant 2: Automatically infer the input and output layers.
-        This variant leaves only the network body to be specified.
+        This variant leaves only the network body to be specified, while
+        the model input and output layers are added automatically such
+        that they match with the input and output properties of the dataset,
+        including dataset name and shape.
+        .. note:: The decorators `inputlayer` and `outputdense`
+        can be used together or individually. If they are used together,
+        inputlayer must be declared before outputdense.
 
         .. code-block:: python
 
           from numpy as np
           from janggo import Janggo
-          from janggo import inputlayer, outputlayer
+          from janggo import inputlayer, outputdense
           from janggo.data import input_props, output_props
           from jangoo.data import NumpyDataset
 
-          # Some random data
+          # Some random data which you would like to use as input for the
+          # model.
           DATA = NumpyDataset('ip', np.random.random((1000, 10)))
           LABELS = NumpyDataset('out', np.random.randint(2, size=(1000, 1)))
 
-          # inputlayer and outputlayer automatically infer the layer shapes
+          # inputlayer and outputdense automatically extract the layer shapes
+          # so that only the model body needs to be specified.
           @inputlayer
-          @outputlayer
+          @outputdense
           def test_inferred_model(inputs, inp, oup, params):
               in_ = output = inputs_['ip']
               return in_, output
 
+          # create the model.
           inp = input_props(DATA)
           oup = output_props(LABELS)
-          model = Janggo.create(name='test_model', (test_inferred_model, None),
+          model = Janggo.create(modeldef=test_inferred_model,
+                                name='test_model',
                                 inputp=inp, outputp=oup)
 
           # Compile the model
@@ -231,8 +270,8 @@ class Janggo(object):
         """
 
         print('create model')
-        modelfct = modeldef[0]
-        modelparams = modeldef[1]
+        modelfct = modeldef
+        #modelparams = modeldef[1]
 
         K.clear_session()
         if not name:

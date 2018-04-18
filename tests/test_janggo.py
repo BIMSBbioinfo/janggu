@@ -44,7 +44,7 @@ def test_janggo_generate_name(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
 
-    bwm = Janggo.create((_cnn_model, (2,)), outputdir=tmpdir.strpath)
+    bwm = Janggo.create(_cnn_model, modelparams=(2,), outputdir=tmpdir.strpath)
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
     #bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -85,8 +85,7 @@ def test_janggo_instance_dense(tmpdir):
 
     with pytest.raises(Exception):
         # due to No input name . defined
-        bwm = Janggo.create(
-                            (_cnn_model, (2,)),
+        bwm = Janggo.create(_cnn_model, modelparams=(2,),
                             inputp=input_props(dna),
                             outputp=output_props(ctcf, 'sigmoid'),
                             name='dna_ctcf_HepG2-cnn',
@@ -104,7 +103,7 @@ def test_janggo_instance_dense(tmpdir):
 
     with pytest.raises(Exception):
         # due to Wrong type for indexing
-        bwm = Janggo.create((_cnn_model, (2,)),
+        bwm = Janggo.create(_cnn_model, modelparams=(2,),
                             inputp=input_props(dna),
                             outputp=output_props(ctcf, 'sigmoid'),
                             name='dna_ctcf_HepG2-cnn',
@@ -122,27 +121,27 @@ def test_janggo_instance_dense(tmpdir):
 
     with pytest.raises(Exception):
         # name with dot not allowed. could be mistaken for a file-ending
-        bwm = Janggo.create((_cnn_model, (2,)),
+        bwm = Janggo.create(_cnn_model, modelparams=(2,),
                             inputp=input_props(dna),
                             outputp=output_props(ctcf, 'sigmoid'),
                             name='dna_ctcf_HepG2.cnn',
                             outputdir=tmpdir.strpath)
     with pytest.raises(Exception):
         # name with must be string
-        bwm = Janggo.create((_cnn_model, (2,)),
+        bwm = Janggo.create(_cnn_model, modelparams=(2,),
                             inputp=input_props(dna),
                             outputp=output_props(ctcf, 'sigmoid'),
                             name=12342134,
                             outputdir=tmpdir.strpath)
 
     # test with given model name
-    bwm = Janggo.create((_cnn_model, (2,)),
+    bwm = Janggo.create(_cnn_model, modelparams=(2,),
                         inputp=input_props(dna),
                         outputp=output_props(ctcf, 'sigmoid'),
                         name='dna_ctcf_HepG2-cnn',
                         outputdir=tmpdir.strpath)
     # test with auto. generated modelname.
-    bwm = Janggo.create((_cnn_model, (2,)),
+    bwm = Janggo.create(_cnn_model, modelparams=(2,),
                         inputp=input_props(dna),
                         outputp=output_props(ctcf, 'sigmoid'),
                         name='dna_ctcf_HepG2-cnn',
@@ -157,7 +156,7 @@ def test_janggo_instance_dense(tmpdir):
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
         return inputs, output
-    bwm = Janggo.create((_cnn_model, (2,)),
+    bwm = Janggo.create(_cnn_model, modelparams=(2,),
                         inputp=input_props(dna),
                         outputp=output_props(ctcf, 'sigmoid'),
                         name='dna_ctcf_HepG2-cnn',
@@ -172,7 +171,7 @@ def test_janggo_instance_dense(tmpdir):
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
         return inputs, output
-    bwm = Janggo.create((_cnn_model, (2,)),
+    bwm = Janggo.create(_cnn_model, modelparams=(2,),
                         inputp=input_props(dna),
                         outputp=output_props(ctcf, 'sigmoid'),
                         name='dna_ctcf_HepG2-cnn',
@@ -220,7 +219,7 @@ def test_janggo_instance_conv(tmpdir):
         layer = Reverse()(layer)
         return inputs, layer
 
-    bwm = Janggo.create((_cnn_model, (2,)),
+    bwm = Janggo.create(_cnn_model, modelparams=(2,),
                         inputp=input_props(dna),
                         outputp=output_props(ctcf, 'sigmoid'),
                         name='dna_ctcf_HepG2-cnn',
@@ -254,7 +253,7 @@ def test_janggo_train_predict_option1(tmpdir):
     def test_model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Janggo.create((test_model, None),
+    bwm = Janggo.create(test_model,
                         inputp=input_props(inputs),
                         outputp=output_props(outputs, 'sigmoid'),
                         name='nptest',
@@ -474,7 +473,7 @@ def test_janggo_train_predict_option6(tmpdir):
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Janggo.create((_model, None),
+    bwm = Janggo.create(_model,
                         inputp=input_props(inputs),
                         outputp=output_props(outputs, 'sigmoid'),
                         name='nptest',
