@@ -3,8 +3,8 @@ from keras.layers import Dense
 from keras.layers import Flatten
 
 from janggo import inputlayer
-from janggo import outputdense
 from janggo import outputconv
+from janggo import outputdense
 
 
 @inputlayer
