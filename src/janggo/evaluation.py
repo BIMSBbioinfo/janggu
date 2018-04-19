@@ -24,12 +24,7 @@ def _input_dimension_match(kerasmodel, inputs):
         tmpinputs = [inputs]
     else:
         tmpinputs = inputs
-    cnt = 0
-    for layer in kerasmodel.layers:
-        if isinstance(layer, InputLayer):
-            cnt += 1
-
-    if cnt != len(tmpinputs):
+    if len(kerasmodel.get_config()['input_layers']) != len(tmpinputs):
         # The number of input-layers is different
         # from the number of provided inputs.
         # Therefore, model and data are incompatible
@@ -57,18 +52,19 @@ def _output_dimension_match(kerasmodel, outputs):
             tmpoutputs = [outputs]
         else:
             tmpoutputs = outputs
+        if len(kerasmodel.get_config()['output_layers']) != len(tmpoutputs):
+            return False
         # Check if output dims match between model spec and data
         for output in tmpoutputs:
-            try:
-                layer = kerasmodel.get_layer(output.name)
-                if not layer.output_shape[1:] == output.shape[1:]:
-                    print('dimension mismatch')
-                    # if the layer name is present but the dimensions
-                    # are incorrect, we end up here.
-                    return False
-            except ValueError:
-                print('name not found')
+
+            if output.name not in [el[0] for el in \
+                                   kerasmodel.get_config()['output_layers']]:
                 # If the layer name is not present we end up here
+                return False
+            layer = kerasmodel.get_layer(output.name)
+            if not layer.output_shape[1:] == output.shape[1:]:
+                # if the layer name is present but the dimensions
+                # are incorrect, we end up here.
                 return False
     return True
 
