@@ -12,7 +12,6 @@ from keras.models import load_model
 
 from janggo.layers import Complement
 from janggo.layers import Reverse
-from janggo.utils import get_parse_tree
 
 
 class Janggo(object):
