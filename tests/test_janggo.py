@@ -77,7 +77,7 @@ def test_janggo_instance_dense(tmpdir):
     @outputdense
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs['.']
-        layer = Complement(1)(layer)
+        layer = Complement()(layer)
         layer = Reverse()(layer)
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
@@ -95,7 +95,7 @@ def test_janggo_instance_dense(tmpdir):
     @outputdense
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs[list()]
-        layer = Complement(1)(layer)
+        layer = Complement()(layer)
         layer = Reverse()(layer)
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
@@ -113,7 +113,7 @@ def test_janggo_instance_dense(tmpdir):
     @outputdense
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs()[0]
-        layer = Complement(1)(layer)
+        layer = Complement()(layer)
         layer = Reverse()(layer)
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
@@ -151,7 +151,7 @@ def test_janggo_instance_dense(tmpdir):
     @outputdense
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs[0]
-        layer = Complement(1)(layer)
+        layer = Complement()(layer)
         layer = Reverse()(layer)
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
@@ -166,7 +166,7 @@ def test_janggo_instance_dense(tmpdir):
     @outputdense
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs['dna']
-        layer = Complement(1)(layer)
+        layer = Complement()(layer)
         layer = Reverse()(layer)
         layer = Flatten()(layer)
         output = Dense(params[0])(layer)
@@ -215,7 +215,7 @@ def test_janggo_instance_conv(tmpdir):
     def _cnn_model(inputs, inp, oup, params):
         with inputs.use('dna') as inlayer:
             layer = inlayer
-        layer = Complement(1)(layer)
+        layer = Complement()(layer)
         layer = Reverse()(layer)
         return inputs, layer
 

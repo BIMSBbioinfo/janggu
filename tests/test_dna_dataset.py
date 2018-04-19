@@ -127,7 +127,7 @@ def test_dna_dims_order_2():
     dna_templ(order)
 
 
-def revcomp(order):
+def reverse_layer(order):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bed_file = os.path.join(data_path, 'regions.bed')
@@ -140,26 +140,60 @@ def revcomp(order):
                                             order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
-    rdna_layer = Reverse(2)(dna_in)
-    rcdna_layer = Complement(order)(rdna_layer)
-    mod = Model(dna_in, rcdna_layer)
+    rdna_layer = Reverse()(dna_in)
+
+    rmod = Model(dna_in, rdna_layer)
 
     indices = [600, 500, 400]
 
     # actual shape of DNA
     dna = data[indices]
-    rcdna = mod.predict(dna)
-    rcrcdna = mod.predict(rcdna)
-
-    np.testing.assert_equal(dna, rcrcdna)
+    np.testing.assert_equal(dna[:,::-1,:,:], rmod.predict(dna))
 
 
-def test_revcomp_order_1():
-    revcomp(1)
+def complement_layer(order):
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bed_file = os.path.join(data_path, 'regions.bed')
+
+    refgenome = os.path.join(data_path, 'genome.fa')
+
+    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
+                                            regions=bed_file,
+                                            storage='ndarray',
+                                            order=order)
+
+    dna_in = Input(shape=data.shape[1:], name='dna')
+    cdna_layer = Complement()(dna_in)
+    cmod = Model(dna_in, cdna_layer)
+
+    indices = [600, 500, 400]
+
+    # actual shape of DNA
+    dna = data[indices]
+
+    cdna = cmod.predict(dna)
+    ccdna = cmod.predict(cdna)
+
+    with pytest.raises(Exception):
+        np.testing.assert_equal(dna, cdna)
+    np.testing.assert_equal(dna, ccdna)
 
 
-def test_revcomp_order_2():
-    revcomp(2)
+def test_reverse_order_1():
+    reverse_layer(1)
+
+
+def test_reverse_order_2():
+    reverse_layer(2)
+
+
+def test_complement_order_1():
+    complement_layer(1)
+
+
+def test_complement_order_2():
+    complement_layer(2)
 
 
 def test_revcomp_rcmatrix():
@@ -379,8 +413,8 @@ def _dna_with_region_strandedness(order):
                                             order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
-    rdna_layer = Reverse(axis=1)(dna_in)
-    rcdna_layer = Complement(order)(rdna_layer)
+    rdna_layer = Reverse()(dna_in)
+    rcdna_layer = Complement()(rdna_layer)
     mod = Model(dna_in, rcdna_layer)
 
     dna = data[[0, 1]]
