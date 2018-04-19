@@ -41,8 +41,17 @@ class Janggo(object):
     def __init__(self, inputs, outputs, name,
                  outputdir=None):
 
+
+        self.kerasmodel = Model(inputs, outputs, name='janggo')
+
+        if not name:
+
+            hasher = hashlib.md5()
+            hasher.update(self.kerasmodel.to_json().encode('utf-8'))
+            name = hasher.hexdigest()
+            print("Generated model-id: '{}'".format(name))
+
         self.name = name
-        self.kerasmodel = Model(inputs, outputs, name)
 
         if not outputdir:  # pragma: no cover
             # this is excluded from the unit tests for which
@@ -150,7 +159,7 @@ class Janggo(object):
 
     @classmethod
     def create(cls, modeldef, modelparams=None, inputp=None, outputp=None, name=None,
-               outputdir=None, modelzoo=None):
+               outputdir=None):
         """Instantiate a Janggo model.
 
         This method instantiates a Janggo model with a given name
@@ -189,14 +198,6 @@ class Janggo(object):
         outputdir : str or None
             Directory in which the log files, model parameters etc.
             will be stored.
-        modelzoo : module, list of modules or None
-            Modelzoo defines python modules that contains
-            the neural network definitions.
-            If a modelzoo is provided, it is parsed in order to create a hash
-            for the function definitions. This in turn can be used to define
-            unique model names conveniently.
-            If None, the hash is created without taking the function
-            definition into account, but only the function name.
 
         Examples
         --------
@@ -274,22 +275,6 @@ class Janggo(object):
         #modelparams = modeldef[1]
 
         K.clear_session()
-        if not name:
-            if modelzoo:
-                parsetree = get_parse_tree(modelzoo)
-                # get dict(modelname: def)
-                name_ = str(parsetree[modelfct.__name__])
-            else:
-                name_ = modelfct.__name__
-
-            name_ += str(modelparams)
-
-            name_ = str(inputp) + str(outputp)
-            hasher = hashlib.md5()
-            hasher.update(name_.encode('utf-8'))
-            name = hasher.hexdigest()
-            print("Generated id: '{}' for {}".format(name, modelfct.__name__))
-
 
         inputs, outputs = modelfct(None, inputp, outputp, modelparams)
 
