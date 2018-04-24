@@ -59,14 +59,13 @@ Welcome to Janggo
 
 .. end-badges
 
-Janggo is a python package that facilitates deep learning in genomics.
-Its main goal is to make it easy to establish and compare deep learning applications in genomics.
-This is achieved in several ways:
+Janggo is a python package that facilitates deep learning in Genomics in
+an easily accessible and reproducible way. Some of the hallmarks of Janggo are:
 
-1. If done manually, preprocessing the datasets in genomics is non-trivial, time-consuming and repetitive. Janggo helps by providing easy access to several common genomics data formats, including fasta, bam or bigwig. Thus, data can easily be fetched and directly used as input or output for a neural network.
-2. It is quite common in genomics to have to deal with large datasets (10s or even 100s of GB). These are challenging to handle, because the dataset might be too big to be read into the RAM. Therefore, Janggo offers the possibility to read data directly from disk.
-3. Janggo provides an easy to use and extensible performance evaluation interface. This allows to quickly address biological hypothesis via model comparison.
-4. Janggo relies on the popular deep learning library keras for specifying, fitting and evaluating the model. Therefore, it can easily make advantage of GPUs if available.
+1. To this end, Janggo builds upon keras to define, train and evaluate neural network in a flexible manner.
+2. Janggo provides special data containers that can hold sequence information or coverage information from next-generation sequencing experiments.
+3. Janggo facilitates reproducibility and eases model comparison by producing log files, storage of model parameters and evaluating various performance metrics out of the box.
+4. Janggo supports processing of too-large-to-keep-in-memory dataset by loading the data in batches from disk.
 
 
 * Free software: BSD 3-Clause License
