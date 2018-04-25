@@ -11,6 +11,7 @@ from keras.models import Model
 from keras.models import load_model
 from keras.callbacks import LambdaCallback
 
+from janggo.data.data import data_props
 from janggo.layers import Complement
 from janggo.layers import Reverse
 from janggo.layers import LocalAveragePooling2D
@@ -160,7 +161,8 @@ class Janggo(object):
         self.kerasmodel.summary()
 
     @classmethod
-    def create(cls, template, modelparams=None, inputp=None, outputp=None, name=None,
+    def create(cls, template, modelparams=None, inputs=None, 
+               outputs=None, name=None,
                outputdir=None):
         """Instantiate a Janggo model.
 
@@ -181,18 +183,10 @@ class Janggo(object):
             upon creation of the neural network. For instance,
             this could contain number of neurons on each layer.
             Default: None.
-        inputp : dict or None
-            Dictionary containing dataset properties such as the input
-            shapes. It will be passed along to `template` upon model creation
-            which allows janggo to infer the input dimensions automatically.
-            This argument can be determined using
-            :func:`input_props` on the provided Input Datasets.
-        outputp : dict or None
-            Dictionary containing dataset properties such as the output
-            shapes. It will be passed along to `template` upon model creation
-            which allows janggo to infer the output dimensions automatically.
-            This argument can be determined using
-            :func:`output_props` on the provided training labels.
+        inputs : Dataset, list(Dataset) or None
+            Input datasets.
+        outputs : Dataset, list(Dataset) or None
+            Output datasets
         name : str or None
             Model name. If None, a model name will be generated automatically.
             If a name is provided, it overwrites the automatically generated
@@ -247,7 +241,6 @@ class Janggo(object):
           import numpy as np
           from janggo import Janggo
           from janggo import inputlayer, outputdense
-          from janggo.data import input_props, output_props
           from janggo.data import NumpyDataset
 
           # Some random data which you would like to use as input for the
@@ -261,7 +254,7 @@ class Janggo(object):
           # Note that with decorators the order matters, inputlayer must be specified
           # before outputdense.
           @inputlayer
-          @outputdense
+          @outputdense(activation='sigmoid')
           def test_inferred_model(inputs, inp, oup, params):
               with inputs.use('ip') as in_:
                   # the with block allows for easy access of a specific named input.
@@ -271,8 +264,8 @@ class Janggo(object):
           # create a model.
           model = Janggo.create(template=test_inferred_model, modelparams=3,
                                 name='test_model',
-                                inputp=input_props(DATA),
-                                outputp=output_props(LABELS))
+                                inputp=DATA,
+                                outputp=LABELS)
 
         """
 
@@ -280,10 +273,13 @@ class Janggo(object):
         modelfct = template
 
         K.clear_session()
+        inputs_ = data_props(inputs) if inputs else None
+        outputs_ = data_props(outputs) if outputs else None
 
-        inputs, outputs = modelfct(None, inputp, outputp, modelparams)
+        input_tensors, output_tensors = modelfct(None, inputs_,
+                                                 outputs_, modelparams)
 
-        model = cls(inputs=inputs, outputs=outputs, name=name,
+        model = cls(inputs=input_tensors, outputs=output_tensors, name=name,
                     outputdir=outputdir)
 
         return model

@@ -13,44 +13,58 @@ from keras.layers import Dense
 from keras.layers import Input
 
 
-def outputdense(func):
+def outputdense(activation):
     """Output layer decorator
 
     This decorator appends an output layer to the
     network with the correct shape, activation and name.
     """
-    @wraps(func)
-    def _add(inputs, inshapes, outshapes, params):
-        inputs, outputs = func(inputs, inshapes, outshapes, params)
-        outputs = [Dense(outshapes[name]['shape'][0],
-                         activation=outshapes[name]['activation'],
-                         name=name)(outputs) for name in outshapes]
-        return inputs, outputs
-    return _add
+    def _outputdense(func):
+        @wraps(func)
+        def _add(inputs, inshapes, outshapes, params):
+            inputs, outputs = func(inputs, inshapes, outshapes, params)
+            if isinstance(activation, str):
+                act = {name: activation for name in outshapes}
+            elif callable(activation):
+                act = {name: activation for name in outshapes}
+            else:
+                act = activation
+            outputs = [Dense(outshapes[name]['shape'][0],
+                             activation=act[name],
+                             name=name)(outputs) for name in outshapes]
+            return inputs, outputs
+        return _add
+    return _outputdense
 
-
-def outputconv(func):
+def outputconv(activation):
     """Output layer decorator
 
     This decorator appends an output layer to the
     network with the correct shape, activation and name.
     """
-    @wraps(func)
-    def _add(inputs, inshapes, outshapes, params):
-        inputs, outputs = func(inputs, inshapes, outshapes, params)
-        shape = outputs.get_shape().as_list()[1:]
-
-        # We want the model to output the same dimension as given by
-        # the output data dimension (outshapes). Therefore we solve
-        # (in_len - k_len + 1) // k_len = out_len
-        # for k_len. Rearranging the equation yields
-        # k_len = (in_len + 1) / (out_len + 1)
-        outputs = [Conv2D(outshapes[name]['shape'][2],
-                          (shape[0] - outshapes[name]['shape'][0] + 1, shape[1]),
-                          activation=outshapes[name]['activation'],
-                          name=name)(outputs) for name in outshapes]
-        return inputs, outputs
-    return _add
+    def _outputconv(func):
+        @wraps(func)
+        def _add(inputs, inshapes, outshapes, params):
+            inputs, outputs = func(inputs, inshapes, outshapes, params)
+            shape = outputs.get_shape().as_list()[1:]
+            if isinstance(activation, str):
+                act = {name: activation for name in outshapes}
+            elif callable(activation):
+                act = {name: activation for name in outshapes}
+            else:
+                act = activation
+            # We want the model to output the same dimension as given by
+            # the output data dimension (outshapes). Therefore we solve
+            # (in_len - k_len + 1) // k_len = out_len
+            # for k_len. Rearranging the equation yields
+            # k_len = (in_len + 1) / (out_len + 1)
+            outputs = [Conv2D(outshapes[name]['shape'][2],
+                              (shape[0] - outshapes[name]['shape'][0] + 1, shape[1]),
+                              activation=act[name],
+                              name=name)(outputs) for name in outshapes]
+            return inputs, outputs
+        return _add
+    return _outputconv
 
 
 def inputlayer(func):

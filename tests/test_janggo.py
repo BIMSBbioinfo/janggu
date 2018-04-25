@@ -23,8 +23,7 @@ from janggo.data import CoverageDataset
 from janggo.data import DnaDataset
 from janggo.data import NumpyDataset
 from janggo.data import TabDataset
-from janggo.data import input_props
-from janggo.data import output_props
+from janggo.data.data import data_props
 from janggo.evaluation import EvaluatorList
 from janggo.evaluation import ScoreEvaluator
 from janggo.evaluation import accuracy
@@ -109,7 +108,7 @@ def test_janggo_instance_dense(tmpdir):
     ctcf = TabDataset('ctcf', filename=csvfile)
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs['.']
         layer = Complement()(layer)
@@ -121,13 +120,13 @@ def test_janggo_instance_dense(tmpdir):
     with pytest.raises(Exception):
         # due to No input name . defined
         bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                            inputp=input_props(dna),
-                            outputp=output_props(ctcf, 'sigmoid'),
+                            inputs=dna,
+                            outputs=ctcf,
                             name='dna_ctcf_HepG2-cnn',
                             outputdir=tmpdir.strpath)
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs[list()]
         layer = Complement()(layer)
@@ -139,13 +138,13 @@ def test_janggo_instance_dense(tmpdir):
     with pytest.raises(Exception):
         # due to Wrong type for indexing
         bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                            inputp=input_props(dna),
-                            outputp=output_props(ctcf, 'sigmoid'),
+                            inputs=dna,
+                            outputs=ctcf,
                             name='dna_ctcf_HepG2-cnn',
                             outputdir=tmpdir.strpath)
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs()[0]
         layer = Complement()(layer)
@@ -157,33 +156,33 @@ def test_janggo_instance_dense(tmpdir):
     with pytest.raises(Exception):
         # name with dot not allowed. could be mistaken for a file-ending
         bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                            inputp=input_props(dna),
-                            outputp=output_props(ctcf, 'sigmoid'),
+                            inputs=dna,
+                            outputs=ctcf,
                             name='dna_ctcf_HepG2.cnn',
                             outputdir=tmpdir.strpath)
     with pytest.raises(Exception):
         # name with must be string
         bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                            inputp=input_props(dna),
-                            outputp=output_props(ctcf, 'sigmoid'),
+                            inputs=dna,
+                            outputs=ctcf,
                             name=12342134,
                             outputdir=tmpdir.strpath)
 
     # test with given model name
     bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                        inputp=input_props(dna),
-                        outputp=output_props(ctcf, 'sigmoid'),
+                        inputs=dna,
+                        outputs=ctcf,
                         name='dna_ctcf_HepG2-cnn',
                         outputdir=tmpdir.strpath)
     # test with auto. generated modelname.
     bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                        inputp=input_props(dna),
-                        outputp=output_props(ctcf, 'sigmoid'),
+                        inputs=dna,
+                        outputs=ctcf,
                         name='dna_ctcf_HepG2-cnn',
                         outputdir=tmpdir.strpath)
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs[0]
         layer = Complement()(layer)
@@ -192,13 +191,13 @@ def test_janggo_instance_dense(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
     bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                        inputp=input_props(dna),
-                        outputp=output_props(ctcf, 'sigmoid'),
+                        inputs=dna,
+                        outputs=ctcf,
                         name='dna_ctcf_HepG2-cnn',
                         outputdir=tmpdir.strpath)
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
         layer = inputs['dna']
         layer = Complement()(layer)
@@ -207,8 +206,8 @@ def test_janggo_instance_dense(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
     bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                        inputp=input_props(dna),
-                        outputp=output_props(ctcf, 'sigmoid'),
+                        inputs=dna,
+                        outputs=ctcf,
                         name='dna_ctcf_HepG2-cnn',
                         outputdir=tmpdir.strpath)
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -246,7 +245,7 @@ def test_janggo_instance_conv(tmpdir):
         storage='ndarray')
 
     @inputlayer
-    @outputconv
+    @outputconv('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
         with inputs.use('dna') as inlayer:
             layer = inlayer
@@ -255,8 +254,8 @@ def test_janggo_instance_conv(tmpdir):
         return inputs, layer
 
     bwm = Janggo.create(_cnn_model, modelparams=(2,),
-                        inputp=input_props(dna),
-                        outputp=output_props(ctcf, 'sigmoid'),
+                        inputs=dna,
+                        outputs=ctcf,
                         name='dna_ctcf_HepG2-cnn',
                         outputdir=tmpdir.strpath)
 
@@ -284,13 +283,13 @@ def test_janggo_train_predict_option1(tmpdir):
                            samplenames=['random'])
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def test_model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
     bwm = Janggo.create(test_model,
-                        inputp=input_props(inputs),
-                        outputp=output_props(outputs, 'sigmoid'),
+                        inputs=inputs,
+                        outputs=outputs,
                         name='nptest',
                         outputdir=tmpdir.strpath)
 
@@ -504,13 +503,13 @@ def test_janggo_train_predict_option6(tmpdir):
                            samplenames=['random'])
 
     @inputlayer
-    @outputdense
+    @outputdense('sigmoid')
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
     bwm = Janggo.create(_model,
-                        inputp=input_props(inputs),
-                        outputp=output_props(outputs, 'sigmoid'),
+                        inputs=inputs,
+                        outputs=outputs,
                         name='nptest',
                         outputdir=tmpdir.strpath)
 

@@ -60,7 +60,7 @@ class Dataset:
         return len(self.shape)
 
 
-def input_props(data):
+def data_props(data):
     """Extracts the shape of a provided Input-Dataset.
 
     Parameters
@@ -87,35 +87,3 @@ def input_props(data):
         return dataprops
     else:
         raise Exception('inputSpace wrong argument: {}'.format(data))
-
-
-def output_props(data, activation='sigmoid'):
-    """Extracts the shape of a provided Output-Dataset.
-
-    Parameters
-    ---------
-    data : :class:`Dataset` or list(:class:`Dataset`)
-        Dataset or list(Dataset).
-    activation : str
-        Output activation function. Default: 'sigmoid'.
-
-    Returns
-    -------
-    dict
-        Dictionary description of the network output.
-    """
-
-    if isinstance(data, Dataset):
-        data = [data]
-
-    if isinstance(data, list):
-        dataprops = {}
-        for datum in data:
-            shape = datum.shape[1:]
-            if shape == ():
-                shape = (1,)
-            dataprops[datum.name] = {'shape': shape,
-                                     'activation': activation}
-        return dataprops
-    else:
-        raise Exception('outputSpace wrong argument: {}'.format(data))
