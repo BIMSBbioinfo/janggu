@@ -22,18 +22,14 @@ Classes
 .. autosummary::
    CoverageDataset
    DnaDataset
-   RevCompDnaDataset
    TabDataset
    NumpyDataset
-   DnaDataset
 
 .. autoclass:: CoverageDataset
-   :members: create_from_bam, create_from_bigwig
+   :members: create_from_bam, create_from_bigwig, create_from_bed
 
 .. autoclass:: DnaDataset
    :members: create_from_refgenome, create_from_fasta
-
-.. autoclass:: RevCompDnaDataset
 
 
 Utilities

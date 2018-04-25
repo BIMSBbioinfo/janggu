@@ -11,7 +11,7 @@ Janggo Model
 
 .. autosummary::
    Janggo
-   Janggo.create_by_shape
+   Janggo.create
    Janggo.create_by_name
    Janggo.fit
    Janggo.predict
@@ -20,16 +20,21 @@ Janggo Model
 .. autoclass:: Janggo
    :members:
 
+
 Evaluator
 ---------
 
 .. autosummary::
+   EvaluatorList
+   EvaluatorList.evaluate
+   EvaluatorList.dump
    Evaluator
-   Evaluator.dump
-   MongoDbEvaluator
+   ScoreEvaluator
+   ScoreEvaluator.evaluate
+   ScoreEvaluator.dump
 
-.. autoclass:: Evaluator
+.. autoclass:: EvaluatorList
    :members:
 
-.. autoclass:: MongoDbEvaluator
+.. autoclass:: ScoreEvaluator
    :members:
