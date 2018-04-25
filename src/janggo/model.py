@@ -9,6 +9,7 @@ import h5py
 from keras import backend as K
 from keras.models import Model
 from keras.models import load_model
+from keras.callbacks import LambdaCallback
 
 from janggo.layers import Complement
 from janggo.layers import Reverse
@@ -33,12 +34,12 @@ class Janggo(object):
         Name of the model.
     outputdir : str
         Output folder in which the log-files and model parameters
-        are stored. Default: 'janggo_results'.
+        are stored. Default: `/home/user/janggo_results`.
     """
     timer = None
     _name = None
 
-    def __init__(self, inputs, outputs, name,
+    def __init__(self, inputs, outputs, name=None,
                  outputdir=None):
 
 
@@ -74,7 +75,7 @@ class Janggo(object):
         logging.basicConfig(filename=logfile,
                             level=logging.DEBUG,
                             format='%(asctime)s:%(name)s:%(message)s',
-                            datefmt='%m/%d/%Y %I:%M:%S')
+                            datefmt='%m/%d/%Y %H:%M:%S')
 
         self.logger.info("Model Summary:")
         self.kerasmodel.summary(print_fn=self.logger.info)
@@ -90,7 +91,7 @@ class Janggo(object):
         name : str
             Name of the model.
         outputdir : str
-            Output directory. Default: '~/janggo_results/'.
+            Output directory. Default: `/home/user/janggo_results`.
 
         Examples
         --------
@@ -159,7 +160,7 @@ class Janggo(object):
         self.kerasmodel.summary()
 
     @classmethod
-    def create(cls, modeldef, modelparams=None, inputp=None, outputp=None, name=None,
+    def create(cls, template, modelparams=None, inputp=None, outputp=None, name=None,
                outputdir=None):
         """Instantiate a Janggo model.
 
@@ -169,26 +170,26 @@ class Janggo(object):
 
         Parameters
         -----------
-        modeldef : function
+        template : function
             Python function that defines a model template of a neural network.
             The function signature must adhere to the signature
-            `modeldef(inputs, inputp, outputp, modelparams)`
+            `template(inputs, inputp, outputp, modelparams)`
             and is expected to return
             `(input_tensor, output_tensor)` of the neural network.
         modelparams : list or tuple or None
-            Additional model parameters that are passed along to modeldef
+            Additional model parameters that are passed along to template
             upon creation of the neural network. For instance,
             this could contain number of neurons on each layer.
             Default: None.
         inputp : dict or None
             Dictionary containing dataset properties such as the input
-            shapes. It will be passed along to `modeldef` upon model creation
+            shapes. It will be passed along to `template` upon model creation
             which allows janggo to infer the input dimensions automatically.
             This argument can be determined using
             :func:`input_props` on the provided Input Datasets.
         outputp : dict or None
             Dictionary containing dataset properties such as the output
-            shapes. It will be passed along to `modeldef` upon model creation
+            shapes. It will be passed along to `template` upon model creation
             which allows janggo to infer the output dimensions automatically.
             This argument can be determined using
             :func:`output_props` on the provided training labels.
@@ -198,82 +199,85 @@ class Janggo(object):
             model name.
         outputdir : str or None
             Directory in which the log files, model parameters etc.
-            will be stored.
+            will be stored. Default: `/home/user/janggo_results`.
 
         Examples
         --------
         Variant 0: Use Janggo similar to keras.models.Model.
+        This variant allows you to define the keras Input and Output
+        layers from which a model is instantiated.
 
         .. code-block:: python
+
           from keras.layers import Input
           from keras.layers import Dense
 
           from janggo import Janggo
 
-          # define model using keras
+          # Define neural network layers using keras
           in_ = Input(shape=(10,), name='ip')
-          output = Dense(1, activation='sigmoid', name='out')(in_)
+          layer = Dense(3)(in_)
+          output = Dense(1, activation='sigmoid', name='out')(layer)
 
-          The only difference is that you have to specify a model name.
+          # Instantiate model name.
           model = Janggo(inputs=in_, outputs=output, name='test_model')
+          model.summary()
 
-        Variant 1: Specify a model using a model definition function.
+        Variant 1: Specify a model using a model template.
 
         .. code-block:: python
 
           def test_manual_model(inputs, inp, oup, params):
               in_ = Input(shape=(10,), name='ip')
+              layer = Dense(params)(in_)
               output = Dense(1, activation='sigmoid', name='out')(in_)
               return in_, output
 
           # Defines the same model by invoking the definition function
           # and the create constructor.
-          model = Janggo.create(modeldef=test_manual_model, name='test_model')
+          model = Janggo.create(template=test_manual_model, modelparams=3)
+          model.summary()
 
-        Variant 2: Automatically infer the input and output layers.
-        This variant leaves only the network body to be specified, while
-        the model input and output layers are added automatically such
-        that they match with the input and output properties of the dataset,
-        including dataset name and shape.
-        .. note:: The decorators `inputlayer` and `outputdense`
-        can be used together or individually. If they are used together,
-        inputlayer must be declared before outputdense.
+        Variant 2: Input and output layer shapes can be automatically
+        determined from the provided dataset. Therefore, only the model
+        body needs to be specified in the following example:
 
         .. code-block:: python
 
-          from numpy as np
+          import numpy as np
           from janggo import Janggo
           from janggo import inputlayer, outputdense
           from janggo.data import input_props, output_props
-          from jangoo.data import NumpyDataset
+          from janggo.data import NumpyDataset
 
           # Some random data which you would like to use as input for the
           # model.
           DATA = NumpyDataset('ip', np.random.random((1000, 10)))
           LABELS = NumpyDataset('out', np.random.randint(2, size=(1000, 1)))
 
-          # inputlayer and outputdense automatically extract the layer shapes
-          # so that only the model body needs to be specified.
+          # The decorators inputlayer and outputdense
+          # automatically extract the layer shapes
+          # so that only the model body remains to be specified.
+          # Note that with decorators the order matters, inputlayer must be specified
+          # before outputdense.
           @inputlayer
           @outputdense
           def test_inferred_model(inputs, inp, oup, params):
-              in_ = output = inputs_['ip']
+              with inputs.use('ip') as in_:
+                  # the with block allows for easy access of a specific named input.
+                  output = Dense(params)(in_)
               return in_, output
 
-          # create the model.
-          inp = input_props(DATA)
-          oup = output_props(LABELS)
-          model = Janggo.create(modeldef=test_inferred_model,
+          # create a model.
+          model = Janggo.create(template=test_inferred_model, modelparams=3,
                                 name='test_model',
-                                inputp=inp, outputp=oup)
+                                inputp=input_props(DATA),
+                                outputp=output_props(LABELS))
 
-          # Compile the model
-          model.compile(optimizer='adadelta', loss='binary_crossentropy')
         """
 
         print('create model')
-        modelfct = modeldef
-        #modelparams = modeldef[1]
+        modelfct = template
 
         K.clear_session()
 
@@ -368,6 +372,7 @@ class Janggo(object):
             'workers': workers
         }
 
+
         self.logger.info('Fit: %s', self.name)
         self.logger.info("Input:")
         self.__dim_logging(inputs)
@@ -375,6 +380,21 @@ class Janggo(object):
         self.__dim_logging(outputs)
         self.timer = time.time()
         history = None
+        self.logger.info("Hyper-parameters:")
+        for par_ in hyper_params:
+            self.logger.info('%s: %s', par_, str(hyper_params[par_]))
+
+        if callbacks:
+
+            callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: self.logger.info(
+                "epoch %s: %s",
+                epoch + 1,
+                ' '.join(["{}={}".format(k, logs[k]) for k in logs]))))
+        else:
+            callbacks = [LambdaCallback(on_epoch_end=lambda epoch, logs: self.logger.info(
+                "epoch %s: %s",
+                epoch + 1,
+                ' '.join(["{}={}".format(k, logs[k]) for k in logs])))]
 
         if generator:
 
@@ -396,22 +416,26 @@ class Janggo(object):
                         (1 if xlen % batch_size > 0 else 0)
 
                 if validation_data:
+                    valinputs = self.__convert_data(validation_data[0])
+                    valoutputs = self.__convert_data(validation_data[1])
                     if len(validation_data) == 2:
-                        vgen = generator(validation_data[0],
-                                         validation_data[1],
+                        vgen = generator(valinputs,
+                                         valoutputs,
                                          batch_size,
                                          shuffle=shuffle)
                     else:
-                        vgen = generator(validation_data[0],
-                                         validation_data[1],
+                        vgen = generator(valinputs,
+                                         valoutputs,
                                          batch_size,
                                          sample_weight=validation_data[2],
                                          shuffle=shuffle)
 
                     if not validation_steps:
-                        validation_steps = len(validation_data[0])//batch_size + \
-                                    (1 if len(validation_data[0]) % batch_size > 0
-                                     else 0)
+                        for k in valinputs:
+                            vallen = len(valinputs[k])
+                            break
+                        validation_steps = vallen//batch_size + \
+                                    (1 if vallen % batch_size > 0 else 0)
                 else:
                     vgen = None
 
@@ -425,7 +449,7 @@ class Janggo(object):
                     validation_steps=validation_steps,
                     class_weight=class_weight,
                     initial_epoch=initial_epoch,
-                    shuffle=False,  # must be false!
+                    shuffle=False,  # must be false, the generator takes care of shuffling.
                     use_multiprocessing=use_multiprocessing,
                     max_queue_size=50,
                     workers=workers,
