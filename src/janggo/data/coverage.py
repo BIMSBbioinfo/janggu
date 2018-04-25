@@ -365,8 +365,12 @@ class CoverageDataset(Dataset):
                     raise Exception('Regions must be a bed, gff or gtf-file.')
 
                 for region in regions_:
+                    if region.iv.chrom not in genomesize:
+                        continue
+
                     region.iv.start //= resolution
                     region.iv.end //= resolution
+
                     if genomesize[region.iv.chrom] <= region.iv.start:
                         print("Region {} outside of genome size - skipped".format(region.iv))
                     else:
