@@ -85,7 +85,6 @@ class InputList(object):
     def __getitem__(self, name):
         if isinstance(name, str):
             for input_ in self.input_list:
-                print(input_.name)
                 if name in input_.name:
                     return input_
             raise IndexError("No input with name {} defined. ".format(name)

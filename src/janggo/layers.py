@@ -115,16 +115,12 @@ class Complement(Layer):
         super(Complement, self).__init__(**kwargs)
 
     def build(self, input_shape):
-        print("input_shape: {}".format(input_shape))
 
         # from the shape of the one-hot encoding (input_shape),
         # we determine the order of the encoding.
         self.rcmatrix = K.constant(
             complement_permmatrix(int(numpy.log(input_shape[2])/numpy.log(4))),
             dtype=K.floatx())
-        print("input_shape: {}".format(input_shape))
-        print("order: {}".format(int(numpy.sqrt(input_shape[2]))))
-        print("mat.shape = {}".format(self.rcmatrix.shape))
         super(Complement, self).build(input_shape)
 
     def call(self, inputs):
