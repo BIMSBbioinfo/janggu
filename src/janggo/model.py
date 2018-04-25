@@ -7,14 +7,14 @@ import time
 
 import h5py
 from keras import backend as K
+from keras.callbacks import LambdaCallback
 from keras.models import Model
 from keras.models import load_model
-from keras.callbacks import LambdaCallback
 
 from janggo.data.data import data_props
 from janggo.layers import Complement
-from janggo.layers import Reverse
 from janggo.layers import LocalAveragePooling2D
+from janggo.layers import Reverse
 
 
 class Janggo(object):
@@ -42,7 +42,6 @@ class Janggo(object):
 
     def __init__(self, inputs, outputs, name=None,
                  outputdir=None):
-
 
         self.kerasmodel = Model(inputs, outputs, name='janggo')
 
@@ -161,7 +160,7 @@ class Janggo(object):
         self.kerasmodel.summary()
 
     @classmethod
-    def create(cls, template, modelparams=None, inputs=None, 
+    def create(cls, template, modelparams=None, inputs=None,
                outputs=None, name=None,
                outputdir=None):
         """Instantiate a Janggo model.
@@ -368,7 +367,6 @@ class Janggo(object):
             'workers': workers
         }
 
-
         self.logger.info('Fit: %s', self.name)
         self.logger.info("Input:")
         self.__dim_logging(inputs)
@@ -431,7 +429,7 @@ class Janggo(object):
                             vallen = len(valinputs[k])
                             break
                         validation_steps = vallen//batch_size + \
-                                    (1 if vallen % batch_size > 0 else 0)
+                            (1 if vallen % batch_size > 0 else 0)
                 else:
                     vgen = None
 
@@ -445,7 +443,7 @@ class Janggo(object):
                     validation_steps=validation_steps,
                     class_weight=class_weight,
                     initial_epoch=initial_epoch,
-                    shuffle=False,  # must be false, the generator takes care of shuffling.
+                    shuffle=False,  # must be false: gnerator shuffles.
                     use_multiprocessing=use_multiprocessing,
                     max_queue_size=50,
                     workers=workers,

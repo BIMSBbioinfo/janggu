@@ -11,9 +11,9 @@ import os
 from abc import ABCMeta
 from abc import abstractmethod
 
+import matplotlib.pyplot as plt
 from keras.engine.topology import InputLayer
 from sklearn import metrics
-import matplotlib.pyplot as plt
 
 from janggo.model import Janggo
 
@@ -37,7 +37,7 @@ def _input_dimension_match(kerasmodel, inputs):
             layer = kerasmodel.get_layer(input_.name)
 
             if not isinstance(layer, InputLayer) or \
-                not layer.input_shape[1:] == input_.shape[1:]:
+               not layer.input_shape[1:] == input_.shape[1:]:
                 # if the layer name is present but the dimensions
                 # are incorrect, we end up here.
                 return False
@@ -58,7 +58,7 @@ def _output_dimension_match(kerasmodel, outputs):
         # Check if output dims match between model spec and data
         for output in tmpoutputs:
 
-            if output.name not in [el[0] for el in \
+            if output.name not in [el[0] for el in
                                    kerasmodel.get_config()['output_layers']]:
                 # If the layer name is not present we end up here
                 return False
@@ -319,6 +319,7 @@ def auprc(ytrue, ypred):
     """
     return metrics.average_precision_score(ytrue, ypred)
 
+
 def prc(ytrue, ypred):
     """Precision recall curve
 
@@ -336,6 +337,7 @@ def prc(ytrue, ypred):
     """
     prec, rec, _ = metrics.precision_recall_curve(ytrue, ypred)
     return (prec, rec)
+
 
 def accuracy(ytrue, ypred):
     """Accuracy

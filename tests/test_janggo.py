@@ -1,9 +1,7 @@
 import json
-import matplotlib
-matplotlib.use('AGG')
-
 import os
 
+import matplotlib
 import numpy as np
 import pkg_resources
 import pytest
@@ -17,13 +15,11 @@ from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
 from janggo import outputconv
 from janggo import outputdense
-from janggo.layers import LocalAveragePooling2D
 from janggo.cli import main
 from janggo.data import CoverageDataset
 from janggo.data import DnaDataset
 from janggo.data import NumpyDataset
 from janggo.data import TabDataset
-from janggo.data.data import data_props
 from janggo.evaluation import EvaluatorList
 from janggo.evaluation import ScoreEvaluator
 from janggo.evaluation import accuracy
@@ -31,7 +27,10 @@ from janggo.evaluation import auprc
 from janggo.evaluation import auroc
 from janggo.evaluation import f1_score
 from janggo.layers import Complement
+from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
+
+matplotlib.use('AGG')
 
 
 def test_main():
@@ -42,27 +41,27 @@ def test_main():
 def test_localaveragepooling2D():
     # some test data
     testin = np.ones((1, 10, 1, 3))
-    testin[:,:,:,1] += 1
-    testin[:,:,:,2] += 2
+    testin[:, :, :, 1] += 1
+    testin[:, :, :, 2] += 2
 
     # test local average pooling
     lin = Input((10, 1, 3))
-    l = LocalAveragePooling2D(3)(lin)
-    m = Janggo(lin, l)
+    out = LocalAveragePooling2D(3)(lin)
+    m = Janggo(lin, out)
 
     testout = m.predict(testin)
-    np.testing.assert_equal(testout, testin[:,:8,:,:])
+    np.testing.assert_equal(testout, testin[:, :8, :, :])
 
     # more tests
     testin = np.ones((1, 3, 1, 2))
-    testin[:,0,:,:] = 0
-    testin[:,2,:,:] = 2
-    testin[:,:,:,1] += 1
+    testin[:, 0, :, :] = 0
+    testin[:, 2, :, :] = 2
+    testin[:, :, :, 1] += 1
 
     # test local average pooling
     lin = Input((3, 1, 2))
-    l = LocalAveragePooling2D(3)(lin)
-    m = Janggo(lin, l)
+    out = LocalAveragePooling2D(3)(lin)
+    m = Janggo(lin, out)
 
     testout = m.predict(testin)
     np.testing.assert_equal(testout.shape, (1, 1, 1, 2))
@@ -81,7 +80,6 @@ def test_janggo_generate_name(tmpdir):
     bwm = Janggo.create(_cnn_model, modelparams=(2,), outputdir=tmpdir.strpath)
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    #bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
 
     bwm.save()
@@ -89,7 +87,7 @@ def test_janggo_generate_name(tmpdir):
 
     assert os.path.exists(storage)
 
-    model2 = Janggo.create_by_name(bwm.name, outputdir=tmpdir.strpath)
+    Janggo.create_by_name(bwm.name, outputdir=tmpdir.strpath)
 
 
 def test_janggo_instance_dense(tmpdir):

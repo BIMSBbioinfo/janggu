@@ -1,7 +1,6 @@
 import os
-import matplotlib
-matplotlib.use('AGG')
 
+import matplotlib
 import numpy as np
 import pkg_resources
 import pytest
@@ -11,6 +10,8 @@ from janggo.data import TabDataset
 from janggo.data.data import data_props
 from janggo.utils import dna2ind
 from janggo.utils import sequences_from_fasta
+
+matplotlib.use('AGG')
 
 
 def test_dna_props_extraction():

@@ -1,8 +1,6 @@
 import os
 
 import matplotlib
-matplotlib.use('AGG')
-
 import numpy as np
 import pkg_resources
 import pytest
@@ -16,6 +14,8 @@ from janggo.layers import Reverse
 from janggo.utils import NMAP
 from janggo.utils import complement_permmatrix
 from janggo.utils import sequences_from_fasta
+
+matplotlib.use('AGG')
 
 reglen = 200
 flank = 150
@@ -151,7 +151,7 @@ def reverse_layer(order):
 
     # actual shape of DNA
     dna = data[indices]
-    np.testing.assert_equal(dna[:,::-1,:,:], rmod.predict(dna))
+    np.testing.assert_equal(dna[:, ::-1, :, :], rmod.predict(dna))
 
 
 def complement_layer(order):

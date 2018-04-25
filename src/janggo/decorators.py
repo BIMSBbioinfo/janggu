@@ -36,6 +36,7 @@ def outputdense(activation):
         return _add
     return _outputdense
 
+
 def outputconv(activation):
     """Output layer decorator
 

@@ -1,7 +1,5 @@
-import numpy as np
 import matplotlib
-matplotlib.use('AGG')
-
+import numpy as np
 from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import Input
@@ -10,6 +8,8 @@ from keras.models import Model
 from janggo import inputlayer
 from janggo import outputconv
 from janggo import outputdense
+
+matplotlib.use('AGG')
 
 
 # ==========================================================

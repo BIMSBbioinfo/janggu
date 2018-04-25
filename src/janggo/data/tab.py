@@ -39,7 +39,6 @@ class TabDataset(Dataset):
         else:
             self.filename = filename
 
-
         if not samplenames:
             samplenames = filename
         self.samplenames = samplenames

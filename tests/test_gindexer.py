@@ -1,13 +1,13 @@
 import os
 
 import matplotlib
-matplotlib.use('AGG')
-
 import numpy as np
 import pkg_resources
 import pytest
 
 from janggo.data import GenomicIndexer
+
+matplotlib.use('AGG')
 
 
 def test_gindexer_errors():
