@@ -39,10 +39,10 @@ class TabDataset(Dataset):
         else:
             self.filename = filename
 
-        self.samplenames = samplenames
-        if not samplenames:
-            self.samplenames = filename
 
+        if not samplenames:
+            samplenames = filename
+        self.samplenames = samplenames
         data = []
         for _file in self.filename:
             data.append(pd.read_csv(_file, header=None,
@@ -56,7 +56,7 @@ class TabDataset(Dataset):
 
     def __repr__(self):  # pragma: no cover
         return 'TabDataset("{}", "{}")'\
-                .format(self.name, self.filename)
+                .format(self.name, self.samplenames)
 
     def __len__(self):
         return len(self.data)
