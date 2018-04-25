@@ -36,9 +36,9 @@ Welcome to Janggo
     :alt: Coverage Status
     :target: https://codecov.io/github/wkopp/janggo
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/janggo/v0.6.0.svg
+.. |commits-since| image:: https://img.shields.io/github/commits-since/wkopp/janggo/v0.6.1.svg
     :alt: Commits since latest release
-    :target: https://github.com/wkopp/janggo/compare/v0.6.0...master
+    :target: https://github.com/wkopp/janggo/compare/v0.6.1...master
 
 .. |version| image:: https://img.shields.io/pypi/v/janggo.svg
     :alt: PyPI Package latest release
