@@ -14,6 +14,7 @@ from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
 from janggo import outputconv
 from janggo import outputdense
+from janggo.layers import LocalAveragePooling2D
 from janggo.cli import main
 from janggo.data import CoverageDataset
 from janggo.data import DnaDataset
@@ -34,6 +35,37 @@ from janggo.layers import Reverse
 def test_main():
     """Basic main test"""
     main([])
+
+
+def test_localaveragepooling2D():
+    # some test data
+    testin = np.ones((1, 10, 1, 3))
+    testin[:,:,:,1] += 1
+    testin[:,:,:,2] += 2
+
+    # test local average pooling
+    lin = Input((10, 1, 3))
+    l = LocalAveragePooling2D(3)(lin)
+    m = Janggo(lin, l)
+
+    testout = m.predict(testin)
+    np.testing.assert_equal(testout, testin[:,:8,:,:])
+
+    # more tests
+    testin = np.ones((1, 3, 1, 2))
+    testin[:,0,:,:] = 0
+    testin[:,2,:,:] = 2
+    testin[:,:,:,1] += 1
+
+    # test local average pooling
+    lin = Input((3, 1, 2))
+    l = LocalAveragePooling2D(3)(lin)
+    m = Janggo(lin, l)
+
+    testout = m.predict(testin)
+    np.testing.assert_equal(testout.shape, (1, 1, 1, 2))
+    np.testing.assert_equal(testout[0, 0, 0, 0], 1)
+    np.testing.assert_equal(testout[0, 0, 0, 1], 2)
 
 
 def test_janggo_generate_name(tmpdir):

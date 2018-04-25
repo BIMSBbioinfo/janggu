@@ -12,6 +12,7 @@ from keras.models import load_model
 
 from janggo.layers import Complement
 from janggo.layers import Reverse
+from janggo.layers import LocalAveragePooling2D
 
 
 class Janggo(object):
@@ -120,7 +121,8 @@ class Janggo(object):
 
         model = load_model(path,
                            custom_objects={'Reverse': Reverse,
-                                           'Complement': Complement})
+                                           'Complement': Complement,
+                                           'LocalAveragePooling2D': LocalAveragePooling2D})
         return cls(model.inputs, model.outputs, name, outputdir)
 
     @property
