@@ -13,6 +13,7 @@ from abc import abstractmethod
 
 from keras.engine.topology import InputLayer
 from sklearn import metrics
+import matplotlib.pyplot as plt
 
 from janggo.model import Janggo
 
@@ -255,6 +256,34 @@ def dump_json(basename, results):
         json.dump(content, jsonfile)
 
 
+def plot_score(basename, results):
+    """Method that dumps the results in a json file.
+
+    Parameters
+    ----------
+    basename : str
+        File-basename (without suffix e.g. '.json') to store the data at.
+        The suffix will be automatically added.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    """
+    fig = plt.figure()
+    ax_ = fig.add_axes([0.1, 0.1, .55, .5])
+
+    for modelname in results:
+        x_score, y_score, avg = results[modelname][basename]
+        ax_.plot(x_score, y_score,
+                 label="{} ({}={:1.2f})".format(
+                     modelname + results[modelname]['datatags'][-1],
+                     basename, avg))
+    lgd = ax_.legend(bbox_to_anchor=(1.05, 1), loc=2, prop={'size': 10}, ncol=1)
+    ax_.set_xlabel("Recall", size=14)
+    ax_.set_ylabel("Precision", size=14)
+    filename = basename + '.eps'
+    fig.savefig(filename, format="eps",
+                dpi=1000, bbox_extra_artists=(lgd,), bbox_inches="tight")
+
+
 def auroc(ytrue, ypred):
     """auROC
 
@@ -290,6 +319,23 @@ def auprc(ytrue, ypred):
     """
     return metrics.average_precision_score(ytrue, ypred)
 
+def prc(ytrue, ypred):
+    """Precision recall curve
+
+    Parameters
+    ----------
+    ytrue : numpy.array
+        1-dimensional numpy array containing targets
+    ypred : numpy.array
+        1-dimensional numpy array containing predictions
+
+    Returns
+    -------
+    float
+        area under the PR curve
+    """
+    prec, rec, _ = metrics.precision_recall_curve(ytrue, ypred)
+    return (prec, rec)
 
 def accuracy(ytrue, ypred):
     """Accuracy

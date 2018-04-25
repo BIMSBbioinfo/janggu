@@ -105,7 +105,8 @@ setup(
         'sklearn',
         'h5py',
         'pyBigWig',
-        'urllib3'
+        'urllib3',
+        'matplotlib'
     ],
     extras_require={
         "tf": ['tensorflow'],

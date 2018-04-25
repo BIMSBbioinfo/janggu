@@ -8,6 +8,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.coverage',
+    'matplotlib.sphinxext.plot_directive',
+    'matplotlib.sphinxext.only_directives',
     'sphinx.ext.doctest',
     'sphinx.ext.extlinks',
     'sphinx.ext.ifconfig',

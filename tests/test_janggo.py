@@ -1,4 +1,7 @@
 import json
+import matplotlib
+matplotlib.use('AGG')
+
 import os
 
 import numpy as np

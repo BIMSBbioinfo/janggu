@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib
+matplotlib.use('AGG')
+
 from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import Input
