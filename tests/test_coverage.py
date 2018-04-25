@@ -4,6 +4,8 @@ import numpy as np
 import pandas
 import pkg_resources
 from HTSeq import GenomicInterval
+import matplotlib
+matplotlib.use('AGG')
 
 from janggo.data import CoverageDataset
 
