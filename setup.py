@@ -102,7 +102,6 @@ setup(
         'keras',
         'htseq',
         'pysam',
-        'sklearn',
         'h5py',
         'pyBigWig',
         'urllib3',

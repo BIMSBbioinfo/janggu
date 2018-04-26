@@ -22,10 +22,6 @@ from janggo.data import NumpyDataset
 from janggo.data import TabDataset
 from janggo.evaluation import EvaluatorList
 from janggo.evaluation import ScoreEvaluator
-from janggo.evaluation import accuracy
-from janggo.evaluation import auprc
-from janggo.evaluation import auroc
-from janggo.evaluation import f1_score
 from janggo.layers import Complement
 from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
@@ -433,6 +429,10 @@ def test_janggo_train_predict_option4(tmpdir):
                      generator=janggo_fit_generator)
 
 
+def _dummy_eval(y_true, y_pred):
+    return 1.
+
+
 def test_janggo_train_predict_option5(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -472,20 +472,20 @@ def test_janggo_train_predict_option5(tmpdir):
     bwm.evaluate([inputs], [outputs], generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    auc_eval = ScoreEvaluator('auROC', auroc)
-    prc_eval = ScoreEvaluator('auPRC', auprc)
-    acc_eval = ScoreEvaluator('accuracy', accuracy)
-    f1_eval = ScoreEvaluator('F1', f1_score)
+    dummy_eval = ScoreEvaluator('dummy', _dummy_eval)
+    dummy2_eval = ScoreEvaluator('dummy2', _dummy_eval)
 
-    evaluators = EvaluatorList([auc_eval, prc_eval, acc_eval,
-                                f1_eval], path=tmpdir.strpath)
+    evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath)
     evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
 
-    for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
+    for file_ in ["dummy.json", "dummy2.json"]:
         with open(os.path.join(tmpdir.strpath, "evaluation",
                                file_), 'r') as f:
+            content = json.load(f)
+            print(content)
             # there must be an entry for the model 'nptest'
-            assert 'test_model' in json.load(f)
+            assert 'test_model' in content
+            assert content['test_model'][0][os.path.splitext(file_)[0]] == 1., content
 
 
 def test_janggo_train_predict_option6(tmpdir):
@@ -529,30 +529,31 @@ def test_janggo_train_predict_option6(tmpdir):
     bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    auc_eval = ScoreEvaluator('auROC', auroc)
-    prc_eval = ScoreEvaluator('auPRC', auprc)
-    acc_eval = ScoreEvaluator('accuracy', accuracy)
-    f1_eval = ScoreEvaluator('F1', f1_score)
+    dummy_eval = ScoreEvaluator('dummy', _dummy_eval)
+    dummy2_eval = ScoreEvaluator('dummy2', _dummy_eval)
 
-    evaluators = EvaluatorList([auc_eval, prc_eval, acc_eval,
-                                f1_eval], path=tmpdir.strpath,
+    evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath,
                                model_filter='ptest')
 
     # first I create fake inputs to provoke dimension
     inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))
     evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
 
-    for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
+    for file_ in ["dummy.json", "dummy2.json"]:
         with open(os.path.join(tmpdir.strpath, "evaluation",
                                file_), 'r') as f:
+            content = json.load(f)
             # the content must be empty at this point, because
             # of mismatching dims. No evaluations were ran.
-            assert not json.load(f)
+            assert not content
 
     evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
     evaluators.dump()
-    for file_ in ["auROC.json", "auPRC.json", "accuracy.json", "F1.json"]:
+    for file_ in ["dummy.json", "dummy2.json"]:
         with open(os.path.join(tmpdir.strpath, "evaluation",
                                file_), 'r') as f:
-            # there must be an entry for the model 'nptest'
-            assert 'nptest' in json.load(f)
+
+            content = json.load(f)
+            print()
+            # now nptest was evaluated
+            assert 'nptest' in content

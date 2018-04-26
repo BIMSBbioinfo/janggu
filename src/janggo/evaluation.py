@@ -13,7 +13,6 @@ from abc import abstractmethod
 
 import matplotlib.pyplot as plt
 from keras.engine.topology import InputLayer
-from sklearn import metrics
 
 from janggo.model import Janggo
 
@@ -282,97 +281,6 @@ def plot_score(basename, results):
     filename = basename + '.eps'
     fig.savefig(filename, format="eps",
                 dpi=1000, bbox_extra_artists=(lgd,), bbox_inches="tight")
-
-
-def auroc(ytrue, ypred):
-    """auROC
-
-    Parameters
-    ----------
-    ytrue : numpy.array
-        1-dimensional numpy array containing targets
-    ypred : numpy.array
-        1-dimensional numpy array containing predictions
-
-    Returns
-    -------
-    float
-        area under the ROC curve
-    """
-    return metrics.roc_auc_score(ytrue, ypred)
-
-
-def auprc(ytrue, ypred):
-    """auPRC
-
-    Parameters
-    ----------
-    ytrue : numpy.array
-        1-dimensional numpy array containing targets
-    ypred : numpy.array
-        1-dimensional numpy array containing predictions
-
-    Returns
-    -------
-    float
-        area under the PR curve
-    """
-    return metrics.average_precision_score(ytrue, ypred)
-
-
-def prc(ytrue, ypred):
-    """Precision recall curve
-
-    Parameters
-    ----------
-    ytrue : numpy.array
-        1-dimensional numpy array containing targets
-    ypred : numpy.array
-        1-dimensional numpy array containing predictions
-
-    Returns
-    -------
-    float
-        area under the PR curve
-    """
-    prec, rec, _ = metrics.precision_recall_curve(ytrue, ypred)
-    return (prec, rec)
-
-
-def accuracy(ytrue, ypred):
-    """Accuracy
-
-    Parameters
-    ----------
-    ytrue : numpy.array
-        1-dimensional numpy array containing targets
-    ypred : numpy.array
-        1-dimensional numpy array containing predictions
-
-    Returns
-    -------
-    float
-        Accuracy score
-    """
-    return metrics.accuracy_score(ytrue, ypred.round())
-
-
-def f1_score(ytrue, ypred):
-    """F1 score
-
-    Parameters
-    ----------
-    ytrue : numpy.array
-        1-dimensional numpy array containing targets
-    ypred : numpy.array
-        1-dimensional numpy array containing predictions
-
-    Returns
-    -------
-    float
-        F1 score
-    """
-    return metrics.f1_score(ytrue, ypred.round())
 
 
 class ScoreEvaluator(Evaluator):
