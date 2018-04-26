@@ -34,7 +34,7 @@ def test_main():
     main([])
 
 
-def test_localaveragepooling2D():
+def test_localaveragepooling2D(tmpdir):
     # some test data
     testin = np.ones((1, 10, 1, 3))
     testin[:, :, :, 1] += 1
@@ -43,7 +43,7 @@ def test_localaveragepooling2D():
     # test local average pooling
     lin = Input((10, 1, 3))
     out = LocalAveragePooling2D(3)(lin)
-    m = Janggo(lin, out)
+    m = Janggo(lin, out, outputdir=tmpdir.strpath)
 
     testout = m.predict(testin)
     np.testing.assert_equal(testout, testin[:, :8, :, :])
@@ -57,7 +57,7 @@ def test_localaveragepooling2D():
     # test local average pooling
     lin = Input((3, 1, 2))
     out = LocalAveragePooling2D(3)(lin)
-    m = Janggo(lin, out)
+    m = Janggo(lin, out, outputdir=tmpdir.strpath)
 
     testout = m.predict(testin)
     np.testing.assert_equal(testout.shape, (1, 1, 1, 2))
