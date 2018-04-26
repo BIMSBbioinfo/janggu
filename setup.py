@@ -105,7 +105,8 @@ setup(
         'h5py',
         'pyBigWig',
         'urllib3',
-        'matplotlib'
+        'matplotlib',
+        'pydot'
     ],
     extras_require={
         "tf": ['tensorflow'],

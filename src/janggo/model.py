@@ -7,6 +7,7 @@ import time
 
 import h5py
 from keras import backend as K
+from keras.utils import plot_model
 from keras.callbacks import LambdaCallback
 from keras.models import Model
 from keras.models import load_model
@@ -79,6 +80,9 @@ class Janggo(object):
 
         self.logger.info("Model Summary:")
         self.kerasmodel.summary(print_fn=self.logger.info)
+        filename = self._storage_path(self.name, self.outputdir)
+        filename = os.path.splitext(filename)[0] + '.png'
+        plot_model(self.kerasmodel, to_file=filename, show_shapes=True)
 
     @classmethod
     def create_by_name(cls, name, outputdir=None):
