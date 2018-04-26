@@ -30,14 +30,3 @@ Classes
 
 .. autoclass:: DnaDataset
    :members: create_from_refgenome, create_from_fasta
-
-
-Utilities
----------
-.. autosummary::
-   input_props
-   output_props
-
-
-.. autofunction:: input_props
-.. autofunction:: output_props
