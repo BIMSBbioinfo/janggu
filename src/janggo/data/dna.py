@@ -116,7 +116,7 @@ class DnaDataset(Dataset):
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions,
                               stepsize=50, reglen=200,
-                              flank=150, order=1, storage='hdf5',
+                              flank=0, order=1, storage='ndarray',
                               cachedir='', overwrite=False):
         """Create a DnaDataset class from a reference genome.
 

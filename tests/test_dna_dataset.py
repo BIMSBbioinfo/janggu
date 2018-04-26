@@ -57,9 +57,13 @@ def dna_templ(order):
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             regions=bed_merged,
                                             storage='ndarray',
+                                            reglen=reglen,
+                                            flank=flank,
                                             order=order)
     idata = DnaDataset.create_from_refgenome('itrain', refgenome=refgenome,
                                              regions=bed_indiv,
+                                             reglen=reglen,
+                                             flank=flank,
                                              storage='ndarray',
                                              order=order)
 
@@ -101,6 +105,8 @@ def test_read_ranges_from_file():
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             regions=regions,
                                             storage='ndarray',
+                                            reglen=reglen,
+                                            flank=flank,
                                             order=order)
 
     indices = [1, 600, 1000]
@@ -140,6 +146,8 @@ def reverse_layer(order):
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             regions=bed_file,
                                             storage='ndarray',
+                                            reglen=reglen,
+                                            flank=flank,
                                             order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
@@ -164,6 +172,8 @@ def complement_layer(order):
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             regions=bed_file,
                                             storage='ndarray',
+                                            reglen=reglen,
+                                            flank=flank,
                                             order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
@@ -413,6 +423,8 @@ def _dna_with_region_strandedness(order):
     data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
                                             regions=bed,
                                             storage='ndarray',
+                                            reglen=reglen,
+                                            flank=flank,
                                             order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')

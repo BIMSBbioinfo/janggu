@@ -26,7 +26,7 @@ def test_dna_props_extraction():
 
     props = data_props(dna)
     assert 'dna' in props
-    assert props['dna']['shape'] == (500, 4, 1)
+    assert props['dna']['shape'] == (200, 4, 1)
 
     with pytest.raises(Exception):
         data_props((0,))
