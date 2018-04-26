@@ -200,7 +200,7 @@ class Janggo(object):
 
         Examples
         --------
-        Variant 0: Use Janggo similar to keras.models.Model.
+        Variant 1: Use Janggo similar to keras.models.Model.
         This variant allows you to define the keras Input and Output
         layers from which a model is instantiated.
 
@@ -220,7 +220,7 @@ class Janggo(object):
           model = Janggo(inputs=in_, outputs=output, name='test_model')
           model.summary()
 
-        Variant 1: Specify a model using a model template.
+        Variant 2: Specify a model using a model template.
 
         .. code-block:: python
 
@@ -235,7 +235,7 @@ class Janggo(object):
           model = Janggo.create(template=test_manual_model, modelparams=3)
           model.summary()
 
-        Variant 2: Input and output layer shapes can be automatically
+        Variant 3: Input and output layer shapes can be automatically
         determined from the provided dataset. Therefore, only the model
         body needs to be specified in the following example:
 
