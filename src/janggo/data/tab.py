@@ -34,13 +34,10 @@ class TabDataset(Dataset):
     def __init__(self, name, filename, samplenames=None,
                  cachedir=None, dtype='int8', sep=','):
 
-        if not isinstance(filename, list):
-            self.filename = [filename]
-        else:
-            self.filename = filename
+        self.filename = filename
 
         if not samplenames:
-            samplenames = filename
+            samplenames = self.filename
         self.samplenames = samplenames
         data = []
         for _file in self.filename:

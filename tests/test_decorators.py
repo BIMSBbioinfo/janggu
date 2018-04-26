@@ -4,6 +4,7 @@ from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
+import keras.backend as K
 
 from janggo import inputlayer
 from janggo import outputconv
@@ -25,9 +26,29 @@ def make_dense_wo_decorator(input, inshapes, outshapes, params):
 
 
 # ==========================================================
-# Test without output decorator
+# Test without output decorator, sigmoid as string
 @outputdense('sigmoid')
-def make_dense_w_top(input, inshapes, outshapes, params):
+def make_dense_w_top_str(input, inshapes, outshapes, params):
+    input = [Input(inshapes[name]['shape'], name=name)
+             for name in inshapes]
+    output = Dense(params[0])(input[0])
+    return input, output
+
+
+# ==========================================================
+# Test without output decorator, sigmoid as string
+@outputdense({'testout': 'sigmoid'})
+def make_dense_w_top_dict(input, inshapes, outshapes, params):
+    input = [Input(inshapes[name]['shape'], name=name)
+             for name in inshapes]
+    output = Dense(params[0])(input[0])
+    return input, output
+
+
+# ==========================================================
+# Test without output decorator, sigmoid as string
+@outputdense(K.tanh)
+def make_dense_w_top_func(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
     output = Dense(params[0])(input[0])
@@ -71,7 +92,27 @@ def make_conv_wo_decorator(input, inshapes, outshapes, params):
 # ==========================================================
 # Test without output decorator
 @outputconv('sigmoid')
-def make_conv_w_top(input, inshapes, outshapes, params):
+def make_conv_w_top_str(input, inshapes, outshapes, params):
+    input = [Input(inshapes[name]['shape'], name=name)
+             for name in inshapes]
+    output = Conv2D(params[0], (1, 1))(input[0])
+    return input, output
+
+
+# ==========================================================
+# Test without output decorator
+@outputconv({'testout': 'sigmoid'})
+def make_conv_w_top_dict(input, inshapes, outshapes, params):
+    input = [Input(inshapes[name]['shape'], name=name)
+             for name in inshapes]
+    output = Conv2D(params[0], (1, 1))(input[0])
+    return input, output
+
+
+# ==========================================================
+# Test without output decorator
+@outputconv(K.tanh)
+def make_conv_w_top_func(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
     output = Conv2D(params[0], (1, 1))(input[0])
@@ -105,7 +146,9 @@ def test_dense_decorators():
     inp = {'testin': {'shape': (10,)}}
     oup = {'testout': {'shape': (3,)}}
 
-    funclist = [make_dense_w_top, make_dense_w_bottom, make_dense_w_topbottom]
+    funclist = [make_dense_w_top_str, make_dense_w_top_dict,
+                make_dense_w_top_func,
+                make_dense_w_bottom, make_dense_w_topbottom]
 
     i, o = make_dense_wo_decorator(None, inp, oup, (30, 'relu'))
     ref_model = Model(i, o)
@@ -124,7 +167,10 @@ def test_conv_decorators():
     inp = {'testin': {'shape': (10, 4, 1)}}
     oup = {'testout': {'shape': (5, 1, 3)}}
 
-    funclist = [make_conv_w_bottom, make_conv_w_top, make_conv_w_topbottom]
+    funclist = [make_conv_w_top_str,
+                make_conv_w_top_dict,
+                make_conv_w_top_func,
+                make_conv_w_bottom, make_conv_w_topbottom]
 
     i, o = make_conv_wo_decorator(None, inp, oup, (30, 'relu'))
     ref_model = Model(i, o)

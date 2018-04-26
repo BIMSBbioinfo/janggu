@@ -272,8 +272,8 @@ def test_janggo_train_predict_option1(tmpdir):
     generators: NO
     """
 
-    inputs = NumpyDataset("X", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+    inputs = NumpyDataset("X", np.random.random((100, 10)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     @inputlayer
@@ -310,12 +310,12 @@ def test_janggo_train_predict_option2(tmpdir):
     generators: NO
     """
 
-    inputs = NumpyDataset("x", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+    inputs = NumpyDataset("x", np.random.random((100, 10)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     def _model(path):
-        inputs = Input((100,), name='x')
+        inputs = Input((10,), name='x')
         output = Dense(1, activation='sigmoid', name='y')(inputs)
         model = Janggo(inputs=inputs, outputs=output, name='test',
                        outputdir=path)
@@ -348,11 +348,11 @@ def test_janggo_train_predict_option3(tmpdir):
     generators: NO
     """
 
-    inputs = np.random.random((1000, 100))
-    outputs = np.random.randint(2, size=(1000, 1))
+    inputs = np.random.random((100, 10))
+    outputs = np.random.randint(2, size=(100, 1))
 
     def _model(path):
-        inputs = Input((100,), name='x')
+        inputs = Input((10,), name='x')
         output = Dense(1, activation='sigmoid')(inputs)
         model = Janggo(inputs=inputs, outputs=output, name='test',
                        outputdir=path)
@@ -393,11 +393,11 @@ def test_janggo_train_predict_option4(tmpdir):
     generators: YES
     """
 
-    inputs = np.random.random((1000, 100))
-    outputs = np.random.randint(2, size=(1000, 1))
+    inputs = np.random.random((100, 10))
+    outputs = np.random.randint(2, size=(100, 1))
 
     def _model(path):
-        inputs = Input((100,), name='x')
+        inputs = Input((10,), name='x')
         output = Dense(1, activation='sigmoid')(inputs)
         model = Janggo(inputs=inputs, outputs=output, name='test',
                        outputdir=path)
@@ -441,12 +441,12 @@ def test_janggo_train_predict_option5(tmpdir):
     generators: YES
     """
 
-    inputs = NumpyDataset("x", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+    inputs = NumpyDataset("x", np.random.random((100, 10)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     def _model(path):
-        inputs = Input((100,), name='x')
+        inputs = Input((10,), name='x')
         output = Dense(1, name='y', activation='sigmoid')(inputs)
         model = Janggo(inputs=inputs, outputs=output, name='test_model',
                        outputdir=path)
@@ -488,16 +488,18 @@ def test_janggo_train_predict_option5(tmpdir):
             assert content['test_model'][0][os.path.splitext(file_)[0]] == 1., content
 
 
+
+
 def test_janggo_train_predict_option6(tmpdir):
     """Train, predict and evaluate on dummy data.
 
-    create: NO
+    create: YES
     Input args: Dataset
     generators: YES
     """
 
-    inputs = NumpyDataset("x", np.random.random((1000, 100)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(1000, 1)),
+    inputs = NumpyDataset("x", np.random.random((100, 10)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     @inputlayer
@@ -518,6 +520,79 @@ def test_janggo_train_predict_option6(tmpdir):
 
     bwm.fit(inputs, outputs, epochs=2, batch_size=32,
             generator=janggo_fit_generator,
+            use_multiprocessing=False)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(inputs, generator=janggo_predict_generator,
+                       use_multiprocessing=False)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
+    np.testing.assert_equal(pred.shape, outputs.shape)
+    bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
+                 use_multiprocessing=False)
+
+    dummy_eval = ScoreEvaluator('dummy', _dummy_eval)
+    dummy2_eval = ScoreEvaluator('dummy2', _dummy_eval)
+
+    evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath,
+                               model_filter='ptest')
+
+    # first I create fake inputs to provoke dimension
+    inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))
+    evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
+
+    for file_ in ["dummy.json", "dummy2.json"]:
+        with open(os.path.join(tmpdir.strpath, "evaluation",
+                               file_), 'r') as f:
+            content = json.load(f)
+            # the content must be empty at this point, because
+            # of mismatching dims. No evaluations were ran.
+            assert not content
+
+    evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
+    evaluators.dump()
+    for file_ in ["dummy.json", "dummy2.json"]:
+        with open(os.path.join(tmpdir.strpath, "evaluation",
+                               file_), 'r') as f:
+
+            content = json.load(f)
+            # now nptest was evaluated
+            assert 'nptest' in content
+
+
+def test_janggo_train_predict_option7(tmpdir):
+    """Train, predict and evaluate on dummy data.
+
+    create: YES
+    Input args: Dataset
+    generators: YES
+    validation_set: YES
+    batch_size: None
+    """
+
+    inputs = NumpyDataset("x", np.random.random((100, 10)))
+    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
+                           samplenames=['random'])
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def _model(inputs, inp, oup, params):
+        return inputs, inputs[0]
+
+    bwm = Janggo.create(_model,
+                        inputs=inputs,
+                        outputs=outputs,
+                        name='nptest',
+                        outputdir=tmpdir.strpath)
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit(inputs, outputs, epochs=2,
+            generator=janggo_fit_generator,
+            validation_data=(inputs, outputs),
             use_multiprocessing=False)
 
     assert os.path.exists(storage)

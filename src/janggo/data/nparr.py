@@ -26,11 +26,8 @@ class NumpyDataset(Dataset):
     def __init__(self, name, array, samplenames=None, cachedir=None):
 
         self.data = array
-        if samplenames:
-            if isinstance(samplenames, list):
-                self.samplenames = samplenames
-            else:
-                self.samplenames = [samplenames]
+        if samplenames and isinstance(samplenames, list):
+            self.samplenames = samplenames
 
         self.cachedir = cachedir
 
