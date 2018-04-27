@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score
 
 from janggo import janggo_fit_generator
 from janggo import janggo_predict_generator
-from janggo.data import NumpyDataset
+from janggo.data import NumpyWrapper
 from janggo.data import input_props
 from janggo.data import output_props
 from janggo.decorators import inputlayer
@@ -30,11 +30,11 @@ y_train = keras.utils.to_categorical(y_train)
 y_test = keras.utils.to_categorical(y_test)
 
 # Wrap it as Dataset
-blg_x_train = NumpyDataset('x', x_train)
-blg_x_test = NumpyDataset('x', x_test)
-blg_y_train = NumpyDataset('y', y_train,
+blg_x_train = NumpyWrapper('x', x_train)
+blg_x_test = NumpyWrapper('x', x_test)
+blg_y_train = NumpyWrapper('y', y_train,
                            samplenames=[str(i) for i in range(10)])
-blg_y_test = NumpyDataset('y', y_test,
+blg_y_test = NumpyWrapper('y', y_test,
                           samplenames=[str(i) for i in range(10)])
 
 

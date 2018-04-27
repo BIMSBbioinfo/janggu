@@ -5,10 +5,10 @@ import pandas as pd
 from janggo.data.data import Dataset
 
 
-class TabDataset(Dataset):
-    """TabDataset class.
+class Table(Dataset):
+    """Table class.
 
-    TabDataset allows to fetch data from a CSV or TSV file.
+    Table allows to fetch data from a CSV or TSV file.
     It might be used to load a set of training labels.
 
     Parameters
@@ -51,7 +51,7 @@ class TabDataset(Dataset):
         Dataset.__init__(self, name)
 
     def __repr__(self):  # pragma: no cover
-        return 'TabDataset("{}", "{}")'\
+        return 'Table("{}", "{}")'\
                 .format(self.name, self.samplenames)
 
     def __len__(self):

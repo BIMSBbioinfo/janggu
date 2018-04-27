@@ -9,7 +9,7 @@ import pkg_resources
 import pytest
 from HTSeq import GenomicInterval
 
-from janggo.data import CoverageDataset
+from janggo.data import Cover
 
 
 
@@ -18,7 +18,7 @@ def test_coverage_from_bam_sanity():
     bed_file = os.path.join(data_path, "yeast.bed")
 
     bamfile_ = os.path.join(data_path, "yeast_I_II_III.bam")
-    CoverageDataset.create_from_bam(
+    Cover.create_from_bam(
         'test',
         bamfiles=bamfile_,
         regions=bed_file,
@@ -28,7 +28,7 @@ def test_coverage_from_bam_sanity():
 
     with pytest.raises(Exception):
         # name must be a string
-        CoverageDataset.create_from_bam(
+        Cover.create_from_bam(
             1.2,
             bamfiles=bamfile_,
             regions=bed_file,
@@ -36,7 +36,7 @@ def test_coverage_from_bam_sanity():
             storage='ndarray')
 
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bam(
+        Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
             regions=bed_file,
@@ -44,7 +44,7 @@ def test_coverage_from_bam_sanity():
             flank=-1,
             storage='ndarray')
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bam(
+        Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
             regions=bed_file,
@@ -52,7 +52,7 @@ def test_coverage_from_bam_sanity():
             flank=0,
             storage='ndarray')
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bam(
+        Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
             regions=bed_file,
@@ -66,7 +66,7 @@ def test_coverage_from_bigwig_sanity():
     bed_file = os.path.join(data_path, "yeast.bed")
 
     bwfile_ = os.path.join(data_path, "yeast_I_II_III.bw")
-    CoverageDataset.create_from_bigwig(
+    Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
         regions=bed_file,
@@ -77,7 +77,7 @@ def test_coverage_from_bigwig_sanity():
 
     with pytest.raises(Exception):
         # name must be a string
-        CoverageDataset.create_from_bigwig(
+        Cover.create_from_bigwig(
             1.2,
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -85,7 +85,7 @@ def test_coverage_from_bigwig_sanity():
             storage='ndarray')
 
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bigwig(
+        Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -93,7 +93,7 @@ def test_coverage_from_bigwig_sanity():
             flank=-1,
             storage='ndarray')
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bigwig(
+        Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -101,7 +101,7 @@ def test_coverage_from_bigwig_sanity():
             flank=0,
             storage='ndarray')
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bigwig(
+        Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -110,7 +110,7 @@ def test_coverage_from_bigwig_sanity():
             storage='ndarray')
     with pytest.raises(Exception):
         # resolution must be greater than stepsize
-        CoverageDataset.create_from_bigwig(
+        Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -125,7 +125,7 @@ def test_coverage_from_bed_sanity():
     bed_file = os.path.join(data_path, 'regions.bed')
 
     bwfile_ = os.path.join(data_path, "indiv_regions.bed")
-    CoverageDataset.create_from_bed(
+    Cover.create_from_bed(
         'test',
         bedfiles=bwfile_,
         regions=bed_file,
@@ -136,7 +136,7 @@ def test_coverage_from_bed_sanity():
 
     with pytest.raises(Exception):
         # name must be a string
-        CoverageDataset.create_from_bed(
+        Cover.create_from_bed(
             1.2,
             bedfiles=bwfile_,
             regions=bed_file,
@@ -144,7 +144,7 @@ def test_coverage_from_bed_sanity():
             storage='ndarray')
 
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bed(
+        Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -152,7 +152,7 @@ def test_coverage_from_bed_sanity():
             flank=-1,
             storage='ndarray')
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bed(
+        Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -160,7 +160,7 @@ def test_coverage_from_bed_sanity():
             flank=0,
             storage='ndarray')
     with pytest.raises(Exception):
-        CoverageDataset.create_from_bed(
+        Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -169,7 +169,7 @@ def test_coverage_from_bed_sanity():
             storage='ndarray')
     with pytest.raises(Exception):
         # resolution must be greater than stepsize
-        CoverageDataset.create_from_bed(
+        Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
             regions=bed_file,
@@ -180,7 +180,7 @@ def test_coverage_from_bed_sanity():
     with pytest.raises(Exception):
         csvfile = os.path.join(data_path, 'ctcf_sample.csv')
         # must be a bed file
-        CoverageDataset.create_from_bed(
+        Cover.create_from_bed(
             'test',
             bedfiles=csvfile,
             regions=bed_file,
@@ -208,7 +208,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['ndarray', 'hdf5']:
         # base pair binsize
         # print(store)
-        cvdata = CoverageDataset.create_from_bam(
+        cvdata = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -218,7 +218,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
             storage=store,
             cachedir=tmpdir.strpath if store == 'hdf5' else None)
 
-        cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
+        cvdata_bam_unstranded_bed = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
@@ -248,7 +248,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
     for store in ['ndarray', 'hdf5']:
         # 20 bp binsize
         # print(store)
-        cvdata = CoverageDataset.create_from_bam(
+        cvdata = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
@@ -258,7 +258,7 @@ def test_load_coveragedataset_bam_stranded(tmpdir):
             storage=store,
             cachedir=tmpdir.strpath)
 
-        cvdata_bam_unstranded_bed = CoverageDataset.create_from_bam(
+        cvdata_bam_unstranded_bed = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file_unstranded,
@@ -314,7 +314,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin1(tmpdir):
     for store in ['ndarray', 'hdf5']:
         # base pair binsize
         print(store)
-        cvdata_bigwig = CoverageDataset.create_from_bigwig(
+        cvdata_bigwig = Cover.create_from_bigwig(
             "yeast_I_II_III.bw_res1_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -324,7 +324,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin1(tmpdir):
             flank=flank,
             storage=store,
             cachedir=cachedir if store == 'hdf5' else None)
-        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
+        cvdata_bigwig_us = Cover.create_from_bigwig(
             "yeast_I_II_III.bw_res1_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,
@@ -397,7 +397,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
     for store in ['ndarray', 'hdf5']:
         # 20 bp binsize
         print(store)
-        cvdata_bigwig = CoverageDataset.create_from_bigwig(
+        cvdata_bigwig = Cover.create_from_bigwig(
             "yeast_I_II_III.bw_res20_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -406,7 +406,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution1_bin20(tmpdir):
             flank=flank,
             storage=store,
             cachedir=cachedir)
-        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
+        cvdata_bigwig_us = Cover.create_from_bigwig(
             "yeast_I_II_III.bw_res20_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,
@@ -463,7 +463,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
     for store in ['ndarray', 'hdf5']:
         # 20 bp binsize
         print(store)
-        cvdata_bigwig = CoverageDataset.create_from_bigwig(
+        cvdata_bigwig = Cover.create_from_bigwig(
             "yeast_I_II_III.bed_res20_str",
             bigwigfiles=bwfile_,
             regions=bed_file,
@@ -472,7 +472,7 @@ def test_load_coveragedataset_bigwig_unstranded_resolution10_bin20(tmpdir):
             flank=flank,
             storage=store,
             cachedir=cachedir)
-        cvdata_bigwig_us = CoverageDataset.create_from_bigwig(
+        cvdata_bigwig_us = Cover.create_from_bigwig(
             "yeast_I_II_III.bw_res20_unstr",
             bigwigfiles=bwfile_,
             regions=bed_file_unstranded,
@@ -526,7 +526,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
     for store in ['ndarray', 'hdf5']:
         # 20 bp binsize
         print(store)
-        cvdata_bigwig = CoverageDataset.create_from_bed(
+        cvdata_bigwig = Cover.create_from_bed(
             "yeast_I_II_III.bed_res20_str",
             bedfiles=bwfile_,
             regions=bed_file,
@@ -552,7 +552,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
         # with flank the label should be shifted. therefore, we do not
         # find the score=10 at index 99, because the score value from the
         # upstream position is returned.
-        cvdata_bigwig = CoverageDataset.create_from_bed(
+        cvdata_bigwig = Cover.create_from_bed(
             "yeast_I_II_III.bed_res20_str",
             bedfiles=bwfile_,
             regions=bed_file,
@@ -577,7 +577,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
                                  cinterval.end))
 
         # now use without flank, otherwise this would introduce a shift.
-        cvdata_bigwig = CoverageDataset.create_from_bed(
+        cvdata_bigwig = Cover.create_from_bed(
             "yeast_I_II_III.bed_res20_str",
             bedfiles=bwfile_,
             regions=bed_file,

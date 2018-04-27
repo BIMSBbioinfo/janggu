@@ -12,8 +12,8 @@ from janggo.utils import dna2ind
 from janggo.utils import sequences_from_fasta
 
 
-class DnaDataset(Dataset):
-    """DnaDataset class.
+class Dna(Dataset):
+    """Dna class.
 
     This datastructure holds a DNA sequence for the purpose of a deep learning
     application.
@@ -118,7 +118,7 @@ class DnaDataset(Dataset):
                               stepsize=50, reglen=200,
                               flank=0, order=1, storage='ndarray',
                               cachedir='', overwrite=False):
-        """Create a DnaDataset class from a reference genome.
+        """Create a Dna class from a reference genome.
 
         This requires a reference genome in fasta format as well as a bed-file
         that holds the regions of interest.
@@ -160,7 +160,7 @@ class DnaDataset(Dataset):
     @classmethod
     def create_from_fasta(cls, name, fastafile, storage='ndarray',
                           order=1, cachedir='', overwrite=False):
-        """Create a DnaDataset class from a fastafile.
+        """Create a Dna class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
         a fastafile.
@@ -216,7 +216,7 @@ class DnaDataset(Dataset):
         return cls(name, garray, gindexer, flank, order)
 
     def __repr__(self):  # pragma: no cover
-        return 'DnaDataset("{}", <garray>, <gindexer>, \
+        return 'Dna("{}", <garray>, <gindexer>, \
                 flank={}, order={})'\
                 .format(self.name, self.flank, self.order)
 
@@ -268,7 +268,7 @@ class DnaDataset(Dataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('DnaDataset.__getitem__: '
+            raise IndexError('Dna.__getitem__: '
                              + 'index must be iterable')
 
         data = as_onehot(self.idna4idx(idxs), self.order)

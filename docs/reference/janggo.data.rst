@@ -20,13 +20,13 @@ Interface
 Classes
 -------
 .. autosummary::
-   CoverageDataset
-   DnaDataset
-   TabDataset
-   NumpyDataset
+   Cover
+   Dna
+   Table
+   NumpyWrapper
 
-.. autoclass:: CoverageDataset
+.. autoclass:: Cover
    :members: create_from_bam, create_from_bigwig, create_from_bed
 
-.. autoclass:: DnaDataset
+.. autoclass:: Dna
    :members: create_from_refgenome, create_from_fasta

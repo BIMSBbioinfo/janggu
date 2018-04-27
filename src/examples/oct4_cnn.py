@@ -13,8 +13,8 @@ from janggo import Janggo
 from janggo import inputlayer
 from janggo import janggo_fit_generator
 from janggo import outputlayer
-from janggo.data import DnaDataset
-from janggo.data import NumpyDataset
+from janggo.data import Dna
+from janggo.data import NumpyWrapper
 from janggo.data import input_props
 from janggo.data import output_props
 from janggo.evaluation import EvaluatorList
@@ -26,17 +26,17 @@ np.random.seed(1234)
 
 DATA_PATH = pkg_resources.resource_filename('janggo', 'resources/')
 OCT4_FILE = os.path.join(DATA_PATH, 'stemcells.fa')
-X1 = DnaDataset.create_from_fasta('dna', fastafile=OCT4_FILE, order=1)
+X1 = Dna.create_from_fasta('dna', fastafile=OCT4_FILE, order=1)
 MAFK_FILE = os.path.join(DATA_PATH, 'mafk.fa')
-X2 = DnaDataset.create_from_fasta('dna', fastafile=MAFK_FILE, order=1)
+X2 = Dna.create_from_fasta('dna', fastafile=MAFK_FILE, order=1)
 
-DNA = DnaDataset.create_from_fasta('dna', fastafile=[OCT4_FILE, MAFK_FILE],
+DNA = Dna.create_from_fasta('dna', fastafile=[OCT4_FILE, MAFK_FILE],
                                    order=1)
-DNA_ONEHOT = NumpyDataset('dna', np.concatenate((X1[:], X2[:])))
+DNA_ONEHOT = NumpyWrapper('dna', np.concatenate((X1[:], X2[:])))
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
-LABELS = NumpyDataset('y', Y, samplenames='Oct4-binding')
+LABELS = NumpyWrapper('y', Y, samplenames='Oct4-binding')
 
 auc_eval = ScoreEvaluator('oct4_result', 'auROC', auroc)
 prc_eval = ScoreEvaluator('oct4_result', 'auPRC', auprc)

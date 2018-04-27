@@ -16,10 +16,10 @@ from janggo import janggo_predict_generator
 from janggo import outputconv
 from janggo import outputdense
 from janggo.cli import main
-from janggo.data import CoverageDataset
-from janggo.data import DnaDataset
-from janggo.data import NumpyDataset
-from janggo.data import TabDataset
+from janggo.data import Cover
+from janggo.data import Dna
+from janggo.data import NumpyWrapper
+from janggo.data import Table
 from janggo.evaluation import EvaluatorList
 from janggo.evaluation import ScoreEvaluator
 from janggo.layers import Complement
@@ -95,11 +95,11 @@ def test_janggo_instance_dense(tmpdir):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaDataset.create_from_refgenome('dna', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=bed_file, order=1)
+    dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    regions=bed_file, order=1)
 
-    ctcf = TabDataset('ctcf', filename=csvfile)
+    ctcf = Table('ctcf', filename=csvfile)
 
     @inputlayer
     @outputdense('sigmoid')
@@ -224,11 +224,11 @@ def test_janggo_instance_conv(tmpdir):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    dna = DnaDataset.create_from_refgenome('dna', refgenome=refgenome,
-                                           storage='ndarray',
-                                           regions=bed_file, order=1)
+    dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    regions=bed_file, order=1)
 
-    ctcf = CoverageDataset.create_from_bed(
+    ctcf = Cover.create_from_bed(
         "positives",
         bedfiles=posfile,
         regions=bed_file,
@@ -272,8 +272,8 @@ def test_janggo_train_predict_option1(tmpdir):
     generators: NO
     """
 
-    inputs = NumpyDataset("X", np.random.random((100, 10)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
+    inputs = NumpyWrapper("X", np.random.random((100, 10)))
+    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     @inputlayer
@@ -310,8 +310,8 @@ def test_janggo_train_predict_option2(tmpdir):
     generators: NO
     """
 
-    inputs = NumpyDataset("x", np.random.random((100, 10)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
+    inputs = NumpyWrapper("x", np.random.random((100, 10)))
+    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     def _model(path):
@@ -441,8 +441,8 @@ def test_janggo_train_predict_option5(tmpdir):
     generators: YES
     """
 
-    inputs = NumpyDataset("x", np.random.random((100, 10)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
+    inputs = NumpyWrapper("x", np.random.random((100, 10)))
+    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     def _model(path):
@@ -488,8 +488,6 @@ def test_janggo_train_predict_option5(tmpdir):
             assert content['test_model'][0][os.path.splitext(file_)[0]] == 1., content
 
 
-
-
 def test_janggo_train_predict_option6(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -498,8 +496,8 @@ def test_janggo_train_predict_option6(tmpdir):
     generators: YES
     """
 
-    inputs = NumpyDataset("x", np.random.random((100, 10)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
+    inputs = NumpyWrapper("x", np.random.random((100, 10)))
+    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     @inputlayer
@@ -538,7 +536,7 @@ def test_janggo_train_predict_option6(tmpdir):
                                model_filter='ptest')
 
     # first I create fake inputs to provoke dimension
-    inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))
+    inputs_wrong_dim = NumpyWrapper("x", np.random.random((1000, 50)))
     evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
 
     for file_ in ["dummy.json", "dummy2.json"]:
@@ -570,8 +568,8 @@ def test_janggo_train_predict_option7(tmpdir):
     batch_size: None
     """
 
-    inputs = NumpyDataset("x", np.random.random((100, 10)))
-    outputs = NumpyDataset('y', np.random.randint(2, size=(100, 1)),
+    inputs = NumpyWrapper("x", np.random.random((100, 10)))
+    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
                            samplenames=['random'])
 
     @inputlayer
@@ -611,7 +609,7 @@ def test_janggo_train_predict_option7(tmpdir):
                                model_filter='ptest')
 
     # first I create fake inputs to provoke dimension
-    inputs_wrong_dim = NumpyDataset("x", np.random.random((1000, 50)))
+    inputs_wrong_dim = NumpyWrapper("x", np.random.random((1000, 50)))
     evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
 
     for file_ in ["dummy.json", "dummy2.json"]:

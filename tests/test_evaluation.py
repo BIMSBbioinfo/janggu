@@ -4,13 +4,13 @@ from keras import Model
 from keras.layers import Dense
 from keras.layers import Flatten
 
-from janggo.data import NumpyDataset
+from janggo.data import NumpyWrapper
 from janggo.evaluation import _input_dimension_match
 from janggo.evaluation import _output_dimension_match
 
 
 def test_input_dims():
-    data = NumpyDataset('testa', numpy.zeros((10, 10, 1)))
+    data = NumpyWrapper('testa', numpy.zeros((10, 10, 1)))
     xin = Input((10, 1), name='testy')
     out = Dense(1)(xin)
     m = Model(xin, out)
@@ -36,8 +36,8 @@ def test_input_dims():
 
 
 def test_output_dims():
-    data = NumpyDataset('testa', numpy.zeros((10, 10, 1)))
-    label = NumpyDataset('testy', numpy.zeros((10, 1)))
+    data = NumpyWrapper('testa', numpy.zeros((10, 10, 1)))
+    label = NumpyWrapper('testy', numpy.zeros((10, 1)))
     xin = Input(data.shape, name='asdf')
     out = Flatten()(xin)
     out = Dense(1)(out)

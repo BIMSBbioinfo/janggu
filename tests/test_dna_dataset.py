@@ -8,7 +8,7 @@ from HTSeq import BED_Reader
 from keras.layers import Input
 from keras.models import Model
 
-from janggo.data import DnaDataset
+from janggo.data import Dna
 from janggo.layers import Complement
 from janggo.layers import Reverse
 from janggo.utils import NMAP
@@ -54,18 +54,18 @@ def dna_templ(order):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            regions=bed_merged,
-                                            storage='ndarray',
-                                            reglen=reglen,
-                                            flank=flank,
-                                            order=order)
-    idata = DnaDataset.create_from_refgenome('itrain', refgenome=refgenome,
-                                             regions=bed_indiv,
-                                             reglen=reglen,
-                                             flank=flank,
-                                             storage='ndarray',
-                                             order=order)
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_merged,
+                                     storage='ndarray',
+                                     reglen=reglen,
+                                     flank=flank,
+                                     order=order)
+    idata = Dna.create_from_refgenome('itrain', refgenome=refgenome,
+                                      regions=bed_indiv,
+                                      reglen=reglen,
+                                      flank=flank,
+                                      storage='ndarray',
+                                      order=order)
 
     indices = [1, 600, 1000]
 
@@ -102,12 +102,12 @@ def test_read_ranges_from_file():
     refgenome = os.path.join(data_path, 'genome.fa')
     regions = os.path.join(data_path, 'regions.bed')
 
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            regions=regions,
-                                            storage='ndarray',
-                                            reglen=reglen,
-                                            flank=flank,
-                                            order=order)
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=regions,
+                                     storage='ndarray',
+                                     reglen=reglen,
+                                     flank=flank,
+                                     order=order)
 
     indices = [1, 600, 1000]
 
@@ -143,12 +143,12 @@ def reverse_layer(order):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            regions=bed_file,
-                                            storage='ndarray',
-                                            reglen=reglen,
-                                            flank=flank,
-                                            order=order)
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_file,
+                                     storage='ndarray',
+                                     reglen=reglen,
+                                     flank=flank,
+                                     order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
     rdna_layer = Reverse()(dna_in)
@@ -169,12 +169,12 @@ def complement_layer(order):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            regions=bed_file,
-                                            storage='ndarray',
-                                            reglen=reglen,
-                                            flank=flank,
-                                            order=order)
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_file,
+                                     storage='ndarray',
+                                     reglen=reglen,
+                                     flank=flank,
+                                     order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
     cdna_layer = Complement()(dna_in)
@@ -264,51 +264,51 @@ def test_dna_dataset_sanity(tmpdir):
 
     with pytest.raises(Exception):
         # name must be a string
-        DnaDataset.create_from_refgenome(1.23, refgenome='',
-                                         storage='ndarray',
-                                         regions=bed_file, order=1)
+        Dna.create_from_refgenome(1.23, refgenome='',
+                                  storage='ndarray',
+                                  regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome='',
-                                         storage='ndarray',
-                                         regions=bed_file, order=1)
+        Dna.create_from_refgenome('train', refgenome='',
+                                  storage='ndarray',
+                                  regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome='test',
-                                         storage='ndarray',
-                                         regions=bed_file, order=1)
+        Dna.create_from_refgenome('train', refgenome='test',
+                                  storage='ndarray',
+                                  regions=bed_file, order=1)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                         storage='ndarray',
-                                         regions=None, order=1)
+        Dna.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  regions=None, order=1)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                         storage='ndarray',
-                                         regions=bed_file, order=0)
+        Dna.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  regions=bed_file, order=0)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                         storage='ndarray',
-                                         regions=bed_file, flank=-1)
+        Dna.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  regions=bed_file, flank=-1)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                         storage='ndarray',
-                                         regions=bed_file, reglen=0)
+        Dna.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  regions=bed_file, reglen=0)
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                         storage='ndarray',
-                                         regions=bed_file, stepsize=0)
+        Dna.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  regions=bed_file, stepsize=0)
 
     with pytest.raises(Exception):
-        DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                         storage='step',
-                                         regions=bed_file, order=1,
-                                         cachedir=tmpdir.strpath)
+        Dna.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='step',
+                                  regions=bed_file, order=1,
+                                  cachedir=tmpdir.strpath)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'genome.fa', 'chr1..nmm'))
 
-    DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                     storage='hdf5',
-                                     regions=bed_file, order=1,
-                                     cachedir=tmpdir.strpath)
+    Dna.create_from_refgenome('train', refgenome=refgenome,
+                              storage='hdf5',
+                              regions=bed_file, order=1,
+                              cachedir=tmpdir.strpath)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                        'storage.unstranded.h5'))
@@ -319,8 +319,8 @@ def test_read_dna_from_fasta_order_1(tmpdir):
 
     order = 1
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaDataset.create_from_fasta('train', fastafile=filename,
-                                        order=order)
+    data = Dna.create_from_fasta('train', fastafile=filename,
+                                 order=order)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data), 200, pow(4, order), 1))
@@ -360,9 +360,9 @@ def test_read_dna_from_fasta_order_2(tmpdir):
 
     order = 2
     filename = os.path.join(data_path, 'oct4.fa')
-    data = DnaDataset.create_from_fasta('train', fastafile=filename,
-                                        order=order,
-                                        cachedir=tmpdir.strpath)
+    data = Dna.create_from_fasta('train', fastafile=filename,
+                                 order=order,
+                                 cachedir=tmpdir.strpath)
 
     np.testing.assert_equal(len(data), 4)
     np.testing.assert_equal(data.shape, (len(data),  199, 16, 1))
@@ -406,7 +406,7 @@ def test_stemcell_onehot_identity():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     filename = os.path.join(data_path, 'stemcells.fa')
-    data = DnaDataset.create_from_fasta('dna', fastafile=filename)
+    data = Dna.create_from_fasta('dna', fastafile=filename)
 
     oh = _seqToOneHot(sequences_from_fasta(filename))
 
@@ -420,12 +420,12 @@ def _dna_with_region_strandedness(order):
 
     refgenome = os.path.join(data_path, 'genome.fa')
 
-    data = DnaDataset.create_from_refgenome('train', refgenome=refgenome,
-                                            regions=bed,
-                                            storage='ndarray',
-                                            reglen=reglen,
-                                            flank=flank,
-                                            order=order)
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed,
+                                     storage='ndarray',
+                                     reglen=reglen,
+                                     flank=flank,
+                                     order=order)
 
     dna_in = Input(shape=data.shape[1:], name='dna')
     rdna_layer = Reverse()(dna_in)

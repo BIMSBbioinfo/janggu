@@ -244,12 +244,12 @@ class Janggo(object):
           import numpy as np
           from janggo import Janggo
           from janggo import inputlayer, outputdense
-          from janggo.data import NumpyDataset
+          from janggo.data import NumpyWrapper
 
           # Some random data which you would like to use as input for the
           # model.
-          DATA = NumpyDataset('ip', np.random.random((1000, 10)))
-          LABELS = NumpyDataset('out', np.random.randint(2, size=(1000, 1)))
+          DATA = NumpyWrapper('ip', np.random.random((1000, 10)))
+          LABELS = NumpyWrapper('out', np.random.randint(2, size=(1000, 1)))
 
           # The decorators inputlayer and outputdense
           # automatically extract the layer shapes

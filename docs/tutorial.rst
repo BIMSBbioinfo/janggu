@@ -79,11 +79,11 @@ This means, only the network body remains to be defined:
 
     import numpy as np
     from janggo import inputlayer, outputdense
-    from janggo.data import NumpyDataset
+    from janggo.data import NumpyWrapper
 
     # Some random data
-    DATA = NumpyDataset('ip', np.random.random((1000, 10)))
-    LABELS = NumpyDataset('out', np.random.randint(2, size=(1000, 1)))
+    DATA = NumpyWrapper('ip', np.random.random((1000, 10)))
+    LABELS = NumpyWrapper('out', np.random.randint(2, size=(1000, 1)))
 
     # inputlayer and outputdense automatically
     # extract dataset shapes and extend the
@@ -121,18 +121,18 @@ Genomic Datasets
 to easily access and fetch genomics data. The datasets can directly be used
 e.g. for training or evaluating neural networks.
 
-Two of the most useful containers are :class:`DnaDataset` and :class:`CoverageDataset`.
+Two of the most useful containers are :class:`Dna` and :class:`Cover`.
 
 
 
-DnaDataset
+Dna
 ^^^^^^^^^^
-The :class:`DnaDataset` allows you to fetch raw sequence data from
+The :class:`Dna` allows you to fetch raw sequence data from
 fasta files or from a reference genome with genomic coordinates of interest
 and translates the sequences into a *one-hot encoding*. Specifically,
 the sequence is stored in a 4D array with dimensions corresponding
 to :code:`(region, region_length, alphabet_size, 1)`.
-The DnaDataset offers a number of features:
+The Dna offers a number of features:
 
 1. Strand-specific sequence extraction
 2. Higher-order one-hot encoding, e.g. di-nucleotide based
@@ -144,11 +144,11 @@ Loading DNA sequences from fasta files can be achieved by invoking
 .. code-block:: python
 
    from pkg_resources import resource_filename
-   from janggo.data import DnaDataset
+   from janggo.data import Dna
 
    fasta_file = resource_filename('janggo', 'resources/sample.fa')
 
-   dna = DnaDataset.create_from_fasta('dna', fastafile=fastafile)
+   dna = Dna.create_from_fasta('dna', fastafile=fastafile)
 
    len(dna)  # there are 4 sequences in the fastafile
 
@@ -164,7 +164,7 @@ genomic coordinates of interest from a bed or gff file.
    bed_file = resource_filename('janggo', 'resources/sample.bed')
    refgenome = resource_filename('janggo', 'resources/sample_genome.fa')
 
-   dna = DnaDataset.create_from_refgenome('dna',
+   dna = Dna.create_from_refgenome('dna',
                                           refgenome=refgenome,
                                           regions=bed_file)
 
@@ -175,35 +175,35 @@ genomic coordinates of interest from a bed or gff file.
 
 
 
-CoverageDataset
+Cover
 ^^^^^^^^^^^^^^^
-The :class:`CoverageDataset` can be utilized to fetch different kinds of
+The :class:`Cover` can be utilized to fetch different kinds of
 coverage data from commonly used data formats, including BAM, BIGWIG, BED and GFF.
 Regardless of the input file format the coverage tracks are
 stored as a 4D array with dimensions corresponding
 to :code:`(region, region_length, strand, condition)`.
 
-The :class:`CoverageDataset` offers the following feature:
+The :class:`Cover` offers the following feature:
 
 1. Strand-specific sequence extraction, if strandedness information is available in the bed_file
-2. :class:`CoverageDataset` can be loaded from one or more input files. Then the each condition dimension is associated with an input file.
+2. :class:`Cover` can be loaded from one or more input files. Then the each condition dimension is associated with an input file.
 3. Dataset access from disk via the hdf5 option for large datasets.
 
 Moreover, additional features are available depending on the input file format (see References).
 
-The following examples illustrate how to instantiate :class:`CoverageDataset`.
+The following examples illustrate how to instantiate :class:`Cover`.
 
 **The coverage from BAM files** is extracted by counting the 5' ends of the tags
 in a strand specific manner.
 
 .. code:: python
 
-   from janggo.data import CoverageDataset
+   from janggo.data import Cover
 
    bam_file = resource_filename('janggo', 'resources/sample.bam')
    bed_file = resource_filename('janggo', 'resources/sample.bed')
 
-   cover = CoverageDataset.create_from_bam('read_coverage',
+   cover = Cover.create_from_bam('read_coverage',
                                            bamfiles=bam_file,
                                            regions=bed_file)
 
@@ -224,7 +224,7 @@ of a specified resolution (in base pairs):
    bed_file = resource_filename('janggo', 'resources/sample.bed')
    bw_file = resource_filename('janggo', 'resources/sample.bw')
 
-   cover = CoverageDataset.create_from_bigwig('bigwig_coverage',
+   cover = Cover.create_from_bigwig('bigwig_coverage',
                                               bigwigfiles=bw_file,
                                               regions=bed_file)
 
@@ -253,7 +253,7 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and/or :code:`resolu
    bed_file = resource_filename('janggo', 'resources/sample.bed')
    score_bed_file = resource_filename('janggo', 'resources/sample_scores.bed')
 
-   cover = CoverageDataset.create_from_bed('bed_coverage',
+   cover = Cover.create_from_bed('bed_coverage',
                                            bedfiles=score_bed_files,
                                            regions=bed_file)
 
@@ -281,10 +281,10 @@ and labels from a BED file.
    score_bed_file = resource_filename('janggo', 'resources/sample_scores.bed')
 
    # 1. get data
-   DNA = DnaDataset.create_from_refgenome('dna',
+   DNA = Dna.create_from_refgenome('dna',
                                           refgenome=refgenome,
                                           regions=bed_file)
-   LABELS = CoverageDataset.create_from_bed('peaks',
+   LABELS = Cover.create_from_bed('peaks',
                                             bedfiles=score_bed_file,
                                             regions=bed_file)
 

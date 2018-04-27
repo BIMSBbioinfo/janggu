@@ -13,8 +13,8 @@ from janggo.data.genomicarray import create_genomic_array
 from janggo.utils import get_genome_size_from_bed
 
 
-class CoverageDataset(Dataset):
-    """CoverageDataset class.
+class Cover(Dataset):
+    """Cover class.
 
     This datastructure holds coverage information across the genome.
     The coverage can conveniently fetched from a list of bam-files,
@@ -64,7 +64,7 @@ class CoverageDataset(Dataset):
                         dtype='int',
                         overwrite=False,
                         cachedir=None):
-        """Create a CoverageDataset class from a bam-file (or files).
+        """Create a Cover class from a bam-file (or files).
 
         Parameters
         -----------
@@ -183,7 +183,7 @@ class CoverageDataset(Dataset):
                            overwrite=False,
                            dimmode='all',
                            cachedir=None):
-        """Create a CoverageDataset class from a bigwig-file (or files).
+        """Create a Cover class from a bigwig-file (or files).
 
         Parameters
         -----------
@@ -289,7 +289,7 @@ class CoverageDataset(Dataset):
                         dimmode='all',
                         overwrite=False,
                         cachedir=None):
-        """Create a CoverageDataset class from a bed-file (or files).
+        """Create a Cover class from a bed-file (or files).
 
         Parameters
         -----------
@@ -403,7 +403,7 @@ class CoverageDataset(Dataset):
                    padding_value=-1, dimmode=dimmode)
 
     def __repr__(self):  # pragma: no cover
-        return "CoverageDataset('{}', ".format(self.name) \
+        return "Cover('{}', ".format(self.name) \
                + "<GenomicArray>, " \
                + "<GenomicIndexer>, " \
                + "flank={}, stranded={})".format(self.flank, self.stranded)
@@ -418,7 +418,7 @@ class CoverageDataset(Dataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('CoverageDataset.__getitem__: '
+            raise IndexError('Cover.__getitem__: '
                              + 'index must be iterable')
 
         data = np.empty((len(idxs),) + self.shape[1:])

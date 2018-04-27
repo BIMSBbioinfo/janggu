@@ -1,11 +1,11 @@
 import numpy as np
 
-from janggo.data import NumpyDataset
+from janggo.data import NumpyWrapper
 
 
 def test_nparr(tmpdir):
-    X = NumpyDataset("X", np.random.random((1000, 100)))
-    y = NumpyDataset('y', np.random.randint(2, size=(1000, 1)))
+    X = NumpyWrapper("X", np.random.random((1000, 100)))
+    y = NumpyWrapper('y', np.random.randint(2, size=(1000, 1)))
 
     np.testing.assert_equal(len(X), len(y))
     np.testing.assert_equal(len(X), 1000)
