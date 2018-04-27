@@ -28,7 +28,6 @@ Evaluator
    EvaluatorList
    EvaluatorList.evaluate
    EvaluatorList.dump
-   Evaluator
    ScoreEvaluator
    ScoreEvaluator.evaluate
    ScoreEvaluator.dump
