@@ -1,5 +1,4 @@
-import sys
-import os
+ import os
 import h5py
 
 import numpy
@@ -46,7 +45,6 @@ class GenomicArray(object):
         self.condition = conditions
         self.typecode = typecode
 
-
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
@@ -55,7 +53,7 @@ class GenomicArray(object):
             start = interval.start
             end = interval.end
             strand = interval.strand
-            self.handle[chrom][start:end, 1 if self.stranded and strand=='-' else 0, condition] = value
+            self.handle[chrom][start:end, 1 if self.stranded and strand == '-' else 0, condition] = value
         else:
             raise IndexError("Index must be a GenomicInterval and a condition index")
 
@@ -66,7 +64,6 @@ class GenomicArray(object):
             chrom = interval.chrom
             start = interval.start
             end = interval.end
-            strand = interval.strand
 
             return self.handle[chrom][start:end]
         else:
@@ -79,7 +76,6 @@ class GenomicArray(object):
     @condition.setter
     def condition(self, conditions):
         self._condition = conditions
-
 
 
 class HDF5GenomicArray(GenomicArray):
