@@ -17,10 +17,8 @@ class Table(Dataset):
         Unique name of the model.
     filename : str or list(str)
         Filename or list of filenames containing tables to load.
-    samplenames : list(str)
-        Samplenames (optional). They are relevant if the dataset
-        is used to hold labels for a deep learning applications.
-        For instance, samplenames might correspond to category names.
+    conditions : list(str) or None
+        Conditions or label names of the dataset.
     cachedir : str or None
         Directory in which the cachefiles are located. Default: None.
     dtype : str
@@ -31,14 +29,14 @@ class Table(Dataset):
 
     _filename = None
 
-    def __init__(self, name, filename, samplenames=None,
+    def __init__(self, name, filename, conditions=None,
                  cachedir=None, dtype='int8', sep=','):
 
         self.filename = filename
 
-        if not samplenames:
-            samplenames = self.filename
-        self.samplenames = samplenames
+        if not conditions:
+            conditions = self.filename
+        self.conditions = conditions
         data = []
         for _file in self.filename:
             data.append(pd.read_csv(_file, header=None,
@@ -52,7 +50,7 @@ class Table(Dataset):
 
     def __repr__(self):  # pragma: no cover
         return 'Table("{}", "{}")'\
-                .format(self.name, self.samplenames)
+                .format(self.name, self.conditions)
 
     def __len__(self):
         return len(self.data)

@@ -15,19 +15,17 @@ class NumpyWrapper(Dataset):
         Name of the dataset
     array : :class:`numpy.array`
         Numpy array.
-    samplenames : list(str)
-        Samplenames (optional). They are relevant if the dataset
-        is used to hold labels for a deep learning applications.
-        For instance, samplenames might correspond to category names.
+    conditions : list(str) or None
+        Conditions or label names of the dataset.
     cachedir : str or None
         Directory in which the cachefiles are located. Default: None.
     """
 
-    def __init__(self, name, array, samplenames=None, cachedir=None):
+    def __init__(self, name, array, conditions=None, cachedir=None):
 
         self.data = array
-        if samplenames and isinstance(samplenames, list):
-            self.samplenames = samplenames
+        if conditions and isinstance(conditions, list):
+            self.conditions = conditions
 
         self.cachedir = cachedir
 

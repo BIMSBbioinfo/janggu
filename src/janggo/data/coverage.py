@@ -57,7 +57,7 @@ class Cover(Dataset):
 
     @classmethod
     def create_from_bam(cls, name, bamfiles, regions, genomesize=None,
-                        samplenames=None,
+                        conditions=None,
                         min_mapq=None,
                         binsize=50, stepsize=50,
                         flank=0, storage='ndarray',
@@ -79,9 +79,9 @@ class Cover(Dataset):
             the genome size
             is fetched from the bam header. Otherwise, the supplied genome
             size is used.
-        samplenames : list
-            List of samplenames. If `samplenames=None`, the filenames
-            are used as samplenames directly.
+        conditions : list(str) or None
+            List of conditions. If `conditions=None`, the filenames
+            are used as conditions directly.
         min_mapq : int
             Minimal mapping quality. Reads with lower mapping quality are
             discarded. If None, all reads are used.
@@ -110,8 +110,8 @@ class Cover(Dataset):
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
 
-        if not samplenames:
-            samplenames = bamfiles
+        if not conditions:
+            conditions = bamfiles
 
         if not min_mapq:
             min_mapq = 0
@@ -164,7 +164,7 @@ class Cover(Dataset):
         # in each bw-file as unstranded
         cover = create_genomic_array(gsize, stranded=True,
                                      storage=storage, memmap_dir=memmap_dir,
-                                     conditions=samplenames,
+                                     conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_bam_loader,
@@ -175,7 +175,7 @@ class Cover(Dataset):
 
     @classmethod
     def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize=None,
-                           samplenames=None,
+                           conditions=None,
                            binsize=200, stepsize=50,
                            resolution=50,
                            flank=0, storage='ndarray',
@@ -197,9 +197,9 @@ class Cover(Dataset):
             Dictionary containing the genome size. If `genomesize=None`,
             the genome size is fetched from the regions defined by the bed-file.
             Otherwise, the supplied genome size is used.
-        samplenames : list
-            List of samplenames. If `samplenames=None`, the filenames
-            are used as samplenames directly.
+        conditions : list(str) or None
+            List of conditions. If `conditions=None`, the filenames
+            are used as conditions directly.
         binsize : int
             Binsize in basepairs. Default: 50.
         stepsize : int
@@ -243,8 +243,8 @@ class Cover(Dataset):
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
 
-        if not samplenames:
-            samplenames = bigwigfiles
+        if not conditions:
+            conditions = bigwigfiles
 
         def _bigwig_loader(cover, bigwigfiles, gindexer):
             print("load from bigwig")
@@ -270,7 +270,7 @@ class Cover(Dataset):
 
         cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, memmap_dir=memmap_dir,
-                                     conditions=samplenames,
+                                     conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_bigwig_loader,
@@ -281,7 +281,7 @@ class Cover(Dataset):
 
     @classmethod
     def create_from_bed(cls, name, bedfiles, regions, genomesize=None,
-                        samplenames=None,
+                        conditions=None,
                         binsize=200, stepsize=50,
                         resolution=50,
                         flank=0, storage='ndarray',
@@ -303,9 +303,9 @@ class Cover(Dataset):
             Dictionary containing the genome size. If `genomesize=None`,
             the genome size is fetched from the regions defined by the bed-file.
             Otherwise, the supplied genome size is used.
-        samplenames : list
-            List of samplenames. If `samplenames=None`, the filenames
-            are used as samplenames directly.
+        conditions : list(str) or None
+            List of conditions. If `conditions=None`, the filenames
+            are used as conditions directly.
         binsize : int
             Binsize in basepairs. Default: 50.
         stepsize : int
@@ -349,8 +349,8 @@ class Cover(Dataset):
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
 
-        if not samplenames:
-            samplenames = bedfiles
+        if not conditions:
+            conditions = bedfiles
 
         def _bed_loader(cover, bedfiles, genomesize):
             print("load from bed")
@@ -393,7 +393,7 @@ class Cover(Dataset):
 
         cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, memmap_dir=memmap_dir,
-                                     conditions=samplenames,
+                                     conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_bed_loader,
@@ -463,7 +463,7 @@ class Cover(Dataset):
                 seqlen, 2 if self.stranded else 1, len(self.covers.condition))
 
     @property
-    def samplenames(self):
+    def conditions(self):
         return self.covers.condition
 
     @property

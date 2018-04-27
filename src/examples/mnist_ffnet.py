@@ -33,9 +33,9 @@ y_test = keras.utils.to_categorical(y_test)
 blg_x_train = NumpyWrapper('x', x_train)
 blg_x_test = NumpyWrapper('x', x_test)
 blg_y_train = NumpyWrapper('y', y_train,
-                           samplenames=[str(i) for i in range(10)])
+                           conditions=[str(i) for i in range(10)])
 blg_y_test = NumpyWrapper('y', y_test,
-                          samplenames=[str(i) for i in range(10)])
+                          conditions=[str(i) for i in range(10)])
 
 
 # Option 2:

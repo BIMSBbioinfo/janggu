@@ -310,8 +310,8 @@ class ScoreEvaluator(Evaluator):
             score = self.score_fct(_out[:, idx], _pre[:, idx])
 
             tags = []
-            if hasattr(outputs, "samplenames"):
-                tags.append(str(outputs.samplenames[idx]))
+            if hasattr(outputs, "conditions"):
+                tags.append(str(outputs.conditions[idx]))
 
             items.append({'date': str(datetime.datetime.utcnow()),
                           self.score_name: score,

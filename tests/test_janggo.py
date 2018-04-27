@@ -274,7 +274,7 @@ def test_janggo_train_predict_option1(tmpdir):
 
     inputs = NumpyWrapper("X", np.random.random((100, 10)))
     outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           samplenames=['random'])
+                           conditions=['random'])
 
     @inputlayer
     @outputdense('sigmoid')
@@ -312,7 +312,7 @@ def test_janggo_train_predict_option2(tmpdir):
 
     inputs = NumpyWrapper("x", np.random.random((100, 10)))
     outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           samplenames=['random'])
+                           conditions=['random'])
 
     def _model(path):
         inputs = Input((10,), name='x')
@@ -443,7 +443,7 @@ def test_janggo_train_predict_option5(tmpdir):
 
     inputs = NumpyWrapper("x", np.random.random((100, 10)))
     outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           samplenames=['random'])
+                           conditions=['random'])
 
     def _model(path):
         inputs = Input((10,), name='x')
@@ -498,7 +498,7 @@ def test_janggo_train_predict_option6(tmpdir):
 
     inputs = NumpyWrapper("x", np.random.random((100, 10)))
     outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           samplenames=['random'])
+                           conditions=['random'])
 
     @inputlayer
     @outputdense('sigmoid')
@@ -570,7 +570,7 @@ def test_janggo_train_predict_option7(tmpdir):
 
     inputs = NumpyWrapper("x", np.random.random((100, 10)))
     outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           samplenames=['random'])
+                           conditions=['random'])
 
     @inputlayer
     @outputdense('sigmoid')

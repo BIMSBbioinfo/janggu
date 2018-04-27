@@ -36,7 +36,7 @@ DNA_ONEHOT = NumpyWrapper('dna', np.concatenate((X1[:], X2[:])))
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
-LABELS = NumpyWrapper('y', Y, samplenames='Oct4-binding')
+LABELS = NumpyWrapper('y', Y, conditions='Oct4-binding')
 
 auc_eval = ScoreEvaluator('oct4_result', 'auROC', auroc)
 prc_eval = ScoreEvaluator('oct4_result', 'auPRC', auprc)
