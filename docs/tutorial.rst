@@ -165,8 +165,8 @@ genomic coordinates of interest from a bed or gff file.
    refgenome = resource_filename('janggo', 'resources/sample_genome.fa')
 
    dna = Dna.create_from_refgenome('dna',
-                                          refgenome=refgenome,
-                                          regions=bed_file)
+                                   refgenome=refgenome,
+                                   regions=bed_file)
 
    # the regions defined in the bed_file are by default split up in
    # 200 bp bins with stepsize 50. Hence, there are 14344 intervals.
@@ -193,7 +193,7 @@ Moreover, additional features are available depending on the input file format (
 
 The following examples illustrate how to instantiate :class:`Cover`.
 
-**The coverage from BAM files** is extracted by counting the 5' ends of the tags
+**Coverage from BAM files** is extracted by counting the 5' ends of the tags
 in a strand specific manner.
 
 .. code:: python
@@ -204,8 +204,8 @@ in a strand specific manner.
    bed_file = resource_filename('janggo', 'resources/sample.bed')
 
    cover = Cover.create_from_bam('read_coverage',
-                                           bamfiles=bam_file,
-                                           regions=bed_file)
+                                 bamfiles=bam_file,
+                                 regions=bed_file)
 
    # The regions in the bed_file are split into non-overlapping 10 bp bins
    # which amounts to 4 regions of length 10 bp.
@@ -216,7 +216,7 @@ By default, the region of interest in :code:`bed_file` is split
 into non-overlapping 200 bp windows. Different windowing options are available
 by setting :code:`binsize`, :code:`stepsize` and :code:`flank`.
 
-**The coverage from a BIGWIG files** is extracted as the average signal intensity
+**Coverage from a BIGWIG files** is extracted as the average signal intensity
 of a specified resolution (in base pairs):
 
 .. code-block:: python
@@ -225,8 +225,8 @@ of a specified resolution (in base pairs):
    bw_file = resource_filename('janggo', 'resources/sample.bw')
 
    cover = Cover.create_from_bigwig('bigwig_coverage',
-                                              bigwigfiles=bw_file,
-                                              regions=bed_file)
+                                    bigwigfiles=bw_file,
+                                    regions=bed_file)
 
    # The regions in the bed_file are split into non-overlapping 10 bp bins
    # which amounts to 4 regions of length 10 bp. Additionally, resolution
@@ -242,7 +242,7 @@ Different windowing and signal resolution options are available
 by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and/or :code:`resolution`.
 
 
-**The coverage from a BED files** (or GFF files alike) is extracted by
+**Coverage from a BED files** (or GFF files alike) is extracted by
 
 1. Extracting the **score** field value from the associated regions, if available.
 2. Treating presence of a region as positive labels (*one*), while the absence of a region is treated as a negative label (*zero*).
@@ -254,8 +254,8 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and/or :code:`resolu
    score_bed_file = resource_filename('janggo', 'resources/sample_scores.bed')
 
    cover = Cover.create_from_bed('bed_coverage',
-                                           bedfiles=score_bed_files,
-                                           regions=bed_file)
+                                 bedfiles=score_bed_files,
+                                 regions=bed_file)
 
    cover.shape
    cover[0]  # coverage of the first region
@@ -282,11 +282,11 @@ and labels from a BED file.
 
    # 1. get data
    DNA = Dna.create_from_refgenome('dna',
-                                          refgenome=refgenome,
-                                          regions=bed_file)
+                                   refgenome=refgenome,
+                                   regions=bed_file)
    LABELS = Cover.create_from_bed('peaks',
-                                            bedfiles=score_bed_file,
-                                            regions=bed_file)
+                                  bedfiles=score_bed_file,
+                                  regions=bed_file)
 
    # 2. define a simple conv net with 30 filters of length 15 bp
    # and relu activation
@@ -314,3 +314,5 @@ and delve into some more advanced examples.
 
 Evaluation
 ----------
+
+The evaluation of models are controlled by :class:`EvaluatorList`.
