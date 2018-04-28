@@ -1,10 +1,10 @@
+import keras.backend as K
 import matplotlib
 import numpy as np
 from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
-import keras.backend as K
 
 from janggo import inputlayer
 from janggo import outputconv

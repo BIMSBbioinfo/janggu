@@ -7,10 +7,10 @@ import time
 
 import h5py
 from keras import backend as K
-from keras.utils import plot_model
 from keras.callbacks import LambdaCallback
 from keras.models import Model
 from keras.models import load_model
+from keras.utils import plot_model
 
 from janggo.data.data import data_props
 from janggo.layers import Complement

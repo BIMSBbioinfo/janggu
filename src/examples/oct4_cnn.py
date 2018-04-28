@@ -31,7 +31,7 @@ MAFK_FILE = os.path.join(DATA_PATH, 'mafk.fa')
 X2 = Dna.create_from_fasta('dna', fastafile=MAFK_FILE, order=1)
 
 DNA = Dna.create_from_fasta('dna', fastafile=[OCT4_FILE, MAFK_FILE],
-                                   order=1)
+                            order=1)
 DNA_ONEHOT = NumpyWrapper('dna', np.concatenate((X1[:], X2[:])))
 
 Y = np.zeros((len(DNA), 1))
