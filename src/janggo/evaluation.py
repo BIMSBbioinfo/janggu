@@ -11,10 +11,20 @@ import os
 from abc import ABCMeta
 from abc import abstractmethod
 
+import keras.losses
 import matplotlib.pyplot as plt
+import pandas as pd
+import pyBigWig
+from keras import Input
+from keras import Model
 from keras.engine.topology import InputLayer
+from keras.layers import Lambda
 
 from janggo.model import Janggo
+
+if pyBigWig.numpy == 0:
+    raise Exception('pyBigWig must be installed with numpy support. '
+                    'Please install numpy before pyBigWig to ensure that.')
 
 
 def _input_dimension_match(kerasmodel, inputs):
@@ -322,3 +332,224 @@ class ScoreEvaluator(Evaluator):
     def dump(self, path):
         output_file_basename = os.path.join(path, self.score_name)
         self._dumper(output_file_basename, self.results)
+
+
+def _process_predictions(model, pred, conditions,
+                         fformat='bigwig', prefix='predict'):
+
+    if not isinstance(pred, list):
+        pred = [pred]
+
+    if isinstance(conditions, list) and isinstance(conditions[0], str):
+        conditions = [conditions]
+
+    if not len(pred) == len(conditions):
+        raise ValueError('The number of output layers does not match '
+                         'with the conditions.')
+
+    for idx, prd in enumerate(pred):
+        if not prd.shape[-1] == len(conditions[idx]):
+            raise Exception('Number of predicted conditions '
+                            'and condition labels do not agree.')
+
+        layername = model.get_config()['output_layers'][idx][0]
+        if fformat == 'bigwig':
+            _export_to_bigwig(model.name,
+                              layername,
+                              model.output_dir,
+                              model.gindexer,
+                              prd, conditions, prefix)
+        elif fformat == 'bed':
+            _export_to_bed(model.name, layername,
+                           model.output_dir,
+                           model.gindexer,
+                           prd, conditions, prefix)
+        else:
+            raise ValueError("fformat '{}' not supported for export.".format(
+                fformat))
+
+
+def export_predict(model, inputs, conditions,
+                   fformat='bigwig', prefix='predict'):
+    """Export model predictions to file.
+
+    Parameters
+    ----------
+    model : :class:`Janggo` object
+        A Janggo model
+    inputs : :class:`Dataset` or list(Dataset)
+        Compatible input dataset or dataset.
+    conditions : list(str) or list(list(str))
+        List of conditions. Use a list(str) in the network has only one
+        output layer. The number of output units needs to match
+        with the condition dimension of the outputs dataset.
+        If the network consists of multiple output layers, use a list(list(str))
+        where the outer list corresponds to the number of output layers
+        and the inner lists correspond to the output units within each layer.
+    format : str
+        Output file format. Default: 'bigwig'.
+    prefix : str
+        Output file name prefix. Default: 'predict'.
+    """
+
+    pred = model.predict(inputs)
+
+    _process_predictions(model, pred, conditions,
+                         fformat=fformat, prefix=prefix)
+
+
+def export_loss(model, inputs, outputs, conditions,
+                fformat='bigwig', prefix='loss'):
+    """Export model predictions to file.
+
+    Parameters
+    ----------
+    model : :class:`Janggo` object
+        A Janggo model
+    inputs : :class:`Dataset` or list(Dataset)
+        Compatible input dataset or dataset.
+    outputs : :class:`Dataset` or list(Dataset)
+        Compatible output dataset or dataset.
+    conditions : list(str) or list(list(str))
+        List of conditions. Use a list(str) in the network has only one
+        output layer. The number of output units needs to match
+        with the condition dimension of the outputs dataset.
+        If the network consists of multiple output layers, use a list(list(str))
+        where the outer list corresponds to the number of output layers
+        and the inner lists correspond to the output units within each layer.
+    format : str
+        Output file format. Default: 'bigwig'.
+    prefix : str
+        Output file name prefix. Default: 'predict'.
+    """
+
+    loss_fct = {}
+    if isinstance(model.loss, str):
+        for name in model.get_config()['output_layers']:
+            loss_fct[name[0]] = keras.losses.get(model.loss)
+    elif callable(model.loss):
+        for name in model.get_config()['output_layers']:
+            loss_fct[name[0]] = model.loss
+    elif isinstance(model.loss, dict):
+        for name in model.get_config()['output_layers']:
+            if not callable(model.loss[name]):
+                loss_fct[name] = keras.losses.get(model.loss[name[0]])
+            else:
+                loss_fct[name] = model.loss[name]
+
+    # get the predictions
+    pred = model.predict(inputs)
+
+    if not isinstance(outputs, list):
+        outputs = [outputs]
+    if not isinstance(pred, list):
+        pred = [pred]
+
+    if len(pred) == len(outputs):
+        raise ValueError('The number of output layers does '
+                         'not match between predictions and '
+                         'labels.')
+
+    losses = []
+    for layer_idx, prd in enumerate(pred):
+
+        targets_tensor = Input(prd.shape)
+        pred_tensor = Input(prd.shape)
+        name = model.get_config()['output_layers'][layer_idx][0]
+
+        loss_layer = Lambda(lambda in_, out_:
+                            loss_fct[name](in_, out_))([targets_tensor,
+                                                        pred_tensor])
+
+        loss_eval = Model(inputs=[targets_tensor, pred_tensor],
+                          outputs=loss_layer)
+        losses += [loss_eval.predict([outputs, prd])]
+
+    _process_predictions(model, losses, conditions,
+                         fformat=fformat, prefix=prefix)
+
+
+def _export_to_bigwig(name, layername, output_dir, gindexer,
+                      pred, conditions, prefix):
+    """Export predictions to bigwig."""
+
+    genomesize = {}
+
+    # extract genome size from gindexer
+    # check also if sorted and non-overlapping
+    last_interval = {}
+    for region in gindexer:
+        if region.chrom in last_interval:
+            if region.start < last_interval[region.chrom]:
+                raise ValueError('The regions in the bed/gff-file must be sorted'
+                                 ' and mutually disjoint. Please, sort and merge'
+                                 ' the regions before exporting the bigwig format')
+        if region.chrom not in genomesize:
+            genomesize[region.chrom] = region.end
+            last_interval[region.chrom] = region.end
+        if genomesize[region.chrom] < region.end:
+            genomesize[region.chrom] = region.end
+
+    bw_header = [(chrom, genomesize[chrom]*gindexer.resolution) for chrom in genomesize]
+
+    output_dir = os.path.join(output_dir, 'export')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # the last dimension holds the conditions. Each condition
+    # needs to be stored in a separate file
+    for cond_idx in range(pred.shape[-1]):
+        bw_file = pyBigWig.open(os.path.join(
+            output_dir,
+            '{prefix}.{model}.{output}.{condition}.bigwig'.format(
+                prefix=prefix, model=name,
+                output=layername, condition=conditions[cond_idx])), 'w')
+        bw_file.addHeader(bw_header)
+        for idx, region in enumerate(gindexer):
+            bw_file.addEntries(region.chrom,
+                               int(region.start*gindexer.resolution +
+                                   gindexer.binsize//2 -
+                                   gindexer.resolution//2),
+                               values=pred[idx, :, 0, cond_idx],
+                               span=int(gindexer.resolution),
+                               step=int(gindexer.resolution))
+        bw_file.close()
+
+
+def _export_to_bed(name, layername, output_dir, gindexer,
+                   pred, conditions, prefix):
+    """Export predictions to bed."""
+
+    output_dir = os.path.join(output_dir, 'export')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # the last dimension holds the conditions. Each condition
+    # needs to be stored in a separate file
+
+    for cond_idx in range(pred.shape[-1]):
+        bed_content = pd.DataFrame(columns=['chr', 'start',
+                                            'end', 'name', 'score'])
+        for idx, region in enumerate(gindexer):
+            stepsize = (region.end-region.start)//pred.shape[1]
+            starts = list(range(region.start,
+                                region.end,
+                                stepsize))
+            ends = list(range(region.start + stepsize,
+                              region.end + stepsize,
+                              stepsize))
+            cont = {'chr': [region.chrom] * pred.shape[1],
+                    'start': [s*gindexer.resolution for s in starts],
+                    'end': [e*gindexer.resolution for e in ends],
+                    'name': ['.'] * pred.shape[1],
+                    'score': pred[idx, :, 0, cond_idx]}
+            bed_entry = pd.DataFrame(cont)
+            bed_content = bed_content.append(bed_entry, ignore_index=True)
+
+        bed_content.to_csv(os.path.join(
+            output_dir,
+            '{prefix}.{model}.{output}.{condition}.bed'.format(
+                prefix=prefix, model=name,
+                output=layername, condition=conditions[cond_idx])),
+                           sep='\t', header=False, index=False,
+                           columns=['chr', 'start', 'end', 'name', 'score'])
