@@ -37,7 +37,7 @@ class GenomicArray(object):
     handle = None
     _condition = None
 
-    def __init__(self, chroms, stranded=True, conditions=None, typecode='d'):
+    def __init__(self, stranded=True, conditions=None, typecode='d'):
         self.stranded = stranded
         if not conditions:
             conditions = ['sample']
@@ -110,8 +110,7 @@ class HDF5GenomicArray(GenomicArray):
 
     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
                  memmap_dir="", overwrite=False, loader=None, loader_args=None):
-        super(HDF5GenomicArray, self).__init__(chroms, stranded,
-                                               conditions, typecode)
+        super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode)
 
         filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'
         if not os.path.exists(memmap_dir):
@@ -172,8 +171,7 @@ class NPGenomicArray(GenomicArray):
     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
                  loader=None, loader_args=None):
 
-        super(NPGenomicArray, self).__init__(chroms, stranded,
-                                             conditions, typecode)
+        super(NPGenomicArray, self).__init__(stranded, conditions, typecode)
 
         self.handle = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
                                                  2 if stranded else 1,
