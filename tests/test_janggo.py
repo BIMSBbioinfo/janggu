@@ -430,7 +430,7 @@ def test_janggo_train_predict_option4(tmpdir):
 
 
 def _dummy_eval(y_true, y_pred):
-    return 1.
+    return 0.15
 
 
 def test_janggo_train_predict_option5(tmpdir):
@@ -472,20 +472,20 @@ def test_janggo_train_predict_option5(tmpdir):
     bwm.evaluate([inputs], [outputs], generator=janggo_fit_generator,
                  use_multiprocessing=False)
 
-    dummy_eval = ScoreEvaluator('dummy', _dummy_eval)
-    dummy2_eval = ScoreEvaluator('dummy2', _dummy_eval)
+    dummy_eval = ScoreEvaluator('score1', _dummy_eval)
+    dummy2_eval = ScoreEvaluator('score2', _dummy_eval)
 
     evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath)
     evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
 
-    for file_ in ["dummy.json", "dummy2.json"]:
+    for file_ in ["score1.json", "score2.json"]:
         with open(os.path.join(tmpdir.strpath, "evaluation",
                                file_), 'r') as f:
             content = json.load(f)
             print(content)
             # there must be an entry for the model 'nptest'
-            assert 'test_model' in content
-            assert content['test_model'][0][os.path.splitext(file_)[0]] == 1., content
+            assert 'test_model,y,random' in content
+            assert content['test_model,y,random']['value'] == 0.15, content
 
 
 def test_janggo_train_predict_option6(tmpdir):
@@ -555,7 +555,7 @@ def test_janggo_train_predict_option6(tmpdir):
 
             content = json.load(f)
             # now nptest was evaluated
-            assert 'nptest' in content
+            assert 'nptest,y,random' in content
 
 
 def test_janggo_train_predict_option7(tmpdir):
@@ -629,4 +629,4 @@ def test_janggo_train_predict_option7(tmpdir):
             content = json.load(f)
             print()
             # now nptest was evaluated
-            assert 'nptest' in content
+            assert 'nptest,y,random' in content

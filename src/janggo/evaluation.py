@@ -13,6 +13,7 @@ from abc import abstractmethod
 
 import keras.losses
 import matplotlib.pyplot as plt
+import numpy
 import pandas as pd
 import pyBigWig
 from keras import Input
@@ -191,147 +192,87 @@ class EvaluatorList(object):
             evaluator.dump(self.output_dir)
 
 
-class Evaluator:
-    """Evaluator interface."""
 
-    __metaclass__ = ABCMeta
-    _reshape = None
-
-    def __init__(self, reshaper):
-        if reshaper:
-            self._reshape = reshaper
-
-    @abstractmethod
-    def evaluate(self, model, inputs, outputs=None, predicted=None,
-                 datatags=None, batch_size=None,
-                 use_multiprocessing=False):
-        """Dumps the result of an evaluation into a container.
-
-        By default, the model will dump the evaluation metrics defined
-        in keras.models.Model.compile.
-
-        Parameters
-        ----------
-        model :
-        inputs : :class:`Dataset` or list
-            Input dataset or list of datasets.
-        outputs : :class:`Dataset` or list
-            Output dataset or list of datasets. Default: None.
-        predicted : numpy array or list of numpy arrays
-            Predicted output for the given inputs. Default: None
-        datatags : list
-            List of dataset tags to be recorded. Default: list().
-        batch_size : int or None
-            Batchsize used to enumerate the dataset. Default: None means a
-            batch_size of 32 is used.
-        use_multiprocessing : bool
-            Use multiprocess threading for evaluating the results.
-            Default: False.
-        """
-
-    def dump(self, path):
-        """Default method for dumping the evaluation results to a storage"""
-        pass
-
-    def reshape(self, data):
-        """Reshape the dataset to make it compatible with the
-        evaluation method.
-        """
-        if self._reshape:
-            return self._reshape(data[:])
-
-        return data
-
-
-def dump_json(basename, results):
+def dump_json(output_dir, name, results, **kwargs):
     """Method that dumps the results in a json file.
 
     Parameters
     ----------
-    basename : str
-        File-basename (without suffix e.g. '.json') to store the data at.
-        The suffix will be automatically added.
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     """
-    filename = basename + '.json'
+    filename = os.path.join(output_dir, name + '.json')
     try:
         with open(filename, 'r') as jsonfile:
             content = json.load(jsonfile)
     except IOError:
         content = {}  # needed for py27
     with open(filename, 'w') as jsonfile:
-        content.update(results)
+        content.update({','.join(key): results[key] for key in results})
         json.dump(content, jsonfile)
 
 
-def plot_score(basename, results):
+def dump_tsv(output_dir, name, results, **kwargs):
+    """Method that dumps the results as tsv file.
+
+    Parameters
+    ----------
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    """
+
+    filename = os.path.join(output_dir, name + '.tsv')
+    pd.DataFrame.from_dict(results, orient='index').to_csv(filename, sep='\t')
+
+
+def plot_score(output_dir, name, results, **kwargs):
     """Method that dumps the results in a json file.
 
     Parameters
     ----------
-    basename : str
-        File-basename (without suffix e.g. '.json') to store the data at.
-        The suffix will be automatically added.
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     """
-    fig = plt.figure()
+
+    if kwargs is not None and 'figsize' in kwargs:
+        fig = plt.figure(kwargs['figsize'])
+    else:
+        fig = plt.figure()
+
     ax_ = fig.add_axes([0.1, 0.1, .55, .5])
 
-    for modelname in results:
-        x_score, y_score, avg = results[modelname][basename]
+    ax_.set_title(name)
+    for key in results:
+        x_score, y_score, threshold = results[key]['value']
         ax_.plot(x_score, y_score,
-                 label="{} ({}={:1.2f})".format(
-                     modelname + results[modelname]['datatags'][-1],
-                     basename, avg))
-    lgd = ax_.legend(bbox_to_anchor=(1.05, 1), loc=2, prop={'size': 10}, ncol=1)
-    ax_.set_xlabel("Recall", size=14)
-    ax_.set_ylabel("Precision", size=14)
-    filename = basename + '.eps'
-    fig.savefig(filename, format="eps",
-                dpi=1000, bbox_extra_artists=(lgd,), bbox_inches="tight")
+                 label="{}".format('-'.join(key)))
 
-
-class ScoreEvaluator(Evaluator):
-
-    def __init__(self, score_name, score_fct, dumper=dump_json, reshaper=None):
-        # append the path by a folder 'AUC'
-        super(ScoreEvaluator, self).__init__(reshaper)
-        self.results = dict()
-        self._dumper = dumper
-        self.score_name = score_name
-        self.score_fct = score_fct
-
-    def evaluate(self, model, inputs, outputs=None, predicted=None,
-                 datatags=None, batch_size=None,
-                 use_multiprocessing=False):
-
-        if predicted is None or outputs is None:
-            raise Exception("ScoreEvaluator requires 'outputs' and 'predicted'.")
-        if not datatags:
-            datatags = []
-        items = []
-        _out = self.reshape(outputs)
-        _pre = self.reshape(predicted)
-
-        for idx in range(_out.shape[1]):
-
-            score = self.score_fct(_out[:, idx], _pre[:, idx])
-
-            tags = []
-            if hasattr(outputs, "conditions"):
-                tags.append(str(outputs.conditions[idx]))
-
-            items.append({'date': str(datetime.datetime.utcnow()),
-                          self.score_name: score,
-                          'datatags': tags})
-
-        self.results[model.name] = items
-
-    def dump(self, path):
-        output_file_basename = os.path.join(path, self.score_name)
-        self._dumper(output_file_basename, self.results)
+    lgd = ax_.legend(bbox_to_anchor=(1.05, 1),
+                     loc=2, prop={'size': 10}, ncol=1)
+    if kwargs is not None and 'xlabel' in kwargs:
+        ax_.set_xlabel(kwargs['xlabel'], size=14)
+    if kwargs is not None and 'ylabel' in kwargs:
+        ax_.set_ylabel(kwargs['ylabel'], size=14)
+    if kwargs is not None and 'format' in kwargs:
+        fform = kwargs['format']
+    else:
+        fform = 'png'
+    filename = os.path.join(output_dir, name + '.' + fform)
+    fig.savefig(filename, format=fform,
+                dpi=1000,
+                bbox_extra_artists=(lgd,), bbox_inches="tight")
 
 
 def _process_predictions(model, pred, conditions,
@@ -553,3 +494,93 @@ def _export_to_bed(name, layername, output_dir, gindexer,
                 output=layername, condition=conditions[cond_idx])),
                            sep='\t', header=False, index=False,
                            columns=['chr', 'start', 'end', 'name', 'score'])
+
+
+class Evaluator:
+    """Evaluator interface."""
+
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def evaluate(self, model, inputs, outputs=None, predicted=None,
+                 datatags=None, batch_size=None,
+                 use_multiprocessing=False):
+        """Dumps the result of an evaluation into a container.
+
+        By default, the model will dump the evaluation metrics defined
+        in keras.models.Model.compile.
+
+        Parameters
+        ----------
+        model : :class:`Janggo`
+            Model object
+        inputs : :class:`Dataset` or list
+            Input dataset or list of datasets.
+        outputs : :class:`Dataset` or list
+            Output dataset or list of datasets. Default: None.
+        predicted : numpy array or list of numpy arrays
+            Predicted output for the given inputs. Default: None
+        datatags : list
+            List of dataset tags to be recorded. Default: list().
+        batch_size : int or None
+            Batchsize used to enumerate the dataset. Default: None means a
+            batch_size of 32 is used.
+        use_multiprocessing : bool
+            Use multiprocess threading for evaluating the results.
+            Default: False.
+        """
+
+    def dump(self, path):
+        """Default method for dumping the evaluation results to a storage"""
+        pass
+
+    def reshape(self, data):
+        """Reshape the dataset to make it compatible with the
+        evaluation method.
+        """
+
+        return data[:].reshape((numpy.prod(data.shape[:1]), data.shape[-1]))
+
+
+class ScoreEvaluator(Evaluator):
+
+    def __init__(self, score_name, score_fct, dumper=dump_json):
+        # append the path by a folder 'AUC'
+        super(ScoreEvaluator, self).__init__()
+        self.results = dict()
+        self._dumper = dumper
+        self.score_name = score_name
+        self.score_fct = score_fct
+
+    def evaluate(self, model, inputs, outputs=None, predicted=None,
+                 datatags=None, batch_size=None,
+                 use_multiprocessing=False):
+
+        if predicted is None or outputs is None:
+            raise Exception("ScoreEvaluator requires 'outputs' and 'predicted'.")
+        if not datatags:
+            datatags = []
+        items = {}
+        _out = self.reshape(outputs)
+        _pre = self.reshape(predicted)
+
+        for layername in model.get_config()['output_layers']:
+            items[layername[0]] = {}
+            for idx in range(_out.shape[-1]):
+                score = self.score_fct(_out[:, idx], _pre[:, idx])
+
+                if hasattr(outputs, "conditions"):
+                    condition = outputs.conditions[idx]
+                else:
+                    condition = str(idx)
+
+                self.results[model.name, layername[0], condition] = {
+                    'date': str(datetime.datetime.utcnow()),
+                    'value': score,
+                    'tags': '-'.join(datatags)}
+
+    def dump(self, path):
+        self._dumper(path, self.score_name, self.results)

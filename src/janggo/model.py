@@ -683,6 +683,9 @@ class Janggo(object):
             for datum in data:
                 self.logger.info("\t%s", datum.shape)
 
+    def get_config(self):
+        return self.kerasmodel.get_config()
+
     @staticmethod
     def __convert_data(data):
         # If we deal with Dataset, we convert it to a Dictionary
