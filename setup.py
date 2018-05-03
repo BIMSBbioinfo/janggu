@@ -49,7 +49,7 @@ def _read(*names, **kwargs):
 
 setup(
     name='janggo',
-    version='0.6.1',
+    version='0.6.2',
     license='BSD 3-Clause License',
     description='Code infrastructure for deep learning to make modelling '
     + 'reproducible and maintainable',
