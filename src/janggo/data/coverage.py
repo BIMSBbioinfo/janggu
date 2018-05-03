@@ -287,6 +287,7 @@ class Cover(Dataset):
                         flank=0, storage='ndarray',
                         dtype='int',
                         dimmode='all',
+                        mode='binary',
                         overwrite=False,
                         cachedir=None):
         """Create a Cover class from a bed-file (or files).
@@ -330,6 +331,9 @@ class Cover(Dataset):
             the first element of size resolution is used. Otherwise,
             all elements of size resolution spanning the binsize are returned.
             Default: 'all'.
+        mode : str
+            Mode of the dataset may be 'binary', 'score' or 'categorical'.
+            Default: binary.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         cachedir : str or None
@@ -352,7 +356,25 @@ class Cover(Dataset):
         if not conditions:
             conditions = bedfiles
 
-        def _bed_loader(cover, bedfiles, genomesize):
+        if mode == 'categorical':
+            if len(conditions) > 1:
+                raise ValueError('Only one bed-file is '
+                                 'allowed with mode=categorical')
+            sample_file = bedfiles[0]
+            if isinstance(sample_file, str) and sample_file.endswith('.bed'):
+                regions_ = BED_Reader(sample_file)
+            elif isinstance(regions, str) and (sample_file.endswith('.gff') or
+                                               sample_file.endswith('.gtf')):
+                regions_ = GFF_Reader(sample_file)
+            else:
+                raise Exception('Regions must be a bed, gff or gtf-file.')
+            max_class = 0
+            for reg in regions_:
+                if reg.score > max_class:
+                    max_class = reg.score
+            conditions = [str(i + 1) for i in range(max_class)]
+
+        def _bed_loader(cover, bedfiles, genomesize, mode):
             print("load from bed")
             for i, sample_file in enumerate(bedfiles):
                 print(sample_file)
@@ -374,11 +396,22 @@ class Cover(Dataset):
                     if genomesize[region.iv.chrom] <= region.iv.start:
                         print("Region {} outside of genome size - skipped".format(region.iv))
                     else:
+                        if region.score is None and \
+                            mode in ['score', 'categorical']:
+                            raise ValueError(
+                                'score field must '
+                                'be available with mode="{}"'.format(mode))
                         # if region score is not defined, take the mere
                         # presence of a range as positive label.
-                        cover[region.iv.start_as_pos, i] = \
-                            np.dtype(dtype).type(region.score if
-                                                 region.score else 1)
+                        if mode == 'score':
+                            cover[region.iv.start_as_pos,
+                                  i] = np.dtype(dtype).type(region.score)
+                        elif mode == 'categorical':
+                            cover[region.iv.start_as_pos,
+                                  int(region.score)] = np.dtype(dtype).type(1)
+                        elif mode == 'binary':
+                            cover[region.iv.start_as_pos,
+                                  i] = np.dtype(dtype).type(1)
             return cover
 
         # At the moment, we treat the information contained
@@ -397,7 +430,7 @@ class Cover(Dataset):
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_bed_loader,
-                                     loader_args=(bedfiles, gsize))
+                                     loader_args=(bedfiles, gsize, mode))
 
         return cls(name, cover, gindexer, flank, stranded=False,
                    padding_value=-1, dimmode=dimmode)
