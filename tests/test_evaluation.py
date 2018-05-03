@@ -21,7 +21,7 @@ from janggo.evaluation import InOutScorer
 from janggo.evaluation import InScorer
 from janggo.evaluation import _input_dimension_match
 from janggo.evaluation import _output_dimension_match
-from janggo.utils import dump_tsv
+from janggo.utils import export_tsv
 from janggo.utils import export_bed
 from janggo.utils import export_bigwig
 from janggo.utils import plot_score
@@ -133,10 +133,8 @@ def test_output_json_score(tmpdir):
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
     # check correctness of json
-    with open(os.path.join(tmpdir.strpath, "evaluation",
+    with open(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
                            "score.json"), 'r') as f:
         content = json.load(f)
         # now nptest was evaluated
@@ -150,13 +148,11 @@ def test_output_tsv_score(tmpdir):
 
     bwm = get_janggo(inputs, outputs, tmpdir)
 
-    dummy_eval = InOutScorer('score', lambda y_true, y_pred: 0.15, dumper=dump_tsv)
+    dummy_eval = InOutScorer('score', lambda y_true, y_pred: 0.15, exporter=export_tsv)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    assert pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation",
+    assert pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
                                         "score.tsv"),
                            sep='\t').value[0] == 0.15
 
@@ -172,28 +168,25 @@ def test_output_plot_score(tmpdir):
                              lambda y_true, y_pred:
                              ([0., 0.5, 0.5, 1.],
                               [0.5, 0.5, 1., 1.],
-                              [0.8, 0.4, 0.35, 0.1]), dumper=plot_score)
+                              [0.8, 0.4, 0.35, 0.1]), exporter=plot_score)
 
     dummy_eval_par = InOutScorer('score',
                                  lambda y_true, y_pred:
                                  ([0., 0.5, 0.5, 1.],
                                   [0.5, 0.5, 1., 1.],
-                                  [0.8, 0.4, 0.35, 0.1]), dumper=plot_score,
-                                 dump_args={'figsize': (10,12),
+                                  [0.8, 0.4, 0.35, 0.1]), exporter=plot_score,
+                                 export_args={'figsize': (10,12),
                                             'xlabel': 'FPR',
                                             'ylabel': 'TPR',
                                             'fform': 'eps'})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval, dummy_eval_par])
 
-    dummy_eval.dump(bwm.outputdir)
-    dummy_eval_par.dump(bwm.outputdir)
-
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "evaluation", "score.png"))
+                                       "evaluation", bwm.name, "score.png"))
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "evaluation", "score.eps"))
+                                       "evaluation", bwm.name, "score.eps"))
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
@@ -214,13 +207,11 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
                                          resolution=200)
 
     dummy_eval = InOutScorer('loss', lambda t, p: [0.1] * len(t),
-                             dumper=export_bed, dump_args={'gindexer': gi})
+                             exporter=export_bed, export_args={'gindexer': gi})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'evaluation',
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -255,15 +246,13 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
                                          resolution=50)
 
     # dummy_eval = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
-    #                    dumper=export_bed, dump_args={'gindexer': gi})
+    #                    exporter=export_bed, export_args={'gindexer': gi})
     dummy_eval = InOutScorer('loss', lambda t, p: [0.1] * len(t),
-                             dumper=export_bed, dump_args={'gindexer': gi})
+                             exporter=export_bed, export_args={'gindexer': gi})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'evaluation',
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -298,14 +287,12 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
                                          resolution=200)
 
     dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
-                          dumper=export_bed, dump_args={'gindexer': gi},
+                          exporter=export_bed, export_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'prediction',
+    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
                          'pred.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -340,14 +327,12 @@ def test_output_bed_predict_denseout(tmpdir):
                                          resolution=200)
 
     dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
-                          dumper=export_bed, dump_args={'gindexer': gi},
+                          exporter=export_bed, export_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'prediction',
+    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
                          'pred.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -382,14 +367,12 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
                                          resolution=50)
 
     dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
-                          dumper=export_bed, dump_args={'gindexer': gi},
+                          exporter=export_bed, export_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'prediction',
+    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
                          'pred.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -424,14 +407,12 @@ def test_output_bigwig_predict_denseout(tmpdir):
                                          resolution=200)
 
     dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
-                          dumper=export_bigwig, dump_args={'gindexer': gi},
+                          exporter=export_bigwig, export_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'prediction',
+    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
                          'pred.nptest.y.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -462,14 +443,12 @@ def test_output_bigwig_predict_convout(tmpdir):
                                          resolution=50)
 
     dummy_eval = InScorer('pred', lambda p: [0.2] * len(p),
-                          dumper=export_bigwig, dump_args={'gindexer': gi},
+                          exporter=export_bigwig, export_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'prediction',
+    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
                          'pred.nptest.y.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -500,15 +479,13 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
                                          resolution=50)
 
     # dummy_eval = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
-    #                    dumper=export_bed, dump_args={'gindexer': gi})
+    #                    exporter=export_bed, export_args={'gindexer': gi})
     dummy_eval = InOutScorer('loss', lambda t, p: [0.2] * len(t),
-                             dumper=export_bigwig, dump_args={'gindexer': gi})
+                             exporter=export_bigwig, export_args={'gindexer': gi})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
-    dummy_eval.dump(bwm.outputdir)
-
-    file_ = os.path.join(tmpdir.strpath, 'evaluation',
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:

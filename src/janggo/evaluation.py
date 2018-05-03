@@ -12,7 +12,7 @@ import numpy
 from keras.engine.topology import InputLayer
 
 from janggo.model import Janggo
-from janggo.utils import dump_json
+from janggo.utils import export_json
 
 
 def _input_dimension_match(kerasmodel, inputs):
@@ -170,11 +170,11 @@ class EvaluatorList(object):
                 evaluator.evaluate(model, inputs, outputs, predicted, datatags,
                                    batch_size, use_multiprocessing)
 
-        self.dump()
+        self.export()
 
-    def dump(self):
+    def export(self):
         for evaluator in self.evaluators:
-            evaluator.dump(self.outputdir)
+            evaluator.export(self.outputdir)
 
 
 def reshape(data):
@@ -194,22 +194,22 @@ def reshape(data):
 class InOutScorer(object):
 
     def __init__(self, score_name, score_fct, conditions=None,
-                 dumper=dump_json, score_args=None,
-                 dump_args=None, immediate_dump=True,
+                 exporter=export_json, score_args=None,
+                 export_args=None, immediate_export=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         super(InOutScorer, self).__init__()
         self.results = dict()
-        self._dumper = dumper
+        self._exporter = exporter
         self.score_name = score_name
         self.score_fct = score_fct
         if score_args is None:
             score_args = {}
         self.score_args = score_args
-        if dump_args is None:
-            dump_args = {}
-        self.dump_args = dump_args
-        self.immediate_dump = immediate_dump
+        if export_args is None:
+            export_args = {}
+        self.export_args = export_args
+        self.immediate_export = immediate_export
         self.conditions = conditions
         if subdir is None:
             subdir = 'evaluation'
@@ -242,46 +242,46 @@ class InOutScorer(object):
                     'value': score,
                     'tags': '-'.join(datatags)}
 
-                if self.immediate_dump:
-                    # dump directly if required
-                    output_dir = os.path.join(model.outputdir, self.subdir,
-                                              self.score_name)
+                self.results[model.name, layername[0], condition] = res
+                if self.immediate_export:
+                    # export directly if required
+                    output_dir = os.path.join(model.outputdir, self.subdir)
 
-                    self._dumper(output_dir, model.name,
-                                 {(model.name, layername[0], condition): res},
-                                 **self.dump_args)
-                else:
-                    # otherwise keep track of evaluation results
-                    # across different models.
-                    self.results[model.name, layername[0], condition] = res
+                    self.export(output_dir, model.name)
 
-    def dump(self, path, filename):
-        path = os.path.join(path, self.subdir, self.score_name)
+                    # reset the results
+                    self.results = {}
+
+    def export(self, path, collection_name):
+        output_path = os.path.join(path, collection_name)
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
         if self.results:
-            # if there are some results, dump them
-            self._dumper(path, filename, self.results, **self.dump_args)
+            # if there are some results, export them
+            self._exporter(output_path, self.score_name, self.results, **self.export_args)
 
 
 class InScorer(object):
 
     def __init__(self, score_name, extractor=None,
                  conditions=None,
-                 dumper=dump_json, extractor_args=None,
-                 dump_args=None, immediate_dump=True,
+                 exporter=export_json, extractor_args=None,
+                 export_args=None, immediate_export=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         super(InScorer, self).__init__()
         self.results = dict()
-        self._dumper = dumper
+        self._exporter = exporter
         self.feature_name = score_name
         self.extractor = extractor
         if extractor_args is None:
             extractor_args = {}
         self.extractor_args = extractor_args
-        if dump_args is None:
-            dump_args = {}
-        self.dump_args = dump_args
-        self.immediate_dump = immediate_dump
+        if export_args is None:
+            export_args = {}
+        self.export_args = export_args
+        self.immediate_export = immediate_export
         self.conditions = conditions
         if subdir is None:
             subdir = 'prediction'
@@ -315,22 +315,22 @@ class InScorer(object):
 
                 self.results[model.name, layername[0], condition] = res
 
-                if self.immediate_dump:
-                    # dump directly if required
-                    output_dir = os.path.join(model.outputdir, self.subdir,
-                                              model.name)
-                    self.dump(output_dir, self.feature_name)
+                if self.immediate_export:
+                    # export directly if required
+                    output_dir = os.path.join(model.outputdir, self.subdir)
+                    self.export(output_dir, model.name)
 
                     # reset the results
                     self.results = {}
 
 
-    def dump(self, path, collection):
-        output_path = os.path.join(path, self.subdir, collection)
+    def export(self, path, collection_name):
+        output_path = os.path.join(path, collection_name)
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
+
         if self.results:
-            # if there are some results, dump them
-            self._dumper(output_path, self.feature_name,
-                         self.results, **self.dump_args)
+            # if there are some results, export them
+            self._exporter(output_path, self.feature_name,
+                         self.results, **self.export_args)

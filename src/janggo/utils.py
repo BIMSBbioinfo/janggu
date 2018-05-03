@@ -223,7 +223,7 @@ def get_genome_size_from_bed(bedfile, flank):
     return gsize
 
 
-def dump_json(output_dir, name, results, append=True):
+def export_json(output_dir, name, results, append=True):
     """Method that dumps the results in a json file.
 
     Parameters
@@ -249,7 +249,7 @@ def dump_json(output_dir, name, results, append=True):
         json.dump(content, jsonfile)
 
 
-def dump_tsv(output_dir, name, results):
+def export_tsv(output_dir, name, results):
     """Method that dumps the results as tsv file.
 
     Parameters

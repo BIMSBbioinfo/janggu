@@ -18,7 +18,7 @@ from janggo.layers import Reverse
 from janggo.layers import Complement
 from janggo.data import Dna
 from janggo.data import NumpyWrapper
-from janggo.utils import dump_tsv
+from janggo.utils import export_tsv
 from janggo.utils import plot_score
 
 from sklearn.metrics import roc_auc_score
@@ -55,10 +55,10 @@ def wrap_prc(y_true, y_pred):
     return recall, precision, aux
 
 
-auc_eval = InOutScorer('auROC', roc_auc_score, dumper=dump_tsv)
-prc_eval = InOutScorer('PRC', wrap_prc, dumper=plot_score)
-roc_eval = InOutScorer('ROC', wrap_roc, dumper=plot_score)
-auprc_eval = InOutScorer('auPRC', average_precision_score, dumper=dump_tsv)
+auc_eval = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
+prc_eval = InOutScorer('PRC', wrap_prc, exporter=plot_score)
+roc_eval = InOutScorer('ROC', wrap_roc, exporter=plot_score)
+auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
 
 
 # Option 3:
