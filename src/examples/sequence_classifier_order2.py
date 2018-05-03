@@ -31,7 +31,7 @@ SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 X1 = Dna.create_from_fasta('dna', fastafile=SAMPLE_1, order=1)
 
-DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2], order=1)
+DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2], order=2)
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
@@ -72,7 +72,7 @@ def janggobody(inputs, inp, oup, params):
 
 K.clear_session()
 model = Janggo.create(template=janggobody,
-                      modelparams=(30, 21, 'relu'),
+                      modelparams=(30, 20, 'relu'),
                       inputs=DNA,
                       outputs=LABELS,
                       outputdir='tf_predict')

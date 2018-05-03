@@ -7,12 +7,15 @@ from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import GlobalAveragePooling2D
 from keras.layers import Input
+from keras.layers import Maximum
 from keras.models import Model
 
 from janggo import Janggo
 from janggo import inputlayer
 from janggo import outputdense
 from janggo import InOutScorer
+from janggo.layers import Reverse
+from janggo.layers import Complement
 from janggo.data import Dna
 from janggo.data import NumpyWrapper
 from janggo.utils import dump_tsv
@@ -64,8 +67,16 @@ auprc_eval = InOutScorer('auPRC', average_precision_score, dumper=dump_tsv)
 @outputdense('sigmoid')
 def janggobody(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
-        layer = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
-                       activation=params[2])(layer)
+        forward = layer
+    convlayer = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
+                       activation=params[2])
+    revcomp = Reverse()(forward)
+    revcomp = Complement()(revcomp)
+
+    forward = convlayer(forward)
+    revcomp = convlayer(revcomp)
+    revcomp = Reverse()(revcomp)
+    layer = Maximum()([forward, revcomp])
     output = GlobalAveragePooling2D()(layer)
     return inputs, output
 
