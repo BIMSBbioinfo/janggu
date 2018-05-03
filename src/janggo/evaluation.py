@@ -174,7 +174,7 @@ class EvaluatorList(object):
 
     def dump(self):
         for evaluator in self.evaluators:
-            evaluator.dump(self.output_dir)
+            evaluator.dump(self.outputdir)
 
 
 def reshape(data):
@@ -244,9 +244,10 @@ class InOutScorer(object):
 
                 if self.immediate_dump:
                     # dump directly if required
-                    output_dir = os.path.join(model.output_dir, self.subdir)
+                    output_dir = os.path.join(model.outputdir, self.subdir,
+                                              self.score_name)
 
-                    self._dumper(output_dir, self.score_name,
+                    self._dumper(output_dir, model.name,
                                  {(model.name, layername[0], condition): res},
                                  **self.dump_args)
                 else:
@@ -254,11 +255,11 @@ class InOutScorer(object):
                     # across different models.
                     self.results[model.name, layername[0], condition] = res
 
-    def dump(self, path):
-        path = os.path.join(path, self.subdir)
+    def dump(self, path, filename):
+        path = os.path.join(path, self.subdir, self.score_name)
         if self.results:
             # if there are some results, dump them
-            self._dumper(path, self.score_name, self.results, **self.dump_args)
+            self._dumper(path, filename, self.results, **self.dump_args)
 
 
 class InScorer(object):
@@ -312,21 +313,22 @@ class InScorer(object):
                     'value': feat,
                     'tags': '-'.join(datatags)}
 
+                self.results[model.name, layername[0], condition] = res
+
                 if self.immediate_dump:
                     # dump directly if required
-                    output_dir = os.path.join(model.output_dir, self.subdir)
+                    output_dir = os.path.join(model.outputdir, self.subdir,
+                                              model.name)
+                    self.dump(output_dir, self.feature_name)
 
-                    self._dumper(output_dir, self.feature_name,
-                                 {(model.name, layername[0], condition): res},
-                                 **self.dump_args)
-                else:
-                    # otherwise keep track of evaluation results
-                    # across different models.
-                    self.results[model.name, layername[0], condition] = res
+                    # reset the results
+                    self.results = {}
 
-    def dump(self, path):
-        path = os.path.join(path, self.subdir)
+
+    def dump(self, path, collection):
+        path = os.path.join(path, self.subdir, collection)
 
         if self.results:
             # if there are some results, dump them
-            self._dumper(path, self.feature_name, self.results, **self.dump_args)
+            self._dumper(path, self.feature_name,
+                         self.results, **self.dump_args)
