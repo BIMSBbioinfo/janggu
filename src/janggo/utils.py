@@ -294,11 +294,13 @@ def plot_score(output_dir, name, results, figsize=None, xlabel=None,
     ax_ = fig.add_axes([0.1, 0.1, .55, .5])
 
     ax_.set_title(name)
-    for key in results:
+    for mname, lname, cname in results:
         # avg might be returned using a custom function
-        x_score, y_score, avg = results[key]['value']
-        ax_.plot(x_score, y_score,
-                 label="{}".format('-'.join(key)))
+        x_score, y_score, auxstr = results[mname, lname, cname]['value']
+        label = "{}".format('-'.join([mname[:8], lname, cname]))
+        if isinstance(auxstr, str):
+            label += ' ' + auxstr
+        ax_.plot(x_score, y_score, label=label)
 
     lgd = ax_.legend(bbox_to_anchor=(1.05, 1),
                      loc=2, prop={'size': 10}, ncol=1)
