@@ -148,13 +148,15 @@ Loading DNA sequences from fasta files can be achieved by invoking
 
    fasta_file = resource_filename('janggo', 'resources/sample.fa')
 
-   dna = Dna.create_from_fasta('dna', fastafile=fastafile)
+   dna = Dna.create_from_fasta('dna', fastafile=fasta_file)
 
-   len(dna)  # there are 4 sequences in the fastafile
+   len(dna)  # there are 3997 sequences in the in sample.fa
 
-   #
+   # Each sequence is 200 bp of length
    dna.shape  # is (4, 200, 4, 1)
-   dna[0]  # one-hot encoding or region 0
+
+   # One-hot encoding for the first 10 bases of the first region
+   dna[0][0, :10, :, 0]
 
 Alternatively, sequences can be fetched from a reference genome with
 genomic coordinates of interest from a bed or gff file.
@@ -179,17 +181,16 @@ Cover
 ^^^^^^^^^^^^^^^
 The :class:`Cover` can be utilized to fetch different kinds of
 coverage data from commonly used data formats, including BAM, BIGWIG, BED and GFF.
-Regardless of the input file format the coverage tracks are
-stored as a 4D array with dimensions corresponding
+Coverage data is stored as a 4D array with dimensions corresponding
 to :code:`(region, region_length, strand, condition)`.
 
 The :class:`Cover` offers the following feature:
 
-1. Strand-specific sequence extraction, if strandedness information is available in the bed_file
+1. Strand-specific sequence extraction.
 2. :class:`Cover` can be loaded from one or more input files. Then the each condition dimension is associated with an input file.
-3. Dataset access from disk via the hdf5 option for large datasets.
+3. Coverage data can be accessed from disk via the hdf5 option for large datasets.
 
-Moreover, additional features are available depending on the input file format (see References).
+Additional features are available depending on the input file format.
 
 The following examples illustrate how to instantiate :class:`Cover`.
 
@@ -239,13 +240,13 @@ of a specified resolution (in base pairs):
 By default, the region of interest in :code:`bed_file` is split
 into non-overlapping 200 bp windows with a resolution of 200 bp.
 Different windowing and signal resolution options are available
-by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and/or :code:`resolution`.
+by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
 
 
-**Coverage from a BED files** (or GFF files alike) is extracted by
+**Coverage from a BED files** can be extracted in various ways:
 
 1. Extracting the **score** field value from the associated regions, if available.
-2. Treating presence of a region as positive labels (*one*), while the absence of a region is treated as a negative label (*zero*).
+2. Extracting binary labels: Treating presence of a region as positive labels (*one*), while the absence of a region is treated as a negative label (*zero*).
 3. Treating the scores as categories.
 
 .. code-block:: python
@@ -264,15 +265,15 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and/or :code:`resolu
 By default, the region of interest in :code:`bed_file` is split
 into non-overlapping 200 bp windows with a resolution of 200 bp.
 Different windowing and signal resolution options are available
-by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and/or :code:`resolution`.
+by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
 
 
 Fit a neural network on DNA sequences
 -------------------------------------
 In the previous sections, we learned how to acquire data and
 how to instantiate neural networks. Now let's
-create and fit a simple convolutional neural network based on DNA sequence
-and labels from a BED file.
+create and fit a simple convolutional neural network that predicts
+labels derived from a BED file from the DNA sequence:
 
 .. code:: python
 
@@ -308,11 +309,68 @@ and labels from a BED file.
    # 4. fit the model
    model.fit(DNA, LABELS)
 
-Congratulations! You've finished the getting started janggo tutorial!
-Next, you might be interested in how to evaluate the model performances
-and delve into some more advanced examples.
+
 
 Evaluation
 ----------
 
-The evaluation of models are controlled by :class:`EvaluatorList`.
+Finally, we would like to evaluate various aspects of the model performance
+and investigate the predictions. This can be done by invoking the
+methods :code:`evaluate` and :code:`predict`.
+While, this is also possible using a native keras model, janggo
+also offers a number of useful functions to 1. export the prediction
+and evaluation results in e.g. json, tsv, 2. plot the scoring metrics such as
+AUC-ROC, and 3. allows to export predictions and model loss in BED or BIGWIG
+format for further investigation of what the model has (or has not) trained
+in a genome browser of your choice.
+
+:code:`InOutScorer`
+^^^^^^^^^^^^^^^^^^^
+Evaluating the predictive performance in comparison with ground truth labels,
+you need to instantiate one or more :code:`InOutScorer` object that
+can be attached as callbacks to :code:`Janggo.evaluate`.
+The following example shows how to compute the AUC-ROC, plot the ROC curve
+and export the prediction loss to bigwig format
+
+In order to compute
+.. code:: python
+
+   import numpy
+   from sklearn.metrics import roc_auc_score, roc_curve
+
+   # Instantiate several evaluation scorers
+   score_auroc = InOutScorer('auROC', roc_auc_score, dumper=dump_tsv)
+   score_roc = InOutScorer('ROC', roc_curve, dumper=plot_score)
+   score_loss = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
+                            dumper=export_bigwig,
+                            dump_args={'gindexer': DNA.gindexer})
+
+   # Evaluate the results
+   model.evaluate(DNA, LABELS, datatags=['training_set'],
+                  callbacks=[score_auroc, score_roc, score_loss])
+
+   # Until this point the evaluators have only collected the scores
+   # Finally, we need to dump the evaluated information
+   [ev.dump(model.outputdir) for ev in [score_auroc, score_roc, score_loss]]
+
+
+:code:`InScorer`
+^^^^^^^^^^^^^^^^^^^
+Sometimes it is useful to evaluate the results based on input data only.
+For example, when you want to have a look at the predicted regions
+or if you want to investigate the feature activities of a specified layer.
+In this case, you need to instantiate one or more :code:`InScorer` objects
+which are attached as callbacks to :code:`Janggo.predict`.
+
+For example to export the model predictions to BED format
+you can invoke the following lines of code:
+
+.. code:: python
+
+   # Instantiate several evaluation scorers
+   pred = InOutScorer('predict', dumper=export_bed,
+                         dump_args={'gindexer': DNA.gindexer})
+
+   # Evaluate predictions
+   model.predict(DNA, datatags=['training_set'],
+                 callbacks=[pred])
