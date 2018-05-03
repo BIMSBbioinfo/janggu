@@ -326,9 +326,11 @@ class InScorer(object):
 
 
     def dump(self, path, collection):
-        path = os.path.join(path, self.subdir, collection)
+        output_path = os.path.join(path, self.subdir, collection)
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
 
         if self.results:
             # if there are some results, dump them
-            self._dumper(path, self.feature_name,
+            self._dumper(output_path, self.feature_name,
                          self.results, **self.dump_args)

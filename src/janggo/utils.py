@@ -235,8 +235,6 @@ def dump_json(output_dir, name, results, append=True):
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     """
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     filename = os.path.join(output_dir, name + '.json')
     try:
@@ -263,8 +261,6 @@ def dump_tsv(output_dir, name, results):
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     """
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     filename = os.path.join(output_dir, name + '.tsv')
     pd.DataFrame.from_dict(results, orient='index').to_csv(filename, sep='\t')
@@ -283,8 +279,6 @@ def plot_score(output_dir, name, results, figsize=None, xlabel=None,
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     """
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     if figsize is not None:
         fig = plt.figure(figsize=figsize)
@@ -321,8 +315,6 @@ def plot_score(output_dir, name, results, figsize=None, xlabel=None,
 def export_bigwig(output_dir, name, results, gindexer=None):
 
     """Export predictions to bigwig."""
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bigiwig')
@@ -373,9 +365,6 @@ def export_bigwig(output_dir, name, results, gindexer=None):
 
 def export_bed(output_dir, name, results, gindexer=None):
     """Export predictions to bed."""
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bed')
