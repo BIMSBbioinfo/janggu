@@ -34,7 +34,8 @@ def _getOneHotSeq(seq):
     n = len(seq)
     result = np.zeros((1, n, m, 1), dtype="float32")
     for i in range(len(seq)):
-        result[0, i, NMAP[seq[i]], 0] = 1
+        if NMAP[seq[i]] >= 0:
+            result[0, i, NMAP[seq[i]], 0] = 1
     return result
 
 
@@ -405,7 +406,7 @@ def test_read_dna_from_fasta_order_2(tmpdir):
 def test_stemcell_onehot_identity():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    filename = os.path.join(data_path, 'stemcells.fa')
+    filename = os.path.join(data_path, 'oct4.fa')
     data = Dna.create_from_fasta('dna', fastafile=filename)
 
     oh = _seqToOneHot(sequences_from_fasta(filename))
