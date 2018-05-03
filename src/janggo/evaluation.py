@@ -6,31 +6,19 @@ model evaluation.
 
 import datetime
 import glob
-import json
 import os
-from abc import ABCMeta
-from abc import abstractmethod
 
-import keras.losses
-import matplotlib.pyplot as plt
 import numpy
-import pandas as pd
-import pyBigWig
-from keras import Input
-from keras import Model
 from keras.engine.topology import InputLayer
-from keras.layers import Lambda
 
 from janggo.model import Janggo
-
-if pyBigWig.numpy == 0:
-    raise Exception('pyBigWig must be installed with numpy support. '
-                    'Please install numpy before pyBigWig to ensure that.')
+from janggo.utils import dump_json
 
 
 def _input_dimension_match(kerasmodel, inputs):
     """Check if input dimensions are matched"""
-
+    print("input_dimension_match")
+    print(kerasmodel.get_config()['input_layers'])
     if not isinstance(inputs, list):
         tmpinputs = [inputs]
     else:
@@ -45,7 +33,7 @@ def _input_dimension_match(kerasmodel, inputs):
         # and dataset
         try:
             layer = kerasmodel.get_layer(input_.name)
-
+            print('{}.shape={} / {}'.format(input_.name, layer.input_shape[1:], input_.shape[1:]))
             if not isinstance(layer, InputLayer) or \
                not layer.input_shape[1:] == input_.shape[1:]:
                 # if the layer name is present but the dimensions
@@ -59,6 +47,7 @@ def _input_dimension_match(kerasmodel, inputs):
 
 def _output_dimension_match(kerasmodel, outputs):
     if outputs is not None:
+        print("output_dimension_match")
         if not isinstance(outputs, list):
             tmpoutputs = [outputs]
         else:
@@ -105,10 +94,6 @@ class EvaluatorList(object):
             self.path = os.path.join(os.path.expanduser("~"), "janggo_results")
         else:
             self.path = path
-
-        self.output_dir = os.path.join(self.path, 'evaluation')
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
 
         if not isinstance(evaluators, list):
             # if only a single evaluator is attached, wrap it up as a list
@@ -192,395 +177,156 @@ class EvaluatorList(object):
             evaluator.dump(self.output_dir)
 
 
-
-def dump_json(output_dir, name, results, **kwargs):
-    """Method that dumps the results in a json file.
-
-    Parameters
-    ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
-    """
-    filename = os.path.join(output_dir, name + '.json')
-    try:
-        with open(filename, 'r') as jsonfile:
-            content = json.load(jsonfile)
-    except IOError:
-        content = {}  # needed for py27
-    with open(filename, 'w') as jsonfile:
-        content.update({','.join(key): results[key] for key in results})
-        json.dump(content, jsonfile)
-
-
-def dump_tsv(output_dir, name, results, **kwargs):
-    """Method that dumps the results as tsv file.
-
-    Parameters
-    ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
+def reshape(data):
+    """Reshape the dataset to make it compatible with the
+    evaluation method.
     """
 
-    filename = os.path.join(output_dir, name + '.tsv')
-    pd.DataFrame.from_dict(results, orient='index').to_csv(filename, sep='\t')
-
-
-def plot_score(output_dir, name, results, **kwargs):
-    """Method that dumps the results in a json file.
-
-    Parameters
-    ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
-    """
-
-    if kwargs is not None and 'figsize' in kwargs:
-        fig = plt.figure(kwargs['figsize'])
+    if isinstance(data, dict):
+        data = {k: data[k][:].reshape(
+            (numpy.prod(data[k].shape[:-1]), data[k].shape[-1])) for k in data}
     else:
-        fig = plt.figure()
+        raise ValueError('Data must be a dict not {}'.format(type(data)))
 
-    ax_ = fig.add_axes([0.1, 0.1, .55, .5])
-
-    ax_.set_title(name)
-    for key in results:
-        x_score, y_score, threshold = results[key]['value']
-        ax_.plot(x_score, y_score,
-                 label="{}".format('-'.join(key)))
-
-    lgd = ax_.legend(bbox_to_anchor=(1.05, 1),
-                     loc=2, prop={'size': 10}, ncol=1)
-    if kwargs is not None and 'xlabel' in kwargs:
-        ax_.set_xlabel(kwargs['xlabel'], size=14)
-    if kwargs is not None and 'ylabel' in kwargs:
-        ax_.set_ylabel(kwargs['ylabel'], size=14)
-    if kwargs is not None and 'format' in kwargs:
-        fform = kwargs['format']
-    else:
-        fform = 'png'
-    filename = os.path.join(output_dir, name + '.' + fform)
-    fig.savefig(filename, format=fform,
-                dpi=1000,
-                bbox_extra_artists=(lgd,), bbox_inches="tight")
+    return data
 
 
-def _process_predictions(model, pred, conditions,
-                         fformat='bigwig', prefix='predict'):
+class InOutScorer(object):
 
-    if not isinstance(pred, list):
-        pred = [pred]
-
-    if isinstance(conditions, list) and isinstance(conditions[0], str):
-        conditions = [conditions]
-
-    if not len(pred) == len(conditions):
-        raise ValueError('The number of output layers does not match '
-                         'with the conditions.')
-
-    for idx, prd in enumerate(pred):
-        if not prd.shape[-1] == len(conditions[idx]):
-            raise Exception('Number of predicted conditions '
-                            'and condition labels do not agree.')
-
-        layername = model.get_config()['output_layers'][idx][0]
-        if fformat == 'bigwig':
-            _export_to_bigwig(model.name,
-                              layername,
-                              model.output_dir,
-                              model.gindexer,
-                              prd, conditions, prefix)
-        elif fformat == 'bed':
-            _export_to_bed(model.name, layername,
-                           model.output_dir,
-                           model.gindexer,
-                           prd, conditions, prefix)
-        else:
-            raise ValueError("fformat '{}' not supported for export.".format(
-                fformat))
-
-
-def export_predict(model, inputs, conditions,
-                   fformat='bigwig', prefix='predict'):
-    """Export model predictions to file.
-
-    Parameters
-    ----------
-    model : :class:`Janggo` object
-        A Janggo model
-    inputs : :class:`Dataset` or list(Dataset)
-        Compatible input dataset or dataset.
-    conditions : list(str) or list(list(str))
-        List of conditions. Use a list(str) in the network has only one
-        output layer. The number of output units needs to match
-        with the condition dimension of the outputs dataset.
-        If the network consists of multiple output layers, use a list(list(str))
-        where the outer list corresponds to the number of output layers
-        and the inner lists correspond to the output units within each layer.
-    format : str
-        Output file format. Default: 'bigwig'.
-    prefix : str
-        Output file name prefix. Default: 'predict'.
-    """
-
-    pred = model.predict(inputs)
-
-    _process_predictions(model, pred, conditions,
-                         fformat=fformat, prefix=prefix)
-
-
-def export_loss(model, inputs, outputs, conditions,
-                fformat='bigwig', prefix='loss'):
-    """Export model predictions to file.
-
-    Parameters
-    ----------
-    model : :class:`Janggo` object
-        A Janggo model
-    inputs : :class:`Dataset` or list(Dataset)
-        Compatible input dataset or dataset.
-    outputs : :class:`Dataset` or list(Dataset)
-        Compatible output dataset or dataset.
-    conditions : list(str) or list(list(str))
-        List of conditions. Use a list(str) in the network has only one
-        output layer. The number of output units needs to match
-        with the condition dimension of the outputs dataset.
-        If the network consists of multiple output layers, use a list(list(str))
-        where the outer list corresponds to the number of output layers
-        and the inner lists correspond to the output units within each layer.
-    format : str
-        Output file format. Default: 'bigwig'.
-    prefix : str
-        Output file name prefix. Default: 'predict'.
-    """
-
-    loss_fct = {}
-    if isinstance(model.loss, str):
-        for name in model.get_config()['output_layers']:
-            loss_fct[name[0]] = keras.losses.get(model.loss)
-    elif callable(model.loss):
-        for name in model.get_config()['output_layers']:
-            loss_fct[name[0]] = model.loss
-    elif isinstance(model.loss, dict):
-        for name in model.get_config()['output_layers']:
-            if not callable(model.loss[name]):
-                loss_fct[name] = keras.losses.get(model.loss[name[0]])
-            else:
-                loss_fct[name] = model.loss[name]
-
-    # get the predictions
-    pred = model.predict(inputs)
-
-    if not isinstance(outputs, list):
-        outputs = [outputs]
-    if not isinstance(pred, list):
-        pred = [pred]
-
-    if len(pred) == len(outputs):
-        raise ValueError('The number of output layers does '
-                         'not match between predictions and '
-                         'labels.')
-
-    losses = []
-    for layer_idx, prd in enumerate(pred):
-
-        targets_tensor = Input(prd.shape)
-        pred_tensor = Input(prd.shape)
-        name = model.get_config()['output_layers'][layer_idx][0]
-
-        loss_layer = Lambda(lambda in_, out_:
-                            loss_fct[name](in_, out_))([targets_tensor,
-                                                        pred_tensor])
-
-        loss_eval = Model(inputs=[targets_tensor, pred_tensor],
-                          outputs=loss_layer)
-        losses += [loss_eval.predict([outputs, prd])]
-
-    _process_predictions(model, losses, conditions,
-                         fformat=fformat, prefix=prefix)
-
-
-def _export_to_bigwig(name, layername, output_dir, gindexer,
-                      pred, conditions, prefix):
-    """Export predictions to bigwig."""
-
-    genomesize = {}
-
-    # extract genome size from gindexer
-    # check also if sorted and non-overlapping
-    last_interval = {}
-    for region in gindexer:
-        if region.chrom in last_interval:
-            if region.start < last_interval[region.chrom]:
-                raise ValueError('The regions in the bed/gff-file must be sorted'
-                                 ' and mutually disjoint. Please, sort and merge'
-                                 ' the regions before exporting the bigwig format')
-        if region.chrom not in genomesize:
-            genomesize[region.chrom] = region.end
-            last_interval[region.chrom] = region.end
-        if genomesize[region.chrom] < region.end:
-            genomesize[region.chrom] = region.end
-
-    bw_header = [(chrom, genomesize[chrom]*gindexer.resolution) for chrom in genomesize]
-
-    output_dir = os.path.join(output_dir, 'export')
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # the last dimension holds the conditions. Each condition
-    # needs to be stored in a separate file
-    for cond_idx in range(pred.shape[-1]):
-        bw_file = pyBigWig.open(os.path.join(
-            output_dir,
-            '{prefix}.{model}.{output}.{condition}.bigwig'.format(
-                prefix=prefix, model=name,
-                output=layername, condition=conditions[cond_idx])), 'w')
-        bw_file.addHeader(bw_header)
-        for idx, region in enumerate(gindexer):
-            bw_file.addEntries(region.chrom,
-                               int(region.start*gindexer.resolution +
-                                   gindexer.binsize//2 -
-                                   gindexer.resolution//2),
-                               values=pred[idx, :, 0, cond_idx],
-                               span=int(gindexer.resolution),
-                               step=int(gindexer.resolution))
-        bw_file.close()
-
-
-def _export_to_bed(name, layername, output_dir, gindexer,
-                   pred, conditions, prefix):
-    """Export predictions to bed."""
-
-    output_dir = os.path.join(output_dir, 'export')
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # the last dimension holds the conditions. Each condition
-    # needs to be stored in a separate file
-
-    for cond_idx in range(pred.shape[-1]):
-        bed_content = pd.DataFrame(columns=['chr', 'start',
-                                            'end', 'name', 'score'])
-        for idx, region in enumerate(gindexer):
-            stepsize = (region.end-region.start)//pred.shape[1]
-            starts = list(range(region.start,
-                                region.end,
-                                stepsize))
-            ends = list(range(region.start + stepsize,
-                              region.end + stepsize,
-                              stepsize))
-            cont = {'chr': [region.chrom] * pred.shape[1],
-                    'start': [s*gindexer.resolution for s in starts],
-                    'end': [e*gindexer.resolution for e in ends],
-                    'name': ['.'] * pred.shape[1],
-                    'score': pred[idx, :, 0, cond_idx]}
-            bed_entry = pd.DataFrame(cont)
-            bed_content = bed_content.append(bed_entry, ignore_index=True)
-
-        bed_content.to_csv(os.path.join(
-            output_dir,
-            '{prefix}.{model}.{output}.{condition}.bed'.format(
-                prefix=prefix, model=name,
-                output=layername, condition=conditions[cond_idx])),
-                           sep='\t', header=False, index=False,
-                           columns=['chr', 'start', 'end', 'name', 'score'])
-
-
-class Evaluator:
-    """Evaluator interface."""
-
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def evaluate(self, model, inputs, outputs=None, predicted=None,
-                 datatags=None, batch_size=None,
-                 use_multiprocessing=False):
-        """Dumps the result of an evaluation into a container.
-
-        By default, the model will dump the evaluation metrics defined
-        in keras.models.Model.compile.
-
-        Parameters
-        ----------
-        model : :class:`Janggo`
-            Model object
-        inputs : :class:`Dataset` or list
-            Input dataset or list of datasets.
-        outputs : :class:`Dataset` or list
-            Output dataset or list of datasets. Default: None.
-        predicted : numpy array or list of numpy arrays
-            Predicted output for the given inputs. Default: None
-        datatags : list
-            List of dataset tags to be recorded. Default: list().
-        batch_size : int or None
-            Batchsize used to enumerate the dataset. Default: None means a
-            batch_size of 32 is used.
-        use_multiprocessing : bool
-            Use multiprocess threading for evaluating the results.
-            Default: False.
-        """
-
-    def dump(self, path):
-        """Default method for dumping the evaluation results to a storage"""
-        pass
-
-    def reshape(self, data):
-        """Reshape the dataset to make it compatible with the
-        evaluation method.
-        """
-
-        return data[:].reshape((numpy.prod(data.shape[:1]), data.shape[-1]))
-
-
-class ScoreEvaluator(Evaluator):
-
-    def __init__(self, score_name, score_fct, dumper=dump_json):
+    def __init__(self, score_name, score_fct, conditions=None,
+                 dumper=dump_json, score_args=None,
+                 dump_args=None, immediate_dump=False,
+                 subdir=None):
         # append the path by a folder 'AUC'
-        super(ScoreEvaluator, self).__init__()
+        super(InOutScorer, self).__init__()
         self.results = dict()
         self._dumper = dumper
         self.score_name = score_name
         self.score_fct = score_fct
+        if score_args is None:
+            score_args = {}
+        self.score_args = score_args
+        if dump_args is None:
+            dump_args = {}
+        self.dump_args = dump_args
+        self.immediate_dump = immediate_dump
+        self.conditions = conditions
+        if subdir is None:
+            subdir = 'evaluation'
+        self.subdir = subdir
 
-    def evaluate(self, model, inputs, outputs=None, predicted=None,
-                 datatags=None, batch_size=None,
-                 use_multiprocessing=False):
+    def evaluate(self, outputs, predicted, model, datatags=None):
 
-        if predicted is None or outputs is None:
-            raise Exception("ScoreEvaluator requires 'outputs' and 'predicted'.")
         if not datatags:
             datatags = []
-        items = {}
-        _out = self.reshape(outputs)
-        _pre = self.reshape(predicted)
+
+        _out = reshape(outputs)
+        _pre = reshape(predicted)
 
         for layername in model.get_config()['output_layers']:
-            items[layername[0]] = {}
-            for idx in range(_out.shape[-1]):
-                score = self.score_fct(_out[:, idx], _pre[:, idx])
+            lout = _out[layername[0]]
+            pout = _pre[layername[0]]
+            for idx in range(_out[layername[0]].shape[-1]):
+                score = self.score_fct(lout[:, idx], pout[:, idx], **self.score_args)
 
-                if hasattr(outputs, "conditions"):
-                    condition = outputs.conditions[idx]
+                if self.conditions is not None and \
+                   len(self.conditions) == pout.shape[-1]:
+                    condition = self.conditions[idx]
+                elif hasattr(outputs[layername[0]], "conditions"):
+                    condition = outputs[layername[0]].conditions[idx]
                 else:
                     condition = str(idx)
 
-                self.results[model.name, layername[0], condition] = {
+                res = {
                     'date': str(datetime.datetime.utcnow()),
                     'value': score,
                     'tags': '-'.join(datatags)}
 
+                if self.immediate_dump:
+                    # dump directly if required
+                    output_dir = os.path.join(model.output_dir, self.subdir)
+
+                    self._dumper(output_dir, self.score_name,
+                                 {(model.name, layername[0], condition): res},
+                                 **self.dump_args)
+                else:
+                    # otherwise keep track of evaluation results
+                    # across different models.
+                    self.results[model.name, layername[0], condition] = res
+
     def dump(self, path):
-        self._dumper(path, self.score_name, self.results)
+        path = os.path.join(path, self.subdir)
+        if self.results:
+            # if there are some results, dump them
+            self._dumper(path, self.score_name, self.results, **self.dump_args)
+
+
+class InScorer(object):
+
+    def __init__(self, score_name, extractor=None,
+                 conditions=None,
+                 dumper=dump_json, extractor_args=None,
+                 dump_args=None, immediate_dump=False,
+                 subdir=None):
+        # append the path by a folder 'AUC'
+        super(InScorer, self).__init__()
+        self.results = dict()
+        self._dumper = dumper
+        self.feature_name = score_name
+        self.extractor = extractor
+        if extractor_args is None:
+            extractor_args = {}
+        self.extractor_args = extractor_args
+        if dump_args is None:
+            dump_args = {}
+        self.dump_args = dump_args
+        self.immediate_dump = immediate_dump
+        self.conditions = conditions
+        if subdir is None:
+            subdir = 'prediction'
+        self.subdir = subdir
+
+    def predict(self, predicted, model, datatags=None):
+
+        if not datatags:
+            datatags = []
+
+        _pre = reshape(predicted)
+
+        for layername in model.get_config()['output_layers']:
+            pout = _pre[layername[0]]
+            for idx in range(pout.shape[-1]):
+
+                print('pout', pout)
+                if self.extractor is not None:
+                    feat = self.extractor(pout[:, idx])
+
+                if self.conditions is not None and \
+                   len(self.conditions) == pout.shape[-1]:
+                    condition = self.conditions[idx]
+                else:
+                    condition = str(idx)
+
+                res = {
+                    'date': str(datetime.datetime.utcnow()),
+                    'value': feat,
+                    'tags': '-'.join(datatags)}
+
+                if self.immediate_dump:
+                    # dump directly if required
+                    output_dir = os.path.join(model.output_dir, self.subdir)
+
+                    self._dumper(output_dir, self.feature_name,
+                                 {(model.name, layername[0], condition): res},
+                                 **self.dump_args)
+                else:
+                    # otherwise keep track of evaluation results
+                    # across different models.
+                    self.results[model.name, layername[0], condition] = res
+
+    def dump(self, path):
+        path = os.path.join(path, self.subdir)
+
+        if self.results:
+            # if there are some results, dump them
+            self._dumper(path, self.feature_name, self.results, **self.dump_args)

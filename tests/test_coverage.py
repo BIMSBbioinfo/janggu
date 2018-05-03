@@ -12,7 +12,6 @@ from HTSeq import GenomicInterval
 from janggo.data import Cover
 
 
-
 def test_coverage_from_bam_sanity():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
     bed_file = os.path.join(data_path, "yeast.bed")

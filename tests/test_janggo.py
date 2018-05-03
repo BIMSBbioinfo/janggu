@@ -1,4 +1,3 @@
-import json
 import os
 
 import matplotlib
@@ -20,8 +19,6 @@ from janggo.data import Cover
 from janggo.data import Dna
 from janggo.data import NumpyWrapper
 from janggo.data import Table
-from janggo.evaluation import EvaluatorList
-from janggo.evaluation import ScoreEvaluator
 from janggo.layers import Complement
 from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
@@ -366,21 +363,21 @@ def test_janggo_train_predict_option3(tmpdir):
     assert not os.path.exists(storage)
 
     bwm.fit([inputs], [outputs], epochs=2, batch_size=32)
-    with pytest.raises(TypeError):
-        bwm.fit([inputs], [outputs], epochs=2, batch_size=32,
-                generator=janggo_fit_generator)
+
+    bwm.fit([inputs], [outputs], epochs=2, batch_size=32,
+            generator=janggo_fit_generator)
     assert os.path.exists(storage)
 
     pred = bwm.predict([inputs])
-    with pytest.raises(TypeError):
-        bwm.predict([inputs], batch_size=32,
-                    generator=janggo_predict_generator)
+
+    bwm.predict([inputs], batch_size=32,
+                generator=janggo_predict_generator)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate([inputs], [outputs])
-    with pytest.raises(TypeError):
-        bwm.evaluate([inputs], [outputs], batch_size=32,
-                     generator=janggo_fit_generator)
+
+    bwm.evaluate([inputs], [outputs], batch_size=32,
+                 generator=janggo_fit_generator)
 
 
 def test_janggo_train_predict_option4(tmpdir):
@@ -411,26 +408,25 @@ def test_janggo_train_predict_option4(tmpdir):
     assert not os.path.exists(storage)
 
     bwm.fit(inputs, outputs, epochs=2, batch_size=32)
-    with pytest.raises(TypeError):
-        bwm.fit(inputs, outputs, epochs=2, batch_size=32,
-                generator=janggo_fit_generator)
+
+    # This used to not work with normal numpy arrays,
+    # but now the numpy arrays are matched automatically
+    # with the layer names.
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32,
+            generator=janggo_fit_generator)
 
     assert os.path.exists(storage)
 
     pred = bwm.predict(inputs)
-    with pytest.raises(TypeError):
-        bwm.predict(inputs, batch_size=32,
-                    generator=janggo_predict_generator)
+
+    bwm.predict(inputs, batch_size=32,
+                generator=janggo_predict_generator)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate(inputs, outputs)
-    with pytest.raises(TypeError):
-        bwm.evaluate(inputs, outputs, batch_size=32,
-                     generator=janggo_fit_generator)
 
-
-def _dummy_eval(y_true, y_pred):
-    return 0.15
+    bwm.evaluate(inputs, outputs, batch_size=32,
+                 generator=janggo_fit_generator)
 
 
 def test_janggo_train_predict_option5(tmpdir):
@@ -471,21 +467,6 @@ def test_janggo_train_predict_option5(tmpdir):
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate([inputs], [outputs], generator=janggo_fit_generator,
                  use_multiprocessing=False)
-
-    dummy_eval = ScoreEvaluator('score1', _dummy_eval)
-    dummy2_eval = ScoreEvaluator('score2', _dummy_eval)
-
-    evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath)
-    evaluators.evaluate([inputs], outputs, datatags=['validation_set'])
-
-    for file_ in ["score1.json", "score2.json"]:
-        with open(os.path.join(tmpdir.strpath, "evaluation",
-                               file_), 'r') as f:
-            content = json.load(f)
-            print(content)
-            # there must be an entry for the model 'nptest'
-            assert 'test_model,y,random' in content
-            assert content['test_model,y,random']['value'] == 0.15, content
 
 
 def test_janggo_train_predict_option6(tmpdir):
@@ -528,34 +509,6 @@ def test_janggo_train_predict_option6(tmpdir):
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
                  use_multiprocessing=False)
-
-    dummy_eval = ScoreEvaluator('dummy', _dummy_eval)
-    dummy2_eval = ScoreEvaluator('dummy2', _dummy_eval)
-
-    evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath,
-                               model_filter='ptest')
-
-    # first I create fake inputs to provoke dimension
-    inputs_wrong_dim = NumpyWrapper("x", np.random.random((1000, 50)))
-    evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
-
-    for file_ in ["dummy.json", "dummy2.json"]:
-        with open(os.path.join(tmpdir.strpath, "evaluation",
-                               file_), 'r') as f:
-            content = json.load(f)
-            # the content must be empty at this point, because
-            # of mismatching dims. No evaluations were ran.
-            assert not content
-
-    evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
-    evaluators.dump()
-    for file_ in ["dummy.json", "dummy2.json"]:
-        with open(os.path.join(tmpdir.strpath, "evaluation",
-                               file_), 'r') as f:
-
-            content = json.load(f)
-            # now nptest was evaluated
-            assert 'nptest,y,random' in content
 
 
 def test_janggo_train_predict_option7(tmpdir):
@@ -601,32 +554,3 @@ def test_janggo_train_predict_option7(tmpdir):
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
                  use_multiprocessing=False)
-
-    dummy_eval = ScoreEvaluator('dummy', _dummy_eval)
-    dummy2_eval = ScoreEvaluator('dummy2', _dummy_eval)
-
-    evaluators = EvaluatorList([dummy_eval, dummy2_eval], path=tmpdir.strpath,
-                               model_filter='ptest')
-
-    # first I create fake inputs to provoke dimension
-    inputs_wrong_dim = NumpyWrapper("x", np.random.random((1000, 50)))
-    evaluators.evaluate(inputs_wrong_dim, outputs, datatags=['validation_set'])
-
-    for file_ in ["dummy.json", "dummy2.json"]:
-        with open(os.path.join(tmpdir.strpath, "evaluation",
-                               file_), 'r') as f:
-            content = json.load(f)
-            # the content must be empty at this point, because
-            # of mismatching dims. No evaluations were ran.
-            assert not content
-
-    evaluators.evaluate(inputs, outputs, datatags=['validation_set'])
-    evaluators.dump()
-    for file_ in ["dummy.json", "dummy2.json"]:
-        with open(os.path.join(tmpdir.strpath, "evaluation",
-                               file_), 'r') as f:
-
-            content = json.load(f)
-            print()
-            # now nptest was evaluated
-            assert 'nptest,y,random' in content

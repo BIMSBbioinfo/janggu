@@ -25,15 +25,13 @@ Evaluator
 ---------
 
 .. autosummary::
-   EvaluatorList
-   EvaluatorList.evaluate
-   EvaluatorList.dump
-   ScoreEvaluator
-   ScoreEvaluator.evaluate
-   ScoreEvaluator.dump
+   InScorer.predict
+   InScorer.dump
+   InOutScorer.evaluate
+   InOutScorer.dump
 
-.. autoclass:: EvaluatorList
+.. autoclass:: InScorer
    :members:
 
-.. autoclass:: ScoreEvaluator
+.. autoclass:: InOutScorer
    :members:

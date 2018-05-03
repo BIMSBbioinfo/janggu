@@ -282,10 +282,8 @@ class Janggo(object):
         input_tensors, output_tensors = modelfct(None, inputs_,
                                                  outputs_, modelparams)
 
-        model = cls(inputs=input_tensors, outputs=output_tensors, name=name,
-                    outputdir=outputdir)
-
-        return model
+        return cls(inputs=input_tensors, outputs=output_tensors, name=name,
+                   outputdir=outputdir)
 
     def compile(self, optimizer, loss, metrics=None,
                 loss_weights=None, sample_weight_mode=None,
@@ -356,8 +354,8 @@ class Janggo(object):
           model.fit(DATA, LABELS, generator=janggo_fit_generator)
         """
 
-        inputs = self.__convert_data(inputs)
-        outputs = self.__convert_data(outputs)
+        inputs = self.__convert_data(inputs, 'input_layers')
+        outputs = self.__convert_data(outputs, 'output_layers')
 
         hyper_params = {
             'epochs': epochs,
@@ -397,11 +395,6 @@ class Janggo(object):
         if generator:
 
             try:
-                if not isinstance(inputs, (list, dict)):
-                    raise TypeError("inputs must be a Dataset, "
-                                    + "list(Dataset)"
-                                    + "or dict(Dataset) if used with a "
-                                    + "generator. Got {}".format(type(inputs)))
                 if not batch_size:
                     batch_size = 32
 
@@ -414,8 +407,8 @@ class Janggo(object):
                         (1 if xlen % batch_size > 0 else 0)
 
                 if validation_data:
-                    valinputs = self.__convert_data(validation_data[0])
-                    valoutputs = self.__convert_data(validation_data[1])
+                    valinputs = self.__convert_data(validation_data[0], 'input_layers')
+                    valoutputs = self.__convert_data(validation_data[1], 'output_layers')
                     if len(validation_data) == 2:
                         vgen = generator(valinputs,
                                          valoutputs,
@@ -490,6 +483,8 @@ class Janggo(object):
                 generator=None,
                 use_multiprocessing=True,
                 layername=None,
+                datatags=None,
+                callbacks=None,
                 workers=1):
 
         """Predict targets.
@@ -525,7 +520,7 @@ class Janggo(object):
           model.predict(DATA, generator=janggo_predict_generator)
         """
 
-        inputs = self.__convert_data(inputs)
+        inputs = self.__convert_data(inputs, 'input_layers')
 
         self.logger.info('Predict: %s', self.name)
         self.logger.info("Input:")
@@ -541,10 +536,7 @@ class Janggo(object):
             model = self.kerasmodel
 
         if generator:
-            if not isinstance(inputs, (list, dict)):
-                raise TypeError("inputs must be a Dataset, list(Dataset)"
-                                + "or dict(Dataset) if used with a "
-                                + "generator.")
+
             if not batch_size:
                 batch_size = 32
 
@@ -556,7 +548,7 @@ class Janggo(object):
                 steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
 
             try:
-                return model.predict_generator(
+                preds = model.predict_generator(
                     generator(inputs, batch_size),
                     steps=steps,
                     use_multiprocessing=use_multiprocessing,
@@ -567,10 +559,15 @@ class Janggo(object):
                 raise
         else:
             try:
-                return model.predict(inputs, batch_size, verbose, steps)
+                preds = model.predict(inputs, batch_size, verbose, steps)
             except Exception:  # pragma: no cover
                 self.logger.exception('predict failed:')
                 raise
+
+        prd = self.__convert_data(preds, 'output_layers')
+        for callback in callbacks or []:
+            callback.predict(prd, model=self, datatags=datatags)
+        return preds
 
     def evaluate(self, inputs=None, outputs=None,
                  batch_size=None,
@@ -579,6 +576,8 @@ class Janggo(object):
                  steps=None,
                  generator=None,
                  use_multiprocessing=True,
+                 datatags=None,
+                 callbacks=None,
                  workers=1):
         """Evaluate the model performance.
 
@@ -614,8 +613,8 @@ class Janggo(object):
           model.evaluate(DATA, LABELS, generator=janggo_fit_generator)
         """
 
-        inputs = self.__convert_data(inputs)
-        outputs = self.__convert_data(outputs)
+        inputs = self.__convert_data(inputs, 'input_layers')
+        outputs = self.__convert_data(outputs, 'output_layers')
 
         self.logger.info('Evaluate: %s', self.name)
         self.logger.info("Input:")
@@ -626,10 +625,6 @@ class Janggo(object):
 
         if generator:
 
-            if not isinstance(inputs, (list, dict)):
-                raise TypeError("inputs must be a Dataset, list(Dataset)"
-                                + "or dict(Dataset) if used with a "
-                                + "generator.")
             if not batch_size:
                 batch_size = 32
 
@@ -669,6 +664,12 @@ class Janggo(object):
 
         self.logger.info("Evaluation finished in %1.3f s",
                          time.time() - self.timer)
+
+        preds = self.kerasmodel.predict(inputs, batch_size)
+        preds = self.__convert_data(preds, 'output_layers')
+
+        for callback in callbacks or []:
+            callback.evaluate(outputs, preds, model=self, datatags=datatags)
         return values
 
     def __dim_logging(self, data):
@@ -686,22 +687,40 @@ class Janggo(object):
     def get_config(self):
         return self.kerasmodel.get_config()
 
-    @staticmethod
-    def __convert_data(data):
+    def __convert_data(self, data, layer):
+        """ converts different data formats to
+        {name:values} dict.
+
+        When a Janggo dataset was used, the name is derived
+        from the name property. Otherwise, the name is derived
+        from the layer.
+
+        layer='output_layers' or 'input_layers'
+
+        """
         # If we deal with Dataset, we convert it to a Dictionary
         # which is directly interpretable by keras
         if hasattr(data, "name") and hasattr(data, "shape"):
-            c_data = {}
-            c_data[data.name] = data
-        elif isinstance(data, list) and \
-                hasattr(data[0], "name") and hasattr(data[0], "shape"):
-            c_data = {}
-            for datum in data:
-                c_data[datum.name] = datum
-        else:
-            # Otherwise, we deal with non-bwdatasets (e.g. numpy)
-            # which for compatibility reasons we just pass through
+            # if it is a janggo.data.Dataset we get here
+            c_data = {data.name: data}
+        elif not hasattr(data, "name") and hasattr(data, "shape"):
+            # if data is a numpy array we get here
+            c_data = {self.kerasmodel.get_config()[layer][0][0]: data}
+        elif isinstance(data, list):
+            if hasattr(data[0], "name"):
+                # if data is a list(Dataset) we get here
+                c_data = {datum.name: datum for datum in data}
+            else:
+                # if data is a list(np.array) we get here
+                c_data = {name[0]: datum for name, datum in
+                          zip(self.kerasmodel.get_config()[layer],
+                              data)}
+        elif isinstance(data, dict):
+            # if data is a dict, it can just be passed through
             c_data = data
+        else:
+            raise ValueError('Unknown data type: {}'.format(type(data)))
+
         return c_data
 
     @staticmethod
