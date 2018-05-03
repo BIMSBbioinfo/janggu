@@ -4,25 +4,20 @@ import numpy as np
 import pkg_resources
 from keras import backend as K
 from keras.layers import Conv2D
-from keras.layers import Dense
 from keras.layers import GlobalAveragePooling2D
-from keras.layers import Input
-from keras.models import Model
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 
+from janggo import InOutScorer
 from janggo import Janggo
 from janggo import inputlayer
 from janggo import outputdense
-from janggo import InOutScorer
+from janggo.data import Array
 from janggo.data import Dna
-from janggo.data import NumpyWrapper
 from janggo.utils import export_tsv
 from janggo.utils import plot_score
-
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_curve
 
 np.random.seed(1234)
 
@@ -35,7 +30,7 @@ DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2], order=2)
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
-LABELS = NumpyWrapper('y', Y, conditions='TF-binding')
+LABELS = Array('y', Y, conditions='TF-binding')
 
 
 def wrap_roc(y_true, y_pred):

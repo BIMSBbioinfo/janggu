@@ -15,9 +15,9 @@ from janggo import janggo_predict_generator
 from janggo import outputconv
 from janggo import outputdense
 from janggo.cli import main
+from janggo.data import Array
 from janggo.data import Cover
 from janggo.data import Dna
-from janggo.data import NumpyWrapper
 from janggo.data import Table
 from janggo.layers import Complement
 from janggo.layers import LocalAveragePooling2D
@@ -269,9 +269,9 @@ def test_janggo_train_predict_option1(tmpdir):
     generators: NO
     """
 
-    inputs = NumpyWrapper("X", np.random.random((100, 10)))
-    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("X", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     @inputlayer
     @outputdense('sigmoid')
@@ -307,9 +307,9 @@ def test_janggo_train_predict_option2(tmpdir):
     generators: NO
     """
 
-    inputs = NumpyWrapper("x", np.random.random((100, 10)))
-    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     def _model(path):
         inputs = Input((10,), name='x')
@@ -437,9 +437,9 @@ def test_janggo_train_predict_option5(tmpdir):
     generators: YES
     """
 
-    inputs = NumpyWrapper("x", np.random.random((100, 10)))
-    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     def _model(path):
         inputs = Input((10,), name='x')
@@ -477,9 +477,9 @@ def test_janggo_train_predict_option6(tmpdir):
     generators: YES
     """
 
-    inputs = NumpyWrapper("x", np.random.random((100, 10)))
-    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     @inputlayer
     @outputdense('sigmoid')
@@ -521,9 +521,9 @@ def test_janggo_train_predict_option7(tmpdir):
     batch_size: None
     """
 
-    inputs = NumpyWrapper("x", np.random.random((100, 10)))
-    outputs = NumpyWrapper('y', np.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     @inputlayer
     @outputdense('sigmoid')

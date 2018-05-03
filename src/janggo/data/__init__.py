@@ -6,5 +6,5 @@ from janggo.data.dna import Dna  # noqa
 from janggo.data.genomic_indexer import GenomicIndexer  # noqa
 from janggo.data.genomicarray import GenomicArray  # noqa
 from janggo.data.genomicarray import create_genomic_array  # noqa
-from janggo.data.nparr import NumpyWrapper  # noqa
+from janggo.data.nparr import Array  # noqa
 from janggo.data.tab import Table  # noqa

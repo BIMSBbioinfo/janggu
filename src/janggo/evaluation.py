@@ -323,14 +323,12 @@ class InScorer(object):
                     # reset the results
                     self.results = {}
 
-
     def export(self, path, collection_name):
         output_path = os.path.join(path, collection_name)
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
-
         if self.results:
             # if there are some results, export them
             self._exporter(output_path, self.feature_name,
-                         self.results, **self.export_args)
+                           self.results, **self.export_args)

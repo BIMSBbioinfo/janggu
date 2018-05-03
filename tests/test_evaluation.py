@@ -15,20 +15,20 @@ from janggo import Janggo
 from janggo import inputlayer
 from janggo import outputconv
 from janggo import outputdense
+from janggo.data import Array
 from janggo.data import GenomicIndexer
-from janggo.data import NumpyWrapper
 from janggo.evaluation import InOutScorer
 from janggo.evaluation import InScorer
 from janggo.evaluation import _input_dimension_match
 from janggo.evaluation import _output_dimension_match
-from janggo.utils import export_tsv
 from janggo.utils import export_bed
 from janggo.utils import export_bigwig
+from janggo.utils import export_tsv
 from janggo.utils import plot_score
 
 
 def test_input_dims():
-    data = NumpyWrapper('testa', numpy.zeros((10, 10, 1)))
+    data = Array('testa', numpy.zeros((10, 10, 1)))
     xin = Input((10, 1), name='testy')
     out = Dense(1)(xin)
     m = Model(xin, out)
@@ -54,8 +54,8 @@ def test_input_dims():
 
 
 def test_output_dims():
-    data = NumpyWrapper('testa', numpy.zeros((10, 10, 1)))
-    label = NumpyWrapper('testy', numpy.zeros((10, 1)))
+    data = Array('testa', numpy.zeros((10, 10, 1)))
+    label = Array('testy', numpy.zeros((10, 1)))
     xin = Input(data.shape, name='asdf')
     out = Flatten()(xin)
     out = Dense(1)(out)
@@ -123,9 +123,9 @@ def get_janggo_conv(inputs, outputs, tmpdir):
 
 def test_output_json_score(tmpdir):
 
-    inputs = NumpyWrapper("x", numpy.random.random((100, 10)))
-    outputs = NumpyWrapper('y', numpy.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
 
@@ -142,9 +142,9 @@ def test_output_json_score(tmpdir):
 
 
 def test_output_tsv_score(tmpdir):
-    inputs = NumpyWrapper("x", numpy.random.random((100, 10)))
-    outputs = NumpyWrapper('y', numpy.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
 
@@ -158,9 +158,9 @@ def test_output_tsv_score(tmpdir):
 
 
 def test_output_plot_score(tmpdir):
-    inputs = NumpyWrapper("x", numpy.random.random((100, 10)))
-    outputs = NumpyWrapper('y', numpy.random.randint(2, size=(100, 1)),
-                           conditions=['random'])
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
 
@@ -193,9 +193,9 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 1, 1, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 1, 1, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 1, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 1, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo_conv(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -232,9 +232,9 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 4, 1, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 4, 1, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 4, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -273,9 +273,9 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 1, 1, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 1, 1, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 1, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 1, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo_conv(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -313,9 +313,9 @@ def test_output_bed_predict_denseout(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 10)))
+    outputs = Array('y', numpy.random.random((7, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -353,9 +353,9 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 4, 1, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 4, 1, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 4, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -393,9 +393,9 @@ def test_output_bigwig_predict_denseout(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 10)))
+    outputs = Array('y', numpy.random.random((7, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -429,9 +429,9 @@ def test_output_bigwig_predict_convout(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 4, 1, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 4, 1, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 4, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo_conv(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',
@@ -465,9 +465,9 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
     # generate loss
     #
     # resolution < stepsize
-    inputs = NumpyWrapper("x", numpy.random.random((7, 4, 1, 10)))
-    outputs = NumpyWrapper('y', numpy.random.random((7, 4, 1, 4)),
-                           conditions=['c1', 'c2', 'c3', 'c4'])
+    inputs = Array("x", numpy.random.random((7, 4, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm = get_janggo(inputs, outputs, tmpdir)
     data_path = pkg_resources.resource_filename('janggo',

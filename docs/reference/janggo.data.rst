@@ -23,7 +23,7 @@ Classes
    Cover
    Dna
    Table
-   NumpyWrapper
+   Array
 
 .. autoclass:: Cover
    :members: create_from_bam, create_from_bigwig, create_from_bed

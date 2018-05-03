@@ -1,13 +1,13 @@
 from janggo.data.data import Dataset
 
 
-class NumpyWrapper(Dataset):
-    """NumpyWrapper class.
+class Array(Dataset):
+    """Array class.
 
     This datastructure wraps arbitrary numpy.arrays for a
     deep learning application with Janggo.
     The main difference to an ordinary numpy.array is that
-    NumpyWrapper has a name attribute.
+    Array has a name attribute.
 
     Parameters
     -----------
@@ -32,7 +32,7 @@ class NumpyWrapper(Dataset):
         Dataset.__init__(self, '{}'.format(name))
 
     def __repr__(self):  # pragma: no cover
-        return 'NumpyWrapper("{}", <np.array>)'.format(self.name)
+        return 'Array("{}", <np.array>)'.format(self.name)
 
     def __len__(self):
         return len(self.data)

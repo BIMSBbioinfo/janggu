@@ -79,11 +79,11 @@ This means, only the network body remains to be defined:
 
     import numpy as np
     from janggo import inputlayer, outputdense
-    from janggo.data import NumpyWrapper
+    from janggo.data import Array
 
     # Some random data
-    DATA = NumpyWrapper('ip', np.random.random((1000, 10)))
-    LABELS = NumpyWrapper('out', np.random.randint(2, size=(1000, 1)))
+    DATA = Array('ip', np.random.random((1000, 10)))
+    LABELS = Array('out', np.random.randint(2, size=(1000, 1)))
 
     # inputlayer and outputdense automatically
     # extract dataset shapes and extend the
