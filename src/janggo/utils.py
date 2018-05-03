@@ -287,7 +287,7 @@ def plot_score(output_dir, name, results, figsize=None, xlabel=None,
         os.makedirs(output_dir)
 
     if figsize is not None:
-        fig = plt.figure(figsize)
+        fig = plt.figure(figsize=figsize)
     else:
         fig = plt.figure()
 

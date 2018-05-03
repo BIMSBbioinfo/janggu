@@ -174,13 +174,26 @@ def test_output_plot_score(tmpdir):
                               [0.5, 0.5, 1., 1.],
                               [0.8, 0.4, 0.35, 0.1]), dumper=plot_score)
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
+    dummy_eval_par = InOutScorer('score',
+                                 lambda y_true, y_pred:
+                                 ([0., 0.5, 0.5, 1.],
+                                  [0.5, 0.5, 1., 1.],
+                                  [0.8, 0.4, 0.35, 0.1]), dumper=plot_score,
+                                 dump_args={'figsize': (10,12),
+                                            'xlabel': 'FPR',
+                                            'ylabel': 'TPR',
+                                            'fform': 'eps'})
+
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval, dummy_eval_par])
 
     dummy_eval.dump(bwm.outputdir)
+    dummy_eval_par.dump(bwm.outputdir)
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
                                        "evaluation", "score.png"))
+    assert os.path.exists(os.path.join(tmpdir.strpath,
+                                       "evaluation", "score.eps"))
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
