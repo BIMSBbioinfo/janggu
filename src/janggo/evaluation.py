@@ -195,7 +195,7 @@ class InOutScorer(object):
 
     def __init__(self, score_name, score_fct, conditions=None,
                  dumper=dump_json, score_args=None,
-                 dump_args=None, immediate_dump=False,
+                 dump_args=None, immediate_dump=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         super(InOutScorer, self).__init__()
@@ -266,7 +266,7 @@ class InScorer(object):
     def __init__(self, score_name, extractor=None,
                  conditions=None,
                  dumper=dump_json, extractor_args=None,
-                 dump_args=None, immediate_dump=False,
+                 dump_args=None, immediate_dump=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         super(InScorer, self).__init__()
