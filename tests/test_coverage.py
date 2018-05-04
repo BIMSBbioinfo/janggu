@@ -600,13 +600,10 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
                                  cinterval.end))
 
 
-
 def test_load_coveragedataset_bed_binary():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bwfile_ = os.path.join(data_path, "scored_region.bed")
-
-    gsize = {'chr1': 20000}
 
     bed_file = os.path.join(data_path, "regions.bed")
 
@@ -639,8 +636,6 @@ def test_load_coveragedataset_bed_scored():
 
     bwfile_ = os.path.join(data_path, "scored_region.bed")
 
-    gsize = {'chr1': 20000}
-
     bed_file = os.path.join(data_path, "regions.bed")
 
     resolution = 50
@@ -671,8 +666,6 @@ def test_load_coveragedataset_bed_categorical():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bwfile_ = os.path.join(data_path, "scored_region.bed")
-
-    gsize = {'chr1': 20000}
 
     bed_file = os.path.join(data_path, "regions.bed")
 
