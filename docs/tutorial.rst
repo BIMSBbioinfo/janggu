@@ -333,6 +333,7 @@ The following example shows how to compute the AUC-ROC, plot the ROC curve
 and export the prediction loss to bigwig format
 
 In order to compute
+
 .. code:: python
 
    import numpy
@@ -342,16 +343,12 @@ In order to compute
    score_auroc = InOutScorer('auROC', roc_auc_score, dumper=dump_tsv)
    score_roc = InOutScorer('ROC', roc_curve, dumper=plot_score)
    score_loss = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
-                            dumper=export_bigwig,
-                            dump_args={'gindexer': DNA.gindexer})
+                            exporter=export_bigwig,
+                            exporter_args={'gindexer': DNA.gindexer})
 
    # Evaluate the results
    model.evaluate(DNA, LABELS, datatags=['training_set'],
                   callbacks=[score_auroc, score_roc, score_loss])
-
-   # Until this point the evaluators have only collected the scores
-   # Finally, we need to dump the evaluated information
-   [ev.dump(model.outputdir) for ev in [score_auroc, score_roc, score_loss]]
 
 
 :code:`InScorer`
@@ -368,8 +365,8 @@ you can invoke the following lines of code:
 .. code:: python
 
    # Instantiate several evaluation scorers
-   pred = InOutScorer('predict', dumper=export_bed,
-                         dump_args={'gindexer': DNA.gindexer})
+   pred = InOutScorer('predict', exporter=export_bed,
+                      exporter_args={'gindexer': DNA.gindexer})
 
    # Evaluate predictions
    model.predict(DNA, datatags=['training_set'],

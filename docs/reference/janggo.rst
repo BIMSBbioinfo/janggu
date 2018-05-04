@@ -25,10 +25,10 @@ Evaluator
 ---------
 
 .. autosummary::
-   InScorer.predict
-   InScorer.dump
-   InOutScorer.evaluate
-   InOutScorer.dump
+   InScorer.score
+   InScorer.export
+   InOutScorer.score
+   InOutScorer.export
 
 .. autoclass:: InScorer
    :members:
