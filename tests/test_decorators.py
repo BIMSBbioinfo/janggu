@@ -80,9 +80,9 @@ def make_dense_w_topbottom(input, input_props, output_props, params):
 def make_conv_wo_decorator(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
-    layer = Conv2D(params[0], (1, 1))(input[0])
+    layer = Conv2D(params[0], (6, 4))(input[0])
     output = [Conv2D(outshapes[name]['shape'][-1],
-                     (6, 4),
+                     (1, 1),
                      name=name,
                      activation=params[1])(layer)
               for name in outshapes]
@@ -95,7 +95,7 @@ def make_conv_wo_decorator(input, inshapes, outshapes, params):
 def make_conv_w_top_str(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
-    output = Conv2D(params[0], (1, 1))(input[0])
+    output = Conv2D(params[0], (6, 4))(input[0])
     return input, output
 
 
@@ -105,7 +105,7 @@ def make_conv_w_top_str(input, inshapes, outshapes, params):
 def make_conv_w_top_dict(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
-    output = Conv2D(params[0], (1, 1))(input[0])
+    output = Conv2D(params[0], (6, 4))(input[0])
     return input, output
 
 
@@ -115,7 +115,7 @@ def make_conv_w_top_dict(input, inshapes, outshapes, params):
 def make_conv_w_top_func(input, inshapes, outshapes, params):
     input = [Input(inshapes[name]['shape'], name=name)
              for name in inshapes]
-    output = Conv2D(params[0], (1, 1))(input[0])
+    output = Conv2D(params[0], (6, 4))(input[0])
     return input, output
 
 
@@ -124,9 +124,9 @@ def make_conv_w_top_func(input, inshapes, outshapes, params):
 @inputlayer
 def make_conv_w_bottom(input, inshapes, outshapes, params):
     input
-    layer = Conv2D(params[0], (1, 1))(input[0])
+    layer = Conv2D(params[0], (6, 4))(input[0])
     output = [Conv2D(outshapes[name]['shape'][-1],
-                     (6, 4),
+                     (1, 1),
                      name=name,
                      activation=params[1])(layer)
               for name in outshapes]
@@ -138,7 +138,7 @@ def make_conv_w_bottom(input, inshapes, outshapes, params):
 @inputlayer
 @outputconv('sigmoid')
 def make_conv_w_topbottom(input, input_props, output_props, params):
-    output = Conv2D(params[0], (1, 1))(input[0])
+    output = Conv2D(params[0], (6, 4))(input[0])
     return input, output
 
 
