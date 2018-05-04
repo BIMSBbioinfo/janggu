@@ -60,7 +60,7 @@ class Dataset:
         return len(self.shape)
 
 
-def data_props(data):
+def _data_props(data):
     """Extracts the shape of a provided Input-Dataset.
 
     Parameters

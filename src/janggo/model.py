@@ -12,7 +12,7 @@ from keras.models import Model
 from keras.models import load_model
 from keras.utils import plot_model
 
-from janggo.data.data import data_props
+from janggo.data.data import _data_props
 from janggo.layers import Complement
 from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
@@ -276,8 +276,8 @@ class Janggo(object):
         modelfct = template
 
         K.clear_session()
-        inputs_ = data_props(inputs) if inputs else None
-        outputs_ = data_props(outputs) if outputs else None
+        inputs_ = _data_props(inputs) if inputs else None
+        outputs_ = _data_props(outputs) if outputs else None
 
         input_tensors, output_tensors = modelfct(None, inputs_,
                                                  outputs_, modelparams)

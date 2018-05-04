@@ -7,7 +7,7 @@ import pytest
 
 from janggo.data import Dna
 from janggo.data import Table
-from janggo.data.data import data_props
+from janggo.data.data import _data_props
 from janggo.utils import dna2ind
 from janggo.utils import sequences_from_fasta
 
@@ -24,12 +24,12 @@ def test_dna_props_extraction():
                                     storage='ndarray',
                                     regions=bed_file, order=1)
 
-    props = data_props(dna)
+    props = _data_props(dna)
     assert 'dna' in props
     assert props['dna']['shape'] == (200, 4, 1)
 
     with pytest.raises(Exception):
-        data_props((0,))
+        _data_props((0,))
 
 
 def test_tab_props_extraction():
@@ -40,7 +40,7 @@ def test_tab_props_extraction():
     ctcf1 = Table('ctcf1', filename=csvfile)
     ctcf2 = Table('ctcf2', filename=csvfile)
 
-    props = data_props([ctcf1, ctcf2])
+    props = _data_props([ctcf1, ctcf2])
 
     assert 'ctcf1' in props
     assert 'ctcf2' in props
@@ -48,7 +48,7 @@ def test_tab_props_extraction():
     assert props['ctcf2']['shape'] == (1,)
 
     with pytest.raises(Exception):
-        data_props((0,))
+        _data_props((0,))
 
 
 def test_dna2ind():
