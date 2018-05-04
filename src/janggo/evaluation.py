@@ -15,57 +15,48 @@ from janggo.model import Janggo
 from janggo.utils import export_json
 
 
-def _input_dimension_match(kerasmodel, inputs):
-    """Check if input dimensions are matched"""
-    print("input_dimension_match")
-    print(kerasmodel.get_config()['input_layers'])
-    if not isinstance(inputs, list):
-        tmpinputs = [inputs]
+def _dimension_match(kerasmodel, data, layertype):
+    """Check if layer dimensions match.
+    The function checks whether the kerasmodel as compatible with
+    the supplied inputs.
+
+    Parameters
+    ----------
+    kerasmodel : :class:`keras.Model`
+        Object of type keras.Model.
+    data : Dataset or list(Dataset)
+        Dataset to check compatiblity for.
+    layertype : str
+        layers is either 'input_layers' or 'output_layers'.
+
+    Returns
+    -------
+    boolean :
+        Returns True if the keras model is compatible with the data
+        and otherwise False.
+    """
+    if data is None and layertype == 'output_layers':
+        return True
+
+    # print("output_dimension_match")
+    if not isinstance(data, list):
+        tmpdata = [data]
     else:
-        tmpinputs = inputs
-    if len(kerasmodel.get_config()['input_layers']) != len(tmpinputs):
-        # The number of input-layers is different
-        # from the number of provided inputs.
-        # Therefore, model and data are incompatible
+        tmpdata = data
+    if len(kerasmodel.get_config()[layertype]) != len(tmpdata):
         return False
-    for input_ in tmpinputs:
-        # Check if input dimensions match between model specification
-        # and dataset
-        try:
-            layer = kerasmodel.get_layer(input_.name)
-            print('{}.shape={} / {}'.format(input_.name, layer.input_shape[1:], input_.shape[1:]))
-            if not isinstance(layer, InputLayer) or \
-               not layer.input_shape[1:] == input_.shape[1:]:
-                # if the layer name is present but the dimensions
-                # are incorrect, we end up here.
-                return False
-        except ValueError:
+    # Check if output dims match between model spec and data
+    for datum in tmpdata:
+
+        if datum.name not in [el[0] for el in
+                              kerasmodel.get_config()[layertype]]:
             # If the layer name is not present we end up here
             return False
-    return True
-
-
-def _output_dimension_match(kerasmodel, outputs):
-    if outputs is not None:
-        print("output_dimension_match")
-        if not isinstance(outputs, list):
-            tmpoutputs = [outputs]
-        else:
-            tmpoutputs = outputs
-        if len(kerasmodel.get_config()['output_layers']) != len(tmpoutputs):
+        layer = kerasmodel.get_layer(datum.name)
+        if not layer.output_shape[1:] == datum.shape[1:]:
+            # if the layer name is present but the dimensions
+            # are incorrect, we end up here.
             return False
-        # Check if output dims match between model spec and data
-        for output in tmpoutputs:
-
-            if output.name not in [el[0] for el in
-                                   kerasmodel.get_config()['output_layers']]:
-                # If the layer name is not present we end up here
-                return False
-            layer = kerasmodel.get_layer(output.name)
-            if not layer.output_shape[1:] == output.shape[1:]:
-                # if the layer name is present but the dimensions
-                # are incorrect, we end up here.
-                return False
     return True
 
 

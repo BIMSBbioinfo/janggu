@@ -19,8 +19,7 @@ from janggo.data import Array
 from janggo.data import GenomicIndexer
 from janggo.evaluation import InOutScorer
 from janggo.evaluation import InScorer
-from janggo.evaluation import _input_dimension_match
-from janggo.evaluation import _output_dimension_match
+from janggo.evaluation import _dimension_match
 from janggo.utils import export_bed
 from janggo.utils import export_bigwig
 from janggo.utils import export_tsv
@@ -34,23 +33,23 @@ def test_input_dims():
     m = Model(xin, out)
 
     # False due to mismatch of names
-    assert not _input_dimension_match(m, data)
+    assert not _dimension_match(m, data, 'input_layers')
 
     xin = Input((20, 10, 1), name='testa')
     out = Dense(1)(xin)
     m = Model(xin, out)
 
     # False due to mismatch of dims
-    assert not _input_dimension_match(m, data)
+    assert not _dimension_match(m, data, 'input_layers')
     # more input datasets supplied than inputs to models
-    assert not _input_dimension_match(m, [data, data])
+    assert not _dimension_match(m, [data, data], 'input_layers')
 
     xin = Input((10, 1), name='testa')
     out = Dense(1)(xin)
     m = Model(xin, out)
 
     # False due to mismatch of dims
-    assert _input_dimension_match(m, data)
+    assert _dimension_match(m, data, 'input_layers')
 
 
 def test_output_dims():
@@ -62,7 +61,7 @@ def test_output_dims():
     m = Model(xin, out)
 
     # False due to mismatch of names
-    assert not _output_dimension_match(m, label)
+    assert not _dimension_match(m, label, 'output_layers')
 
     xin = Input(data.shape, name='testa')
     out = Flatten()(xin)
@@ -70,7 +69,7 @@ def test_output_dims():
     m = Model(xin, out)
 
     # False due to mismatch of dims
-    assert not _output_dimension_match(m, label)
+    assert not _dimension_match(m, label, 'output_layers')
 
     xin = Input(data.shape, name='testa')
     out = Flatten()(xin)
@@ -78,9 +77,9 @@ def test_output_dims():
     m = Model(xin, out)
 
     # False due to mismatch of dims
-    assert _output_dimension_match(m, label)
+    assert _dimension_match(m, label, 'output_layers')
 
-    assert _output_dimension_match(m, None)
+    assert _dimension_match(m, None, 'output_layers')
 
 
 def get_janggo(inputs, outputs, tmpdir):
