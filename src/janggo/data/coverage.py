@@ -3,13 +3,12 @@ import os
 import numpy as np
 import pyBigWig
 import pysam
-from HTSeq import BED_Reader
 from HTSeq import GenomicInterval
-from HTSeq import GFF_Reader
 
 from janggo.data.data import Dataset
 from janggo.data.genomic_indexer import GenomicIndexer
 from janggo.data.genomicarray import create_genomic_array
+from janggo.utils import _get_genomic_reader
 from janggo.utils import get_genome_size_from_bed
 
 
@@ -361,13 +360,8 @@ class Cover(Dataset):
                 raise ValueError('Only one bed-file is '
                                  'allowed with mode=categorical')
             sample_file = bedfiles[0]
-            if isinstance(sample_file, str) and sample_file.endswith('.bed'):
-                regions_ = BED_Reader(sample_file)
-            elif isinstance(regions, str) and (sample_file.endswith('.gff') or
-                                               sample_file.endswith('.gtf')):
-                regions_ = GFF_Reader(sample_file)
-            else:
-                raise Exception('Regions must be a bed, gff or gtf-file.')
+            regions_ = _get_genomic_reader(sample_file)
+
             max_class = 0
             for reg in regions_:
                 if reg.score > max_class:
@@ -378,13 +372,7 @@ class Cover(Dataset):
             print("load from bed")
             for i, sample_file in enumerate(bedfiles):
                 print(sample_file)
-                if isinstance(sample_file, str) and sample_file.endswith('.bed'):
-                    regions_ = BED_Reader(sample_file)
-                elif isinstance(regions, str) and (sample_file.endswith('.gff') or
-                                                   sample_file.endswith('.gtf')):
-                    regions_ = GFF_Reader(sample_file)
-                else:
-                    raise Exception('Regions must be a bed, gff or gtf-file.')
+                regions_ = _get_genomic_reader(sample_file)
 
                 for region in regions_:
                     if region.iv.chrom not in genomesize:

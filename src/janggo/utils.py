@@ -185,6 +185,20 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     return content.to_dict()['length']
 
 
+def _get_genomic_reader(filename):
+    """regions from a BED_Reader or GFF_Reader.
+    """
+    if isinstance(filename, str) and filename.endswith('.bed'):
+        regions_ = BED_Reader(filename)
+    elif isinstance(filename, str) and (filename.endswith('.gff') or
+                                        filename.endswith('.gtf')):
+        regions_ = GFF_Reader(filename)
+    else:
+        raise Exception('Regions must be a bed, gff or gtf-file.')
+
+    return regions_
+
+
 def get_genome_size_from_bed(bedfile, flank):
     """Get genome size.
 
@@ -206,13 +220,7 @@ def get_genome_size_from_bed(bedfile, flank):
         as values.
     """
 
-    if isinstance(bedfile, str) and bedfile.endswith('.bed'):
-        regions_ = BED_Reader(bedfile)
-    elif isinstance(bedfile, str) and (bedfile.endswith('.gff') or
-                                       bedfile.endswith('.gtf')):
-        regions_ = GFF_Reader(bedfile)
-    else:
-        raise Exception('Regions must be a bed, gff or gtf-file.')
+    regions_ = _get_genomic_reader(bedfile)
 
     gsize = {}
     for region in regions_:

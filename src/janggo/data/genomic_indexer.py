@@ -1,7 +1,7 @@
 import numpy as np
-from HTSeq import BED_Reader
 from HTSeq import GenomicInterval
-from HTSeq import GFF_Reader
+
+from janggo.utils import _get_genomic_reader
 
 
 class GenomicIndexer(object):
@@ -56,13 +56,7 @@ class GenomicIndexer(object):
             the binsize. If False, variable region lengths are allowed.
         """
 
-        if isinstance(regions, str) and regions.endswith('.bed'):
-            regions_ = BED_Reader(regions)
-        elif isinstance(regions, str) and (regions.endswith('.gff') or
-                                           regions.endswith('.gtf')):
-            regions_ = GFF_Reader(regions)
-        else:
-            raise Exception('Regions must be a bed, gff or gtf-file.')
+        regions_ = _get_genomic_reader(regions)
 
         gind = cls(binsize, stepsize, resolution)
 
