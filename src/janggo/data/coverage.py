@@ -372,7 +372,7 @@ class Cover(Dataset):
             for reg in regions_:
                 if reg.score > max_class:
                     max_class = reg.score
-            conditions = [str(i + 1) for i in range(max_class)]
+            conditions = [str(i) for i in range(int(max_class + 1))]
 
         def _bed_loader(cover, bedfiles, genomesize, mode):
             print("load from bed")

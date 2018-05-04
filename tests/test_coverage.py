@@ -541,7 +541,7 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
         np.testing.assert_equal(len(cvdata), 14344)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 4 + 2*4, 1, 1))
         np.testing.assert_equal(cvdata[99].shape, (1, 12, 1, 1))
-        np.testing.assert_equal(cvdata[99].sum(), 10 + 11)
+        np.testing.assert_equal(cvdata[99].sum(), 1 + 11)
 
         cinterval = cvdata.gindexer[99]
         np.testing.assert_equal(('chr1', 111, 115),
@@ -592,9 +592,110 @@ def test_load_coveragedataset_bed_unstranded_resolution50_bin200(tmpdir):
         np.testing.assert_equal(len(cvdata), 14344)
         np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 1, 1))
         np.testing.assert_equal(cvdata[99].shape, (1, 1, 1, 1))
-        np.testing.assert_equal(cvdata[99].sum(), 10)
+        np.testing.assert_equal(cvdata[99].sum(), 1)
 
         cinterval = cvdata.gindexer[99]
         np.testing.assert_equal(('chr1', 111, 115),
                                 (cinterval.chrom, cinterval.start,
                                  cinterval.end))
+
+
+
+def test_load_coveragedataset_bed_binary():
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "scored_region.bed")
+
+    gsize = {'chr1': 20000}
+
+    bed_file = os.path.join(data_path, "regions.bed")
+
+    resolution = 50
+
+    store = 'ndarray'
+
+    cvdata_bigwig = Cover.create_from_bed(
+        "yeast_I_II_III.bed_res20_str",
+        bedfiles=bwfile_,
+        regions=bed_file,
+        binsize=50, stepsize=50,
+        resolution=resolution,
+        dimmode='all',
+        storage=store,
+        mode='binary')
+
+    cvdata = cvdata_bigwig
+
+    np.testing.assert_equal(len(cvdata), 14350)
+    np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 1, 1))
+    np.testing.assert_equal(cvdata[0].shape, (1, 1, 1, 1))
+    np.testing.assert_equal(cvdata[0].sum(), 1)
+    np.testing.assert_equal(cvdata[1].sum(), 1)
+    np.testing.assert_equal(cvdata[99].sum(), 0)
+
+
+def test_load_coveragedataset_bed_scored():
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "scored_region.bed")
+
+    gsize = {'chr1': 20000}
+
+    bed_file = os.path.join(data_path, "regions.bed")
+
+    resolution = 50
+
+    store = 'ndarray'
+
+    cvdata_bigwig = Cover.create_from_bed(
+        "yeast_I_II_III.bed_res20_str",
+        bedfiles=bwfile_,
+        regions=bed_file,
+        binsize=50, stepsize=50,
+        resolution=resolution,
+        dimmode='all',
+        storage=store,
+        mode='score')
+
+    cvdata = cvdata_bigwig
+
+    np.testing.assert_equal(len(cvdata), 14350)
+    np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 1, 1))
+    np.testing.assert_equal(cvdata[0].shape, (1, 1, 1, 1))
+    np.testing.assert_equal(cvdata[0].sum(), 1)
+    np.testing.assert_equal(cvdata[1].sum(), 2)
+    np.testing.assert_equal(cvdata[99].sum(), 0)
+
+
+def test_load_coveragedataset_bed_categorical():
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "scored_region.bed")
+
+    gsize = {'chr1': 20000}
+
+    bed_file = os.path.join(data_path, "regions.bed")
+
+    resolution = 50
+
+    store = 'ndarray'
+
+    cvdata_bigwig = Cover.create_from_bed(
+        "yeast_I_II_III.bed_res20_str",
+        bedfiles=bwfile_,
+        regions=bed_file,
+        binsize=50, stepsize=50,
+        resolution=resolution,
+        dimmode='all',
+        storage=store,
+        mode='categorical')
+
+    cvdata = cvdata_bigwig
+
+    np.testing.assert_equal(len(cvdata), 14350)
+    np.testing.assert_equal(cvdata.shape, (len(cvdata), 1, 1, 9))
+    np.testing.assert_equal(cvdata[0].shape, (1, 1, 1, 9))
+    np.testing.assert_equal(cvdata[0][0, 0, 0, 1], 1)
+    np.testing.assert_equal(cvdata[1][0, 0, 0, 2], 1)
+    np.testing.assert_equal(cvdata[2][0, 0, 0, 3], 1)
+    np.testing.assert_equal(cvdata[99].sum(), 0)
