@@ -175,9 +175,9 @@ def test_output_plot_score(tmpdir):
                                   [0.5, 0.5, 1., 1.],
                                   [0.8, 0.4, 0.35, 0.1]), exporter=plot_score,
                                  exporter_args={'figsize': (10, 12),
-                                              'xlabel': 'FPR',
-                                              'ylabel': 'TPR',
-                                              'fform': 'eps'})
+                                                'xlabel': 'FPR',
+                                                'ylabel': 'TPR',
+                                                'fform': 'eps'})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval, dummy_eval_par])
 
