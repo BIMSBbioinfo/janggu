@@ -186,6 +186,8 @@ class NPGenomicArray(GenomicArray):
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                          storage='hdf5', memmap_dir="", overwrite=False,
                          loader=None, loader_args=None):
+    """Factory function for creating a GenomicArray."""
+
     if storage == 'hdf5':
         return HDF5GenomicArray(chroms, stranded, conditions, typecode,
                                 memmap_dir, overwrite, loader, loader_args)
