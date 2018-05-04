@@ -17,17 +17,13 @@ class Array(Dataset):
         Numpy array.
     conditions : list(str) or None
         Conditions or label names of the dataset.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
     """
 
-    def __init__(self, name, array, conditions=None, cachedir=None):
+    def __init__(self, name, array, conditions=None):
 
         self.data = array
         if conditions and isinstance(conditions, list):
             self.conditions = conditions
-
-        self.cachedir = cachedir
 
         Dataset.__init__(self, '{}'.format(name))
 

@@ -19,8 +19,6 @@ class Table(Dataset):
         Filename or list of filenames containing tables to load.
     conditions : list(str) or None
         Conditions or label names of the dataset.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
     dtype : str
         Datatype. Default: 'int8'
     sep : str
@@ -30,7 +28,7 @@ class Table(Dataset):
     _filename = None
 
     def __init__(self, name, filename, conditions=None,
-                 cachedir=None, dtype='int8', sep=','):
+                 dtype='int8', sep=','):
 
         self.filename = filename
 
@@ -43,8 +41,6 @@ class Table(Dataset):
                                     sep=sep, dtype=dtype))
 
             self.data = pd.concat(data, axis=1, ignore_index=True).values
-
-        self.cachedir = cachedir
 
         Dataset.__init__(self, name)
 
