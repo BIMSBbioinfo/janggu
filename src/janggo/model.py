@@ -566,7 +566,7 @@ class Janggo(object):
 
         prd = self.__convert_data(preds, 'output_layers')
         for callback in callbacks or []:
-            callback.predict(prd, model=self, datatags=datatags)
+            callback.score(prd, model=self, datatags=datatags)
         return preds
 
     def evaluate(self, inputs=None, outputs=None,
@@ -669,7 +669,7 @@ class Janggo(object):
         preds = self.__convert_data(preds, 'output_layers')
 
         for callback in callbacks or []:
-            callback.evaluate(outputs, preds, model=self, datatags=datatags)
+            callback.score(outputs, preds, model=self, datatags=datatags)
         return values
 
     def __dim_logging(self, data):

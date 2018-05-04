@@ -313,8 +313,10 @@ def plot_score(output_dir, name, results, figsize=None, xlabel=None,
 
 
 def export_bigwig(output_dir, name, results, gindexer=None):
+    """Export predictions to bigwig.
 
-    """Export predictions to bigwig."""
+    This function can be used as exporter with :class:`InOutScorer`.
+    """
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bigiwig')
@@ -364,7 +366,10 @@ def export_bigwig(output_dir, name, results, gindexer=None):
 
 
 def export_bed(output_dir, name, results, gindexer=None):
-    """Export predictions to bed."""
+    """Export predictions to bed.
+
+    This function can be used as exporter with :class:`InOutScorer`.
+    """
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bed')
