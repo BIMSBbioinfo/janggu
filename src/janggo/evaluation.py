@@ -177,7 +177,7 @@ class EvaluatorList(object):
             evaluator.export(self.outputdir)
 
 
-def reshape(data):
+def _reshape(data):
     """Reshape the dataset to make it compatible with the
     evaluation method.
     """
@@ -220,8 +220,8 @@ class InOutScorer(object):
         if not datatags:
             datatags = []
 
-        _out = reshape(outputs)
-        _pre = reshape(predicted)
+        _out = _reshape(outputs)
+        _pre = _reshape(predicted)
 
         for layername in model.get_config()['output_layers']:
             lout = _out[layername[0]]
