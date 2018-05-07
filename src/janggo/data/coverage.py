@@ -58,7 +58,7 @@ class Cover(Dataset):
     def create_from_bam(cls, name, bamfiles, regions, genomesize=None,
                         conditions=None,
                         min_mapq=None,
-                        binsize=50, stepsize=50,
+                        binsize=200, stepsize=200,
                         flank=0, storage='ndarray',
                         dtype='int',
                         overwrite=False,
@@ -85,10 +85,10 @@ class Cover(Dataset):
             Minimal mapping quality. Reads with lower mapping quality are
             discarded. If None, all reads are used.
         binsize : int
-            Binsize in basepairs. Default: 50.
+            Binsize in basepairs. Default: 200.
         stepsize : int
             Stepsize in basepairs. This defines the step size for traversing
-            the genome. Default: 50.
+            the genome. Default: 200.
         flank : int
             Flanking size increases the interval size at both ends by
             flank base pairs. Default: 0
@@ -175,8 +175,8 @@ class Cover(Dataset):
     @classmethod
     def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize=None,
                            conditions=None,
-                           binsize=200, stepsize=50,
-                           resolution=50,
+                           binsize=200, stepsize=200,
+                           resolution=200,
                            flank=0, storage='ndarray',
                            dtype='float32',
                            overwrite=False,
@@ -200,14 +200,15 @@ class Cover(Dataset):
             List of conditions. If `conditions=None`, the filenames
             are used as conditions directly.
         binsize : int
-            Binsize in basepairs. Default: 50.
+            Binsize in basepairs. Default: 200.
         stepsize : int
             Stepsize in basepairs. This defines the step size for traversing
-            the genome. Default: 50.
+            the genome. Default: 200.
         resolution : int
             Resolution in base pairs. This is used to collect the mean signal
-            over the window lengths defined by the resolution. Default: 50.
-            This value should be chosen to be divisible by binsize and stepsize.
+            over the window lengths defined by the resolution.
+            This value must be chosen to be divisible by binsize and stepsize.
+            Default: 200.
         flank : int
             Flanking size increases the interval size at both ends by
             flank bins. Note that the binsize is defined by the resolution parameter.
@@ -281,8 +282,8 @@ class Cover(Dataset):
     @classmethod
     def create_from_bed(cls, name, bedfiles, regions, genomesize=None,
                         conditions=None,
-                        binsize=200, stepsize=50,
-                        resolution=50,
+                        binsize=200, stepsize=200,
+                        resolution=200,
                         flank=0, storage='ndarray',
                         dtype='int',
                         dimmode='all',
@@ -307,14 +308,15 @@ class Cover(Dataset):
             List of conditions. If `conditions=None`, the filenames
             are used as conditions directly.
         binsize : int
-            Binsize in basepairs. Default: 50.
+            Binsize in basepairs. Default: 200.
         stepsize : int
             Stepsize in basepairs. This defines the step size for traversing
-            the genome. Default: 50.
+            the genome. Default: 200.
         resolution : int
             Resolution in base pairs. This is used to collect the mean signal
-            over the window lengths defined by the resolution. Default: 50.
+            over the window lengths defined by the resolution.
             This value should be chosen to be divisible by binsize and stepsize.
+            Default: 200.
         flank : int
             Flanking size increases the interval size at both ends by
             flank bins. Note that the binsize is defined by the resolution parameter.

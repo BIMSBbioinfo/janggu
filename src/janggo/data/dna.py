@@ -115,7 +115,7 @@ class Dna(Dataset):
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions,
-                              stepsize=50, reglen=200,
+                              stepsize=200, reglen=200,
                               flank=0, order=1, storage='ndarray',
                               cachedir='', overwrite=False):
         """Create a Dna class from a reference genome.
@@ -134,10 +134,10 @@ class Dna(Dataset):
         reglen : int
             Region length in basepairs to be considered. Default: 200.
         stepsize : int
-            stepsize in basepairs for traversing the genome. Default: 50.
+            stepsize in basepairs for traversing the genome. Default: 200.
         flank : int
             Flanking regions in basepairs to be extended up and downstream.
-            Default: 150.
+            Default: 0.
         order : int
             Order for the one-hot representation. Default: 1.
         storage : str

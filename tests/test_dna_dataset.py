@@ -59,12 +59,14 @@ def dna_templ(order):
                                      regions=bed_merged,
                                      storage='ndarray',
                                      reglen=reglen,
+                                     stepsize=stepsize,
                                      flank=flank,
                                      order=order)
     idata = Dna.create_from_refgenome('itrain', refgenome=refgenome,
                                       regions=bed_indiv,
                                       reglen=reglen,
                                       flank=flank,
+                                      stepsize=stepsize,
                                       storage='ndarray',
                                       order=order)
 
