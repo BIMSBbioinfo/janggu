@@ -1,0 +1,4 @@
+##description: example gtf
+##format: gtf
+chr1	JANGGO	chrom	15001	25000	.	+	.	feature_id "f1";
+chr2	JANGGO	chrom	15001	25000	.	-	.	feature_id "f2";
