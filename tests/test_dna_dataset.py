@@ -50,51 +50,29 @@ def datalen(bed_file):
 def dna_templ(order):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    bed_merged = os.path.join(data_path, 'regions.bed')
-    bed_indiv = os.path.join(data_path, 'indiv_regions.bed')
+    bed_merged = os.path.join(data_path, 'sample.bed')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Dna.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_merged,
                                      storage='ndarray',
-                                     reglen=reglen,
-                                     stepsize=stepsize,
-                                     flank=flank,
                                      order=order)
-    idata = Dna.create_from_refgenome('itrain', refgenome=refgenome,
-                                      regions=bed_indiv,
-                                      reglen=reglen,
-                                      flank=flank,
-                                      stepsize=stepsize,
-                                      storage='ndarray',
-                                      order=order)
 
-    indices = [1, 600, 1000]
-
-    # Check correctness of idna4idx
-    np.testing.assert_equal(data.idna4idx(indices).shape, (len(indices),
-                            reglen + 2*flank - order + 1))
-
-    # actual shape of DNA
-    dna = data[indices]
-    # this is the actual numpy array
-    np.testing.assert_equal(dna.shape, (len(indices),
-                                        reglen + 2*flank - order + 1,
-                                        pow(4, order), 1))
-
-    # this is the bwdataset
-    np.testing.assert_equal(data.shape, (len(data),
-                                         reglen + 2*flank - order + 1,
-                                         pow(4, order), 1))
-
-    # Check length
-    np.testing.assert_equal(len(data), datalen(bed_merged))
-
-    # test if the two arrays (one is read from a merged bed and one
-    # from individual bed regions) are the same
-    np.testing.assert_equal(data[indices], idata[indices])
-    np.testing.assert_equal(len(data), len(idata))
+    # for order 1
+    assert len(data) == 100
+    assert data.shape == (100, 200, 4, 1)
+    np.testing.assert_equal(data[0][0, :10, :, 0],
+                            np.asarray([[1, 0, 0, 0],
+                                        [0, 0, 0, 1],
+                                        [0, 0, 0, 1],
+                                        [0, 0, 1, 0],
+                                        [0, 0, 0, 1],
+                                        [0, 0, 1, 0],
+                                        [0, 0, 1, 0],
+                                        [0, 0, 0, 1],
+                                        [0, 0, 1, 0],
+                                        [1, 0, 0, 0]], dtype=int8))
 
 
 def test_read_ranges_from_file():
@@ -131,13 +109,104 @@ def test_read_ranges_from_file():
 
 def test_dna_dims_order_1():
     order = 1
-    dna_templ(order)
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.bed')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_merged,
+                                     storage='ndarray',
+                                     order=order)
+    # for order 1
+    assert len(data) == 100
+    assert data.shape == (100, 200, 4, 1)
+    # the correctness of the sequence extraction was also
+    # validated using:
+    # bedtools getfasta -fi sample_genome.fa -bed sample.bed
+    # >chr1:15000-25000
+    # ATTGTGGTGA...
+    # this sequence is read from the forward strand
+    np.testing.assert_equal(data[0][0, :10, :, 0],
+                            np.asarray([[1, 0, 0, 0],  # A
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # C
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # G
+                                        [0, 0, 1, 0],  # G
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # G
+                                        [1, 0, 0, 0]],  # A
+                                        dtype='int8'))
+
+    # bedtools getfasta -fi sample_genome.fa -bed sample.bed
+    # >chr2:15000-25000
+    # ggggaagcaa...
+    # this sequence is read from the reverse strand
+    # so we have ...ttgcttcccc
+    np.testing.assert_equal(data[50][0, -10:, :, 0],
+                            np.asarray([[0, 0, 0, 1],  # T
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # G
+                                        [0, 1, 0, 0],  # C
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 0, 1],  # T
+                                        [0, 1, 0, 0],  # C
+                                        [0, 1, 0, 0],  # C
+                                        [0, 1, 0, 0],  # C
+                                        [0, 1, 0, 0]],  # C
+                                        dtype='int8'))
 
 def test_dna_dims_order_2():
     order = 2
-    dna_templ(order)
+    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.bed')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_merged,
+                                     storage='ndarray',
+                                     order=order)
+    # for order 1
+    assert len(data) == 100
+    assert data.shape == (100, 199, 16, 1)
+    # the correctness of the sequence extraction was also
+    # validated using:
+    # >bedtools getfasta -fi sample_genome.fa -bed sample.bed
+    # >chr1:15000-25000
+    # ATTGTGGTGAC...
+    np.testing.assert_equal(
+        data[0][0, :10, :, 0],
+        np.asarray([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # AT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], # TT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # GT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], # GG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # GT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], # GA
+                    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], # AC
+                    dtype='int8'))
+
+    # bedtools getfasta -fi sample_genome.fa -bed sample.bed
+    # >chr2:15000-25000
+    # ggggaagcaag...
+    # this sequence is read from the reverse strand
+    # so we have ...cttgcttcccc
+    np.testing.assert_equal(
+        data[50][0, -10:, :, 0],
+        np.asarray([[0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],  # CT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # TT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],  # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],  # GC
+                    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],  # CT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # TT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],  # TC
+                    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # CC
+                    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # CC
+                    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],  # CC
+                                        dtype='int8'))
 
 def reverse_layer(order):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
