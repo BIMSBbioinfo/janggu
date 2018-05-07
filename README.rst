@@ -28,8 +28,15 @@ Welcome to Janggo
 
 Janggo is a python package that facilitates deep learning in Genomics.
 
+.. image:: motivation.png
+   :width: 100%
+   :alt: Janggo motivation
+   :align: center
+   :target: janggo_image
+
+
 While building and training neural networks can conveniently
-achieved using a number of package, including `keras <keras.io>`_
+achieved using a number of package, including `keras <keras.io>`_,
 preparing Genomics datasets
 for the use with keras as well as consistently evaluating
 model performances for model comparison
@@ -42,16 +49,18 @@ on designing the neural network architecture primarily.
 Some of the hallmarks of Janggo are:
 
 1. Janggo builds upon keras to define, train and evaluate neural network in a flexible manner.
-2. Janggo provides special data containers that can hold sequence information or coverage information from next-generation sequencing experiments.
+2. Janggo provides special data containers for processing genomics data, including nucleotide sequences or coverage tracks from next-generation sequencing.
 3. Janggo facilitates reproducibility and eases model comparison by producing log files, storage of model parameters and evaluating various performance metrics out of the box.
 4. Janggo supports processing of too-large-to-keep-in-memory dataset by loading the data in batches from disk.
 
 Why Janggo?
 
-Janggo is a Korean percussion instrument that looks like an hourglass.
-The two ends of the drum represent the two ends of a deep learning
-application in genomics, namely data acquisition and evaluation.
-The middle part is facilitated by keras.
+`Janggo <https://en.wikipedia.org/wiki/Janggu>`_ is a Korean percussion instrument that looks like an hourglass.
+
+Like the two ends of the instrument, the Janggo package represents
+the two ends of a deep learning application in genomics,
+namely data acquisition and evaluation (see Figure above).
+
 
 * Free software: BSD 3-Clause License
 
@@ -68,10 +77,6 @@ For GPU-support:
 
     pip install janggo[tf_gpu]
 
-Documentation
-=============
-
-https://janggo.readthedocs.io/
 
 Development
 ===========
