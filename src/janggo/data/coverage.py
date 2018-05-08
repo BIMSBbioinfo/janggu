@@ -142,7 +142,7 @@ class Cover(Dataset):
                             continue
 
                         if aln.is_reverse:
-                            array[aln.reference_end - 1 if aln.reference_end
+                            array[aln.reference_end if aln.reference_end
                                   else aln.reference_start, 1] += 1
                         else:
                             array[aln.reference_start, 0] += 1
