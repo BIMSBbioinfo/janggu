@@ -389,20 +389,20 @@ class Cover(Dataset):
                         print("Region {} outside of genome size - skipped".format(region.iv))
                     else:
                         if region.score is None and \
-                            mode in ['score', 'categorical']:
+                        mode in ['score', 'categorical']:
                             raise ValueError(
                                 'score field must '
                                 'be available with mode="{}"'.format(mode))
                         # if region score is not defined, take the mere
                         # presence of a range as positive label.
                         if mode == 'score':
-                            cover[region.iv.start_as_pos,
+                            cover[region.iv,
                                   i] = np.dtype(dtype).type(region.score)
                         elif mode == 'categorical':
-                            cover[region.iv.start_as_pos,
+                            cover[region.iv,
                                   int(region.score)] = np.dtype(dtype).type(1)
                         elif mode == 'binary':
-                            cover[region.iv.start_as_pos,
+                            cover[region.iv,
                                   i] = np.dtype(dtype).type(1)
             return cover
 
