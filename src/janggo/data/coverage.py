@@ -252,12 +252,14 @@ class Cover(Dataset):
                 bwfile = pyBigWig.open(sample_file)
 
                 for interval in gindexer:
-                    cover[interval.start_as_pos, i] = \
-                        np.mean(
-                            bwfile.values(
-                                interval.chrom,
-                                int(interval.start*gindexer.resolution),
-                                int(interval.end*gindexer.resolution)))
+                    vals = bwfile.values(
+                        interval.chrom,
+                        int(interval.start*gindexer.resolution),
+                        int(interval.end*gindexer.resolution), numpy=True)
+                    vals = vals.reshape((interval.end-interval.start, resolution))
+                    vals = vals.mean(axis=1)
+
+                    cover[interval, i] = vals
             return cover
 
         if cachedir:
