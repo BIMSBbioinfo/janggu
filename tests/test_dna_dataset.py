@@ -29,37 +29,6 @@ def datalen(bed_file):
         reglens += (reg.iv.end - reg.iv.start - reglen + stepsize)//stepsize
     return reglens
 
-def test_read_ranges_from_file():
-
-    order = 1
-
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
-    refgenome = os.path.join(data_path, 'genome.fa')
-    regions = os.path.join(data_path, 'regions.bed')
-
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=regions,
-                                     storage='ndarray',
-                                     reglen=reglen,
-                                     flank=flank,
-                                     order=order)
-
-    indices = [1, 600, 1000]
-
-    # Check correctness of idna4idx
-    np.testing.assert_equal(data.idna4idx(indices).shape, (len(indices),
-                            reglen + 2*flank - order + 1))
-
-    # actual shape of DNA
-    dna = data[indices]
-    np.testing.assert_equal(dna.shape, (len(indices),
-                                        reglen + 2*flank - order + 1,
-                                        pow(4, order), 1))
-
-    np.testing.assert_equal(data.shape, (len(data),
-                                         reglen + 2*flank - order + 1,
-                                         pow(4, order), 1))
-
 
 def test_dna_dims_order_1():
     order = 1
@@ -165,9 +134,9 @@ def test_dna_dims_order_2():
 def reverse_layer(order):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    bed_file = os.path.join(data_path, 'regions.bed')
+    bed_file = os.path.join(data_path, 'sample.bed')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Dna.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_file,
@@ -181,19 +150,19 @@ def reverse_layer(order):
 
     rmod = Model(dna_in, rdna_layer)
 
-    indices = [600, 500, 400]
+    indices = [0]
 
     # actual shape of DNA
-    dna = data[indices]
+    dna = data[0]
     np.testing.assert_equal(dna[:, ::-1, :, :], rmod.predict(dna))
 
 
 def complement_layer(order):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    bed_file = os.path.join(data_path, 'regions.bed')
+    bed_file = os.path.join(data_path, 'sample.bed')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Dna.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_file,
@@ -206,10 +175,8 @@ def complement_layer(order):
     cdna_layer = Complement()(dna_in)
     cmod = Model(dna_in, cdna_layer)
 
-    indices = [600, 500, 400]
-
     # actual shape of DNA
-    dna = data[indices]
+    dna = data[0]
 
     cdna = cmod.predict(dna)
     ccdna = cmod.predict(cdna)
@@ -284,9 +251,9 @@ def test_rcmatrix_identity():
 
 def test_dna_dataset_sanity(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
-    bed_file = os.path.join(data_path, 'regions.bed')
+    bed_file = os.path.join(data_path, 'sample.bed')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     with pytest.raises(Exception):
         # name must be a string
@@ -329,7 +296,8 @@ def test_dna_dataset_sanity(tmpdir):
                                   cachedir=tmpdir.strpath)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
-                                           'genome.fa', 'chr1..nmm'))
+                                           'storage.unstranded.h5'))
+
 
     Dna.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
@@ -340,134 +308,49 @@ def test_dna_dataset_sanity(tmpdir):
                                        'storage.unstranded.h5'))
 
 
-def test_read_dna_from_fasta_order_1(tmpdir):
+def test_read_dna_from_fasta_order_1():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     order = 1
-    filename = os.path.join(data_path, 'oct4.fa')
+    filename = os.path.join(data_path, 'sample.fa')
     data = Dna.create_from_fasta('train', fastafile=filename,
                                  order=order)
 
-    np.testing.assert_equal(len(data), 4)
-    np.testing.assert_equal(data.shape, (len(data), 200, pow(4, order), 1))
-    np.testing.assert_equal(data[0].shape, (1, 200, 4, 1))
-
-    # correctness of the first sequence - uppercase
-    # cacagcagag
-    np.testing.assert_equal(data[0][0, :5, 0, 0], np.asarray([0, 1, 0, 1, 0]))
-    np.testing.assert_equal(data[0][0, :5, 1, 0], np.asarray([1, 0, 1, 0, 0]))
-    np.testing.assert_equal(data[0][0, :5, 3, 0], np.asarray([0, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[0][0, :5, 2, 0], np.asarray([0, 0, 0, 0, 1]))
-
-    # correctness of the second sequence - uppercase
-    # cncact
-    np.testing.assert_equal(data[1][0, :5, 0, 0], np.asarray([0, 0, 0, 1, 0]))
-    np.testing.assert_equal(data[1][0, :5, 1, 0], np.asarray([1, 0, 1, 0, 1]))
-    np.testing.assert_equal(data[1][0, :5, 2, 0], np.asarray([0, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[1][0, :5, 3, 0], np.asarray([0, 0, 0, 0, 0]))
-
-    # correctness of the third sequence - lowercase
-    # aagtta
-    np.testing.assert_equal(data[2][0, :5, 0, 0], np.asarray([1, 1, 0, 0, 0]))
-    np.testing.assert_equal(data[2][0, :5, 1, 0], np.asarray([0, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[2][0, :5, 2, 0], np.asarray([0, 0, 1, 0, 0]))
-    np.testing.assert_equal(data[2][0, :5, 3, 0], np.asarray([0, 0, 0, 1, 1]))
-
-    # correctness of the third sequence - lowercase
-    # cnaagt
-    np.testing.assert_equal(data[3][0, :5, 0, 0], np.asarray([0, 0, 1, 1, 0]))
-    np.testing.assert_equal(data[3][0, :5, 1, 0], np.asarray([1, 0, 0, 0, 0]))
-    np.testing.assert_equal(data[3][0, :5, 2, 0], np.asarray([0, 0, 0, 0, 1]))
-    np.testing.assert_equal(data[3][0, :5, 3, 0], np.asarray([0, 0, 0, 0, 0]))
+    np.testing.assert_equal(len(data), 3997)
+    np.testing.assert_equal(data.shape, (3997, 200, 4, 1))
+    np.testing.assert_equal(
+        data[0][0, :10, :, 0],
+        np.asarray([[0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0]], dtype='int8'))
 
 
-def test_read_dna_from_fasta_order_2(tmpdir):
+def test_read_dna_from_fasta_order_2():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     order = 2
-    filename = os.path.join(data_path, 'oct4.fa')
+    filename = os.path.join(data_path, 'sample.fa')
     data = Dna.create_from_fasta('train', fastafile=filename,
-                                 order=order,
-                                 cachedir=tmpdir.strpath)
+                                 order=order)
 
-    np.testing.assert_equal(len(data), 4)
-    np.testing.assert_equal(data.shape, (len(data),  199, 16, 1))
-
-    # correctness of the first sequence - uppercase
-    # cacagc
-    np.testing.assert_equal(data[0][0, 0, 4, 0], 1)
-    np.testing.assert_equal(data[0][0, 1, 1, 0], 1)
-    np.testing.assert_equal(data[0][0, 2, 4, 0], 1)
-    np.testing.assert_equal(data[0][0, 3, 2, 0], 1)
-    np.testing.assert_equal(data[0][0, 4, 9, 0], 1)
-    np.testing.assert_equal(data[0][:, :5, :, :].sum(), 5)
-
-    # correctness of the second sequence - uppercase
-    # cncact
-    # np.testing.assert_equal(data[0][5, 0, 0], 1)
-    # np.testing.assert_equal(data[0][2, 1, 0], 1)
-    np.testing.assert_equal(data[1][0, 2, 4, 0], 1)
-    np.testing.assert_equal(data[1][0, 3, 1, 0], 1)
-    np.testing.assert_equal(data[1][0, 4, 7, 0], 1)
-    np.testing.assert_equal(data[1][:, :5, :, :].sum(), 3)
-
-    # correctness of the third sequence - lowercase
-    # aagtta
-    np.testing.assert_equal(data[2][0, 0, 0, 0], 1)
-    np.testing.assert_equal(data[2][0, 1, 2, 0], 1)
-    np.testing.assert_equal(data[2][0, 2, 11, 0], 1)
-    np.testing.assert_equal(data[2][0, 3, 15, 0], 1)
-    np.testing.assert_equal(data[2][0, 4, 12, 0], 1)
-    np.testing.assert_equal(data[2][0, :5, :, :].sum(), 5)
-
-    # correctness of the third sequence - lowercase
-    # cnaagt
-    np.testing.assert_equal(data[3][0, 2, 0, 0], 1)
-    np.testing.assert_equal(data[3][0, 3, 2, 0], 1)
-    np.testing.assert_equal(data[3][0, 4, 11, 0], 1)
-    np.testing.assert_equal(data[3][0, :5, :, :].sum(), 3)
-
-
-
-
-def _dna_with_region_strandedness(order):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
-
-    bed = os.path.join(data_path, 'region_w_strand.bed')
-
-    refgenome = os.path.join(data_path, 'genome.fa')
-
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed,
-                                     storage='ndarray',
-                                     reglen=reglen,
-                                     flank=flank,
-                                     order=order)
-
-    dna_in = Input(shape=data.shape[1:], name='dna')
-    rdna_layer = Reverse()(dna_in)
-    rcdna_layer = Complement()(rdna_layer)
-    mod = Model(dna_in, rcdna_layer)
-
-    dna = data[[0, 1]]
-    rcdna = mod.predict(data)
-
-    np.testing.assert_equal(data.shape, (2,
-                                         reglen + 2*flank - order + 1,
-                                         pow(4, order), 1))
-    np.testing.assert_equal(dna.shape, rcdna.shape)
-
-    np.testing.assert_equal(data[0], rcdna[1:2])
-    np.testing.assert_equal(data[1], rcdna[:1])
-    np.testing.assert_equal(data[:], rcdna[::-1])
-
-    with pytest.raises(Exception):
-        np.testing.assert_equal(data[0], data[1])
-
-    with pytest.raises(Exception):
-        np.testing.assert_equal(rcdna[0], rcdna[1])
-
-
-def test_dna_with_region_strandedness():
-    _dna_with_region_strandedness(1)
-    _dna_with_region_strandedness(2)
+    np.testing.assert_equal(len(data), 3997)
+    np.testing.assert_equal(data.shape, (3997, 199, 16, 1))
+    np.testing.assert_equal(
+        data[0][0, :10, :, 0],
+        np.asarray([[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], dtype='int8'))
