@@ -77,12 +77,8 @@ class Janggo(object):
                             level=logging.DEBUG,
                             format='%(asctime)s:%(name)s:%(message)s',
                             datefmt='%m/%d/%Y %H:%M:%S')
-
         self.logger.info("Model Summary:")
         self.kerasmodel.summary(print_fn=self.logger.info)
-        filename = self._storage_path(self.name, self.outputdir)
-        filename = os.path.splitext(filename)[0] + '.png'
-        plot_model(self.kerasmodel, to_file=filename, show_shapes=True)
 
     @classmethod
     def create_by_name(cls, name, outputdir=None):
@@ -282,8 +278,13 @@ class Janggo(object):
         input_tensors, output_tensors = modelfct(None, inputs_,
                                                  outputs_, modelparams)
 
-        return cls(inputs=input_tensors, outputs=output_tensors, name=name,
-                   outputdir=outputdir)
+        jmodel = cls(inputs=input_tensors, outputs=output_tensors, name=name,
+                     outputdir=outputdir)
+
+        filename = cls._storage_path(jmodel.name, jmodel.outputdir)
+        filename = os.path.splitext(filename)[0] + '.png'
+        plot_model(jmodel.kerasmodel, to_file=filename, show_shapes=True)
+        return jmodel
 
     def compile(self, optimizer, loss, metrics=None,
                 loss_weights=None, sample_weight_mode=None,
