@@ -117,20 +117,23 @@ Genomic Datasets
    its Input and Output layers via corresponding Dataset and Layer names.
 
 
-:mod:`janggo.data` provides a number of special genomics data containers which
-to easily access and fetch genomics data. The datasets can directly be used
-e.g. for training or evaluating neural networks.
-
-Two of the most useful containers are :class:`Dna` and :class:`Cover`.
-
+:mod:`janggo.data` provides Dataset classes that can be used for
+training and evaluating neural networks.
+Of particular importance are the Genomics-specific dataset,
+ :class:`Dna` and :class:`Cover` which
+to easily access and fetch genomics data.
+Additional Dataset classes are described in the Reference section of the
+documentation.
 
 
 Dna
 ^^^^^^^^^^
-The :class:`Dna` allows you to fetch raw sequence data from
-fasta files or from a reference genome with genomic coordinates of interest
+The :class:`Dna` allows to fetch raw sequence data from
+fasta files or from a reference genome along with
+genomic coordinates of interest
 and translates the sequences into a *one-hot encoding*. Specifically,
-the sequence is stored in a 4D array with dimensions corresponding
+the *one-hot encoding* is represented as a
+4D array with dimensions corresponding
 to :code:`(region, region_length, alphabet_size, 1)`.
 The Dna offers a number of features:
 
@@ -138,8 +141,8 @@ The Dna offers a number of features:
 2. Higher-order one-hot encoding, e.g. di-nucleotide based
 3. Dataset access from disk via the hdf5 option for large datasets.
 
-Loading DNA sequences from fasta files can be achieved by invoking
-`create_from_fasta`
+A sequence can be loaded from a fasta file using
+the :code:`create_from_fasta` constructor method. For example:
 
 .. code-block:: python
 
@@ -158,8 +161,8 @@ Loading DNA sequences from fasta files can be achieved by invoking
    # One-hot encoding for the first 10 bases of the first region
    dna[0][0, :10, :, 0]
 
-Alternatively, sequences can be fetched from a reference genome with
-genomic coordinates of interest from a bed or gff file.
+Alternatively, sequences can be fetched from a reference genome using
+genomic coordinates of interest that are provided by a bed or gff file.
 
 .. code-block:: python
 
@@ -170,11 +173,15 @@ genomic coordinates of interest from a bed or gff file.
                                    refgenome=refgenome,
                                    regions=bed_file)
 
-   # the regions defined in the bed_file are by default split up in
-   # 200 bp bins with stepsize 50. Hence, there are 14344 intervals.
-   dna.shape  # is (14344, 200, 4, 1)
+   dna.shape  # is (100, 200, 4, 1)
    dna[0]  # One-hot encoding of region 0
 
+
+By default, when using :code:`create_from_genome`, the regions
+in *bed_file* are split into non-overlapping bins of length 200 bp.
+Different tiling procedures can be chosen by specifying
+the arguments: :code:`binsize`, :code:`stepsize` and
+:code:`flank`.
 
 
 Cover
@@ -208,9 +215,7 @@ in a strand specific manner.
                                  bamfiles=bam_file,
                                  regions=bed_file)
 
-   # The regions in the bed_file are split into non-overlapping 10 bp bins
-   # which amounts to 4 regions of length 10 bp.
-   cover.shape  # is (4, 10, 2, 1)
+   cover.shape  # is (100, 200, 2, 1)
    cover[0]  # coverage of the first region
 
 By default, the region of interest in :code:`bed_file` is split
@@ -229,12 +234,7 @@ of a specified resolution (in base pairs):
                                     bigwigfiles=bw_file,
                                     regions=bed_file)
 
-   # The regions in the bed_file are split into non-overlapping 10 bp bins
-   # which amounts to 4 regions of length 10 bp. Additionally, resolution
-   # computes the average signal in a given window.
-   # shape is (4, 5, 1, 1), because there are 5 x 2 bp
-   # resolution windows summing up to the binsize of 10 bp.
-   cover.shape
+   cover.shape  # is (100, 1, 1, 1)
    cover[0]  # coverage of the first region
 
 By default, the region of interest in :code:`bed_file` is split
@@ -252,15 +252,33 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolutio
 .. code-block:: python
 
    bed_file = resource_filename('janggo', 'resources/sample.bed')
-   score_bed_file = resource_filename('janggo', 'resources/sample_scores.bed')
+   score_file = resource_filename('janggo', 'resources/scored_sample.bed')
 
+   # load as binary labels
    cover = Cover.create_from_bed('bed_coverage',
-                                 bedfiles=score_bed_files,
+                                 bedfiles=score_file,
                                  regions=bed_file)
 
-   cover.shape
-   cover[0]  # coverage of the first region
+   cover.shape  # is (100, 1, 1, 1)
+   cover[4]  # contains one
 
+   # load as binary labels
+   cover = Cover.create_from_bed('bed_coverage',
+                                 bedfiles=score_file,
+                                 regions=bed_file,
+                                 mode='score')
+
+   cover.shape  # is (100, 1, 1, 1)
+   cover[4]  # contains the score 5
+
+   # load as binary labels
+   cover = Cover.create_from_bed('bed_coverage',
+                                 bedfiles=score_file,
+                                 regions=bed_file,
+                                 mode='categorical')
+
+   cover.shape  # is (100, 1, 1, 6)
+   cover[4]  # contains [0., 0., 0., 0., 0., 1.]
 
 By default, the region of interest in :code:`bed_file` is split
 into non-overlapping 200 bp windows with a resolution of 200 bp.
@@ -277,16 +295,21 @@ labels derived from a BED file from the DNA sequence:
 
 .. code:: python
 
-   refgenome = resource_filename('janggo', 'resources/sample_refgenome.bed')
+   from keras.layers import Conv2D
+   from keras.layers import AveragePooling2D
+   from janggo import inputlayer
+   from janggo import outputconv
+
+   refgenome = resource_filename('janggo', 'resources/sample_genome.fa')
    bed_file = resource_filename('janggo', 'resources/sample.bed')
-   score_bed_file = resource_filename('janggo', 'resources/sample_scores.bed')
+   score_file = resource_filename('janggo', 'resources/scored_sample.bed')
 
    # 1. get data
    DNA = Dna.create_from_refgenome('dna',
                                    refgenome=refgenome,
                                    regions=bed_file)
    LABELS = Cover.create_from_bed('peaks',
-                                  bedfiles=score_bed_file,
+                                  bedfiles=score_file,
                                   regions=bed_file)
 
    # 2. define a simple conv net with 30 filters of length 15 bp
@@ -297,11 +320,11 @@ labels derived from a BED file from the DNA sequence:
       with inputs.use('dna') as layer:
          layer_ = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
                          activation=params[2])(layer)
-         output = GlobalAveragePooling2D()(layer_)
+         output = AveragePooling2D(pool_size=(layer_.shape.as_list()[1], 1))(layer_)
       return inputs, output
 
    # 3. instantiate and compile the model
-   model = Janggo.create(template=_conv_net
+   model = Janggo.create(template=_conv_net,
                          modelparams=(30, 15, 'relu'),
                          inputs=DNA, outputs=LABELS)
    model.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -309,6 +332,23 @@ labels derived from a BED file from the DNA sequence:
    # 4. fit the model
    model.fit(DNA, LABELS)
 
+
+The network takes as input a 200 bp nucleotide sequence. It uses
+30 convolution kernels of length 21 bp, average pooling and another convolution
+layer that combines the activities of the 30 kernels
+to predict binary valued peaks.
+
+Upon creation of the model a network depiction is
+automatically produced in :code:`<results_root>/models` which is illustrated
+below
+
+.. image:: dna_peak.png
+   :width: 70%
+   :alt: Prediction from DNA to peaks
+   :align: center
+
+Logging information about the model fitting, model and dataset dimensions
+are written to :code:`<results_root>/logs`.
 
 
 Evaluation
@@ -324,7 +364,7 @@ AUC-ROC, and 3. allows to export predictions and model loss in BED or BIGWIG
 format for further investigation of what the model has (or has not) trained
 in a genome browser of your choice.
 
-:code:`InOutScorer`
+InOutScorer
 ^^^^^^^^^^^^^^^^^^^
 Evaluating the predictive performance in comparison with ground truth labels,
 you need to instantiate one or more :code:`InOutScorer` object that
@@ -339,9 +379,14 @@ In order to compute
    import numpy
    from sklearn.metrics import roc_auc_score, roc_curve
 
+   from janggo import InOutScorer
+   from janggo.utils import export_tsv
+   from janggo.utils import plot_score
+   from janggo.utils import export_bigwig
+
    # Instantiate several evaluation scorers
-   score_auroc = InOutScorer('auROC', roc_auc_score, dumper=dump_tsv)
-   score_roc = InOutScorer('ROC', roc_curve, dumper=plot_score)
+   score_auroc = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
+   score_roc = InOutScorer('ROC', roc_curve, exporter=plot_score)
    score_loss = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
                             exporter=export_bigwig,
                             exporter_args={'gindexer': DNA.gindexer})
@@ -351,7 +396,7 @@ In order to compute
                   callbacks=[score_auroc, score_roc, score_loss])
 
 
-:code:`InScorer`
+InScorer
 ^^^^^^^^^^^^^^^^^^^
 Sometimes it is useful to evaluate the results based on input data only.
 For example, when you want to have a look at the predicted regions
