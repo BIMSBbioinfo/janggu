@@ -32,8 +32,9 @@ class Table(Dataset):
 
         self.filename = filename
 
-        if not conditions:
-            conditions = self.filename
+        if conditions is None:
+            conditions = [os.path.basename(f) for f in filename]
+
         self.conditions = conditions
         data = []
         for _file in self.filename:

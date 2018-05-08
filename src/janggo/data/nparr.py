@@ -22,7 +22,7 @@ class Array(Dataset):
     def __init__(self, name, array, conditions=None):
 
         self.data = array
-        if conditions and isinstance(conditions, list):
+        if conditions is not None and isinstance(conditions, list):
             self.conditions = conditions
 
         Dataset.__init__(self, '{}'.format(name))

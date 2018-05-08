@@ -110,7 +110,7 @@ class Cover(Dataset):
             bamfiles = [bamfiles]
 
         if not conditions:
-            conditions = bamfiles
+            conditions = [os.path.basename(f) for f in bamfiles]
 
         if not min_mapq:
             min_mapq = 0
@@ -244,7 +244,7 @@ class Cover(Dataset):
             bigwigfiles = [bigwigfiles]
 
         if not conditions:
-            conditions = bigwigfiles
+            conditions = [os.path.basename(f) for f in bigwigfiles]
 
         def _bigwig_loader(cover, bigwigfiles, gindexer):
             print("load from bigwig")
@@ -357,7 +357,7 @@ class Cover(Dataset):
             bedfiles = [bedfiles]
 
         if not conditions:
-            conditions = bedfiles
+            conditions = [os.path.basename(f) for f in bedfiles]
 
         if mode == 'categorical':
             if len(conditions) > 1:
