@@ -33,7 +33,7 @@ class Table(Dataset):
         self.filename = filename
 
         if conditions is None:
-            conditions = [os.path.basename(f) for f in filename]
+            conditions = [os.path.splitext(os.path.basename(f))[0] for f in filename]
 
         self.conditions = conditions
         data = []
