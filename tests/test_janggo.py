@@ -86,11 +86,11 @@ def test_janggo_generate_name(tmpdir):
 def test_janggo_instance_dense(tmpdir):
     """Test Janggo creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
-    bed_file = os.path.join(data_path, 'regions.bed')
+    bed_file = os.path.join(data_path, 'sample.bed')
 
-    csvfile = os.path.join(data_path, 'ctcf_sample.csv')
+    csvfile = os.path.join(data_path, 'sample.csv')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
@@ -215,11 +215,11 @@ def test_janggo_instance_dense(tmpdir):
 def test_janggo_instance_conv(tmpdir):
     """Test Janggo creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
-    bed_file = os.path.join(data_path, 'regions.bed')
+    bed_file = os.path.join(data_path, 'sample.bed')
 
     posfile = os.path.join(data_path, 'positive.bed')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',

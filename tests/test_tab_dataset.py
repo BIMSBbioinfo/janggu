@@ -10,25 +10,18 @@ from janggo.data import Table
 def test_tab_reading():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
-    ctcf = Table('train', filename=os.path.join(data_path,
-                                                'ctcf_sample.csv'))
+    sample = Table('train', filename=os.path.join(data_path, 'sample.csv'))
 
-    np.testing.assert_equal(len(ctcf), 14344)
-    np.testing.assert_equal(ctcf.shape, (len(ctcf), 1,))
-
-    jund = Table('train', filename=os.path.join(data_path,
-                                                'jund_sample.csv'))
-
-    np.testing.assert_equal(len(jund), 14344)
-    np.testing.assert_equal(jund.shape, (len(jund), 1,))
+    np.testing.assert_equal(len(sample), 100)
+    np.testing.assert_equal(sample.shape, (100, 1,))
 
     # read both
     both = Table('train',
-                 filename=[os.path.join(data_path, 'jund_sample.csv'),
-                           os.path.join(data_path, 'ctcf_sample.csv')])
+                 filename=[os.path.join(data_path, 'sample.csv'),
+                           os.path.join(data_path, 'sample.csv')])
 
-    np.testing.assert_equal(len(both), 14344)
-    np.testing.assert_equal(both.shape, both[:].shape)
+    np.testing.assert_equal(len(both), 100)
+    np.testing.assert_equal(both.shape, (100, 2,))
 
     with pytest.raises(Exception):
         Table('train', filename='')

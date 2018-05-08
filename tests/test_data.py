@@ -16,9 +16,9 @@ matplotlib.use('AGG')
 
 def test_dna_props_extraction():
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
-    bed_file = os.path.join(data_path, 'regions.bed')
+    bed_file = os.path.join(data_path, 'sample.bed')
 
-    refgenome = os.path.join(data_path, 'genome.fa')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
@@ -35,30 +35,17 @@ def test_dna_props_extraction():
 def test_tab_props_extraction():
     data_path = pkg_resources.resource_filename('janggo',
                                                 'resources/')
-    csvfile = os.path.join(data_path, 'ctcf_sample.csv')
+    csvfile = os.path.join(data_path, 'sample.csv')
 
-    ctcf1 = Table('ctcf1', filename=csvfile)
-    ctcf2 = Table('ctcf2', filename=csvfile)
+    sam1 = Table('sample1', filename=csvfile)
+    sam2 = Table('sample2', filename=csvfile)
 
-    props = _data_props([ctcf1, ctcf2])
+    props = _data_props([sam1, sam2])
 
-    assert 'ctcf1' in props
-    assert 'ctcf2' in props
-    assert props['ctcf1']['shape'] == (1,)
-    assert props['ctcf2']['shape'] == (1,)
+    assert 'sample1' in props
+    assert 'sample2' in props
+    assert props['sample1']['shape'] == (1,)
+    assert props['sample2']['shape'] == (1,)
 
     with pytest.raises(Exception):
         _data_props((0,))
-
-
-def test_dna2ind():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
-    filename = os.path.join(data_path, 'oct4.fa')
-    seqs = sequences_from_fasta(filename)
-
-    np.testing.assert_equal(dna2ind(seqs[0]), dna2ind(str(seqs[0].seq)))
-    np.testing.assert_equal(dna2ind(seqs[0]), dna2ind(seqs[0].seq))
-
-    with pytest.raises(TypeError):
-        # wrong type: int
-        dna2ind(0)
