@@ -19,8 +19,8 @@ from janggo.data import Array
 from janggo.data import Dna
 from janggo.layers import Complement
 from janggo.layers import Reverse
+from janggo.utils import export_score_plot
 from janggo.utils import export_tsv
-from janggo.utils import plot_score
 
 np.random.seed(1234)
 
@@ -51,8 +51,8 @@ def wrap_prc(y_true, y_pred):
 
 
 auc_eval = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
-prc_eval = InOutScorer('PRC', wrap_prc, exporter=plot_score)
-roc_eval = InOutScorer('ROC', wrap_roc, exporter=plot_score)
+prc_eval = InOutScorer('PRC', wrap_prc, exporter=export_score_plot)
+roc_eval = InOutScorer('ROC', wrap_roc, exporter=export_score_plot)
 auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
 
 

@@ -23,7 +23,7 @@ from janggo.evaluation import _dimension_match
 from janggo.utils import export_bed
 from janggo.utils import export_bigwig
 from janggo.utils import export_tsv
-from janggo.utils import plot_score
+from janggo.utils import export_score_plot
 
 
 def test_input_dims():
@@ -156,7 +156,7 @@ def test_output_tsv_score(tmpdir):
                            sep='\t').value[0] == 0.15
 
 
-def test_output_plot_score(tmpdir):
+def test_output_export_score_plot(tmpdir):
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -167,13 +167,13 @@ def test_output_plot_score(tmpdir):
                              lambda y_true, y_pred:
                              ([0., 0.5, 0.5, 1.],
                               [0.5, 0.5, 1., 1.],
-                              [0.8, 0.4, 0.35, 0.1]), exporter=plot_score)
+                              [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot)
 
     dummy_eval_par = InOutScorer('score',
                                  lambda y_true, y_pred:
                                  ([0., 0.5, 0.5, 1.],
                                   [0.5, 0.5, 1., 1.],
-                                  [0.8, 0.4, 0.35, 0.1]), exporter=plot_score,
+                                  [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot,
                                  exporter_args={'figsize': (10, 12),
                                                 'xlabel': 'FPR',
                                                 'ylabel': 'TPR',

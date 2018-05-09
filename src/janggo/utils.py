@@ -274,7 +274,7 @@ def export_tsv(output_dir, name, results):
     pd.DataFrame.from_dict(results, orient='index').to_csv(filename, sep='\t')
 
 
-def plot_score(output_dir, name, results, figsize=None, xlabel=None,
+def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
                ylabel=None, fform=None):
     """Method that dumps the results in a json file.
 

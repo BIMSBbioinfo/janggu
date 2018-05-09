@@ -19,24 +19,48 @@ from janggo.layers import Reverse
 
 
 class Janggo(object):
-    """Janggo model
+    """Janggo class
 
-    The class :class:`Janggo` builds up on :class:`keras.models.Model`
-    and allows to instantiate a neural network model.
-    This class contains methods to fit, predict and evaluate the model.
+    The class :class:`Janggo` maintains a :class:`keras.models.Model`
+    object, that is an instance of a neural network.
+    Furthermore, to the outside, Janggo behaves similarly to
+    :class:`keras.models.Model` which allows you to create,
+    fit, and evaluate the model.
 
     Parameters
     -----------
     inputs : Input or list(Input)
         Input layer or list of Inputs as defined by keras.
-        See https://keras.io/layers.
+        See https://keras.io/.
     outputs : Layer or list(Layer)
-        Output layer or list of outputs. See https://keras.io/layers.
+        Output layer or list of outputs. See https://keras.io/.
     name : str
         Name of the model.
     outputdir : str
         Output folder in which the log-files and model parameters
         are stored. Default: `/home/user/janggo_results`.
+
+    Examples
+    --------
+
+    Define a Janggo object similar to keras.models.Model
+    using Input and Output layers.
+
+    .. code-block:: python
+
+      from keras.layers import Input
+      from keras.layers import Dense
+
+      from janggo import Janggo
+
+      # Define neural network layers using keras
+      in_ = Input(shape=(10,), name='ip')
+      layer = Dense(3)(in_)
+      output = Dense(1, activation='sigmoid', name='out')(layer)
+
+      # Instantiate a model.
+      model = Janggo(inputs=in_, outputs=output, name='test_model')
+      model.summary()
     """
     timer = None
     _name = None
@@ -84,7 +108,7 @@ class Janggo(object):
     def create_by_name(cls, name, outputdir=None):
         """Creates a Janggo object by name.
 
-        This option is usually used to load an already trained model.
+        This option is used to load a pre-trained model.
 
         Parameters
         ----------
@@ -95,17 +119,17 @@ class Janggo(object):
 
         Examples
         --------
+        
         .. code-block:: python
 
-          from janggo import Janggo
+          in_ = Input(shape=(10,), name='ip')
+          layer = Dense(3)(in_)
+          output = Dense(1, activation='sigmoid', name='out')(layer)
 
-          def test_model(inputs, inp, oup, params):
-              in_ = Input(shape=(10,), name='ip')
-              output = Dense(1, activation='sigmoid', name='out')(in_)
-              return in_, output
+          # Instantiate a model.
+          model = Janggo(inputs=in_, outputs=output, name='test_model')
 
-          # create a now model
-          model = Janggo.create(name='test_model', (test_model, None))
+          # saves the model to /home/user/janggo_results/models
           model.save()
 
           # remove the original model
@@ -152,6 +176,8 @@ class Janggo(object):
         if not filename:  # pragma: no cover
             filename = self._storage_path(self.name, self.outputdir)
 
+        plotname = os.path.splitext(filename)[0] + '.png'
+        plot_model(self.kerasmodel, to_file=plotname, show_shapes=True)
         self.logger.info("Save model %s", filename)
         self.kerasmodel.save(filename, overwrite)
 
@@ -163,60 +189,45 @@ class Janggo(object):
     def create(cls, template, modelparams=None, inputs=None,
                outputs=None, name=None,
                outputdir=None):
-        """Instantiate a Janggo model.
+        """Janggo constructor method.
 
-        This method instantiates a Janggo model with a given name
-        and model definition. This method can be used to automatically
-        infer the input and output shapes for the model (see Examples).
+        This method instantiates a Janggo model with
+        model template and parameters. It also allows to
+        automatically infer and extend the correct
+        input and output layers for the network.
 
         Parameters
         -----------
         template : function
             Python function that defines a model template of a neural network.
             The function signature must adhere to the signature
-            `template(inputs, inputp, outputp, modelparams)`
+            :code:`template(inputs, inputp, outputp, modelparams)`
             and is expected to return
-            `(input_tensor, output_tensor)` of the neural network.
+            :code:`(input_tensor, output_tensor)` of the neural network.
         modelparams : list or tuple or None
             Additional model parameters that are passed along to template
             upon creation of the neural network. For instance,
-            this could contain number of neurons on each layer.
+            this could contain number of neurons at each layer.
             Default: None.
         inputs : Dataset, list(Dataset) or None
-            Input datasets.
+            Input datasets from which the input layer shapes should be derived.
+            Use this option together with the :code:`inputlayer` decorator (see Example below).
         outputs : Dataset, list(Dataset) or None
-            Output datasets
+            Output datasets from which the output layer shapes should be derived.
+            Use this option toghether with :code:`outputdense` or :code:`outputconv`
+            decorators (see Example below).
         name : str or None
-            Model name. If None, a model name will be generated automatically.
-            If a name is provided, it overwrites the automatically generated
-            model name.
+            Model name. If None, a unique model name is generated
+            based on the model configuration and network architecture.
         outputdir : str or None
-            Directory in which the log files, model parameters etc.
-            will be stored. Default: `/home/user/janggo_results`.
+            Root output directory in which the log files, model parameters etc.
+            will be stored. If None, the outputdir is set
+            to `/home/user/janggo_results`.
 
         Examples
         --------
-        Variant 1: Use Janggo similar to keras.models.Model.
-        This variant allows you to define the keras Input and Output
-        layers from which a model is instantiated.
 
-        .. code-block:: python
-
-          from keras.layers import Input
-          from keras.layers import Dense
-
-          from janggo import Janggo
-
-          # Define neural network layers using keras
-          in_ = Input(shape=(10,), name='ip')
-          layer = Dense(3)(in_)
-          output = Dense(1, activation='sigmoid', name='out')(layer)
-
-          # Instantiate model name.
-          model = Janggo(inputs=in_, outputs=output, name='test_model')
-          model.summary()
-
-        Variant 2: Specify a model using a model template.
+        Specify a model using a model template and parameters:
 
         .. code-block:: python
 
@@ -231,9 +242,8 @@ class Janggo(object):
           model = Janggo.create(template=test_manual_model, modelparams=3)
           model.summary()
 
-        Variant 3: Input and output layer shapes can be automatically
-        determined from the provided dataset. Therefore, only the model
-        body needs to be specified in the following example:
+        Specify a model using automatic input and output layer determination.
+        That is, only the model body needs to be specified:
 
         .. code-block:: python
 
@@ -248,15 +258,17 @@ class Janggo(object):
           LABELS = Array('out', np.random.randint(2, size=(1000, 1)))
 
           # The decorators inputlayer and outputdense
-          # automatically extract the layer shapes
+          # extract the layer shapes and append the respective layers
+          # to the network
           # so that only the model body remains to be specified.
-          # Note that with decorators the order matters, inputlayer must be specified
-          # before outputdense.
+          # Note that the the decorator order matters.
+          # inputlayer must be specified before outputdense.
           @inputlayer
           @outputdense(activation='sigmoid')
           def test_inferred_model(inputs, inp, oup, params):
               with inputs.use('ip') as in_:
-                  # the with block allows for easy access of a specific named input.
+                  # the with block allows for easy
+                  # access of a specific named input.
                   output = Dense(params)(in_)
               return in_, output
 
@@ -281,21 +293,24 @@ class Janggo(object):
         jmodel = cls(inputs=input_tensors, outputs=output_tensors, name=name,
                      outputdir=outputdir)
 
-        filename = cls._storage_path(jmodel.name, jmodel.outputdir)
-        filename = os.path.splitext(filename)[0] + '.png'
-        plot_model(jmodel.kerasmodel, to_file=filename, show_shapes=True)
         return jmodel
 
     def compile(self, optimizer, loss, metrics=None,
                 loss_weights=None, sample_weight_mode=None,
                 weighted_metrics=None, target_tensors=None):
-        """Compiles a model.
+        """Model compilation.
 
-        This method invokes keras.models.Model.compile
-        (see https://keras.io/models/model/) in order to compile
-        the keras model that Janggo maintains.
+        This method delegates the compilation to
+        keras.models.Model.compile. See https://keras.io/models/model/
+        for more information on the arguments.
 
-        The parameters are identical to the corresponding keras method.
+        Examples
+        --------
+
+        .. code:: python
+
+           model.compile(optimizer='adadelta', loss='binary_crossentropy')
+
         """
 
         self.kerasmodel.compile(optimizer, loss, metrics, loss_weights,
@@ -321,7 +336,7 @@ class Janggo(object):
             use_multiprocessing=True,
             workers=1,
             **kwargs):
-        """Fit the model.
+        """Model fitting.
 
         This method is used to fit a given model.
         All of the parameters are directly delegated the keras model
@@ -335,7 +350,7 @@ class Janggo(object):
         See :func:`janggo_fit_generator`.
 
         Generally, generators need to adhere to the following signature:
-        `generator(inputs, outputs, batch_size, sample_weight=None,
+        :code:`generator(inputs, outputs, batch_size, sample_weight=None,
         shuffle=False)`.
 
         Examples
@@ -488,7 +503,7 @@ class Janggo(object):
                 callbacks=None,
                 workers=1):
 
-        """Predict targets.
+        """Performs a prediction.
 
         This method predicts the targets.
         All of the parameters are directly delegated the keras model
@@ -502,7 +517,7 @@ class Janggo(object):
         See :func:`janggo_predict_generator`.
 
         Generally, generators need to adhere to the following signature:
-        `generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
+        :code:`generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
 
         Examples
         --------
@@ -580,7 +595,7 @@ class Janggo(object):
                  datatags=None,
                  callbacks=None,
                  workers=1):
-        """Evaluate the model performance.
+        """Evaluates the performance.
 
         This method is used to evaluate a given model.
         All of the parameters are directly delegated the keras model
@@ -594,7 +609,7 @@ class Janggo(object):
         See :func:`janggo_fit_generator`.
 
         Generally, generators need to adhere to the following signature:
-        `generator(inputs, outputs, batch_size, sample_weight=None,
+        :code:`generator(inputs, outputs, batch_size, sample_weight=None,
         shuffle=False)`.
 
         Examples
@@ -689,15 +704,22 @@ class Janggo(object):
         return self.kerasmodel.get_config()
 
     def __convert_data(self, data, layer):
-        """ converts different data formats to
+        """Converts different data formats to
         {name:values} dict.
 
-        When a Janggo dataset was used, the name is derived
-        from the name property. Otherwise, the name is derived
-        from the layer.
+        keras support different data formats, e.g. np.array,
+        list(np.array) or dict(key: np.array).
+        This function normalizes all dataset to the dictionary
+        style usage internally. This simplifies the compatibility
+        checks at various places.
 
-        layer='output_layers' or 'input_layers'
-
+        Parameters
+        ----------
+        data : Dataset, np.array, list or dict
+            Dataset.
+        layer : str
+            Indication as to whether data is used as input or output.
+            :code:`layer='output_layers'` or 'input_layers'.
         """
         # If we deal with Dataset, we convert it to a Dictionary
         # which is directly interpretable by keras
@@ -733,13 +755,15 @@ class Janggo(object):
         return filename
 
     def _save_hyper(self, hyper_params, filename=None):
-        """This method attaches the hyper parameters to an hdf5 file.
+        """This method attaches the hyper parameters that were used
+        to train the model to the hdf5 file.
 
-        This method is supposed to be used after model training.
+        This method is supposed to be used after model training
+        from within the fit method.
         It attaches the hyper parameter, e.g. epochs, batch_size, etc.
         to the hdf5 file that contains the model weights.
         The hyper parameters are added as attributes to the
-        group 'model_weights'
+        group 'model_weights'.
 
         Parameters
         ----------
@@ -747,6 +771,7 @@ class Janggo(object):
             Dictionary that contains the hyper parameters.
         filename : str
             Filename of the hdf5 file. This file must already exist.
+            So save has to be called before.
         """
         if not filename:  # pragma: no cover
             filename = self._storage_path(self.name, self.outputdir)
