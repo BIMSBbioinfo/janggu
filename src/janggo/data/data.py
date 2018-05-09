@@ -139,4 +139,4 @@ class JanggoSequence(Sequence):
 
     def on_epoch_end(self):
         if self.shuffle:
-            np.random.shuffle(self.indices)
+            numpy.random.shuffle(self.indices)

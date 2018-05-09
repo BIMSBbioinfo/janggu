@@ -12,8 +12,8 @@ from keras.models import Model
 from keras.models import load_model
 from keras.utils import plot_model
 
-from janggo.data.data import _data_props
 from janggo.data.data import JanggoSequence
+from janggo.data.data import _data_props
 from janggo.layers import Complement
 from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
@@ -399,7 +399,6 @@ class Janggo(object):
         else:
             valjseq = None
 
-
         try:
             history = self.kerasmodel.fit_generator(
                 jseq,
@@ -416,7 +415,6 @@ class Janggo(object):
         except Exception:  # pragma: no cover
             self.logger.exception('fit_generator failed:')
             raise
-
 
         self.logger.info('#' * 40)
         for k in history.history:
@@ -540,7 +538,6 @@ class Janggo(object):
         except Exception:  # pragma: no cover
             self.logger.exception('evaluate_generator failed:')
             raise
-
 
         self.logger.info('#' * 40)
         if not isinstance(values, list):

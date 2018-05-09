@@ -388,8 +388,8 @@ class Cover(Dataset):
                     if genomesize[region.iv.chrom] <= region.iv.start:
                         print("Region {} outside of genome size - skipped".format(region.iv))
                     else:
-                        if region.score is None and \
-                        mode in ['score', 'categorical']:
+                        if region.score is None and mode in ['score',
+                                                             'categorical']:
                             raise ValueError(
                                 'score field must '
                                 'be available with mode="{}"'.format(mode))

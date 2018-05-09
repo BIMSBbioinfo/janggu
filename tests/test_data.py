@@ -1,15 +1,12 @@
 import os
 
 import matplotlib
-import numpy as np
 import pkg_resources
 import pytest
 
 from janggo.data import Dna
 from janggo.data import Table
 from janggo.data.data import _data_props
-from janggo.utils import dna2ind
-from janggo.utils import sequences_from_fasta
 
 matplotlib.use('AGG')
 

@@ -11,9 +11,7 @@ from keras.models import Model
 from janggo.data import Dna
 from janggo.layers import Complement
 from janggo.layers import Reverse
-from janggo.utils import NMAP
 from janggo.utils import complement_permmatrix
-from janggo.utils import sequences_from_fasta
 
 matplotlib.use('AGG')
 
@@ -60,7 +58,7 @@ def test_dna_dims_order_1():
                                         [0, 0, 0, 1],  # T
                                         [0, 0, 1, 0],  # G
                                         [1, 0, 0, 0]],  # A
-                                        dtype='int8'))
+                            dtype='int8'))
 
     # bedtools getfasta -fi sample_genome.fa -bed sample.bed
     # >chr2:15000-25000
@@ -78,7 +76,8 @@ def test_dna_dims_order_1():
                                         [0, 1, 0, 0],  # C
                                         [0, 1, 0, 0],  # C
                                         [0, 1, 0, 0]],  # C
-                                        dtype='int8'))
+                            dtype='int8'))
+
 
 def test_dna_dims_order_2():
     order = 2
@@ -100,17 +99,17 @@ def test_dna_dims_order_2():
     # ATTGTGGTGAC...
     np.testing.assert_equal(
         data[0][0, :10, :, 0],
-        np.asarray([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], # AT
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], # TT
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], # TG
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # GT
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], # TG
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], # GG
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], # GT
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], # TG
-                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], # GA
-                    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], # AC
-                    dtype='int8'))
+        np.asarray([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # AT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # TT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],  # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],  # GT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],  # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  # GG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],  # GT
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],  # TG
+                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],  # GA
+                    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],  # AC
+                   dtype='int8'))
 
     # bedtools getfasta -fi sample_genome.fa -bed sample.bed
     # >chr2:15000-25000
@@ -129,7 +128,8 @@ def test_dna_dims_order_2():
                     [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # CC
                     [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # CC
                     [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],  # CC
-                                        dtype='int8'))
+                   dtype='int8'))
+
 
 def reverse_layer(order):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
@@ -149,8 +149,6 @@ def reverse_layer(order):
     rdna_layer = Reverse()(dna_in)
 
     rmod = Model(dna_in, rdna_layer)
-
-    indices = [0]
 
     # actual shape of DNA
     dna = data[0]
@@ -297,7 +295,6 @@ def test_dna_dataset_sanity(tmpdir):
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'storage.unstranded.h5'))
-
 
     Dna.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',

@@ -7,7 +7,6 @@ import numpy as np
 import pandas
 import pkg_resources
 import pytest
-from HTSeq import GenomicInterval
 
 from janggo.data import Cover
 
@@ -215,27 +214,27 @@ def test_cover_bam(tmpdir):
 
         # the region is read relative to the forward strand
         # read on the reverse strand
-        val = np.where(cover[4]==1)
+        val = np.where(cover[4] == 1)
         np.testing.assert_equal(cover[4].sum(), 1.)
         np.testing.assert_equal(val[1][0], 179)  # pos
         np.testing.assert_equal(val[2][0], 1)  # strand
 
         # two reads on the forward strand
-        val = np.where(cover[13]==1)
+        val = np.where(cover[13] == 1)
         np.testing.assert_equal(cover[13].sum(), 2.)
         np.testing.assert_equal(val[1], np.asarray([162, 178]))  # pos
-        np.testing.assert_equal(val[2], np.asarray([0, 0,]))  # strand
+        np.testing.assert_equal(val[2], np.asarray([0, 0]))  # strand
 
         # the region is read relative to the reverse strand
         # for index 50
         # read on the reverse strand
-        val = np.where(cover[52]==1)
+        val = np.where(cover[52] == 1)
         np.testing.assert_equal(cover[52].sum(), 2.)
         np.testing.assert_equal(val[1], np.asarray([9, 89]))  # pos
         np.testing.assert_equal(val[2], np.asarray([0, 0]))  # strand
 
         # two reads on the forward strand
-        val = np.where(cover[96]==1)
+        val = np.where(cover[96] == 1)
         np.testing.assert_equal(cover[96].sum(), 1.)
         np.testing.assert_equal(val[1], np.asarray([25]))  # pos
         np.testing.assert_equal(val[2], np.asarray([1]))  # strand
@@ -249,8 +248,6 @@ def test_load_cover_bigwig_default(tmpdir):
 
     gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
                             index_col='chr').to_dict()['length']
-
-    # gsize = content.to_dict()['length']
 
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -267,7 +264,6 @@ def test_load_cover_bigwig_default(tmpdir):
             storage=store,
             cachedir=cachedir if store == 'hdf5' else None)
 
-
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
 
@@ -280,12 +276,6 @@ def test_load_cover_bigwig_resolution1(tmpdir):
     data_path = pkg_resources.resource_filename('janggo', 'resources/')
 
     bwfile_ = os.path.join(data_path, "sample.bw")
-    gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
-
-    gsize = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
-                            index_col='chr').to_dict()['length']
-
-    # gsize = content.to_dict()['length']
 
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -301,7 +291,6 @@ def test_load_cover_bigwig_resolution1(tmpdir):
             resolution=1,
             storage=store,
             cachedir=cachedir if store == 'hdf5' else None)
-
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
@@ -424,6 +413,7 @@ def test_load_cover_bed_scored():
     np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
     np.testing.assert_equal(cover[0].sum(), 0)
     np.testing.assert_equal(cover[4].sum(), 5)
+
 
 def test_load_cover_bed_categorical():
 
