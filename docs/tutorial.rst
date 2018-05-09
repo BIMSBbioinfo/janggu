@@ -355,64 +355,77 @@ Evaluation
 ----------
 
 Finally, we would like to evaluate various aspects of the model performance
-and investigate the predictions. This can be done by invoking the
-methods :code:`evaluate` and :code:`predict`.
-While, this is also possible using a native keras model, janggo
-also offers a number of useful functions to 1. export the prediction
-and evaluation results in e.g. json, tsv, 2. plot the scoring metrics such as
-AUC-ROC, and 3. allows to export predictions and model loss in BED or BIGWIG
-format for further investigation of what the model has (or has not) trained
-in a genome browser of your choice.
+and investigate the predictions. This can be done by invoking
 
-InOutScorer
-^^^^^^^^^^^^^^^^^^^
-Evaluating the predictive performance in comparison with ground truth labels,
-you need to instantiate one or more :code:`InOutScorer` object that
-can be attached as callbacks to :code:`Janggo.evaluate`.
-The following example shows how to compute the AUC-ROC, plot the ROC curve
-and export the prediction loss to bigwig format
+.. code-block:: python
 
-In order to compute
+   model.evaluate(DNA, LABELS)
+   model.predict(DNA)
+
+which resemble the familiar keras methods.
+Janggo additinally offers features to simplify the
+analysis of the results through callback objects that you can
+attach when invoking
+:code:`model.evaluate` and :code:`model.predict`.
+This allows you to determine different performance metrics and/or
+export the results in various ways, e.g. as tsv file, as plot or
+as bigwig or bed file.
+
+There are two callback classes :code:`InOutScorer` and :code:`InScorer`,
+which can be used with :code:`evaluate` and :code:`predict`, respectively.
+
+Both of them maintain a name, a scoring function and an exporter function.
+
+An example of using :code:`InOutScorer` to
+write the area under the ROC curve (auROC)
+into a tsv file is illustrate in the following
 
 .. code:: python
 
-   import numpy
-   from sklearn.metrics import roc_auc_score, roc_curve
-
+   from sklearn.metrics import roc_auc_score
    from janggo import InOutScorer
    from janggo.utils import export_tsv
-   from janggo.utils import plot_score
-   from janggo.utils import export_bigwig
 
-   # Instantiate several evaluation scorers
-   score_auroc = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
-   score_roc = InOutScorer('ROC', roc_curve, exporter=plot_score)
-   score_loss = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
-                            exporter=export_bigwig,
-                            exporter_args={'gindexer': DNA.gindexer})
+   # create a scorer
+   score_auroc = InOutScorer('auROC',
+                             roc_auc_score,
+                             exporter=export_tsv)
 
-   # Evaluate the results
-   model.evaluate(DNA, LABELS, datatags=['training_set'],
-                  callbacks=[score_auroc, score_roc, score_loss])
+   # determine the auROC
+   model.evaluate(DNA, LABELS, callbacks=[score_auroc])
 
+After the evaluation, you will find the results
+in :code:`<results-root>/evaluation/<modelname>/auROC.tsv`.
 
-InScorer
-^^^^^^^^^^^^^^^^^^^
-Sometimes it is useful to evaluate the results based on input data only.
-For example, when you want to have a look at the predicted regions
-or if you want to investigate the feature activities of a specified layer.
-In this case, you need to instantiate one or more :code:`InScorer` objects
-which are attached as callbacks to :code:`Janggo.predict`.
-
-For example to export the model predictions to BED format
-you can invoke the following lines of code:
+Similarly, you can use :code:`InScorer` to export the predictions
+of the model into a json file
 
 .. code:: python
 
-   # Instantiate several evaluation scorers
-   pred = InOutScorer('predict', exporter=export_bed,
-                      exporter_args={'gindexer': DNA.gindexer})
+   from janggo import InScorer
+
+   # create scorer
+   # in this case, the scoring function is optional.
+   pred_scorer = InScorer('predict', exporter=export_json)
 
    # Evaluate predictions
    model.predict(DNA, datatags=['training_set'],
-                 callbacks=[pred])
+                 callbacks=[pred_scorer])
+
+The Scorer objects support a number of scoring and exporter function
+combinations that can be used to analyze the model results.
+For example, you can :code:`InOutScorer` with other `sklearn.metrics`, including
+`roc_curve` or `precision_recall_curve` and create a plot using :code:`export_score_plot`.
+Or you can export prediction to a bigwig or bed file using :code:`export_bigwig`
+and :code:`export_bed`, respectively.
+
+Alternatively, you can supply custom scoring and exporter functions
+
+.. code:: python
+
+   # computes the per-data point loss
+   score_loss = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
+                            exporter=export_json)
+
+Further examples are illustrated in the reference section and
+in the module :code:`janggo.utils`.
