@@ -316,6 +316,8 @@ class InScorer(object):
                 print('pout', pout)
                 if self.extractor is not None:
                     feat = self.extractor(pout[:, idx])
+                else:
+                    feat = pout[:, idx]
 
                 if self.conditions is not None and \
                    len(self.conditions) == pout.shape[-1]:

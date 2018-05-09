@@ -9,12 +9,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyBigWig
+import seaborn as sns
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
+from sklearn.manifold import TSNE
 
 if sys.version_info[0] < 3:  # pragma: no cover
     from urllib import urlcleanup, urlretrieve
@@ -275,7 +277,7 @@ def export_tsv(output_dir, name, results):
 
 
 def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
-               ylabel=None, fform=None):
+                      ylabel=None, fform=None):
     """Method that dumps the results in a json file.
 
     Parameters
@@ -418,3 +420,46 @@ def export_bed(output_dir, name, results, gindexer=None):
                 output=layername, condition=condition)),
                            sep='\t', header=False, index=False,
                            columns=['chr', 'start', 'end', 'name', 'score'])
+
+
+def export_clustermap(output_dir, name, results, fform=None):
+    """Create of clustermap of the feature activities."""
+
+    _rs = {k: results[k]['value'] for k in results}
+    df = pd.DataFrame.from_dict(_rs)
+    if fform is not None:
+        fform = fform
+    else:
+        fform = 'png'
+
+    sns.clustermap(df, method='ward').savefig(os.path.join(output_dir,
+                                                           name + '.' + fform),
+                                              format=fform, dpi=700)
+
+
+def export_tsne(output_dir, name, results, figsize=None,
+                cmap=None, colors=None, norm=None, alpha=None, fform=None):
+    """Create a plot of the 2D t-SNE embedding of the feature activities."""
+
+    _rs = {k: results[k]['value'] for k in results}
+    df = pd.DataFrame.from_dict(_rs)
+
+    tsne = TSNE()
+    embedding = tsne.fit_transform(df.values)
+
+    if figsize is not None:
+        fig = plt.figure(figsize=figsize)
+    else:
+        fig = plt.figure()
+
+    plt.scatter(x=embedding[:, 0], y=embedding[:, 1],
+                c=colors, cmap=cmap, norm=norm, alpha=alpha)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.axis('off')
+    if fform is not None:
+        fform = fform
+    else:
+        fform = 'png'
+
+    fig.savefig(os.path.join(output_dir, name + '.' + fform),
+                format=fform, dpi=700)
