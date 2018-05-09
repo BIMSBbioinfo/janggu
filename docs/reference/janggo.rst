@@ -1,8 +1,8 @@
 janggo - Deep learning for Genomics data
 ===============================================
 
-This section describes the interface and utilities that janggo provides
-for deep learning.
+This section describes the interface and utilities to build
+build and evaluate deep learning applications with janggo.
 
 .. currentmodule:: janggo
 
@@ -35,3 +35,31 @@ Evaluator
 
 .. autoclass:: InOutScorer
    :members:
+
+Utilities
+=========
+
+.. autofunction:: export_json
+.. autofunction:: export_tsv
+.. autofunction:: export_bed
+.. autofunction:: export_bigwig
+.. autofunction:: export_score_plot
+
+Decorators
+^^^^^^^^^^^
+
+.. autofunction:: inputlayer
+.. autofunction:: outputdense
+.. autofunction:: outputconv
+
+Generators
+^^^^^^^^^^
+.. autofunction:: janggo_fit_generator
+.. autofunction:: janggo_predict_generator
+
+Special Network layers
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: Complement
+.. autoclass:: Reverse
+.. autoclass:: LocalAveragePooling2D
