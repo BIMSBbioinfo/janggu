@@ -22,8 +22,10 @@ from janggo.evaluation import InScorer
 from janggo.evaluation import _dimension_match
 from janggo.utils import export_bed
 from janggo.utils import export_bigwig
-from janggo.utils import export_tsv
+from janggo.utils import export_clustermap
 from janggo.utils import export_score_plot
+from janggo.utils import export_tsne
+from janggo.utils import export_tsv
 
 
 def test_input_dims():
@@ -186,6 +188,80 @@ def test_output_export_score_plot(tmpdir):
                                        "evaluation", bwm.name, "score.png"))
     assert os.path.exists(os.path.join(tmpdir.strpath,
                                        "evaluation", bwm.name, "score.eps"))
+
+
+def test_output_export_clustermap(tmpdir):
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def _model(inputs, inp, oup, params):
+        with inputs.use('x') as layer:
+            outputs = Dense(3, name='hidden')(layer)
+        return inputs, outputs
+
+    bwm = Janggo.create(_model,
+                        inputs=inputs,
+                        outputs=outputs,
+                        name='nptest',
+                        outputdir=tmpdir.strpath)
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    dummy_eval = InScorer('cluster',
+                          exporter=export_clustermap)
+
+    dummy_eval_par = InScorer('cluster',
+                              exporter=export_clustermap,
+                              exporter_args={'fform': 'eps'})
+
+    bwm.predict(inputs, layername='hidden',
+                callbacks=[dummy_eval, dummy_eval_par])
+
+    # check if plot was produced
+    assert os.path.exists(os.path.join(tmpdir.strpath,
+                                       "prediction", bwm.name, "cluster.png"))
+    assert os.path.exists(os.path.join(tmpdir.strpath,
+                                       "prediction", bwm.name, "cluster.eps"))
+
+
+def test_output_export_tsne(tmpdir):
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def _model(inputs, inp, oup, params):
+        with inputs.use('x') as layer:
+            outputs = Dense(3, name='hidden')(layer)
+        return inputs, outputs
+
+    bwm = Janggo.create(_model,
+                        inputs=inputs,
+                        outputs=outputs,
+                        name='nptest',
+                        outputdir=tmpdir.strpath)
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    dummy_eval = InScorer('tsne',
+                          exporter=export_tsne)
+
+    dummy_eval_par = InScorer('tsne',
+                              exporter=export_tsne,
+                              exporter_args={'fform': 'eps'})
+
+    bwm.predict(inputs, layername='hidden',
+                callbacks=[dummy_eval, dummy_eval_par])
+
+    # check if plot was produced
+    assert os.path.exists(os.path.join(tmpdir.strpath,
+                                       "prediction", bwm.name, "tsne.png"))
+    assert os.path.exists(os.path.join(tmpdir.strpath,
+                                       "prediction", bwm.name, "tsne.eps"))
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
