@@ -7,8 +7,6 @@ from janggo.decorators import outputconv  # noqa
 from janggo.decorators import outputdense  # noqa
 from janggo.evaluation import InOutScorer  # noqa
 from janggo.evaluation import InScorer  # noqa
-from janggo.generators import janggo_fit_generator  # noqa
-from janggo.generators import janggo_predict_generator  # noqa
 from janggo.layers import Complement  # noqa
 from janggo.layers import LocalAveragePooling2D  # noqa
 from janggo.layers import Reverse  # noqa

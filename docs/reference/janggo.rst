@@ -52,10 +52,6 @@ Decorators
 .. autofunction:: outputdense
 .. autofunction:: outputconv
 
-Generators
-^^^^^^^^^^
-.. autofunction:: janggo_fit_generator
-.. autofunction:: janggo_predict_generator
 
 Special Network layers
 ^^^^^^^^^^^^^^^^^^^^^^^

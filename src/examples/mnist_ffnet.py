@@ -8,8 +8,6 @@ from keras.layers import Input
 from keras.models import Model
 from sklearn.metrics import roc_auc_score
 
-from janggo import janggo_fit_generator
-from janggo import janggo_predict_generator
 from janggo.data import Array
 from janggo.data import input_props
 from janggo.data import output_props
@@ -115,7 +113,6 @@ K.clear_session()
 np.random.seed(1234)
 bw = janggomodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
-           generator=janggo_fit_generator,
            workers=3, verbose=0)
 ypred = bw.predict(blg_x_test)
 
@@ -131,9 +128,8 @@ K.clear_session()
 np.random.seed(1234)
 bw = janggomodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
-           generator=janggo_fit_generator,
            workers=3, verbose=0)
-ypred = bw.predict(blg_x_test, generator=janggo_predict_generator)
+ypred = bw.predict(blg_x_test)
 
 print('Option 2c')
 print('#' * 40)

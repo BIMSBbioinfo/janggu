@@ -2,6 +2,9 @@ from abc import ABCMeta
 from abc import abstractmethod
 from abc import abstractproperty
 
+import numpy
+from keras.utils import Sequence
+
 
 class Dataset:
     """Dataset interface.
@@ -87,3 +90,53 @@ def _data_props(data):
         return dataprops
     else:
         raise Exception('inputSpace wrong argument: {}'.format(data))
+
+
+class JanggoSequence(Sequence):
+    def __init__(self, batch_size, inputs, outputs=None, sample_weights=None,
+                 shuffle=False):
+        self.inputs = inputs
+        self.outputs = outputs
+        self.sample_weights = sample_weights
+        self.batch_size = batch_size
+        for k in inputs:
+            xlen = len(inputs[k])
+            break
+
+        self.indices = list(range(xlen))
+        self.shuffle = shuffle
+
+    def __len__(self):
+        return int(numpy.ceil(len(self.indices) / float(self.batch_size)))
+
+    def __getitem__(self, idx):
+
+        inputs = {}
+
+        for k in self.inputs:
+            inputs[k] = self.inputs[k][
+                self.indices[idx*self.batch_size:(idx+1)*self.batch_size]]
+
+        ret = (inputs, )
+        if self.outputs is not None:
+            outputs = {}
+            for k in self.outputs:
+                outputs[k] = self.outputs[k][
+                    self.indices[idx*self.batch_size:(idx+1)*self.batch_size]]
+        else:
+            outputs = None
+
+        if self.sample_weights is not None:
+
+            sweight = self.sample_weight[
+                self.indices[idx*self.batch_size:(idx+1)*self.batch_size]]
+        else:
+            sweight = None
+        ret += (outputs, sweight)
+
+        print(len(ret))
+        return ret
+
+    def on_epoch_end(self):
+        if self.shuffle:
+            np.random.shuffle(self.indices)

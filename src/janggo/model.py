@@ -13,6 +13,7 @@ from keras.models import load_model
 from keras.utils import plot_model
 
 from janggo.data.data import _data_props
+from janggo.data.data import JanggoSequence
 from janggo.layers import Complement
 from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
@@ -119,7 +120,7 @@ class Janggo(object):
 
         Examples
         --------
-        
+
         .. code-block:: python
 
           in_ = Input(shape=(10,), name='ip')
@@ -332,42 +333,22 @@ class Janggo(object):
             initial_epoch=0,
             steps_per_epoch=None,
             validation_steps=None,
-            generator=None,
             use_multiprocessing=True,
             workers=1,
             **kwargs):
         """Model fitting.
 
         This method is used to fit a given model.
-        All of the parameters are directly delegated the keras model
-        fit or fit_generator method.
-        See https://keras.io/models/model/#methods.
-        If a generator is supplied, the fit_generator method of the
-        respective keras model will be invoked.
-        Otherwise the fit method is used.
-
-        Janggo provides a readily available generator.
-        See :func:`janggo_fit_generator`.
-
-        Generally, generators need to adhere to the following signature:
-        :code:`generator(inputs, outputs, batch_size, sample_weight=None,
-        shuffle=False)`.
+        All of the parameters are directly delegated the keras model.
 
         Examples
         --------
-        Variant 1: Use `fit` without a generator
+
 
         .. code-block:: python
 
           model.fit(DATA, LABELS)
 
-        Variant 2: Use `fit` with a generator
-
-        .. code-block:: python
-
-          from janggo import janggo_fit_generator
-
-          model.fit(DATA, LABELS, generator=janggo_fit_generator)
         """
 
         inputs = self.__convert_data(inputs, 'input_layers')
@@ -380,7 +361,6 @@ class Janggo(object):
             'class_weight': class_weight,
             'initial_epoch': initial_epoch,
             'steps_per_epoch': steps_per_epoch,
-            'generator': True if generator else False,
             'use_multiprocessing': use_multiprocessing,
             'workers': workers
         }
@@ -407,78 +387,36 @@ class Janggo(object):
                 "epoch %s: %s",
                 epoch + 1,
                 ' '.join(["{}={}".format(k, logs[k]) for k in logs])))]
+        if not batch_size:
+            batch_size = 32
+        jseq = JanggoSequence(batch_size, inputs, outputs, sample_weight)
 
-        if generator:
-
-            try:
-                if not batch_size:
-                    batch_size = 32
-
-                for k in inputs:
-                    xlen = len(inputs[k])
-                    break
-
-                if not steps_per_epoch:
-                    steps_per_epoch = xlen//batch_size + \
-                        (1 if xlen % batch_size > 0 else 0)
-
-                if validation_data:
-                    valinputs = self.__convert_data(validation_data[0], 'input_layers')
-                    valoutputs = self.__convert_data(validation_data[1], 'output_layers')
-                    if len(validation_data) == 2:
-                        vgen = generator(valinputs,
-                                         valoutputs,
-                                         batch_size,
-                                         shuffle=shuffle)
-                    else:
-                        vgen = generator(valinputs,
-                                         valoutputs,
-                                         batch_size,
-                                         sample_weight=validation_data[2],
-                                         shuffle=shuffle)
-
-                    if not validation_steps:
-                        for k in valinputs:
-                            vallen = len(valinputs[k])
-                            break
-                        validation_steps = vallen//batch_size + \
-                            (1 if vallen % batch_size > 0 else 0)
-                else:
-                    vgen = None
-
-                history = self.kerasmodel.fit_generator(
-                    generator(inputs, outputs, batch_size,
-                              sample_weight=sample_weight,
-                              shuffle=shuffle),
-                    steps_per_epoch=steps_per_epoch,
-                    epochs=epochs,
-                    validation_data=vgen,
-                    validation_steps=validation_steps,
-                    class_weight=class_weight,
-                    initial_epoch=initial_epoch,
-                    shuffle=False,  # must be false: gnerator shuffles.
-                    use_multiprocessing=use_multiprocessing,
-                    max_queue_size=50,
-                    workers=workers,
-                    verbose=verbose,
-                    callbacks=callbacks)
-            except Exception:  # pragma: no cover
-                self.logger.exception('fit_generator failed:')
-                raise
+        if validation_data is not None:
+            valinputs = self.__convert_data(validation_data[0], 'input_layers')
+            valoutputs = self.__convert_data(validation_data[1], 'output_layers')
+            sweights = validation_data[2] if len(validation_data) == 3 else None
+            valjseq = JanggoSequence(batch_size, valinputs, valoutputs, sweights)
         else:
-            try:
-                history = self.kerasmodel.fit(inputs, outputs, batch_size, epochs,
-                                              verbose,
-                                              callbacks, validation_split,
-                                              validation_data, shuffle,
-                                              class_weight,
-                                              sample_weight, initial_epoch,
-                                              steps_per_epoch,
-                                              validation_steps,
-                                              **kwargs)
-            except Exception:  # pragma: no cover
-                self.logger.exception('fit failed:')
-                raise
+            valjseq = None
+
+
+        try:
+            history = self.kerasmodel.fit_generator(
+                jseq,
+                epochs=epochs,
+                validation_data=valjseq,
+                class_weight=class_weight,
+                initial_epoch=initial_epoch,
+                shuffle=shuffle,  # must be false: gnerator shuffles.
+                use_multiprocessing=use_multiprocessing,
+                max_queue_size=50,
+                workers=workers,
+                verbose=verbose,
+                callbacks=callbacks)
+        except Exception:  # pragma: no cover
+            self.logger.exception('fit_generator failed:')
+            raise
+
 
         self.logger.info('#' * 40)
         for k in history.history:
@@ -496,7 +434,6 @@ class Janggo(object):
                 batch_size=None,
                 verbose=0,
                 steps=None,
-                generator=None,
                 use_multiprocessing=True,
                 layername=None,
                 datatags=None,
@@ -506,34 +443,16 @@ class Janggo(object):
         """Performs a prediction.
 
         This method predicts the targets.
-        All of the parameters are directly delegated the keras model
-        predict or predict_generator method.
+        All of the parameters are directly delegated the keras model.
         See https://keras.io/models/model/#methods.
-        If a generator is supplied, the `predict_generator` method of the
-        respective keras model will be invoked.
-        Otherwise the `predict` method is used.
-
-        Janggo provides a readily available generator for this method
-        See :func:`janggo_predict_generator`.
-
-        Generally, generators need to adhere to the following signature:
-        :code:`generator(inputs, batch_size, sample_weight=None, shuffle=False)`.
 
         Examples
         --------
-        Variant 1: Use `predict` without a generator
 
         .. code-block:: python
 
           model.predict(DATA)
 
-        Variant 2: Use `predict` with a generator
-
-        .. code-block:: python
-
-          from janggo import janggo_predict_generator
-
-          model.predict(DATA, generator=janggo_predict_generator)
         """
 
         inputs = self.__convert_data(inputs, 'input_layers')
@@ -551,34 +470,21 @@ class Janggo(object):
         else:
             model = self.kerasmodel
 
-        if generator:
+        if not batch_size:
+            batch_size = 32
 
-            if not batch_size:
-                batch_size = 32
+        jseq = JanggoSequence(batch_size, inputs, None, None)
 
-            for k in inputs:
-                xlen = len(inputs[k])
-                break
-
-            if not steps:
-                steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
-
-            try:
-                preds = model.predict_generator(
-                    generator(inputs, batch_size),
-                    steps=steps,
-                    use_multiprocessing=use_multiprocessing,
-                    workers=workers,
-                    verbose=verbose)
-            except Exception:  # pragma: no cover
-                self.logger.exception('predict_generator failed:')
-                raise
-        else:
-            try:
-                preds = model.predict(inputs, batch_size, verbose, steps)
-            except Exception:  # pragma: no cover
-                self.logger.exception('predict failed:')
-                raise
+        try:
+            preds = model.predict_generator(
+                jseq,
+                steps=steps,
+                use_multiprocessing=use_multiprocessing,
+                workers=workers,
+                verbose=verbose)
+        except Exception:  # pragma: no cover
+            self.logger.exception('predict_generator failed:')
+            raise
 
         prd = self.__convert_data(preds, 'output_layers')
         for callback in callbacks or []:
@@ -590,7 +496,6 @@ class Janggo(object):
                  verbose=1,
                  sample_weight=None,
                  steps=None,
-                 generator=None,
                  use_multiprocessing=True,
                  datatags=None,
                  callbacks=None,
@@ -598,35 +503,16 @@ class Janggo(object):
         """Evaluates the performance.
 
         This method is used to evaluate a given model.
-        All of the parameters are directly delegated the keras model
-        `evaluate` or `evaluate_generator` method.
+        All of the parameters are directly delegated the keras model.
         See https://keras.io/models/model/#methods.
-        If a generator is supplied, the `evaluate_generator` method of the
-        respective keras model will be invoked.
-        Otherwise the `evaluate` method is used.
-
-        Janggo provides a readily available generator.
-        See :func:`janggo_fit_generator`.
-
-        Generally, generators need to adhere to the following signature:
-        :code:`generator(inputs, outputs, batch_size, sample_weight=None,
-        shuffle=False)`.
 
         Examples
         --------
-        Variant 1: Use `evaluate` without a generator
 
         .. code-block:: python
 
           model.evaluate(DATA, LABELS)
 
-        Variant 2: Use `evaluate` with a generator
-
-        .. code-block:: python
-
-          from janggo import janggo_fit_generator
-
-          model.evaluate(DATA, LABELS, generator=janggo_fit_generator)
         """
 
         inputs = self.__convert_data(inputs, 'input_layers')
@@ -639,37 +525,22 @@ class Janggo(object):
         self.__dim_logging(outputs)
         self.timer = time.time()
 
-        if generator:
 
-            if not batch_size:
-                batch_size = 32
+        if not batch_size:
+            batch_size = 32
 
-            for k in inputs:
-                xlen = len(inputs[k])
-                break
+        jseq = JanggoSequence(batch_size, inputs, outputs, None)
 
-            if not steps:
-                steps = xlen//batch_size + (1 if xlen % batch_size > 0 else 0)
+        try:
+            values = self.kerasmodel.evaluate_generator(
+                jseq,
+                steps=steps,
+                use_multiprocessing=use_multiprocessing,
+                workers=workers)
+        except Exception:  # pragma: no cover
+            self.logger.exception('evaluate_generator failed:')
+            raise
 
-            try:
-                values = self.kerasmodel.evaluate_generator(
-                    generator(inputs, outputs, batch_size,
-                              sample_weight=sample_weight,
-                              shuffle=False),
-                    steps=steps,
-                    use_multiprocessing=use_multiprocessing,
-                    workers=workers)
-            except Exception:  # pragma: no cover
-                self.logger.exception('evaluate_generator failed:')
-                raise
-        else:
-            try:
-                values = self.kerasmodel.evaluate(inputs, outputs, batch_size,
-                                                  verbose,
-                                                  sample_weight, steps)
-            except Exception:  # pragma: no cover
-                self.logger.exception('evaluate_generator failed:')
-                raise
 
         self.logger.info('#' * 40)
         if not isinstance(values, list):
@@ -723,6 +594,8 @@ class Janggo(object):
         """
         # If we deal with Dataset, we convert it to a Dictionary
         # which is directly interpretable by keras
+        print(data)
+        print(type(data))
         if hasattr(data, "name") and hasattr(data, "shape"):
             # if it is a janggo.data.Dataset we get here
             c_data = {data.name: data}

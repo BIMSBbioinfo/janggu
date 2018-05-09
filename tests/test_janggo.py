@@ -10,8 +10,6 @@ from keras.layers import Input
 
 from janggo import Janggo
 from janggo import inputlayer
-from janggo import janggo_fit_generator
-from janggo import janggo_predict_generator
 from janggo import outputconv
 from janggo import outputdense
 from janggo.cli import main
@@ -266,7 +264,6 @@ def test_janggo_train_predict_option1(tmpdir):
 
     create: by_shape
     Input args: Dataset
-    generators: NO
     """
 
     inputs = Array("X", np.random.random((100, 10)))
@@ -304,7 +301,6 @@ def test_janggo_train_predict_option2(tmpdir):
 
     create: NO
     Input args: list(Dataset)
-    generators: NO
     """
 
     inputs = Array("x", np.random.random((100, 10)))
@@ -342,7 +338,6 @@ def test_janggo_train_predict_option3(tmpdir):
 
     create: NO
     Input args: list(np.array)
-    generators: NO
     """
 
     inputs = np.random.random((100, 10))
@@ -364,20 +359,17 @@ def test_janggo_train_predict_option3(tmpdir):
 
     bwm.fit([inputs], [outputs], epochs=2, batch_size=32)
 
-    bwm.fit([inputs], [outputs], epochs=2, batch_size=32,
-            generator=janggo_fit_generator)
+    bwm.fit([inputs], [outputs], epochs=2, batch_size=32)
     assert os.path.exists(storage)
 
     pred = bwm.predict([inputs])
 
-    bwm.predict([inputs], batch_size=32,
-                generator=janggo_predict_generator)
+    bwm.predict([inputs], batch_size=32)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate([inputs], [outputs])
 
-    bwm.evaluate([inputs], [outputs], batch_size=32,
-                 generator=janggo_fit_generator)
+    bwm.evaluate([inputs], [outputs], batch_size=32)
 
 
 def test_janggo_train_predict_option4(tmpdir):
@@ -387,7 +379,6 @@ def test_janggo_train_predict_option4(tmpdir):
 
     create: NO
     Input args: np.array
-    generators: YES
     """
 
     inputs = np.random.random((100, 10))
@@ -412,21 +403,18 @@ def test_janggo_train_predict_option4(tmpdir):
     # This used to not work with normal numpy arrays,
     # but now the numpy arrays are matched automatically
     # with the layer names.
-    bwm.fit(inputs, outputs, epochs=2, batch_size=32,
-            generator=janggo_fit_generator)
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32)
 
     assert os.path.exists(storage)
 
     pred = bwm.predict(inputs)
 
-    bwm.predict(inputs, batch_size=32,
-                generator=janggo_predict_generator)
+    bwm.predict(inputs, batch_size=32)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate(inputs, outputs)
 
-    bwm.evaluate(inputs, outputs, batch_size=32,
-                 generator=janggo_fit_generator)
+    bwm.evaluate(inputs, outputs, batch_size=32)
 
 
 def test_janggo_train_predict_option5(tmpdir):
@@ -434,7 +422,6 @@ def test_janggo_train_predict_option5(tmpdir):
 
     create: NO
     Input args: list(Dataset)
-    generators: YES
     """
 
     inputs = Array("x", np.random.random((100, 10)))
@@ -456,16 +443,15 @@ def test_janggo_train_predict_option5(tmpdir):
     assert not os.path.exists(storage)
 
     bwm.fit([inputs], [outputs], epochs=2, batch_size=32,
-            generator=janggo_fit_generator,
             use_multiprocessing=False)
 
     assert os.path.exists(storage)
 
-    pred = bwm.predict([inputs], generator=janggo_predict_generator,
+    pred = bwm.predict([inputs],
                        use_multiprocessing=False)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate([inputs], [outputs], generator=janggo_fit_generator,
+    bwm.evaluate([inputs], [outputs],
                  use_multiprocessing=False)
 
 
@@ -474,7 +460,6 @@ def test_janggo_train_predict_option6(tmpdir):
 
     create: YES
     Input args: Dataset
-    generators: YES
     """
 
     inputs = Array("x", np.random.random((100, 10)))
@@ -498,16 +483,15 @@ def test_janggo_train_predict_option6(tmpdir):
     assert not os.path.exists(storage)
 
     bwm.fit(inputs, outputs, epochs=2, batch_size=32,
-            generator=janggo_fit_generator,
             use_multiprocessing=False)
 
     assert os.path.exists(storage)
 
-    pred = bwm.predict(inputs, generator=janggo_predict_generator,
+    pred = bwm.predict(inputs,
                        use_multiprocessing=False)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
+    bwm.evaluate(inputs, outputs,
                  use_multiprocessing=False)
 
 
@@ -516,7 +500,6 @@ def test_janggo_train_predict_option7(tmpdir):
 
     create: YES
     Input args: Dataset
-    generators: YES
     validation_set: YES
     batch_size: None
     """
@@ -542,15 +525,14 @@ def test_janggo_train_predict_option7(tmpdir):
     assert not os.path.exists(storage)
 
     bwm.fit(inputs, outputs, epochs=2,
-            generator=janggo_fit_generator,
             validation_data=(inputs, outputs),
             use_multiprocessing=False)
 
     assert os.path.exists(storage)
 
-    pred = bwm.predict(inputs, generator=janggo_predict_generator,
+    pred = bwm.predict(inputs,
                        use_multiprocessing=False)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate(inputs, outputs, generator=janggo_fit_generator,
+    bwm.evaluate(inputs, outputs,
                  use_multiprocessing=False)
