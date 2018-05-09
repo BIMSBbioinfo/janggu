@@ -178,7 +178,11 @@ class Janggo(object):
             filename = self._storage_path(self.name, self.outputdir)
 
         plotname = os.path.splitext(filename)[0] + '.png'
-        plot_model(self.kerasmodel, to_file=plotname, show_shapes=True)
+        try:
+            plot_model(self.kerasmodel, to_file=plotname, show_shapes=True)
+        except:
+            # if graphviz is not installed on the system.
+            pass
         self.logger.info("Save model %s", filename)
         self.kerasmodel.save(filename, overwrite)
 
