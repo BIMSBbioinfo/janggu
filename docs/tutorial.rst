@@ -120,7 +120,7 @@ Genomic Datasets
 :mod:`janggo.data` provides Dataset classes that can be used for
 training and evaluating neural networks.
 Of particular importance are the Genomics-specific dataset,
- :class:`Dna` and :class:`Cover` which
+:class:`Dna` and :class:`Cover` which
 to easily access and fetch genomics data.
 Additional Dataset classes are described in the Reference section of the
 documentation.
