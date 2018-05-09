@@ -25,7 +25,7 @@ class Cover(Dataset):
         Name of the dataset
     covers : :class:`BlgGenomicArray`
         A genomic array that holds the coverage data
-    gindxer : :class:`GenomicIndexer`
+    gindexer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
     flank : int
