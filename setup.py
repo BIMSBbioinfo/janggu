@@ -8,36 +8,13 @@ from __future__ import print_function
 import io
 import re
 from glob import glob
-from os import sep
-from os import walk
 from os.path import basename
 from os.path import dirname
 from os.path import join
-from os.path import relpath
 from os.path import splitext
 
-from setuptools import Extension
 from setuptools import find_packages
 from setuptools import setup
-
-try:
-    import Cython
-    from Cython.Build import cythonize
-except ImportError:
-    Cython = None
-
-if Cython:
-    CYTHONIZED = cythonize([
-        Extension(
-            splitext(relpath(path, 'src').replace(sep, '.'))[0],
-            sources=[path],
-            include_dirs=[dirname(path)]
-        )
-        for root, _, _ in walk('src')
-        for path in glob(join(root, '*.pyx' if Cython else '*.c'))
-    ], compiler_directives={'embedsignature': True})
-else:
-    CYTHONIZED = None
 
 
 def _read(*names, **kwargs):
@@ -115,13 +92,9 @@ setup(
         #   'rst': ['docutils>=0.11'],
         #   ':python_version=="2.6"': ['argparse'],
     },
-    setup_requires=[
-        'cython',
-    ] if Cython else [],
     entry_points={
         'console_scripts': [
             'janggo = janggo.cli:main',
         ]
-    },
-    ext_modules=CYTHONIZED,
+    }
 )
