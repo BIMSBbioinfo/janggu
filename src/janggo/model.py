@@ -180,8 +180,9 @@ class Janggo(object):
         plotname = os.path.splitext(filename)[0] + '.png'
         try:
             plot_model(self.kerasmodel, to_file=plotname, show_shapes=True)
-        except:
+        except Exception:  # pragma: no cover
             # if graphviz is not installed on the system.
+            self.logger.exception('plot_model failed, continue nevertheless: ')
             pass
         self.logger.info("Save model %s", filename)
         self.kerasmodel.save(filename, overwrite)
@@ -329,21 +330,20 @@ class Janggo(object):
             epochs=1,
             verbose=1,
             callbacks=None,
-            validation_split=0.,
             validation_data=None,
             shuffle=True,
             class_weight=None,
             sample_weight=None,
             initial_epoch=0,
             steps_per_epoch=None,
-            validation_steps=None,
-            use_multiprocessing=True,
+            use_multiprocessing=False,
             workers=1,
             **kwargs):
         """Model fitting.
 
         This method is used to fit a given model.
-        All of the parameters are directly delegated the keras model.
+        All of the parameters are directly delegated the
+        fit_generator of the keras model.
 
         Examples
         --------
@@ -436,7 +436,7 @@ class Janggo(object):
                 batch_size=None,
                 verbose=0,
                 steps=None,
-                use_multiprocessing=True,
+                use_multiprocessing=False,
                 layername=None,
                 datatags=None,
                 callbacks=None,
@@ -445,7 +445,8 @@ class Janggo(object):
         """Performs a prediction.
 
         This method predicts the targets.
-        All of the parameters are directly delegated the keras model.
+        All of the parameters are directly delegated the
+        predict_generator of the keras model.
         See https://keras.io/models/model/#methods.
 
         Examples
@@ -498,14 +499,15 @@ class Janggo(object):
                  verbose=1,
                  sample_weight=None,
                  steps=None,
-                 use_multiprocessing=True,
+                 use_multiprocessing=False,
                  datatags=None,
                  callbacks=None,
                  workers=1):
         """Evaluates the performance.
 
         This method is used to evaluate a given model.
-        All of the parameters are directly delegated the keras model.
+        All of the parameters are directly delegated the
+        evalute_generator of the keras model.
         See https://keras.io/models/model/#methods.
 
         Examples
@@ -526,7 +528,6 @@ class Janggo(object):
         self.logger.info("Output:")
         self.__dim_logging(outputs)
         self.timer = time.time()
-
 
         if not batch_size:
             batch_size = 32
