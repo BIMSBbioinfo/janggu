@@ -32,11 +32,10 @@ Janggo is a python package that facilitates deep learning in Genomics.
    :width: 100%
    :alt: Janggo motivation
    :align: center
-   :target: janggo_image
 
 
 While building and training neural networks can conveniently
-achieved using a number of package, including `keras <keras.io>`_,
+achieved using a number of package, including `keras <https://keras.io>`_,
 preparing Genomics datasets
 for the use with keras as well as consistently evaluating
 model performances for model comparison
