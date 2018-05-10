@@ -311,7 +311,6 @@ class InScorer(object):
             pout = _pre[layername[0]]
             for idx in range(pout.shape[-1]):
 
-                print('pout', pout)
                 if self.extractor is not None:
                     feat = self.extractor(pout[:, idx])
                 else:

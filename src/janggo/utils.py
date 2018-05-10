@@ -393,10 +393,6 @@ def export_bed(output_dir, name, results, gindexer=None):
         for ridx, region in enumerate(gindexer):
             pred = results[modelname, layername, condition]['value']
 
-            print(pred)
-            print(region)
-            print(gindexer)
-            print('len(gi)={}'.format(len(gindexer)))
             nsplit = len(pred)//len(gindexer)
             stepsize = (region.end-region.start)//nsplit
             starts = list(range(region.start,

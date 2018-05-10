@@ -594,8 +594,6 @@ class Janggo(object):
         """
         # If we deal with Dataset, we convert it to a Dictionary
         # which is directly interpretable by keras
-        print(data)
-        print(type(data))
         if hasattr(data, "name") and hasattr(data, "shape"):
             # if it is a janggo.data.Dataset we get here
             c_data = {data.name: data}

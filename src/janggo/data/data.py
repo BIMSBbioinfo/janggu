@@ -142,7 +142,6 @@ class JanggoSequence(Sequence):
             sweight = None
         ret += (outputs, sweight)
 
-        print(len(ret))
         return ret
 
     def on_epoch_end(self):
