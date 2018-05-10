@@ -178,12 +178,10 @@ class InOutScorer(object):
                 else:
                     condition = str(idx)
 
-                res = {
-                    'date': str(datetime.datetime.utcnow()),
-                    'value': score,
-                    'tags': '-'.join(datatags)}
-
-                self.results[model.name, layername[0], condition] = res
+                self.results[model.name, layername[0], condition] = \
+                    {'date': str(datetime.datetime.utcnow()),
+                     'value': score,
+                     'tags': '-'.join(datatags)}
 
         if self.immediate_export:
             # export directly if required
@@ -325,12 +323,10 @@ class InScorer(object):
                 else:
                     condition = str(idx)
 
-                res = {
-                    'date': str(datetime.datetime.utcnow()),
-                    'value': feat,
-                    'tags': '-'.join(datatags)}
-
-                self.results[model.name, layername[0], condition] = res
+                self.results[model.name, layername[0], condition] = \
+                    {'date': str(datetime.datetime.utcnow()),
+                     'value': feat,
+                     'tags': '-'.join(datatags)}
 
         if self.immediate_export:
             # export directly if required

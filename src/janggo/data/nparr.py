@@ -1,3 +1,4 @@
+"""Array dataset"""
 from janggo.data.data import Dataset
 
 

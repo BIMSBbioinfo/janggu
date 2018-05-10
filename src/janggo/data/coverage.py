@@ -1,3 +1,5 @@
+"""Coverage dataset"""
+
 import os
 
 import numpy as np
@@ -489,6 +491,7 @@ class Cover(Dataset):
 
     @property
     def conditions(self):
+        """Conditions"""
         return self.covers.condition
 
     @property

@@ -1,3 +1,5 @@
+"""Table dataset"""
+
 import os
 
 import pandas as pd

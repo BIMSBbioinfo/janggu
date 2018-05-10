@@ -1,3 +1,5 @@
+"""Genomic arrays"""
+
 import os
 
 import h5py
@@ -34,7 +36,7 @@ class GenomicArray(object):
         Directory in which to store the cachefiles. Used only with
         'memmap' and 'hdf5'. Default: "".
     """
-    handle = None
+    handle = dict()
     _condition = None
 
     def __init__(self, stranded=True, conditions=None, typecode='d'):
@@ -53,7 +55,9 @@ class GenomicArray(object):
             start = interval.start
             end = interval.end
             strand = interval.strand
-            self.handle[chrom][start:end, 1 if self.stranded and strand == '-' else 0, condition] = value
+            self.handle[chrom][start:end,
+                               1 if self.stranded and strand == '-' else 0,
+                               condition] = value
         else:
             raise IndexError("Index must be a GenomicInterval and a condition index")
 
@@ -71,6 +75,7 @@ class GenomicArray(object):
 
     @property
     def condition(self):
+        """condition"""
         return self._condition
 
     @condition.setter

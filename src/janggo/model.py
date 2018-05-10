@@ -153,7 +153,7 @@ class Janggo(object):
 
     @property
     def name(self):
-        """Name property"""
+        """Model name"""
         return self._name
 
     @name.setter
@@ -183,7 +183,7 @@ class Janggo(object):
         except Exception:  # pragma: no cover
             # if graphviz is not installed on the system.
             self.logger.exception('plot_model failed, continue nevertheless: ')
-            pass
+
         self.logger.info("Save model %s", filename)
         self.kerasmodel.save(filename, overwrite)
 
@@ -337,8 +337,7 @@ class Janggo(object):
             initial_epoch=0,
             steps_per_epoch=None,
             use_multiprocessing=False,
-            workers=1,
-            **kwargs):
+            workers=1):
         """Model fitting.
 
         This method is used to fit a given model.
@@ -347,7 +346,6 @@ class Janggo(object):
 
         Examples
         --------
-
 
         .. code-block:: python
 
@@ -496,7 +494,6 @@ class Janggo(object):
 
     def evaluate(self, inputs=None, outputs=None,
                  batch_size=None,
-                 verbose=1,
                  sample_weight=None,
                  steps=None,
                  use_multiprocessing=False,
@@ -532,7 +529,7 @@ class Janggo(object):
         if not batch_size:
             batch_size = 32
 
-        jseq = JanggoSequence(batch_size, inputs, outputs, None)
+        jseq = JanggoSequence(batch_size, inputs, outputs, sample_weight)
 
         try:
             values = self.kerasmodel.evaluate_generator(
@@ -574,6 +571,7 @@ class Janggo(object):
                 self.logger.info("\t%s", datum.shape)
 
     def get_config(self):
+        """Get model config."""
         return self.kerasmodel.get_config()
 
     def __convert_data(self, data, layer):

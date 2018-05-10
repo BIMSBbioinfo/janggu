@@ -1,3 +1,5 @@
+"""Genomic Indexer"""
+
 import numpy as np
 from HTSeq import GenomicInterval
 

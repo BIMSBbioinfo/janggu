@@ -1,3 +1,5 @@
+"""Janggo specific dataset class."""
+
 from abc import ABCMeta
 from abc import abstractmethod
 from abc import abstractproperty
@@ -36,7 +38,7 @@ class Dataset:
 
     @property
     def name(self):
-        """Name of the Dataset"""
+        """Dataset name"""
         return self._name
 
     @name.setter
@@ -93,6 +95,12 @@ def _data_props(data):
 
 
 class JanggoSequence(Sequence):
+    """JanggoSequence class.
+
+    This class is a subclass of keras.utils.Sequence.
+    It is used to serve the fit_generator, predict_generator
+    and evaluate_generator.
+    """
     def __init__(self, batch_size, inputs, outputs=None, sample_weights=None,
                  shuffle=False):
         self.inputs = inputs
@@ -128,7 +136,7 @@ class JanggoSequence(Sequence):
 
         if self.sample_weights is not None:
 
-            sweight = self.sample_weight[
+            sweight = self.sample_weights[
                 self.indices[idx*self.batch_size:(idx+1)*self.batch_size]]
         else:
             sweight = None
@@ -138,5 +146,6 @@ class JanggoSequence(Sequence):
         return ret
 
     def on_epoch_end(self):
+        """Stuff to do after epoch end."""
         if self.shuffle:
             numpy.random.shuffle(self.indices)

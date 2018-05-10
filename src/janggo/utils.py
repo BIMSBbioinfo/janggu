@@ -114,7 +114,7 @@ def as_onehot(idna, order):
     return onehot
 
 
-def complement_index(idx, order):
+def _complement_index(idx, order):
     rev_idx = np.arange(4)[::-1]
     irc = 0
     for iord in range(order):
@@ -141,7 +141,7 @@ def complement_permmatrix(order):
     """
     perm = np.zeros((pow(4, order), pow(4, order)))
     for idx in range(pow(4, order)):
-        jdx = complement_index(idx, order)
+        jdx = _complement_index(idx, order)
         perm[jdx, idx] = 1
     return perm
 
@@ -422,19 +422,23 @@ def export_bed(output_dir, name, results, gindexer=None):
                            columns=['chr', 'start', 'end', 'name', 'score'])
 
 
-def export_clustermap(output_dir, name, results, fform=None):
+def export_clustermap(output_dir, name, results, fform=None, figsize=None,
+                      method='ward', metric='euclidean'):
     """Create of clustermap of the feature activities."""
 
     _rs = {k: results[k]['value'] for k in results}
-    df = pd.DataFrame.from_dict(_rs)
+    data = pd.DataFrame.from_dict(_rs)
     if fform is not None:
         fform = fform
     else:
         fform = 'png'
 
-    sns.clustermap(df, method='ward').savefig(os.path.join(output_dir,
-                                                           name + '.' + fform),
-                                              format=fform, dpi=700)
+    sns.clustermap(data,
+                   method=method,
+                   metric=metric,
+                   figsize=figsize).savefig(os.path.join(output_dir,
+                                                         name + '.' + fform),
+                                            format=fform, dpi=700)
 
 
 def export_tsne(output_dir, name, results, figsize=None,
@@ -442,10 +446,10 @@ def export_tsne(output_dir, name, results, figsize=None,
     """Create a plot of the 2D t-SNE embedding of the feature activities."""
 
     _rs = {k: results[k]['value'] for k in results}
-    df = pd.DataFrame.from_dict(_rs)
+    data = pd.DataFrame.from_dict(_rs)
 
     tsne = TSNE()
-    embedding = tsne.fit_transform(df.values)
+    embedding = tsne.fit_transform(data.values)
 
     if figsize is not None:
         fig = plt.figure(figsize=figsize)
