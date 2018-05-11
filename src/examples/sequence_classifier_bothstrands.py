@@ -11,6 +11,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
+from janggo import InScorer
 from janggo import InOutScorer
 from janggo import Janggo
 from janggo import inputlayer
@@ -21,6 +22,8 @@ from janggo.layers import Complement
 from janggo.layers import Reverse
 from janggo.utils import export_score_plot
 from janggo.utils import export_tsv
+from janggo.utils import export_clustermap
+from janggo.utils import export_tsne
 
 np.random.seed(1234)
 
@@ -54,7 +57,12 @@ auc_eval = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
 prc_eval = InOutScorer('PRC', wrap_prc, exporter=export_score_plot)
 roc_eval = InOutScorer('ROC', wrap_roc, exporter=export_score_plot)
 auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
-
+heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
+                        exporter_args={'row_contrast': LABELS[:, 0],
+                                       'z_score': 1})
+tsne_eval = InScorer('tsne', exporter=export_tsne,
+                     exporter_args={'alpha': .1,
+                                    'contrast': LABELS[:, 0]})
 
 # Option 3:
 # Instantiate an ordinary keras model
@@ -72,7 +80,7 @@ def janggobody(inputs, inp, oup, params):
     revcomp = convlayer(revcomp)
     revcomp = Reverse()(revcomp)
     layer = Maximum()([forward, revcomp])
-    output = GlobalAveragePooling2D()(layer)
+    output = GlobalAveragePooling2D(name='motif')(layer)
     return inputs, output
 
 
@@ -95,3 +103,6 @@ print('#' * 40)
 
 model.evaluate(DNA, LABELS, datatags=['training_set'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
+model.predict(DNA, datatags=['training_set'],
+              callbacks=[heatmap_eval, tsne_eval],
+              layername='motif')
