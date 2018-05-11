@@ -419,8 +419,23 @@ def export_bed(output_dir, name, results, gindexer=None):
 
 
 def export_clustermap(output_dir, name, results, fform=None, figsize=None,
-                      method='ward', metric='euclidean'):
-    """Create of clustermap of the feature activities."""
+                      row_contrast=None,
+                      method='ward', metric='euclidean', z_score=None,
+                      standard_scale=None, row_cluster=True, col_cluster=True,
+                      row_linkage=None, col_linkage=None, row_colors=None,
+                      col_colors=None, mask=None, **kwargs):
+    """Create of clustermap of the feature activities.
+
+    This method utilizes
+    `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_
+    to illustrate feature activities of the neural net.
+    """
+
+    if row_contrast is not None:
+        dfcontrast = pd.Series(row_contrast)
+        pal = sns.light_palette('blue', len(dfcontrast.unique()))
+        lut = dict(zip(dfcontrast.unique(), pal))
+        row_colors = dfcontrast.map(lut)
 
     _rs = {k: results[k]['value'] for k in results}
     data = pd.DataFrame.from_dict(_rs)
@@ -432,9 +447,19 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,
     sns.clustermap(data,
                    method=method,
                    metric=metric,
-                   figsize=figsize).savefig(os.path.join(output_dir,
-                                                         name + '.' + fform),
-                                            format=fform, dpi=700)
+                   z_score=z_score,
+                   standard_scale=standard_scale,
+                   row_cluster=row_cluster,
+                   col_cluster=col_cluster,
+                   row_linkage=row_linkage,
+                   col_linkage=col_linkage,
+                   col_colors=col_colors,
+                   row_colors=row_colors,
+                   mask=mask,
+                   figsize=figsize,
+                   **kwargs).savefig(os.path.join(output_dir,
+                                                  name + '.' + fform),
+                                     format=fform, dpi=700)
 
 
 def export_tsne(output_dir, name, results, figsize=None,
