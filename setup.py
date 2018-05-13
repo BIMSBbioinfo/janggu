@@ -85,6 +85,10 @@ setup(
         'matplotlib',
         'scikit-learn',
         'seaborn',
+        'dash',
+        'dash_renderer',
+        'dash_core_components',
+        'dash_html_components',
         'pydot'
     ],
     extras_require={

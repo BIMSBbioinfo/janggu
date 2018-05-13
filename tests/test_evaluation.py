@@ -222,9 +222,9 @@ def test_output_export_clustermap(tmpdir):
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "prediction", bwm.name, "cluster.png"))
+                                       "evaluation", bwm.name, "cluster.png"))
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "prediction", bwm.name, "cluster.eps"))
+                                       "evaluation", bwm.name, "cluster.eps"))
 
 
 def test_output_export_tsne(tmpdir):
@@ -259,9 +259,9 @@ def test_output_export_tsne(tmpdir):
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "prediction", bwm.name, "tsne.png"))
+                                       "evaluation", bwm.name, "tsne.png"))
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "prediction", bwm.name, "tsne.eps"))
+                                       "evaluation", bwm.name, "tsne.eps"))
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
@@ -367,7 +367,7 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -407,7 +407,7 @@ def test_output_bed_predict_denseout(tmpdir):
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -447,7 +447,7 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -487,7 +487,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
@@ -523,7 +523,7 @@ def test_output_bigwig_predict_convout(tmpdir):
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
-    file_ = os.path.join(tmpdir.strpath, 'prediction', bwm.name,
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
