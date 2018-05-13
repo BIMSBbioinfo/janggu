@@ -155,7 +155,7 @@ def test_output_tsv_score(tmpdir):
 
     assert pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
                                         "score.tsv"),
-                           sep='\t').value[0] == 0.15
+                           sep='\t', header=[0,1,2]).iloc[0, 0] == 0.15
 
 
 def test_output_export_score_plot(tmpdir):

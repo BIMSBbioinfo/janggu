@@ -280,7 +280,7 @@ def export_tsv(output_dir, name, results):
     except TypeError:
         # if the result is not iterable, wrap it up as list
         _rs = {k: [results[k]['value']] for k in results}
-    pd.DataFrame.from_dict(_rs).to_csv(filename, sep='\t')
+    pd.DataFrame.from_dict(_rs).to_csv(filename, sep='\t', index=False)
 
 
 def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
