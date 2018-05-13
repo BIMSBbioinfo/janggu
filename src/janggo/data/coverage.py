@@ -111,13 +111,13 @@ class Cover(Dataset):
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
 
-        if not conditions:
+        if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bamfiles]
 
-        if not min_mapq:
+        if min_mapq is None:
             min_mapq = 0
 
-        if not genomesize:
+        if genomesize is None:
             header = pysam.AlignmentFile(bamfiles[0], 'r')
             gsize = {}
             for chrom, length in zip(header.references, header.lengths):
@@ -245,7 +245,7 @@ class Cover(Dataset):
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
 
-        if not conditions:
+        if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
 
         def _bigwig_loader(cover, bigwigfiles, gindexer):
@@ -358,11 +358,11 @@ class Cover(Dataset):
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
 
-        if not conditions:
+        if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bedfiles]
 
         if mode == 'categorical':
-            if len(conditions) > 1:
+            if len(bedfiles) > 1:
                 raise ValueError('Only one bed-file is '
                                  'allowed with mode=categorical')
             sample_file = bedfiles[0]
@@ -372,7 +372,8 @@ class Cover(Dataset):
             for reg in regions_:
                 if reg.score > max_class:
                     max_class = reg.score
-            conditions = [str(i) for i in range(int(max_class + 1))]
+            if conditions is None:
+                conditions = [str(i) for i in range(int(max_class + 1))]
 
         def _bed_loader(cover, bedfiles, genomesize, mode):
             print("load from bed")
@@ -492,7 +493,7 @@ class Cover(Dataset):
     @property
     def conditions(self):
         """Conditions"""
-        return self.covers.condition
+        return [s.decode('utf-8') for s in self.covers.condition]
 
     @property
     def flank(self):

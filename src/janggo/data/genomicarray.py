@@ -41,7 +41,7 @@ class GenomicArray(object):
 
     def __init__(self, stranded=True, conditions=None, typecode='d'):
         self.stranded = stranded
-        if not conditions:
+        if conditions is None:
             conditions = ['sample']
 
         self.condition = conditions

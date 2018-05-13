@@ -273,7 +273,14 @@ def export_tsv(output_dir, name, results):
     """
 
     filename = os.path.join(output_dir, name + '.tsv')
-    pd.DataFrame.from_dict(results, orient='index').to_csv(filename, sep='\t')
+    try:
+        # check if the result is iterable
+        iter(results[list(results.keys())[0]]['value'])
+        _rs = {k: results[k]['value'] for k in results}
+    except TypeError:
+        # if the result is not iterable, wrap it up as list
+        _rs = {k: [results[k]['value']] for k in results}
+    pd.DataFrame.from_dict(_rs).to_csv(filename, sep='\t')
 
 
 def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
@@ -300,6 +307,7 @@ def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
     ax_.set_title(name)
     for mname, lname, cname in results:
         # avg might be returned using a custom function
+        print(mname, lname, cname)
         x_score, y_score, auxstr = results[mname, lname, cname]['value']
         label = "{}".format('-'.join([mname[:8], lname, cname]))
         if isinstance(auxstr, str):

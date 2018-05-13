@@ -13,6 +13,7 @@ from janggo.layers import Reverse  # noqa
 from janggo.model import Janggo  # noqa
 from janggo.utils import export_bed  # noqa
 from janggo.utils import export_bigwig  # noqa
+from janggo.utils import export_clustermap  # noqa
 from janggo.utils import export_json  # noqa
 from janggo.utils import export_score_plot  # noqa
 from janggo.utils import export_tsv  # noqa

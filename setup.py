@@ -83,6 +83,7 @@ setup(
         'pyBigWig',
         'urllib3',
         'matplotlib',
+        'scikit-learn',
         'seaborn',
         'pydot'
     ],
