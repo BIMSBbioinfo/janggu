@@ -372,7 +372,9 @@ class Cover(Dataset):
             if conditions is None:
                 conditions = [str(i) for i in range(int(max_class + 1))]
         if conditions is None:
-            conditions = [os.path.splitext(os.path.basename(f))[0] for f in bedfiles]
+            conditions = [os.path.splitext(os.path.basename(f))[0]
+                          for f in bedfiles]
+
         def _bed_loader(cover, bedfiles, genomesize, mode):
             print("load from bed")
             for i, sample_file in enumerate(bedfiles):
@@ -387,7 +389,8 @@ class Cover(Dataset):
                     region.iv.end //= resolution
 
                     if genomesize[region.iv.chrom] <= region.iv.start:
-                        print("Region {} outside of genome size - skipped".format(region.iv))
+                        print('Region {} outside of '.format(region.iv) +
+                              'genome size - skipped')
                     else:
                         if region.score is None and mode in ['score',
                                                              'categorical']:

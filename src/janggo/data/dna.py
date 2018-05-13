@@ -8,8 +8,8 @@ from HTSeq import GenomicInterval
 from janggo.data.data import Dataset
 from janggo.data.genomic_indexer import GenomicIndexer
 from janggo.data.genomicarray import create_genomic_array
-from janggo.utils import as_onehot
 from janggo.utils import _complement_index
+from janggo.utils import as_onehot
 from janggo.utils import dna2ind
 from janggo.utils import sequences_from_fasta
 

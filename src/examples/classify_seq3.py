@@ -10,17 +10,17 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from janggo import InScorer
 from janggo import InOutScorer
+from janggo import InScorer
 from janggo import Janggo
 from janggo import inputlayer
 from janggo import outputdense
 from janggo.data import Array
 from janggo.data import Dna
-from janggo.utils import export_score_plot
-from janggo.utils import export_tsv
 from janggo.utils import export_clustermap
+from janggo.utils import export_score_plot
 from janggo.utils import export_tsne
+from janggo.utils import export_tsv
 
 np.random.seed(1234)
 
@@ -59,6 +59,7 @@ heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
                                        'z_score': 1})
 tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1})
 pred_eval = InScorer('pred', exporter=export_tsv)
+
 
 # Option 3:
 # Instantiate an ordinary keras model

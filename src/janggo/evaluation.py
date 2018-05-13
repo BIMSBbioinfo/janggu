@@ -111,6 +111,7 @@ class Scorer(object):
                  immediate_export=True,
                  subdir=None):
         # append the path by a folder 'AUC'
+        self.score_name = name
         self.results = dict()
         self._exporter = exporter
         if exporter_args is None:
@@ -149,6 +150,7 @@ class Scorer(object):
             # if there are some results, export them
             self._exporter(output_path, self.score_name,
                            self.results, **self.exporter_args)
+
 
 class InOutScorer(Scorer):
     """InOutScorer class.
@@ -198,7 +200,6 @@ class InOutScorer(Scorer):
         super(InOutScorer, self).__init__(name,
                                           conditions, exporter, exporter_args,
                                           immediate_export, subdir)
-        self.score_name = name
         self.score_fct = score_fct
         if score_args is None:
             score_args = {}
@@ -313,7 +314,7 @@ class InScorer(Scorer):
         super(InScorer, self).__init__(name,
                                        conditions, exporter, exporter_args,
                                        immediate_export, subdir)
-        self.score_name = name
+
         self.extractor = extractor
         if extractor_args is None:
             extractor_args = {}
@@ -372,4 +373,3 @@ class InScorer(Scorer):
 
             # reset the results
             self.results = {}
-
