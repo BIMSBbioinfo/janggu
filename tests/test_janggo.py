@@ -12,7 +12,6 @@ from janggo import Janggo
 from janggo import inputlayer
 from janggo import outputconv
 from janggo import outputdense
-from janggo.cli import main
 from janggo.data import Array
 from janggo.data import Cover
 from janggo.data import Dna
@@ -22,11 +21,6 @@ from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
 
 matplotlib.use('AGG')
-
-
-def test_main():
-    """Basic main test"""
-    main([])
 
 
 def test_localaveragepooling2D(tmpdir):
