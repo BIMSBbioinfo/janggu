@@ -358,9 +358,6 @@ class Cover(Dataset):
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
 
-        if conditions is None:
-            conditions = [os.path.splitext(os.path.basename(f))[0] for f in bedfiles]
-
         if mode == 'categorical':
             if len(bedfiles) > 1:
                 raise ValueError('Only one bed-file is '
@@ -374,7 +371,8 @@ class Cover(Dataset):
                     max_class = reg.score
             if conditions is None:
                 conditions = [str(i) for i in range(int(max_class + 1))]
-
+        if conditions is None:
+            conditions = [os.path.splitext(os.path.basename(f))[0] for f in bedfiles]
         def _bed_loader(cover, bedfiles, genomesize, mode):
             print("load from bed")
             for i, sample_file in enumerate(bedfiles):
