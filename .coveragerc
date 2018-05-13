@@ -12,4 +12,7 @@ parallel = true
 [report]
 show_missing = true
 precision = 2
-omit = *migrations*
+omit =
+    *migrations*
+    src/janggo/cli.py
+    src/janggo/__main__.py
