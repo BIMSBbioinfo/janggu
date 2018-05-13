@@ -10,8 +10,8 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from janggo import InOutScorer
 from janggo import InScorer
+from janggo import InOutScorer
 from janggo import Janggo
 from janggo import inputlayer
 from janggo import outputdense
@@ -29,7 +29,7 @@ SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 X1 = Dna.create_from_fasta('dna', fastafile=SAMPLE_1, order=1)
 
-DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2], order=1)
+DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2], order=2)
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
@@ -49,6 +49,7 @@ def wrap_prc(y_true, y_pred):
     print('prc', aux)
     return recall, precision, aux
 
+
 auc_eval = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
 prc_eval = InOutScorer('PRC', wrap_prc, exporter=export_score_plot)
 roc_eval = InOutScorer('ROC', wrap_roc, exporter=export_score_plot)
@@ -57,6 +58,7 @@ heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
                         exporter_args={'row_contrast': LABELS[:, 0],
                                        'z_score': 1})
 tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1})
+pred_eval = InScorer('pred', exporter=export_tsv)
 
 # Option 3:
 # Instantiate an ordinary keras model
@@ -72,7 +74,7 @@ def janggobody(inputs, inp, oup, params):
 
 K.clear_session()
 model = Janggo.create(template=janggobody,
-                      modelparams=(30, 21, 'relu'),
+                      modelparams=(30, 20, 'relu'),
                       inputs=DNA,
                       outputs=LABELS,
                       outputdir='tf_predict')
@@ -92,3 +94,7 @@ model.evaluate(DNA, LABELS, datatags=['training_set'],
 model.predict(DNA, datatags=['training_set'],
               callbacks=[heatmap_eval, tsne_eval],
               layername='motif')
+model.predict(DNA, datatags=['train', 'motif'],
+              callbacks=[pred_eval], layername='motif')
+model.predict(DNA, datatags=['train', 'output'],
+              callbacks=[pred_eval])

@@ -61,6 +61,7 @@ heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
                         exporter_args={'row_contrast': LABELS[:, 0],
                                        'z_score': 1})
 tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1})
+pred_eval = InScorer('pred', exporter=export_tsv)
 
 # Option 3:
 # Instantiate an ordinary keras model
@@ -104,3 +105,7 @@ model.evaluate(DNA, LABELS, datatags=['training_set'],
 model.predict(DNA, datatags=['training_set'],
               callbacks=[heatmap_eval, tsne_eval],
               layername='motif')
+model.predict(DNA, datatags=['train', 'motif'],
+              callbacks=[pred_eval], layername='motif')
+model.predict(DNA, datatags=['train', 'output'],
+              callbacks=[pred_eval])
