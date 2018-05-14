@@ -24,11 +24,6 @@ else:
     from urllib.request import urlcleanup, urlretrieve
 
 
-if pyBigWig.numpy == 0:
-    raise Exception('pyBigWig must be installed with numpy support. '
-                    'Please install numpy before pyBigWig to ensure that.')
-
-
 def sequences_from_fasta(fasta):
     """Obtains nucleotide sequences from a fasta file.
 

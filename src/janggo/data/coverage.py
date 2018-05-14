@@ -254,10 +254,10 @@ class Cover(Dataset):
                 bwfile = pyBigWig.open(sample_file)
 
                 for interval in gindexer:
-                    vals = bwfile.values(
+                    vals = np.asarray(bwfile.values(
                         interval.chrom,
                         int(interval.start*gindexer.resolution),
-                        int(interval.end*gindexer.resolution), numpy=True)
+                        int(interval.end*gindexer.resolution)))
                     vals = vals.reshape((interval.end-interval.start, resolution))
                     vals = vals.mean(axis=1)
 
