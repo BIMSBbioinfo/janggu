@@ -259,7 +259,7 @@ def export_json(output_dir, name, results, append=True):
         json.dump(content, jsonfile)
 
 
-def export_tsv(output_dir, name, results):
+def export_tsv(output_dir, name, results, annot=None):
     """Method that dumps the results as tsv file.
 
     Parameters
@@ -270,6 +270,8 @@ def export_tsv(output_dir, name, results):
         Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
+    annot : list, np.array or None
+        Row annotations to store with the dataset. Default: None.
     """
 
     filename = os.path.join(output_dir, name + '.tsv')
@@ -280,7 +282,10 @@ def export_tsv(output_dir, name, results):
     except TypeError:
         # if the result is not iterable, wrap it up as list
         _rs = {k: [results[k]['value']] for k in results}
-    pd.DataFrame.from_dict(_rs).to_csv(filename, sep='\t', index=False)
+    df = pd.DataFrame.from_dict(_rs)
+    if annot is not None:
+        df['annot'] = annot
+    df.to_csv(filename, sep='\t', index=False)
 
 
 def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
@@ -427,7 +432,7 @@ def export_bed(output_dir, name, results, gindexer=None):
 
 
 def export_clustermap(output_dir, name, results, fform=None, figsize=None,
-                      row_contrast=None,
+                      annot=None,
                       method='ward', metric='euclidean', z_score=None,
                       standard_scale=None, row_cluster=True, col_cluster=True,
                       row_linkage=None, col_linkage=None, row_colors=None,
@@ -439,8 +444,8 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,
     to illustrate feature activities of the neural net.
     """
 
-    if row_contrast is not None:
-        dfcontrast = pd.Series(row_contrast)
+    if annot is not None:
+        dfcontrast = pd.Series(annot)
         pal = sns.light_palette('blue', len(dfcontrast.unique()))
         lut = dict(zip(dfcontrast.unique(), pal))
         row_colors = dfcontrast.map(lut)
