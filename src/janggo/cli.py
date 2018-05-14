@@ -19,10 +19,16 @@ import argparse
 import base64
 import glob
 import os
+import numpy as np
+import pandas as pd
+from scipy.linalg import svd
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 
 PARSER = argparse.ArgumentParser(description='Command description.')
 PARSER.add_argument('-path', dest='janggo_results',
@@ -82,6 +88,13 @@ def display_page(pathname):
         files += glob.glob(os.path.join(args.janggo_results,
                                         'evaluation', pathname[1:],
                                         '*', '*.png'))
+        files += glob.glob(os.path.join(args.janggo_results,
+                                       'evaluation', pathname[1:], '*.tsv'))
+        files += glob.glob(os.path.join(args.janggo_results,
+                                        'evaluation', pathname[1:],
+                                        '*', '*.tsv'))
+        if not files:
+            return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
         return html.Div([html.H3('Model: {}'.format(pathname[1:])),
                          dcc.Dropdown(id='tag-selection',
@@ -95,10 +108,110 @@ def display_page(pathname):
     dash.dependencies.Output('output-plot', 'children'),
     [dash.dependencies.Input('tag-selection', 'value')])
 def update_output(value):
-    img = base64.b64encode(open(value, 'rb').read())
-    return html.Img(width='100%',
-                    src='data:image/png;base64,{}'.format(img.decode()))
 
+    if value.endswith('png'):
+        # display the png images directly
+        img = base64.b64encode(open(value, 'rb').read())
+        return html.Img(width='100%',
+                        src='data:image/png;base64,{}'.format(img.decode()))
+    elif value.endswith('tsv'):
+
+        return html.Div([
+        html.Div([dcc.Dropdown(id='operation',
+                     options=[{'label': x,
+                               'value': x} for x in ['tsne', 'svd', 'pca']],
+                     value='svd'),
+        dcc.Graph(id='scatter'), dcc.Graph(id='features')],
+                 style={'width': '100%',
+                        'display': 'inline-block',
+                        'padding': '0 20'}),
+
+        ])
+    else:
+        return html.P('Cannot find action for {}'.format(value))
+
+
+
+@app.callback(
+    dash.dependencies.Output('scatter', 'figure'),
+    [dash.dependencies.Input('tag-selection', 'value'),
+     dash.dependencies.Input('operation', 'value')])
+def update_scatter(filename, operation):
+    df = pd.read_csv(filename, sep='\t', header=[0,1,2])
+
+    # if 'annot' in df use coloring
+    if 'annot' in df:
+        color = df.pop('annot').values
+    else:
+        color = 'blue'
+    marker = dict(size=1, opacity=.5,
+                  color=color,
+                  colorscale='Viridis')
+    if operation == 'svd':
+        u, d, v = svd(df, full_matrices=False)
+        trdf = np.dot(u[:,:3], np.diag(d[:3]))
+        print('u', u.shape)
+        print('d', d.shape)
+        print('v', v.shape)
+        print('trdf', trdf.shape)
+    elif operation == 'pca':
+        pca = PCA(n_components=3)
+        trdf = pca.fit_transform(df)
+    else:
+        tsne = TSNE(n_components=3)
+        trdf = tsne.fit_transform(df)
+
+    return {'data': [
+        dict(x=trdf[:,0],
+             y=trdf[:,1],
+             z=trdf[:,2],
+             mode='markers',
+             type='scatter3d',
+             marker=marker)],
+        'layout': go.Layout(
+            margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
+            hovermode='closest',
+            scene = dict(
+                camera = dict(
+                    up=dict(x=0, y=0, z=1),
+                    center=dict(x=0, y=0, z=0),
+                    eye=dict(x=0.08, y=2.2, z=0.08)
+                )
+            ),
+            plot_bgcolor = '#E5E5E5',
+            paper_bgcolor = '#E5E5E5'
+        )
+    }
+
+
+
+@app.callback(
+    dash.dependencies.Output('features', 'figure'),
+    [dash.dependencies.Input('tag-selection', 'value'),
+     dash.dependencies.Input('operation', 'value')])
+def update_features(value, feature):
+    df = pd.read_csv(value, sep='\t', header=[0,1,2])
+    print('update_features')
+    linedict = {}
+    dimlist = []
+    if 'annot' in df:
+        color = df.pop('annot').values
+    else:
+        color = 0
+    linedict=dict(color=color, colorscale='Viridis')
+
+    for f in df:
+        dimlist.append(dict(range = [df[f].min(), df[f].max()],
+                            label=None, values=df[f]))
+    return {'data': [go.Parcoords(
+            line = linedict,
+            dimensions = dimlist
+             )],
+        'layout': go.Layout(
+            plot_bgcolor = '#E5E5E5',
+            paper_bgcolor = '#E5E5E5'
+        )
+    }
 
 external_css = ["https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
                 "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",

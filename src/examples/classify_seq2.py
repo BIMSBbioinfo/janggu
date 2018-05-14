@@ -58,12 +58,12 @@ prc_eval = InOutScorer('PRC', wrap_prc, exporter=export_score_plot)
 roc_eval = InOutScorer('ROC', wrap_roc, exporter=export_score_plot)
 auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
 heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
-                        exporter_args={'row_contrast': LABELS[:, 0],
+                        exporter_args={'annot': LABELS[:, 0],
                                        'z_score': 1})
 tsne_eval = InScorer('tsne', exporter=export_tsne,
                      exporter_args={'alpha': .1,
                                     'contrast': LABELS[:, 0]})
-pred_eval = InScorer('pred', exporter=export_tsv)
+pred_eval = InScorer('pred', exporter=export_tsv, exporter_args={'annot': LABELS[:, 0]})
 
 
 # Option 3:
