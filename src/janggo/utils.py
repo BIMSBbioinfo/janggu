@@ -471,7 +471,8 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,
 
 
 def export_tsne(output_dir, name, results, figsize=None,
-                cmap=None, colors=None, norm=None, alpha=None, fform=None):
+                cmap=None, colors=None, norm=None, alpha=None, fform=None,
+                annot=None):
     """Create a plot of the 2D t-SNE embedding of the feature activities."""
 
     _rs = {k: results[k]['value'] for k in results}
@@ -484,6 +485,12 @@ def export_tsne(output_dir, name, results, figsize=None,
         fig = plt.figure(figsize=figsize)
     else:
         fig = plt.figure()
+
+    if annot is not None:
+        dfcontrast = pd.Series(annot)
+        pal = sns.color_palette('hls', len(dfcontrast.unique()))
+        lut = dict(zip(dfcontrast.unique(), pal))
+        colors = dfcontrast.map(lut)
 
     plt.scatter(x=embedding[:, 0], y=embedding[:, 1],
                 c=colors, cmap=cmap, norm=norm, alpha=alpha)

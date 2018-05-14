@@ -60,7 +60,8 @@ auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
 heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
                         exporter_args={'annot': LABELS[:, 0],
                                        'z_score': 1})
-tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1})
+tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
+                                                                  'annot': LABELS[:, 0]})
 pred_eval = InScorer('pred', exporter=export_tsv, exporter_args={'annot': LABELS[:, 0]})
 
 
