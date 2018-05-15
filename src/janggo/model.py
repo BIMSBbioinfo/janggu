@@ -19,6 +19,52 @@ from janggo.layers import LocalAveragePooling2D
 from janggo.layers import Reverse
 
 
+def _convert_data(kerasmodel, data, layer):
+    """Converts different data formats to
+    {name:values} dict.
+
+    keras support different data formats, e.g. np.array,
+    list(np.array) or dict(key: np.array).
+    This function normalizes all dataset to the dictionary
+    style usage internally. This simplifies the compatibility
+    checks at various places.
+
+    Parameters
+    ----------
+    kerasmodel : keras.Model
+        A keras Model object.
+    data : Dataset, np.array, list or dict
+        Dataset.
+    layer : str
+        Indication as to whether data is used as input or output.
+        :code:`layer='output_layers'` or 'input_layers'.
+    """
+    # If we deal with Dataset, we convert it to a Dictionary
+    # which is directly interpretable by keras
+    if hasattr(data, "name") and hasattr(data, "shape"):
+        # if it is a janggo.data.Dataset we get here
+        c_data = {data.name: data}
+    elif not hasattr(data, "name") and hasattr(data, "shape"):
+        # if data is a numpy array we get here
+        c_data = {kerasmodel.get_config()[layer][0][0]: data}
+    elif isinstance(data, list):
+        if hasattr(data[0], "name"):
+            # if data is a list(Dataset) we get here
+            c_data = {datum.name: datum for datum in data}
+        else:
+            # if data is a list(np.array) we get here
+            c_data = {name[0]: datum for name, datum in
+                      zip(kerasmodel.get_config()[layer],
+                          data)}
+    elif isinstance(data, dict):
+        # if data is a dict, it can just be passed through
+        c_data = data
+    else:
+        raise ValueError('Unknown data type: {}'.format(type(data)))
+
+    return c_data
+
+
 class Janggo(object):
     """Janggo class
 
@@ -353,8 +399,8 @@ class Janggo(object):
 
         """
 
-        inputs = self.__convert_data(inputs, 'input_layers')
-        outputs = self.__convert_data(outputs, 'output_layers')
+        inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
+        outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
 
         hyper_params = {
             'epochs': epochs,
@@ -394,8 +440,10 @@ class Janggo(object):
         jseq = JanggoSequence(batch_size, inputs, outputs, sample_weight)
 
         if validation_data is not None:
-            valinputs = self.__convert_data(validation_data[0], 'input_layers')
-            valoutputs = self.__convert_data(validation_data[1], 'output_layers')
+            valinputs = _convert_data(self.kerasmodel, validation_data[0],
+                                       'input_layers')
+            valoutputs = _convert_data(self.kerasmodel, validation_data[1],
+                                        'output_layers')
             sweights = validation_data[2] if len(validation_data) == 3 else None
             valjseq = JanggoSequence(batch_size, valinputs, valoutputs, sweights)
         else:
@@ -456,7 +504,7 @@ class Janggo(object):
 
         """
 
-        inputs = self.__convert_data(inputs, 'input_layers')
+        inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
 
         self.logger.info('Predict: %s', self.name)
         self.logger.info("Input:")
@@ -466,10 +514,12 @@ class Janggo(object):
         # if a desired layername is specified, the features
         # will be predicted.
         if layername:
-            model = Model(self.kerasmodel.input,
-                          self.kerasmodel.get_layer(layername).output)
+            model = Janggo(self.kerasmodel.input,
+                           self.kerasmodel.get_layer(layername).output,
+                           name=self.name,
+                           outputdir=self.outputdir)
         else:
-            model = self.kerasmodel
+            model = self
 
         if not batch_size:
             batch_size = 32
@@ -477,7 +527,7 @@ class Janggo(object):
         jseq = JanggoSequence(batch_size, inputs, None, None)
 
         try:
-            preds = model.predict_generator(
+            preds = model.kerasmodel.predict_generator(
                 jseq,
                 steps=steps,
                 use_multiprocessing=use_multiprocessing,
@@ -487,9 +537,16 @@ class Janggo(object):
             self.logger.exception('predict_generator failed:')
             raise
 
-        prd = self.__convert_data(preds, 'output_layers')
+        prd = _convert_data(model.kerasmodel, preds, 'output_layers')
+        if layername is not None:
+            # no need to set an extra datatag.
+            # if layername is present, it will be added to the tags
+            if datatags is None:
+                datatags = [layername]
+            else:
+                datatags.append(layername)
         for callback in callbacks or []:
-            callback.score(prd, model=self, datatags=datatags)
+            callback.score(prd, model=model, datatags=datatags)
         return preds
 
     def evaluate(self, inputs=None, outputs=None,
@@ -516,8 +573,8 @@ class Janggo(object):
 
         """
 
-        inputs = self.__convert_data(inputs, 'input_layers')
-        outputs = self.__convert_data(outputs, 'output_layers')
+        inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
+        outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
 
         self.logger.info('Evaluate: %s', self.name)
         self.logger.info("Input:")
@@ -552,7 +609,7 @@ class Janggo(object):
                          time.time() - self.timer)
 
         preds = self.kerasmodel.predict(inputs, batch_size)
-        preds = self.__convert_data(preds, 'output_layers')
+        preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
             callback.score(outputs, preds, model=self, datatags=datatags)
@@ -573,49 +630,6 @@ class Janggo(object):
     def get_config(self):
         """Get model config."""
         return self.kerasmodel.get_config()
-
-    def __convert_data(self, data, layer):
-        """Converts different data formats to
-        {name:values} dict.
-
-        keras support different data formats, e.g. np.array,
-        list(np.array) or dict(key: np.array).
-        This function normalizes all dataset to the dictionary
-        style usage internally. This simplifies the compatibility
-        checks at various places.
-
-        Parameters
-        ----------
-        data : Dataset, np.array, list or dict
-            Dataset.
-        layer : str
-            Indication as to whether data is used as input or output.
-            :code:`layer='output_layers'` or 'input_layers'.
-        """
-        # If we deal with Dataset, we convert it to a Dictionary
-        # which is directly interpretable by keras
-        if hasattr(data, "name") and hasattr(data, "shape"):
-            # if it is a janggo.data.Dataset we get here
-            c_data = {data.name: data}
-        elif not hasattr(data, "name") and hasattr(data, "shape"):
-            # if data is a numpy array we get here
-            c_data = {self.kerasmodel.get_config()[layer][0][0]: data}
-        elif isinstance(data, list):
-            if hasattr(data[0], "name"):
-                # if data is a list(Dataset) we get here
-                c_data = {datum.name: datum for datum in data}
-            else:
-                # if data is a list(np.array) we get here
-                c_data = {name[0]: datum for name, datum in
-                          zip(self.kerasmodel.get_config()[layer],
-                              data)}
-        elif isinstance(data, dict):
-            # if data is a dict, it can just be passed through
-            c_data = data
-        else:
-            raise ValueError('Unknown data type: {}'.format(type(data)))
-
-        return c_data
 
     @staticmethod
     def _storage_path(name, outputdir):
