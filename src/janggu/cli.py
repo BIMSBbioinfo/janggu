@@ -228,6 +228,7 @@ def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
      dash.dependencies.Input('scatter', 'selectedData')])
 def update_features(value, feature, selectedData):
     df = pd.read_csv(value, sep='\t', header=[0])
+    df.reindex_axis(sorted(df.columns), axis=1)
     print('update_features')
 
     for col in df:
@@ -257,9 +258,10 @@ def update_features(value, feature, selectedData):
             opacity=0.8
         ))],
             'layout': go.Layout(
+                xaxis={'title': 'Features'},
                 plot_bgcolor='#E5E5E5',
                 paper_bgcolor='#E5E5E5',
-                yaxis={'showgrid': False}
+                yaxis={'showgrid': False, 'title': 'Activities'}
             )
            }
 
