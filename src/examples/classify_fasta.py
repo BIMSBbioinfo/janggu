@@ -58,8 +58,9 @@ DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
 LABELS = Array('y', Y, conditions=['TF-binding'])
-annot = pd.DataFrame(Y[:,0], columns=LABELS.conditions).applymap(
-    lambda x: 'Oct4' if x==1 else 'Mafk').to_dict(orient='list')
+annot = pd.DataFrame(Y[:, 0], columns=LABELS.conditions).applymap(
+    lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
+
 
 # evaluation metrics from sklearn.metrics
 def wrap_roc(y_true, y_pred):
@@ -100,8 +101,7 @@ pred_plotly = InScorer('pred', exporter=export_plotly,
                        exporter_args={'annot': annot,
                                       'row_names': DNA.gindexer.chrs})
 
-# Option 3:
-# Instantiate an ordinary keras model
+# Define the model templates
 @inputlayer
 @outputdense('sigmoid')
 def single_stranded_model(inputs, inp, oup, params):
@@ -129,9 +129,11 @@ def double_stranded_model(inputs, inp, oup, params):
     output = GlobalAveragePooling2D(name='motif')(layer)
     return inputs, output
 
+
 modeltemplate = single_stranded_model if args.model == 'single' \
                 else double_stranded_model
 K.clear_session()
+
 # create a new model object
 model = Janggo.create(template=modeltemplate,
                       modelparams=(30, 21, 'relu'),

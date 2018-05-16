@@ -291,12 +291,12 @@ def export_tsv(output_dir, name, results, filesuffix='tsv', annot=None, row_name
     except TypeError:
         # if the result is not iterable, wrap it up as list
         _rs = {'-'.join(k): [results[k]['value']] for k in results}
-    df = pd.DataFrame.from_dict(_rs)
-    for an in annot or []:
-        df['annot.'+an] = annot[an]
+    _df = pd.DataFrame.from_dict(_rs)
+    for _an in annot or []:
+        _df['annot.' + _an] = annot[_an]
     if row_names is not None:
-        df['row_names'] = row_names
-    df.to_csv(filename, sep='\t', index=False)
+        _df['row_names'] = row_names
+    _df.to_csv(filename, sep='\t', index=False)
 
 
 def export_plotly(output_dir, name, results, annot=None, row_names=None):
@@ -513,23 +513,21 @@ def export_tsne(output_dir, name, results, figsize=None,
         firstkey = list(annot.keys())[0]
         pal = sns.color_palette('hls', len(set(annot[firstkey])))
         lut = dict(zip(set(annot[firstkey]), pal))
-        row_colors = [lut[k] for k in annot[firstkey]]
 
         for label in lut:
-
-            plt.scatter(x=embedding[np.asarray(annot[firstkey])==label, 0],
-                        y=embedding[np.asarray(annot[firstkey])==label, 1],
+            plt.scatter(x=embedding[np.asarray(annot[firstkey]) == label, 0],
+                        y=embedding[np.asarray(annot[firstkey]) == label, 1],
                         c=lut[label],
                         label=label,
                         norm=norm, alpha=alpha)
 
         plt.legend()
     else:
-        plt.scatter(x=embedding[annot[firstkey]==label, 0],
-                    y=embedding[annot[firstkey]==label, 1],
+        plt.scatter(x=embedding[annot[firstkey] == label, 0],
+                    y=embedding[annot[firstkey] == label, 1],
                     c=colors, cmap=cmap,
                     norm=norm, alpha=alpha)
-        #plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
     plt.axis('off')
     if fform is not None:
         fform = fform

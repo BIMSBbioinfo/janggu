@@ -19,16 +19,16 @@ import argparse
 import base64
 import glob
 import os
-import numpy as np
-import pandas as pd
-from scipy.linalg import svd
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import numpy as np
+import pandas as pd
 import plotly.graph_objs as go
+from scipy.linalg import svd
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 PARSER = argparse.ArgumentParser(description='Command description.')
 PARSER.add_argument('-path', dest='janggo_results',
@@ -78,9 +78,11 @@ def display_page(pathname):
             html.Table(
                 [html.Tr([html.Th('Model name'), html.Th('Architecture')])] +
                 [html.Tr([dcc.Link(html.Td(name), href='/{}'.format(name)),
-                 html.Td(html.Img(id=name, width='50%',
-                                  src='data:image/png;base64,{}'.format(
-                                      encoding[name].decode())))]) for name in encoding],
+                          html.Td(html.Img(
+                              id=name, width='50%',
+                              src='data:image/png;base64,{}'.format(
+                                  encoding[name].decode())))])
+                 for name in encoding],
                 className='table table-bordered')])
     else:
         pathlen = len(os.path.join(args.janggo_results,
@@ -91,7 +93,7 @@ def display_page(pathname):
                                         'evaluation', pathname[1:],
                                         '*', '*.png'))
         files += glob.glob(os.path.join(args.janggo_results,
-                                       'evaluation', pathname[1:], '*.ply'))
+                                        'evaluation', pathname[1:], '*.ply'))
         files += glob.glob(os.path.join(args.janggo_results,
                                         'evaluation', pathname[1:],
                                         '*', '*.ply'))
@@ -128,33 +130,38 @@ def update_output(value):
             html.Div([
                 dcc.Dropdown(id='xaxis',
                              options=[{'label': x,
-                                       'value': x} for x in ['Component {}'.format(i) for i in [1,2,3]]],
+                                       'value': x}
+                                      for x in ['Component {}'.format(i)
+                                                for i in [1, 2, 3]]],
                              value='Component 1'),
                 dcc.Dropdown(id='yaxis',
                              options=[{'label': x,
-                                       'value': x} for x in ['Component {}'.format(i) for i in [1,2,3]]],
+                                       'value': x}
+                                      for x in ['Component {}'.format(i)
+                                                for i in [1, 2, 3]]],
                              value='Component 2'),
-        dcc.Graph(id='scatter')],
-                 style={'width': '100%',
-                        'display': 'inline-block',
-                        'padding': '0 20'}),
+                dcc.Graph(id='scatter')],
+                     style={'width': '100%',
+                            'display': 'inline-block',
+                            'padding': '0 20'}),
             html.Div([
                 dcc.Dropdown(id='operation',
-                     options=[{'label': x,
-                               'value': x} for x in ['tsne', 'svd', 'pca']],
-                     value='svd'),
+                             options=[{'label': x,
+                                       'value': x}
+                                      for x in ['tsne', 'svd', 'pca']],
+                             value='svd'),
                 dcc.Dropdown(id='annotation',
-                     options=[{'label': x,
-                               'value': x} for x in ['None'] + annot],
-                     value='None'),
+                             options=[{'label': x,
+                                       'value': x} for x in ['None'] + annot],
+                             value='None'),
                 dcc.Graph(id='features')],
-                 style={'width': '100%',
-                        'display': 'inline-block',
-                        'padding': '0 20'}),
+                     style={'width': '100%',
+                            'display': 'inline-block',
+                            'padding': '0 20'}),
         ], style={'columnCount': 2})
-    else:
-        return html.P('Cannot find action for {}'.format(value))
 
+    # else the value is not known
+    return html.P('Cannot find action for {}'.format(value))
 
 
 @app.callback(
@@ -163,13 +170,12 @@ def update_output(value):
      dash.dependencies.Input('operation', 'value'),
      dash.dependencies.Input('xaxis', 'value'),
      dash.dependencies.Input('yaxis', 'value'),
-     dash.dependencies.Input('annotation', 'value'),
-     ])
+     dash.dependencies.Input('annotation', 'value')])
 def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
     df = pd.read_csv(filename, sep='\t', header=[0])
 
     # if 'annot' in df use coloring
-    colors=pd.Series(['blue'] * df.shape[0])
+    colors = pd.Series(['blue'] * df.shape[0])
     for col in df:
         if col[:len('annot.')] == 'annot.':
             if annotation == col[len('annot.'):]:
@@ -181,37 +187,38 @@ def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
     marker = dict(size=3, opacity=.5)
     if operation == 'svd':
         u, d, v = svd(df, full_matrices=False)
-        trdf = np.dot(u[:,:3], np.diag(d[:3]))
+        trdf = np.dot(u[:, :3], np.diag(d[:3]))
     elif operation == 'pca':
         pca = PCA(n_components=3)
         trdf = pca.fit_transform(df)
     else:
         tsne = TSNE(n_components=3)
         trdf = tsne.fit_transform(df)
-    trdf = pd.DataFrame(trdf, columns=['Component {}'.format(i) for i in [1,2,3]])
+    trdf = pd.DataFrame(trdf, columns=['Component {}'.format(i)
+                                       for i in [1, 2, 3]])
 
     print(colors.unique())
     data = []
     for c in colors.unique():
         data.append(
             go.Scatter(
-                x=trdf[xaxis_label][colors==c],
-                y=trdf[yaxis_label][colors==c],
+                x=trdf[xaxis_label][colors == c],
+                y=trdf[yaxis_label][colors == c],
                 text=text,
                 name=c,
                 mode='markers',
                 marker=dict(size=3, opacity=.5)))
 
     return {'data': data,
-        'layout': go.Layout(
-            margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
-            xaxis={'title': xaxis_label},
-            yaxis={'title': yaxis_label},
-            hovermode='closest',
-            plot_bgcolor = '#E5E5E5',
-            paper_bgcolor = '#E5E5E5'
-        )
-    }
+            'layout': go.Layout(
+                margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
+                xaxis={'title': xaxis_label},
+                yaxis={'title': yaxis_label},
+                hovermode='closest',
+                plot_bgcolor='#E5E5E5',
+                paper_bgcolor='#E5E5E5'
+            )
+           }
 
 
 @app.callback(
@@ -222,8 +229,6 @@ def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
 def update_features(value, feature, selectedData):
     df = pd.read_csv(value, sep='\t', header=[0])
     print('update_features')
-    linedict = {}
-    dimlist = []
 
     for col in df:
         if col[:len('annot')] == 'annot':
@@ -234,34 +239,30 @@ def update_features(value, feature, selectedData):
     if selectedData is not None:
         selected_idx = [datum['pointIndex'] for datum in selectedData['points']]
         df = df.loc[selected_idx, :]
-    linedict=dict(color=0, colorscale='Viridis')
+
     mean = df.mean().values
     std = df.std().values
-    print(df.mean().values)
-    print(df.std().values)
 
-    for f in df:
-        dimlist.append(dict(range = [df[f].min(), df[f].max()],
-                            label=None, values=df[f]))
     return {'data': [go.Scatter(
-            x=list(range(len(mean))),
-            y=mean,
-            mode='line',
-            text=df.columns,
-            error_y=dict(
-        type='percent',
-        value=std,
-        thickness=1,
-        width=0,
-        color='#444',
-        opacity=0.8
-    ))],
-        'layout': go.Layout(
-            plot_bgcolor = '#E5E5E5',
-            paper_bgcolor = '#E5E5E5',
-            yaxis = {'showgrid': False}
-        )
-    }
+        x=list(range(len(mean))),
+        y=mean,
+        mode='line',
+        text=df.columns,
+        error_y=dict(
+            type='percent',
+            value=std,
+            thickness=1,
+            width=0,
+            color='#444',
+            opacity=0.8
+        ))],
+            'layout': go.Layout(
+                plot_bgcolor='#E5E5E5',
+                paper_bgcolor='#E5E5E5',
+                yaxis={'showgrid': False}
+            )
+           }
+
 
 external_css = ["https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
                 "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
