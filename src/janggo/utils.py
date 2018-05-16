@@ -523,8 +523,8 @@ def export_tsne(output_dir, name, results, figsize=None,
 
         plt.legend()
     else:
-        plt.scatter(x=embedding[annot[firstkey] == label, 0],
-                    y=embedding[annot[firstkey] == label, 1],
+        plt.scatter(x=embedding[:, 0],
+                    y=embedding[:, 1],
                     c=colors, cmap=cmap,
                     norm=norm, alpha=alpha)
 
