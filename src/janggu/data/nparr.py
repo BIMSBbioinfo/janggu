@@ -45,4 +45,6 @@ class Array(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
+        if len(self.data.shape) == 1:
+            return self.data.shape + (1,)
         return self.data.shape

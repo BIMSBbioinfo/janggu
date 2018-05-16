@@ -85,10 +85,7 @@ def _data_props(data):
     if isinstance(data, list):
         dataprops = {}
         for datum in data:
-            shape = datum.shape[1:]
-            if shape == ():
-                shape = (1,)
-            dataprops[datum.name] = {'shape': shape}
+            dataprops[datum.name] = {'shape': datum.shape[1:]}
         return dataprops
     else:
         raise Exception('inputSpace wrong argument: {}'.format(data))
