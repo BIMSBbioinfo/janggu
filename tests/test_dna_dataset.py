@@ -313,8 +313,8 @@ def test_read_dna_from_fasta_order_1():
     data = Dna.create_from_fasta('train', fastafile=filename,
                                  order=order)
 
-    np.testing.assert_equal(len(data), 3997)
-    np.testing.assert_equal(data.shape, (3997, 200, 4, 1))
+    np.testing.assert_equal(len(data), 3897)
+    np.testing.assert_equal(data.shape, (3897, 200, 4, 1))
     np.testing.assert_equal(
         data[0][0, :10, :, 0],
         np.asarray([[0, 1, 0, 0],
@@ -337,8 +337,8 @@ def test_read_dna_from_fasta_order_2():
     data = Dna.create_from_fasta('train', fastafile=filename,
                                  order=order)
 
-    np.testing.assert_equal(len(data), 3997)
-    np.testing.assert_equal(data.shape, (3997, 199, 16, 1))
+    np.testing.assert_equal(len(data), 3897)
+    np.testing.assert_equal(data.shape, (3897, 199, 16, 1))
     np.testing.assert_equal(
         data[0][0, :10, :, 0],
         np.asarray([[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
