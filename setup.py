@@ -25,7 +25,7 @@ def _read(*names, **kwargs):
 
 
 setup(
-    name='janggo',
+    name='janggu',
     version='0.6.4',
     license='BSD 3-Clause License',
     description='Code infrastructure for deep learning to make modelling '
@@ -37,10 +37,10 @@ setup(
     ),
     author='Wolfgang Kopp',
     author_email='wolfgang.kopp@mdc-berlin.de',
-    url='https://github.com/wkopp/janggo',
+    url='https://github.com/wkopp/janggu',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    package_data={'janggo': ['resources/*.fa',
+    package_data={'janggu': ['resources/*.fa',
                              'resources/*.bed',
                              'resources/*.csv']},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
@@ -100,7 +100,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'janggo = janggo.cli:main',
+            'janggu = janggu.cli:main',
         ]
     }
 )

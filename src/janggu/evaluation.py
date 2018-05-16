@@ -9,7 +9,7 @@ import os
 
 import numpy
 
-from janggo.utils import export_json
+from janggu.utils import export_json
 
 
 def _dimension_match(kerasmodel, data, layertype):
@@ -75,7 +75,7 @@ class Scorer(object):
     """Scorer class.
 
     This class implements the callback interface that is used
-    with Janggo.evaluate.
+    with Janggu.evaluate.
     An InOutScorer can apply a desired scoring metric, e.g. from sklearn.
     and write the results into a desired output file, e.g. json, tsv
     or a plot.
@@ -156,7 +156,7 @@ class InOutScorer(Scorer):
     """InOutScorer class.
 
     This class implements the callback interface that is used
-    with Janggo.evaluate.
+    with Janggu.evaluate.
     An InOutScorer can apply a desired scoring metric, e.g. from sklearn.
     and write the results into a desired output file, e.g. json, tsv
     or a plot.
@@ -222,8 +222,8 @@ class InOutScorer(Scorer):
             True output labels.
         predicted: dict{name: np.array}
             Predicted outputs.
-        model : :class:`Janggo`
-            a Janggo object representing the current model.
+        model : :class:`Janggu`
+            a Janggu object representing the current model.
         datatags : list(str) or None
             Optional tags describing the dataset, e.g. 'test_set'.
         """
@@ -267,7 +267,7 @@ class InScorer(Scorer):
     """InScorer class.
 
     This class implements the callback interface that is used
-    with Janggo.predict.
+    with Janggu.predict.
     An InScorer can apply a desired transformation, e.g. np.log
     and write the results into a desired output file, e.g. json, tsv
     or a plot.
@@ -336,8 +336,8 @@ class InScorer(Scorer):
         ----------
         predicted: dict{name: np.array}
             Predicted outputs.
-        model : :class:`Janggo`
-            a Janggo object representing the current model.
+        model : :class:`Janggu`
+            a Janggu object representing the current model.
         datatags : list(str) or None
             Optional tags describing the dataset, e.g. 'test_set'.
         """

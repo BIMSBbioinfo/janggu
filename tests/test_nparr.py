@@ -1,6 +1,6 @@
 import numpy as np
 
-from janggo.data import Array
+from janggu.data import Array
 
 
 def test_nparr(tmpdir):

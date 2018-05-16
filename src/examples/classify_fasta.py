@@ -13,21 +13,21 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from janggo import InOutScorer
-from janggo import InScorer
-from janggo import Janggo
-from janggo import inputlayer
-from janggo import outputdense
-from janggo.data import Array
-from janggo.data import Dna
-from janggo.layers import Complement
-from janggo.layers import Reverse
-from janggo.utils import export_clustermap
-from janggo.utils import export_json
-from janggo.utils import export_plotly
-from janggo.utils import export_score_plot
-from janggo.utils import export_tsne
-from janggo.utils import export_tsv
+from janggu import InOutScorer
+from janggu import InScorer
+from janggu import Janggu
+from janggu import inputlayer
+from janggu import outputdense
+from janggu.data import Array
+from janggu.data import Dna
+from janggu.layers import Complement
+from janggu.layers import Reverse
+from janggu.utils import export_clustermap
+from janggu.utils import export_json
+from janggu.utils import export_plotly
+from janggu.utils import export_score_plot
+from janggu.utils import export_tsne
+from janggu.utils import export_tsv
 
 np.random.seed(1234)
 
@@ -46,7 +46,7 @@ args = PARSER.parse_args()
 
 
 # load the dataset
-DATA_PATH = pkg_resources.resource_filename('janggo', 'resources/')
+DATA_PATH = pkg_resources.resource_filename('janggu', 'resources/')
 SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 X1 = Dna.create_from_fasta('dna', fastafile=SAMPLE_1,
@@ -135,7 +135,7 @@ modeltemplate = single_stranded_model if args.model == 'single' \
 K.clear_session()
 
 # create a new model object
-model = Janggo.create(template=modeltemplate,
+model = Janggu.create(template=modeltemplate,
                       modelparams=(30, 21, 'relu'),
                       inputs=DNA,
                       outputs=LABELS,

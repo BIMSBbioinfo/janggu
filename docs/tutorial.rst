@@ -3,24 +3,24 @@ Tutorial
 =========
 
 In this section we shall illustrate a number of ways that allow
-you to define, train and evaluate neural networks using `janggo`.
+you to define, train and evaluate neural networks using `janggu`.
 
 Building a neural network
 -------------------------
-A neural network can be created by instantiating a :class:`Janggo` object.
+A neural network can be created by instantiating a :class:`Janggu` object.
 There are two ways of achieving this:
 
-1. Similar as with `keras.models.Model`, a :class:`Janggo` object can be created from a set of native keras Input and Output layers, respectively.
-2. Janggo offers a `Janggo.create` constructor method which helps to reduce redundant code when defining many rather similar models.
+1. Similar as with `keras.models.Model`, a :class:`Janggu` object can be created from a set of native keras Input and Output layers, respectively.
+2. Janggu offers a `Janggu.create` constructor method which helps to reduce redundant code when defining many rather similar models.
 
 
-Example 1: Instantiate Janggo similar to keras.models.Model
+Example 1: Instantiate Janggu similar to keras.models.Model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. sidebar:: **Output directory**
 
    Model results,
-   e.g. trained parameters, are automatically stored with an associated model name in `outputdir` which is set to '`/home/user/janggo_results`' by default. Additionally, Janggo determines a unique model name, based on a md5-hash of the network configuration.
+   e.g. trained parameters, are automatically stored with an associated model name in `outputdir` which is set to '`/home/user/janggu_results`' by default. Additionally, Janggu determines a unique model name, based on a md5-hash of the network configuration.
 
 
 .. code-block:: python
@@ -28,7 +28,7 @@ Example 1: Instantiate Janggo similar to keras.models.Model
   from keras.layers import Input
   from keras.layers import Dense
 
-  from janggo import Janggo
+  from janggu import Janggu
 
   # Define neural network layers using keras
   in_ = Input(shape=(10,), name='ip')
@@ -37,7 +37,7 @@ Example 1: Instantiate Janggo similar to keras.models.Model
                  name='out')(layer)
 
   # Instantiate model name.
-  model = Janggo(inputs=in_, outputs=output)
+  model = Janggu(inputs=in_, outputs=output)
   model.summary()
 
 
@@ -58,7 +58,7 @@ a network via a python function as in the following example
 
    # Defines the same model by invoking the definition function
    # and the create constructor.
-   model = Janggo.create(template=test_manual_model,
+   model = Janggu.create(template=test_manual_model,
                          modelparams=3)
 
 
@@ -71,15 +71,15 @@ e.g. with different numbers of neurons per layer or different activations.
 
 Example 3: Automatic Input and Output layer extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A second benefit to invoke Janggo.create is that it can automatically
+A second benefit to invoke Janggu.create is that it can automatically
 determine and append appropriate Input and Output layers to the network.
 This means, only the network body remains to be defined:
 
 .. code-block:: python
 
     import numpy as np
-    from janggo import inputlayer, outputdense
-    from janggo.data import Array
+    from janggu import inputlayer, outputdense
+    from janggu.data import Array
 
     # Some random data
     DATA = Array('ip', np.random.random((1000, 10)))
@@ -99,7 +99,7 @@ This means, only the network body remains to be defined:
         return inputs, output
 
     # create the model.
-    model = Janggo.create(template=test_inferred_model,
+    model = Janggu.create(template=test_inferred_model,
                           modelparams=3,
                           inputs=DATA, outputs=LABELS)
     model.summary()
@@ -113,11 +113,11 @@ Genomic Datasets
 ----------------------------------
 .. sidebar:: Datasets are named
 
-   In :class:`Janggo`, a Dataset is linked to
+   In :class:`Janggu`, a Dataset is linked to
    its Input and Output layers via corresponding Dataset and Layer names.
 
 
-:mod:`janggo.data` provides Dataset classes that can be used for
+:mod:`janggu.data` provides Dataset classes that can be used for
 training and evaluating neural networks.
 Of particular importance are the Genomics-specific dataset,
 :class:`Dna` and :class:`Cover` which
@@ -147,9 +147,9 @@ the :code:`create_from_fasta` constructor method. For example:
 .. code-block:: python
 
    from pkg_resources import resource_filename
-   from janggo.data import Dna
+   from janggu.data import Dna
 
-   fasta_file = resource_filename('janggo', 'resources/sample.fa')
+   fasta_file = resource_filename('janggu', 'resources/sample.fa')
 
    dna = Dna.create_from_fasta('dna', fastafile=fasta_file)
 
@@ -166,8 +166,8 @@ genomic coordinates of interest that are provided by a bed or gff file.
 
 .. code-block:: python
 
-   bed_file = resource_filename('janggo', 'resources/sample.bed')
-   refgenome = resource_filename('janggo', 'resources/sample_genome.fa')
+   bed_file = resource_filename('janggu', 'resources/sample.bed')
+   refgenome = resource_filename('janggu', 'resources/sample_genome.fa')
 
    dna = Dna.create_from_refgenome('dna',
                                    refgenome=refgenome,
@@ -206,10 +206,10 @@ in a strand specific manner.
 
 .. code:: python
 
-   from janggo.data import Cover
+   from janggu.data import Cover
 
-   bam_file = resource_filename('janggo', 'resources/sample.bam')
-   bed_file = resource_filename('janggo', 'resources/sample.bed')
+   bam_file = resource_filename('janggu', 'resources/sample.bam')
+   bed_file = resource_filename('janggu', 'resources/sample.bed')
 
    cover = Cover.create_from_bam('read_coverage',
                                  bamfiles=bam_file,
@@ -227,8 +227,8 @@ of a specified resolution (in base pairs):
 
 .. code-block:: python
 
-   bed_file = resource_filename('janggo', 'resources/sample.bed')
-   bw_file = resource_filename('janggo', 'resources/sample.bw')
+   bed_file = resource_filename('janggu', 'resources/sample.bed')
+   bw_file = resource_filename('janggu', 'resources/sample.bw')
 
    cover = Cover.create_from_bigwig('bigwig_coverage',
                                     bigwigfiles=bw_file,
@@ -251,8 +251,8 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolutio
 
 .. code-block:: python
 
-   bed_file = resource_filename('janggo', 'resources/sample.bed')
-   score_file = resource_filename('janggo', 'resources/scored_sample.bed')
+   bed_file = resource_filename('janggu', 'resources/sample.bed')
+   score_file = resource_filename('janggu', 'resources/scored_sample.bed')
 
    # load as binary labels
    cover = Cover.create_from_bed('bed_coverage',
@@ -297,12 +297,12 @@ labels derived from a BED file from the DNA sequence:
 
    from keras.layers import Conv2D
    from keras.layers import AveragePooling2D
-   from janggo import inputlayer
-   from janggo import outputconv
+   from janggu import inputlayer
+   from janggu import outputconv
 
-   refgenome = resource_filename('janggo', 'resources/sample_genome.fa')
-   bed_file = resource_filename('janggo', 'resources/sample.bed')
-   score_file = resource_filename('janggo', 'resources/scored_sample.bed')
+   refgenome = resource_filename('janggu', 'resources/sample_genome.fa')
+   bed_file = resource_filename('janggu', 'resources/sample.bed')
+   score_file = resource_filename('janggu', 'resources/scored_sample.bed')
 
    # 1. get data
    DNA = Dna.create_from_refgenome('dna',
@@ -324,7 +324,7 @@ labels derived from a BED file from the DNA sequence:
       return inputs, output
 
    # 3. instantiate and compile the model
-   model = Janggo.create(template=_conv_net,
+   model = Janggu.create(template=_conv_net,
                          modelparams=(30, 15, 'relu'),
                          inputs=DNA, outputs=LABELS)
    model.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -363,7 +363,7 @@ and investigate the predictions. This can be done by invoking
    model.predict(DNA)
 
 which resemble the familiar keras methods.
-Janggo additinally offers features to simplify the
+Janggu additinally offers features to simplify the
 analysis of the results through callback objects that you can
 attach when invoking
 :code:`model.evaluate` and :code:`model.predict`.
@@ -383,8 +383,8 @@ into a tsv file is illustrate in the following
 .. code:: python
 
    from sklearn.metrics import roc_auc_score
-   from janggo import InOutScorer
-   from janggo.utils import export_tsv
+   from janggu import InOutScorer
+   from janggu.utils import export_tsv
 
    # create a scorer
    score_auroc = InOutScorer('auROC',
@@ -402,7 +402,7 @@ of the model into a json file
 
 .. code:: python
 
-   from janggo import InScorer
+   from janggu import InScorer
 
    # create scorer
    # in this case, the scoring function is optional.
@@ -428,4 +428,4 @@ Alternatively, you can supply custom scoring and exporter functions
                             exporter=export_json)
 
 Further examples are illustrated in the reference section and
-in the module :code:`janggo.utils`.
+in the module :code:`janggu.utils`.

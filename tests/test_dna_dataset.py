@@ -8,10 +8,10 @@ from HTSeq import BED_Reader
 from keras.layers import Input
 from keras.models import Model
 
-from janggo.data import Dna
-from janggo.layers import Complement
-from janggo.layers import Reverse
-from janggo.utils import complement_permmatrix
+from janggu.data import Dna
+from janggu.layers import Complement
+from janggu.layers import Reverse
+from janggu.utils import complement_permmatrix
 
 matplotlib.use('AGG')
 
@@ -30,7 +30,7 @@ def datalen(bed_file):
 
 def test_dna_dims_order_1():
     order = 1
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.gtf')
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
@@ -81,7 +81,7 @@ def test_dna_dims_order_1():
 
 def test_dna_dims_order_2():
     order = 2
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.bed')
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
@@ -132,7 +132,7 @@ def test_dna_dims_order_2():
 
 
 def reverse_layer(order):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -156,7 +156,7 @@ def reverse_layer(order):
 
 
 def complement_layer(order):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -248,7 +248,7 @@ def test_rcmatrix_identity():
 
 
 def test_dna_dataset_sanity(tmpdir):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
@@ -306,7 +306,7 @@ def test_dna_dataset_sanity(tmpdir):
 
 
 def test_read_dna_from_fasta_order_1():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     order = 1
     filename = os.path.join(data_path, 'sample.fa')
@@ -330,7 +330,7 @@ def test_read_dna_from_fasta_order_1():
 
 
 def test_read_dna_from_fasta_order_2():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     order = 2
     filename = os.path.join(data_path, 'sample.fa')

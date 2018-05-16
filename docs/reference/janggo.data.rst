@@ -1,4 +1,4 @@
-janggo.data - Genomics datasets for deep learning
+janggu.data - Genomics datasets for deep learning
 =========================================================
 
 
@@ -7,7 +7,7 @@ raw genomics datasets (e.g. DNA sequence from a fasta file, or genome-wide cover
 information from a bam-file) and the dataformat applications directly for a deep learning
 application.
 
-.. currentmodule:: janggo.data
+.. currentmodule:: janggu.data
 
 Interface
 ---------

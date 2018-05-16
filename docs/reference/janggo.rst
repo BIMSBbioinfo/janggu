@@ -1,23 +1,23 @@
-janggo - Deep learning for Genomics data
+janggu - Deep learning for Genomics data
 ===============================================
 
 This section describes the interface and utilities to build
-build and evaluate deep learning applications with janggo.
+build and evaluate deep learning applications with janggu.
 
-.. currentmodule:: janggo
+.. currentmodule:: janggu
 
-Janggo Model
+Janggu Model
 ---------------
 
 .. autosummary::
-   Janggo
-   Janggo.create
-   Janggo.create_by_name
-   Janggo.fit
-   Janggo.predict
-   Janggo.evaluate
+   Janggu
+   Janggu.create
+   Janggu.create_by_name
+   Janggu.fit
+   Janggu.predict
+   Janggu.evaluate
 
-.. autoclass:: Janggo
+.. autoclass:: Janggu
    :members:
 
 

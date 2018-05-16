@@ -1,7 +1,7 @@
 import numpy as np
 from HTSeq import GenomicInterval
 
-from janggo.data import create_genomic_array
+from janggu.data import create_genomic_array
 
 
 def test_bwga_instance_unstranded(tmpdir):

@@ -1,12 +1,12 @@
 """Array dataset"""
-from janggo.data.data import Dataset
+from janggu.data.data import Dataset
 
 
 class Array(Dataset):
     """Array class.
 
     This datastructure wraps arbitrary numpy.arrays for a
-    deep learning application with Janggo.
+    deep learning application with Janggu.
     The main difference to an ordinary numpy.array is that
     Array has a name attribute.
 

@@ -4,7 +4,7 @@ import os
 
 import pandas as pd
 
-from janggo.data.data import Dataset
+from janggu.data.data import Dataset
 
 
 class Table(Dataset):

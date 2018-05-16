@@ -7,11 +7,11 @@ import pyBigWig
 import pysam
 from HTSeq import GenomicInterval
 
-from janggo.data.data import Dataset
-from janggo.data.genomic_indexer import GenomicIndexer
-from janggo.data.genomicarray import create_genomic_array
-from janggo.utils import _get_genomic_reader
-from janggo.utils import get_genome_size_from_bed
+from janggu.data.data import Dataset
+from janggu.data.genomic_indexer import GenomicIndexer
+from janggu.data.genomicarray import create_genomic_array
+from janggu.utils import _get_genomic_reader
+from janggu.utils import get_genome_size_from_bed
 
 
 class Cover(Dataset):

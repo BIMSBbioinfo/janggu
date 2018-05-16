@@ -66,5 +66,5 @@ docs/_build
 
 *.whl
 
-# Janggo output
-janggo_results
+# Janggu output
+janggu_results

@@ -4,15 +4,15 @@ import matplotlib
 import pkg_resources
 import pytest
 
-from janggo.data import Dna
-from janggo.data import Table
-from janggo.data.data import _data_props
+from janggu.data import Dna
+from janggu.data import Table
+from janggu.data.data import _data_props
 
 matplotlib.use('AGG')
 
 
 def test_dna_props_extraction():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
@@ -30,7 +30,7 @@ def test_dna_props_extraction():
 
 
 def test_tab_props_extraction():
-    data_path = pkg_resources.resource_filename('janggo',
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/')
     csvfile = os.path.join(data_path, 'sample.csv')
 

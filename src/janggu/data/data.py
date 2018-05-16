@@ -1,4 +1,4 @@
-"""Janggo specific dataset class."""
+"""Janggu specific dataset class."""
 
 from abc import ABCMeta
 from abc import abstractmethod
@@ -94,8 +94,8 @@ def _data_props(data):
         raise Exception('inputSpace wrong argument: {}'.format(data))
 
 
-class JanggoSequence(Sequence):
-    """JanggoSequence class.
+class JangguSequence(Sequence):
+    """JangguSequence class.
 
     This class is a subclass of keras.utils.Sequence.
     It is used to serve the fit_generator, predict_generator

@@ -5,13 +5,13 @@ import numpy as np
 import pkg_resources
 import pytest
 
-from janggo.data import GenomicIndexer
+from janggu.data import GenomicIndexer
 
 matplotlib.use('AGG')
 
 
 def test_gindexer_errors():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     with pytest.raises(ValueError):
         GenomicIndexer.create_from_file(os.path.join(data_path,
@@ -31,7 +31,7 @@ def test_gindexer_errors():
 
 
 def test_gindexer_merged():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     gi = GenomicIndexer.create_from_file(
         os.path.join(data_path, 'sample.bed'), binsize=200, stepsize=200)
@@ -45,7 +45,7 @@ def test_gindexer_merged():
 
 
 def test_gindexer_merged_variable_length_ranges():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     # with fixed size
     gi = GenomicIndexer.create_from_file(

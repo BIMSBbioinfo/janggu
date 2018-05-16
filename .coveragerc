@@ -1,12 +1,12 @@
 [paths]
 source =
-   src/janggo
-   */site-packages/janggo
+   src/janggu
+   */site-packages/janggu
 
 [run]
 branch = true
 source =
-    janggo
+    janggu
 parallel = true
 
 [report]
@@ -14,5 +14,5 @@ show_missing = true
 precision = 2
 omit =
     *migrations*
-    src/janggo/cli.py
-    src/janggo/__main__.py
+    src/janggu/cli.py
+    src/janggu/__main__.py

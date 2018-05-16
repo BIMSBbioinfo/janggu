@@ -3,7 +3,7 @@
 import numpy as np
 from HTSeq import GenomicInterval
 
-from janggo.utils import _get_genomic_reader
+from janggu.utils import _get_genomic_reader
 
 
 class GenomicIndexer(object):

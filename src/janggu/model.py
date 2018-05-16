@@ -1,4 +1,4 @@
-"""Janggo - deep learning for genomics"""
+"""Janggu - deep learning for genomics"""
 
 import hashlib
 import logging
@@ -12,11 +12,11 @@ from keras.models import Model
 from keras.models import load_model
 from keras.utils import plot_model
 
-from janggo.data.data import JanggoSequence
-from janggo.data.data import _data_props
-from janggo.layers import Complement
-from janggo.layers import LocalAveragePooling2D
-from janggo.layers import Reverse
+from janggu.data.data import JangguSequence
+from janggu.data.data import _data_props
+from janggu.layers import Complement
+from janggu.layers import LocalAveragePooling2D
+from janggu.layers import Reverse
 
 
 def _convert_data(kerasmodel, data, layer):
@@ -42,7 +42,7 @@ def _convert_data(kerasmodel, data, layer):
     # If we deal with Dataset, we convert it to a Dictionary
     # which is directly interpretable by keras
     if hasattr(data, "name") and hasattr(data, "shape"):
-        # if it is a janggo.data.Dataset we get here
+        # if it is a janggu.data.Dataset we get here
         c_data = {data.name: data}
     elif not hasattr(data, "name") and hasattr(data, "shape"):
         # if data is a numpy array we get here
@@ -65,12 +65,12 @@ def _convert_data(kerasmodel, data, layer):
     return c_data
 
 
-class Janggo(object):
-    """Janggo class
+class Janggu(object):
+    """Janggu class
 
-    The class :class:`Janggo` maintains a :class:`keras.models.Model`
+    The class :class:`Janggu` maintains a :class:`keras.models.Model`
     object, that is an instance of a neural network.
-    Furthermore, to the outside, Janggo behaves similarly to
+    Furthermore, to the outside, Janggu behaves similarly to
     :class:`keras.models.Model` which allows you to create,
     fit, and evaluate the model.
 
@@ -85,12 +85,12 @@ class Janggo(object):
         Name of the model.
     outputdir : str
         Output folder in which the log-files and model parameters
-        are stored. Default: `/home/user/janggo_results`.
+        are stored. Default: `/home/user/janggu_results`.
 
     Examples
     --------
 
-    Define a Janggo object similar to keras.models.Model
+    Define a Janggu object similar to keras.models.Model
     using Input and Output layers.
 
     .. code-block:: python
@@ -98,7 +98,7 @@ class Janggo(object):
       from keras.layers import Input
       from keras.layers import Dense
 
-      from janggo import Janggo
+      from janggu import Janggu
 
       # Define neural network layers using keras
       in_ = Input(shape=(10,), name='ip')
@@ -106,7 +106,7 @@ class Janggo(object):
       output = Dense(1, activation='sigmoid', name='out')(layer)
 
       # Instantiate a model.
-      model = Janggo(inputs=in_, outputs=output, name='test_model')
+      model = Janggu(inputs=in_, outputs=output, name='test_model')
       model.summary()
     """
     timer = None
@@ -115,7 +115,7 @@ class Janggo(object):
     def __init__(self, inputs, outputs, name=None,
                  outputdir=None):
 
-        self.kerasmodel = Model(inputs, outputs, name='janggo')
+        self.kerasmodel = Model(inputs, outputs, name='janggu')
 
         if not name:
 
@@ -129,7 +129,7 @@ class Janggo(object):
         if not outputdir:  # pragma: no cover
             # this is excluded from the unit tests for which
             # only temporary directories should be used.
-            outputdir = os.path.join(os.path.expanduser("~"), 'janggo_results')
+            outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
         self.outputdir = outputdir
 
         if not os.path.exists(outputdir):  # pragma: no cover
@@ -140,7 +140,7 @@ class Janggo(object):
         if not os.path.exists(os.path.join(outputdir, 'logs')):
             os.makedirs(os.path.join(outputdir, 'logs'))
 
-        logfile = os.path.join(outputdir, 'logs', 'janggo.log')
+        logfile = os.path.join(outputdir, 'logs', 'janggu.log')
 
         self.logger = logging.getLogger(self.name)
 
@@ -153,7 +153,7 @@ class Janggo(object):
 
     @classmethod
     def create_by_name(cls, name, outputdir=None):
-        """Creates a Janggo object by name.
+        """Creates a Janggu object by name.
 
         This option is used to load a pre-trained model.
 
@@ -162,7 +162,7 @@ class Janggo(object):
         name : str
             Name of the model.
         outputdir : str
-            Output directory. Default: `/home/user/janggo_results`.
+            Output directory. Default: `/home/user/janggu_results`.
 
         Examples
         --------
@@ -174,21 +174,21 @@ class Janggo(object):
           output = Dense(1, activation='sigmoid', name='out')(layer)
 
           # Instantiate a model.
-          model = Janggo(inputs=in_, outputs=output, name='test_model')
+          model = Janggu(inputs=in_, outputs=output, name='test_model')
 
-          # saves the model to /home/user/janggo_results/models
+          # saves the model to /home/user/janggu_results/models
           model.save()
 
           # remove the original model
           del model
 
           # reload the model
-          model = Janggo.create_by_name('test_model')
+          model = Janggu.create_by_name('test_model')
         """
         if not outputdir:  # pragma: no cover
             # this is excluded from the unit tests for which
             # only temporary directories should be used.
-            outputdir = os.path.join(os.path.expanduser("~"), 'janggo_results')
+            outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
         path = cls._storage_path(name, outputdir)
 
         model = load_model(path,
@@ -241,9 +241,9 @@ class Janggo(object):
     def create(cls, template, modelparams=None, inputs=None,
                outputs=None, name=None,
                outputdir=None):
-        """Janggo constructor method.
+        """Janggu constructor method.
 
-        This method instantiates a Janggo model with
+        This method instantiates a Janggu model with
         model template and parameters. It also allows to
         automatically infer and extend the correct
         input and output layers for the network.
@@ -274,7 +274,7 @@ class Janggo(object):
         outputdir : str or None
             Root output directory in which the log files, model parameters etc.
             will be stored. If None, the outputdir is set
-            to `/home/user/janggo_results`.
+            to `/home/user/janggu_results`.
 
         Examples
         --------
@@ -291,7 +291,7 @@ class Janggo(object):
 
           # Defines the same model by invoking the definition function
           # and the create constructor.
-          model = Janggo.create(template=test_manual_model, modelparams=3)
+          model = Janggu.create(template=test_manual_model, modelparams=3)
           model.summary()
 
         Specify a model using automatic input and output layer determination.
@@ -300,9 +300,9 @@ class Janggo(object):
         .. code-block:: python
 
           import numpy as np
-          from janggo import Janggo
-          from janggo import inputlayer, outputdense
-          from janggo.data import Array
+          from janggu import Janggu
+          from janggu import inputlayer, outputdense
+          from janggu.data import Array
 
           # Some random data which you would like to use as input for the
           # model.
@@ -325,7 +325,7 @@ class Janggo(object):
               return in_, output
 
           # create a model.
-          model = Janggo.create(template=test_inferred_model, modelparams=3,
+          model = Janggu.create(template=test_inferred_model, modelparams=3,
                                 name='test_model',
                                 inputp=DATA,
                                 outputp=LABELS)
@@ -437,7 +437,7 @@ class Janggo(object):
                 ' '.join(["{}={}".format(k, logs[k]) for k in logs])))]
         if not batch_size:
             batch_size = 32
-        jseq = JanggoSequence(batch_size, inputs, outputs, sample_weight)
+        jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
 
         if validation_data is not None:
             valinputs = _convert_data(self.kerasmodel, validation_data[0],
@@ -445,7 +445,7 @@ class Janggo(object):
             valoutputs = _convert_data(self.kerasmodel, validation_data[1],
                                        'output_layers')
             sweights = validation_data[2] if len(validation_data) == 3 else None
-            valjseq = JanggoSequence(batch_size, valinputs, valoutputs, sweights)
+            valjseq = JangguSequence(batch_size, valinputs, valoutputs, sweights)
         else:
             valjseq = None
 
@@ -516,7 +516,7 @@ class Janggo(object):
         # if a desired layername is specified, the features
         # will be predicted.
         if layername:
-            model = Janggo(self.kerasmodel.input,
+            model = Janggu(self.kerasmodel.input,
                            self.kerasmodel.get_layer(layername).output,
                            name=self.name,
                            outputdir=self.outputdir)
@@ -526,7 +526,7 @@ class Janggo(object):
         if not batch_size:
             batch_size = 32
 
-        jseq = JanggoSequence(batch_size, inputs, None, None)
+        jseq = JangguSequence(batch_size, inputs, None, None)
 
         try:
             preds = model.kerasmodel.predict_generator(
@@ -588,7 +588,7 @@ class Janggo(object):
         if not batch_size:
             batch_size = 32
 
-        jseq = JanggoSequence(batch_size, inputs, outputs, sample_weight)
+        jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
 
         try:
             values = self.kerasmodel.evaluate_generator(

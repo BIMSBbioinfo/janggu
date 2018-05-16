@@ -1,36 +1,36 @@
 =================
-Welcome to Janggo
+Welcome to Janggu
 =================
 
 .. start-badges
 
-.. image:: https://readthedocs.org/projects/janggo/badge/?style=flat
-    :target: https://readthedocs.org/projects/janggo
+.. image:: https://readthedocs.org/projects/janggu/badge/?style=flat
+    :target: https://readthedocs.org/projects/janggu
     :alt: Documentation Status
 
-.. image:: https://travis-ci.org/wkopp/janggo.svg?branch=master
+.. image:: https://travis-ci.org/wkopp/janggu.svg?branch=master
     :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/wkopp/janggo
+    :target: https://travis-ci.org/wkopp/janggu
 
-.. image:: https://requires.io/github/wkopp/janggo/requirements.svg?branch=master
+.. image:: https://requires.io/github/wkopp/janggu/requirements.svg?branch=master
     :alt: Requirements Status
-    :target: https://requires.io/github/wkopp/janggo/requirements/?branch=master
+    :target: https://requires.io/github/wkopp/janggu/requirements/?branch=master
 
-.. image:: https://codecov.io/github/wkopp/janggo/coverage.svg?branch=master
+.. image:: https://codecov.io/github/wkopp/janggu/coverage.svg?branch=master
     :alt: Coverage Status
-    :target: https://codecov.io/github/wkopp/janggo
+    :target: https://codecov.io/github/wkopp/janggu
 
-.. image:: https://img.shields.io/pypi/v/janggo.svg
+.. image:: https://img.shields.io/pypi/v/janggu.svg
     :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/janggo
+    :target: https://pypi.python.org/pypi/janggu
 
 .. end-badges
 
-Janggo is a python package that facilitates deep learning in Genomics.
+Janggu is a python package that facilitates deep learning in Genomics.
 
 .. image:: motivation.png
    :width: 100%
-   :alt: Janggo motivation
+   :alt: Janggu motivation
    :align: center
 
 
@@ -40,23 +40,23 @@ preparing Genomics datasets
 for the use with keras as well as consistently evaluating
 model performances for model comparison
 and/or hypothesis testing might cause significant overhead to deal
-with. Janggo facilitates easy **Genomics data acquisition**
+with. Janggu facilitates easy **Genomics data acquisition**
 and **out-of-the-box evaluation** so that you can concentrate
 on designing the neural network architecture primarily.
 
 
-Some of the hallmarks of Janggo are:
+Some of the hallmarks of Janggu are:
 
-1. Janggo builds upon keras to define, train and evaluate neural network in a flexible manner.
-2. Janggo provides special data containers for processing genomics data, including nucleotide sequences or coverage tracks from next-generation sequencing.
-3. Janggo facilitates reproducibility and eases model comparison by producing log files, storage of model parameters and evaluating various performance metrics out of the box.
-4. Janggo supports processing of too-large-to-keep-in-memory dataset by loading the data in batches from disk.
+1. Janggu builds upon keras to define, train and evaluate neural network in a flexible manner.
+2. Janggu provides special data containers for processing genomics data, including nucleotide sequences or coverage tracks from next-generation sequencing.
+3. Janggu facilitates reproducibility and eases model comparison by producing log files, storage of model parameters and evaluating various performance metrics out of the box.
+4. Janggu supports processing of too-large-to-keep-in-memory dataset by loading the data in batches from disk.
 
-Why Janggo?
+Why Janggu?
 
-`Janggo <https://en.wikipedia.org/wiki/Janggu>`_ is a Korean percussion instrument that looks like an hourglass.
+`Janggu <https://en.wikipedia.org/wiki/Janggu>`_ is a Korean percussion instrument that looks like an hourglass.
 
-Like the two ends of the instrument, the Janggo package represents
+Like the two ends of the instrument, the Janggu package represents
 the two ends of a deep learning application in genomics,
 namely data acquisition and evaluation (see Figure above).
 
@@ -69,12 +69,12 @@ Installation
 For CPU-only support:
 ::
 
-    pip install janggo[tf]
+    pip install janggu[tf]
 
 For GPU-support:
 ::
 
-    pip install janggo[tf_gpu]
+    pip install janggu[tf_gpu]
 
 
 Development

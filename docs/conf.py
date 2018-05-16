@@ -24,7 +24,7 @@ if os.getenv('SPELLCHECK'):
 
 source_suffix = '.rst'
 master_doc = 'index'
-project = u'Janggo'
+project = u'Janggu'
 year = u'2017'
 author = u'Wolfgang Kopp'
 copyright = '{0}, {1}'.format(year, author)
@@ -33,8 +33,8 @@ version = release = '0.6.4'
 pygments_style = 'trac'
 templates_path = ['.']
 extlinks = {
-    'issue': ('https://github.com/wkopp/janggo/issues/%s', '#'),
-    'pr': ('https://github.com/wkopp/janggo/pull/%s', 'PR #'),
+    'issue': ('https://github.com/wkopp/janggu/issues/%s', '#'),
+    'pr': ('https://github.com/wkopp/janggu/pull/%s', 'PR #'),
 }
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'

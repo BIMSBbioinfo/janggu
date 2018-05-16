@@ -4,7 +4,7 @@ from keras import backend as K
 from keras.engine.topology import Layer
 from keras.initializers import Constant
 
-from janggo.utils import complement_permmatrix
+from janggu.utils import complement_permmatrix
 
 
 class LocalAveragePooling2D(Layer):

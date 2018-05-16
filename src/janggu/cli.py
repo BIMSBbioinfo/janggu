@@ -6,11 +6,11 @@ Why does this file exist, and why not put this in __main__?
   You may be tempted to import things from __main__ later, but that will cause
   problems: the code will get executed twice:
 
-  - When you run `python -mjanggo` python will execute
+  - When you run `python -mjanggu` python will execute
     ``__main__.py`` as a script. That means there won't be any
-    ``janggo.__main__`` in ``sys.modules``.
+    ``janggu.__main__`` in ``sys.modules``.
   - When you import __main__ it will get executed again (as a module) because
-    there's no ``janggo.__main__`` in ``sys.modules``.
+    there's no ``janggu.__main__`` in ``sys.modules``.
 
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
@@ -31,22 +31,22 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 PARSER = argparse.ArgumentParser(description='Command description.')
-PARSER.add_argument('-path', dest='janggo_results',
+PARSER.add_argument('-path', dest='janggu_results',
                     default=os.path.join(os.path.expanduser("~"),
-                                         'janggo_results'),
-                    help="Janggo results path.")
+                                         'janggu_results'),
+                    help="Janggu results path.")
 
 args = PARSER.parse_args()
 
-app = dash.Dash('Janggo')
-app.title = 'Janggo'
+app = dash.Dash('Janggu')
+app.title = 'Janggu'
 app.config['suppress_callback_exceptions'] = True
 
 
 def serve_layer():
     return html.Div([
         dcc.Location(id='url', refresh=False),
-        html.Nav(html.Div(dcc.Link(html.H2('Janggo'), href='/',
+        html.Nav(html.Div(dcc.Link(html.H2('Janggu'), href='/',
                                    className='navbar-brand'),
                           className='navbar-header'),
                  className='navbar navbar-default navbar-expand-lg navbar-dark'),
@@ -64,12 +64,12 @@ def display_page(pathname):
     if pathname is None:
         return html.Div([])
     elif pathname == '/':
-        print(args.janggo_results)
-        files = glob.glob(os.path.join(args.janggo_results, 'models', '*.png'))
+        print(args.janggu_results)
+        files = glob.glob(os.path.join(args.janggu_results, 'models', '*.png'))
         if not files:
             return html.Div([
                 html.P('The directory "{}" appears to be empty.'
-                       .format(args.janggo_results))])
+                       .format(args.janggu_results))])
         encoding = {os.path.basename(os.path.splitext(name)[0]):
                     base64.b64encode(open(name, 'rb').read())
                     for name in files}
@@ -85,16 +85,16 @@ def display_page(pathname):
                  for name in encoding],
                 className='table table-bordered')])
     else:
-        pathlen = len(os.path.join(args.janggo_results,
+        pathlen = len(os.path.join(args.janggu_results,
                                    'evaluation', pathname[1:])) + 1
-        files = glob.glob(os.path.join(args.janggo_results,
+        files = glob.glob(os.path.join(args.janggu_results,
                                        'evaluation', pathname[1:], '*.png'))
-        files += glob.glob(os.path.join(args.janggo_results,
+        files += glob.glob(os.path.join(args.janggu_results,
                                         'evaluation', pathname[1:],
                                         '*', '*.png'))
-        files += glob.glob(os.path.join(args.janggo_results,
+        files += glob.glob(os.path.join(args.janggu_results,
                                         'evaluation', pathname[1:], '*.ply'))
-        files += glob.glob(os.path.join(args.janggo_results,
+        files += glob.glob(os.path.join(args.janggu_results,
                                         'evaluation', pathname[1:],
                                         '*', '*.ply'))
         if not files:
@@ -280,6 +280,6 @@ for js in external_js:
 
 def main():
     """cli entry"""
-    print('Welcome to janggo (GPL-v2). Copyright (C) 2017 '
+    print('Welcome to janggu (GPL-v2). Copyright (C) 2017 '
           + 'Wolfgang Kopp.')
     app.run_server()

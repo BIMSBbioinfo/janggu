@@ -8,16 +8,16 @@ from keras.layers import Input
 from keras.models import Model
 from sklearn.metrics import roc_auc_score
 
-from janggo.data import Array
-from janggo.data import input_props
-from janggo.data import output_props
-from janggo.decorators import inputlayer
-from janggo.decorators import outputlayer
-from janggo.evaluation import EvaluatorList
-from janggo.evaluation import ScoreEvaluator
-from janggo.evaluation import auprc
-from janggo.evaluation import auroc
-from janggo.model import Janggo
+from janggu.data import Array
+from janggu.data import input_props
+from janggu.data import output_props
+from janggu.decorators import inputlayer
+from janggu.decorators import outputlayer
+from janggu.evaluation import EvaluatorList
+from janggu.evaluation import ScoreEvaluator
+from janggu.evaluation import auprc
+from janggu.evaluation import auroc
+from janggu.model import Janggu
 
 np.random.seed(1234)
 
@@ -51,12 +51,12 @@ def kerasmodel():
 
 # Option 2:
 # Instantiate the model manually
-def janggomodel():
+def janggumodel():
     input_ = Input(shape=(28, 28), name='x')
     layer = Flatten()(input_)
     layer = Dense(10, activation='tanh')(layer)
     output = Dense(10, activation='sigmoid', name='y')(layer)
-    model = Janggo(inputs=input_, outputs=output, name='mnist')
+    model = Janggu(inputs=input_, outputs=output, name='mnist')
     model.compile(optimizer='adadelta', loss='categorical_crossentropy',
                   metrics=['accuracy'])
     return model
@@ -64,7 +64,7 @@ def janggomodel():
 
 # Option 3:
 # Define the body of the network using the decorators.
-# This option is used with Janggo.create_by_shape
+# This option is used with Janggu.create_by_shape
 @inputlayer
 @outputlayer
 def ffn(input_, inparams, outparams, otherparams):
@@ -80,7 +80,7 @@ def auc3(ytrue_, ypred_):
     return roc_auc_score(yt, pt)
 
 
-# The datastructures provided by janggo can be immediately
+# The datastructures provided by janggu can be immediately
 # supplied to keras, because they mimic numpy arrays
 K.clear_session()
 np.random.seed(1234)
@@ -94,10 +94,10 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in janggo
+# then use it in janggu
 K.clear_session()
 np.random.seed(1234)
-bw = janggomodel()
+bw = janggumodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100, verbose=0)
 ypred = bw.predict(blg_x_test)
 
@@ -108,10 +108,10 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in janggo
+# then use it in janggu
 K.clear_session()
 np.random.seed(1234)
-bw = janggomodel()
+bw = janggumodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
            workers=3, verbose=0)
 ypred = bw.predict(blg_x_test)
@@ -123,10 +123,10 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# then use it in janggo
+# then use it in janggu
 K.clear_session()
 np.random.seed(1234)
-bw = janggomodel()
+bw = janggumodel()
 h = bw.fit(blg_x_train, blg_y_train, epochs=30, batch_size=100,
            workers=3, verbose=0)
 ypred = bw.predict(blg_x_test)
@@ -138,7 +138,7 @@ print('AUC: {}'.format(auc3(blg_y_test[:], ypred)))
 print('#' * 40)
 
 
-# For comparison, here is how the model would train without Janggo
+# For comparison, here is how the model would train without Janggu
 K.clear_session()
 np.random.seed(1234)
 m = kerasmodel()
@@ -155,7 +155,7 @@ print('#' * 40)
 # Instantiate model from input and output shape
 K.clear_session()
 np.random.seed(1234)
-bw = Janggo.create_by_shape(input_props(blg_x_train),
+bw = Janggu.create_by_shape(input_props(blg_x_train),
                             output_props(blg_y_train,
                                          'categorical_crossentropy'),
                             'mnist_ffn',

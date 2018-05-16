@@ -11,21 +11,21 @@ from keras import Model
 from keras.layers import Dense
 from keras.layers import Flatten
 
-from janggo import Janggo
-from janggo import inputlayer
-from janggo import outputconv
-from janggo import outputdense
-from janggo.data import Array
-from janggo.data import GenomicIndexer
-from janggo.evaluation import InOutScorer
-from janggo.evaluation import InScorer
-from janggo.evaluation import _dimension_match
-from janggo.utils import export_bed
-from janggo.utils import export_bigwig
-from janggo.utils import export_clustermap
-from janggo.utils import export_score_plot
-from janggo.utils import export_tsne
-from janggo.utils import export_tsv
+from janggu import Janggu
+from janggu import inputlayer
+from janggu import outputconv
+from janggu import outputdense
+from janggu.data import Array
+from janggu.data import GenomicIndexer
+from janggu.evaluation import InOutScorer
+from janggu.evaluation import InScorer
+from janggu.evaluation import _dimension_match
+from janggu.utils import export_bed
+from janggu.utils import export_bigwig
+from janggu.utils import export_clustermap
+from janggu.utils import export_score_plot
+from janggu.utils import export_tsne
+from janggu.utils import export_tsv
 
 
 def test_input_dims():
@@ -84,13 +84,13 @@ def test_output_dims():
     assert _dimension_match(m, None, 'output_layers')
 
 
-def get_janggo(inputs, outputs, tmpdir):
+def get_janggu(inputs, outputs, tmpdir):
     @inputlayer
     @outputdense('sigmoid')
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Janggo.create(_model,
+    bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
                         name='nptest',
@@ -103,13 +103,13 @@ def get_janggo(inputs, outputs, tmpdir):
     return bwm
 
 
-def get_janggo_conv(inputs, outputs, tmpdir):
+def get_janggu_conv(inputs, outputs, tmpdir):
     @inputlayer
     @outputconv('sigmoid')
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
 
-    bwm = Janggo.create(_model,
+    bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
                         name='nptest',
@@ -128,7 +128,7 @@ def test_output_json_score(tmpdir):
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs, tmpdir)
 
     dummy_eval = InOutScorer('score', lambda y_true, y_pred: 0.15)
 
@@ -147,7 +147,7 @@ def test_output_tsv_score(tmpdir):
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs, tmpdir)
 
     dummy_eval = InOutScorer('score', lambda y_true, y_pred: 0.15, exporter=export_tsv)
 
@@ -163,7 +163,7 @@ def test_output_export_score_plot(tmpdir):
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs, tmpdir)
 
     dummy_eval = InOutScorer('score',
                              lambda y_true, y_pred:
@@ -202,7 +202,7 @@ def test_output_export_clustermap(tmpdir):
             outputs = Dense(3, name='hidden')(layer)
         return inputs, outputs
 
-    bwm = Janggo.create(_model,
+    bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
                         name='nptest',
@@ -241,7 +241,7 @@ def test_output_export_tsne(tmpdir):
             outputs = Dense(3, name='hidden')(layer)
         return inputs, outputs
 
-    bwm = Janggo.create(_model,
+    bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
                         name='nptest',
@@ -276,8 +276,8 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 1, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo_conv(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu_conv(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -315,8 +315,8 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -356,8 +356,8 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 1, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo_conv(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu_conv(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -396,8 +396,8 @@ def test_output_bed_predict_denseout(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -436,8 +436,8 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -476,8 +476,8 @@ def test_output_bigwig_predict_denseout(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -512,8 +512,8 @@ def test_output_bigwig_predict_convout(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo_conv(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu_conv(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,
@@ -548,8 +548,8 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggo(inputs, outputs, tmpdir)
-    data_path = pkg_resources.resource_filename('janggo',
+    bwm = get_janggu(inputs, outputs, tmpdir)
+    data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
     gi = GenomicIndexer.create_from_file(data_path,

@@ -8,11 +8,11 @@ import pandas
 import pkg_resources
 import pytest
 
-from janggo.data import Cover
+from janggu.data import Cover
 
 
 def test_cover_from_bam_sanity():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bam")
@@ -60,7 +60,7 @@ def test_cover_from_bam_sanity():
 
 
 def test_cover_from_bigwig_sanity():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
     bwfile_ = os.path.join(data_path, "sample.bw")
@@ -119,7 +119,7 @@ def test_cover_from_bigwig_sanity():
 
 
 def test_cover_from_bed_sanity():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
     bwfile_ = os.path.join(data_path, "scored_sample.bed")
@@ -187,7 +187,7 @@ def test_cover_from_bed_sanity():
 
 
 def test_cover_bam(tmpdir):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample.bam")
     gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
 
@@ -241,7 +241,7 @@ def test_cover_bam(tmpdir):
 
 
 def test_load_cover_bigwig_default(tmpdir):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bwfile_ = os.path.join(data_path, "sample.bw")
     gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
@@ -273,7 +273,7 @@ def test_load_cover_bigwig_default(tmpdir):
 
 
 def test_load_cover_bigwig_resolution1(tmpdir):
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bwfile_ = os.path.join(data_path, "sample.bw")
 
@@ -331,8 +331,8 @@ def test_load_cover_bigwig_resolution1(tmpdir):
 
 def test_load_cover_bed_binary():
 
-    bed_file = pkg_resources.resource_filename('janggo', 'resources/sample.bed')
-    score_file = pkg_resources.resource_filename('janggo',
+    bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+    score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
 
     cover = Cover.create_from_bed(
@@ -374,8 +374,8 @@ def test_load_cover_bed_binary():
 
 def test_load_cover_bed_scored():
 
-    bed_file = pkg_resources.resource_filename('janggo', 'resources/sample.bed')
-    score_file = pkg_resources.resource_filename('janggo',
+    bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+    score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
 
     cover = Cover.create_from_bed(
@@ -417,8 +417,8 @@ def test_load_cover_bed_scored():
 
 def test_load_cover_bed_categorical():
 
-    bed_file = pkg_resources.resource_filename('janggo', 'resources/sample.bed')
-    score_file = pkg_resources.resource_filename('janggo',
+    bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+    score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
 
     cover = Cover.create_from_bed(

@@ -6,9 +6,9 @@ from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
 
-from janggo import inputlayer
-from janggo import outputconv
-from janggo import outputdense
+from janggu import inputlayer
+from janggu import outputconv
+from janggu import outputdense
 
 matplotlib.use('AGG')
 

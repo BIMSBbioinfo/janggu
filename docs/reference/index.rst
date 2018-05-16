@@ -4,5 +4,5 @@ Reference
 .. toctree::
     :glob:
 
-    janggo.data
-    janggo*
+    janggu.data
+    janggu*

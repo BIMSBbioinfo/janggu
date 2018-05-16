@@ -1,4 +1,4 @@
-"""Utilities for janggo """
+"""Utilities for janggu """
 
 import json
 import os

@@ -5,13 +5,13 @@ import os
 import numpy as np
 from HTSeq import GenomicInterval
 
-from janggo.data.data import Dataset
-from janggo.data.genomic_indexer import GenomicIndexer
-from janggo.data.genomicarray import create_genomic_array
-from janggo.utils import _complement_index
-from janggo.utils import as_onehot
-from janggo.utils import dna2ind
-from janggo.utils import sequences_from_fasta
+from janggu.data.data import Dataset
+from janggu.data.genomic_indexer import GenomicIndexer
+from janggu.data.genomicarray import create_genomic_array
+from janggu.utils import _complement_index
+from janggu.utils import as_onehot
+from janggu.utils import dna2ind
+from janggu.utils import sequences_from_fasta
 
 
 class Dna(Dataset):

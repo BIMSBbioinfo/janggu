@@ -4,11 +4,11 @@ import numpy as np
 import pkg_resources
 import pytest
 
-from janggo.data import Table
+from janggu.data import Table
 
 
 def test_tab_reading():
-    data_path = pkg_resources.resource_filename('janggo', 'resources/')
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     sample = Table('train', filename=os.path.join(data_path, 'sample.csv'))
 
