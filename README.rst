@@ -44,7 +44,7 @@ of quickly testing biological hypothesis.
 
 Hallmarks of Janggu:
 
-1. Janggu builds upon keras to define, train and evaluate neural network in a flexible manner.
+1. Janggu builds upon `keras <https://keras.io>`_ to define, train and evaluate neural network in a flexible manner.
 2. Janggu provides special **Genomics datasets**, including for processing nucleotide sequences or coverage tracks from next-generation sequencing experiments.
 3. Janggu supports **processing of large memory** dataset directly from disk.
 4. Janggu facilitates **reproducibility** and eases model comparison by automatically producing log files, storage of model parameters and evaluating various performance metrics out of the box.
