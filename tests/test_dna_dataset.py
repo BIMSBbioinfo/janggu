@@ -15,17 +15,17 @@ from janggu.utils import complement_permmatrix
 
 matplotlib.use('AGG')
 
-reglen = 200
+binsize = 200
 flank = 150
 stepsize = 50
 
 
 def datalen(bed_file):
-    reglens = 0
+    binsizes = 0
     reader = BED_Reader(bed_file)
     for reg in reader:
-        reglens += (reg.iv.end - reg.iv.start - reglen + stepsize)//stepsize
-    return reglens
+        binsizes += (reg.iv.end - reg.iv.start - binsize + stepsize)//stepsize
+    return binsizes
 
 
 def test_dna_dims_order_1():
@@ -141,7 +141,7 @@ def reverse_layer(order):
     data = Dna.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_file,
                                      storage='ndarray',
-                                     reglen=reglen,
+                                     binsize=binsize,
                                      flank=flank,
                                      order=order)
 
@@ -165,7 +165,7 @@ def complement_layer(order):
     data = Dna.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_file,
                                      storage='ndarray',
-                                     reglen=reglen,
+                                     binsize=binsize,
                                      flank=flank,
                                      order=order)
 
@@ -281,7 +281,7 @@ def test_dna_dataset_sanity(tmpdir):
     with pytest.raises(Exception):
         Dna.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
-                                  regions=bed_file, reglen=0)
+                                  regions=bed_file, binsize=0)
     with pytest.raises(Exception):
         Dna.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',

@@ -117,7 +117,7 @@ class Dna(Dataset):
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions,
-                              stepsize=200, reglen=200,
+                              stepsize=200, binsize=200,
                               flank=0, order=1, storage='ndarray',
                               cachedir='', overwrite=False):
         """Create a Dna class from a reference genome.
@@ -133,8 +133,8 @@ class Dna(Dataset):
             Fasta file.
         regions : str
             BED- or GFF-filename.
-        reglen : int
-            Region length in basepairs to be considered. Default: 200.
+        binsize : int
+            Binsize in basepairs to be read out. Default: 200.
         stepsize : int
             stepsize in basepairs for traversing the genome. Default: 200.
         flank : int
@@ -151,7 +151,7 @@ class Dna(Dataset):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = GenomicIndexer.create_from_file(regions, reglen, stepsize)
+        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
                                          cachedir=cachedir,
