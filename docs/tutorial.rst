@@ -2,111 +2,9 @@
 Tutorial
 =========
 
-In this section we shall illustrate a number of ways that allow
-you to define, train and evaluate neural networks using `janggu`.
-
-Building a neural network
--------------------------
-A neural network can be created by instantiating a :class:`Janggu` object.
-There are two ways of achieving this:
-
-1. Similar as with `keras.models.Model`, a :class:`Janggu` object can be created from a set of native keras Input and Output layers, respectively.
-2. Janggu offers a `Janggu.create` constructor method which helps to reduce redundant code when defining many rather similar models.
-
-
-Example 1: Instantiate Janggu similar to keras.models.Model
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. sidebar:: **Output directory**
-
-   Model results,
-   e.g. trained parameters, are automatically stored with an associated model name in `outputdir` which is set to '`/home/user/janggu_results`' by default. Additionally, Janggu determines a unique model name, based on a md5-hash of the network configuration.
-
-
-.. code-block:: python
-
-  from keras.layers import Input
-  from keras.layers import Dense
-
-  from janggu import Janggu
-
-  # Define neural network layers using keras
-  in_ = Input(shape=(10,), name='ip')
-  layer = Dense(3)(in_)
-  output = Dense(1, activation='sigmoid',
-                 name='out')(layer)
-
-  # Instantiate model name.
-  model = Janggu(inputs=in_, outputs=output)
-  model.summary()
-
-
-
-Example 2: Specify a model using a model definition function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-As an alternative to the above stated variant, it is also possible to specify
-a network via a python function as in the following example
-
-.. code-block:: python
-
-   def test_manual_model(inputs, inp, oup, params):
-       inputs = Input(shape=(10,), name='ip')
-       layer = Dense(params)(inputs)
-       output = Dense(1, activation='sigmoid',
-                      name='out')(layer)
-       return inputs, output
-
-   # Defines the same model by invoking the definition function
-   # and the create constructor.
-   model = Janggu.create(template=test_manual_model,
-                         modelparams=3)
-
-
-The advantage of this variant is that it allows you to define a model template
-along with arbitrary parameters to fill in upon creation. For example,
-`modelparams=3` is passed on to the `params` argument in `test_manual_model`.
-This is useful if one seeks to test numerous slightly different models,
-e.g. with different numbers of neurons per layer or different activations.
-
-
-Example 3: Automatic Input and Output layer extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A second benefit to invoke Janggu.create is that it can automatically
-determine and append appropriate Input and Output layers to the network.
-This means, only the network body remains to be defined:
-
-.. code-block:: python
-
-    import numpy as np
-    from janggu import inputlayer, outputdense
-    from janggu.data import Array
-
-    # Some random data
-    DATA = Array('ip', np.random.random((1000, 10)))
-    LABELS = Array('out', np.random.randint(2, size=(1000, 1)))
-
-    # inputlayer and outputdense automatically
-    # extract dataset shapes and extend the
-    # Input and Output layers appropriately.
-    # That is, only the model body needs to be specified.
-    @inputlayer
-    @outputdense('sigmoid')
-    def test_inferred_model(inputs, inp, oup, params):
-        with inputs.use('ip') as layer:
-            # the with block allows
-            # for easy access of a specific named input.
-            output = Dense(params)(layer)
-        return inputs, output
-
-    # create the model.
-    model = Janggu.create(template=test_inferred_model,
-                          modelparams=3,
-                          inputs=DATA, outputs=LABELS)
-    model.summary()
-
-As is illustrated by the example, automatic Input and Output layer determination
-can be achieved by using the decorators inputlayer and/or outputdense which extract
-the layer dimensions from the provided inputs and outputs in the create constructor.
+In this section we shall illustrate the genomics datasets,
+how to construct and fit a neural network and finally
+how to evaluate the results.
 
 
 Genomic Datasets
@@ -122,15 +20,14 @@ training and evaluating neural networks.
 Of particular importance are the Genomics-specific dataset,
 :class:`Dna` and :class:`Cover` which
 to easily access and fetch genomics data.
-Additional Dataset classes are described in the Reference section of the
-documentation.
+Other Dataset classes, e.g. :class:`Array` are described in the Reference section.
 
 
 Dna
 ^^^^^^^^^^
-The :class:`Dna` allows to fetch raw sequence data from
-fasta files or from a reference genome along with
-genomic coordinates of interest
+The :class:`Dna` fetches raw sequence data from
+fasta files or from a reference genome along with a set of
+genomic coordinates
 and translates the sequences into a *one-hot encoding*. Specifically,
 the *one-hot encoding* is represented as a
 4D array with dimensions corresponding
@@ -142,7 +39,7 @@ The Dna offers a number of features:
 3. Dataset access from disk via the hdf5 option for large datasets.
 
 A sequence can be loaded from a fasta file using
-the :code:`create_from_fasta` constructor method. For example:
+the :code:`create_from_fasta` constructor method:
 
 .. code-block:: python
 
@@ -161,8 +58,8 @@ the :code:`create_from_fasta` constructor method. For example:
    # One-hot encoding for the first 10 bases of the first region
    dna[0][0, :10, :, 0]
 
-Alternatively, sequences can be fetched from a reference genome using
-genomic coordinates of interest that are provided by a bed or gff file.
+Alternatively, sequences can be obtained from a reference genome along with
+genomic coordinates of interest that are provided by a BED or GFF file.
 
 .. code-block:: python
 
@@ -186,16 +83,16 @@ the arguments: :code:`binsize`, :code:`stepsize` and
 
 Cover
 ^^^^^^^^^^^^^^^
-The :class:`Cover` can be utilized to fetch different kinds of
+:class:`Cover` can be utilized to fetch different kinds of
 coverage data from commonly used data formats, including BAM, BIGWIG, BED and GFF.
 Coverage data is stored as a 4D array with dimensions corresponding
 to :code:`(region, region_length, strand, condition)`.
 
-The :class:`Cover` offers the following feature:
+:class:`Cover` offers the following feature:
 
 1. Strand-specific sequence extraction.
-2. :class:`Cover` can be loaded from one or more input files. Then the each condition dimension is associated with an input file.
-3. Coverage data can be accessed from disk via the hdf5 option for large datasets.
+2. :class:`Cover` can be loaded from one or more input files in which case file is associated with a condition.
+3. Coverage data can be accessed from disk.
 
 Additional features are available depending on the input file format.
 
@@ -245,40 +142,42 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolutio
 
 **Coverage from a BED files** can be extracted in various ways:
 
-1. Extracting the **score** field value from the associated regions, if available.
-2. Extracting binary labels: Treating presence of a region as positive labels (*one*), while the absence of a region is treated as a negative label (*zero*).
-3. Treating the scores as categories.
+1. **Binary** or Presence/Absence mode.
+2. **score** mode reads out the score field value from the associated regions.
+3. **Categorical** mode transforms the scores into one-hot representation.
+
+Examples of loading data from a BED file are shown below
 
 .. code-block:: python
 
    bed_file = resource_filename('janggu', 'resources/sample.bed')
    score_file = resource_filename('janggu', 'resources/scored_sample.bed')
 
-   # load as binary labels
+   # binary mode (default)
    cover = Cover.create_from_bed('bed_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file)
 
    cover.shape  # is (100, 1, 1, 1)
-   cover[4]  # contains one
+   cover[4]  # contains [[[[1.]]]]
 
-   # load as binary labels
+   # score mode
    cover = Cover.create_from_bed('bed_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file,
                                  mode='score')
 
    cover.shape  # is (100, 1, 1, 1)
-   cover[4]  # contains the score 5
+   cover[4]  # contains the score [[[[5.]]]]
 
-   # load as binary labels
+   # categorical mode
    cover = Cover.create_from_bed('bed_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file,
                                  mode='categorical')
 
    cover.shape  # is (100, 1, 1, 6)
-   cover[4]  # contains [0., 0., 0., 0., 0., 1.]
+   cover[4]  # contains [[[[0., 0., 0., 0., 0., 1.]]]]
 
 By default, the region of interest in :code:`bed_file` is split
 into non-overlapping 200 bp windows with a resolution of 200 bp.
@@ -286,12 +185,117 @@ Different windowing and signal resolution options are available
 by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
 
 
+
+Building a neural network
+-------------------------
+A neural network can be created by instantiating a :class:`Janggu` object.
+There are two ways of achieving this:
+
+1. Similar as with `keras.models.Model`, a :class:`Janggu` object can be created from a set of native keras Input and Output layers, respectively.
+2. Janggu offers a `Janggu.create` constructor method which helps to reduce redundant code when defining many rather similar models.
+
+
+Example 1: Instantiate Janggu similar to keras.models.Model
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. sidebar:: **Output directory**
+
+   Model results,
+   e.g. trained parameters, are automatically stored with an associated model name in `outputdir` which is set to '`/home/user/janggu_results`' by default. Additionally, Janggu determines a unique model name, based on a md5-hash of the network configuration.
+
+
+.. code-block:: python
+
+  from keras.layers import Input
+  from keras.layers import Dense
+
+  from janggu import Janggu
+
+  # Define neural network layers using keras
+  in_ = Input(shape=(10,), name='ip')
+  layer = Dense(3)(in_)
+  output = Dense(1, activation='sigmoid',
+                 name='out')(layer)
+
+  # Instantiate model name.
+  model = Janggu(inputs=in_, outputs=output)
+  model.summary()
+
+
+
+Example 2: Specify a model using a model template function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+As an alternative to the above stated variant, it is also possible to specify
+a network via a python function as in the following example
+
+.. code-block:: python
+
+   def model_template(inputs, inp, oup, params):
+       inputs = Input(shape=(10,), name='ip')
+       layer = Dense(params)(inputs)
+       output = Dense(1, activation='sigmoid',
+                      name='out')(layer)
+       return inputs, output
+
+   # Defines the same model by invoking the definition function
+   # and the create constructor.
+   model = Janggu.create(template=model_template,
+                         modelparams=3)
+
+The model template function must adhere to the
+signature :code:`tpl(inputs, inp, oup, params)`.
+Notice, that :code:`modelparams=3` gets passed on to :code:`params`
+upon model creation. This allows to parametrize the network
+and reduces code redundancy.
+
+
+Example 3: Automatic Input and Output layer extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A second benefit to invoke :code:`Janggu.create` is that it can automatically
+determine and append appropriate Input and Output layers to the network.
+This means, only the network body remains to be defined.
+
+.. code-block:: python
+
+    import numpy as np
+    from janggu import inputlayer, outputdense
+    from janggu.data import Array
+
+    # Some random data
+    DATA = Array('ip', np.random.random((1000, 10)))
+    LABELS = Array('out', np.random.randint(2, size=(1000, 1)))
+
+    # inputlayer and outputdense automatically
+    # extract dataset shapes and extend the
+    # Input and Output layers appropriately.
+    # That is, only the model body needs to be specified.
+    @inputlayer
+    @outputdense('sigmoid')
+    def model_body_template(inputs, inp, oup, params):
+        with inputs.use('ip') as layer:
+            # the with block allows
+            # for easy access of a specific named input.
+            output = Dense(params)(layer)
+        return inputs, output
+
+    # create the model.
+    model = Janggu.create(template=test_inferred_model,
+                          modelparams=3,
+                          inputs=DATA, outputs=LABELS)
+    model.summary()
+
+As is illustrated by the example, automatic Input and Output layer determination
+can be achieved by using the decorators :code:`inputlayer` and/or
+:code:`outputdense` which extract the layer dimensions from the
+provided input and output Datasets in the create constructor.
+
+
 Fit a neural network on DNA sequences
 -------------------------------------
 In the previous sections, we learned how to acquire data and
 how to instantiate neural networks. Now let's
-create and fit a simple convolutional neural network that predicts
-labels derived from a BED file from the DNA sequence:
+create and fit a simple convolutional neural network that learns
+to classify DNA sequence:
 
 .. code:: python
 
