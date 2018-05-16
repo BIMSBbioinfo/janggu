@@ -441,9 +441,9 @@ class Janggo(object):
 
         if validation_data is not None:
             valinputs = _convert_data(self.kerasmodel, validation_data[0],
-                                       'input_layers')
+                                      'input_layers')
             valoutputs = _convert_data(self.kerasmodel, validation_data[1],
-                                        'output_layers')
+                                       'output_layers')
             sweights = validation_data[2] if len(validation_data) == 3 else None
             valjseq = JanggoSequence(batch_size, valinputs, valoutputs, sweights)
         else:
@@ -463,6 +463,8 @@ class Janggo(object):
                 verbose=verbose,
                 callbacks=callbacks)
         except Exception:  # pragma: no cover
+            # ignore the linter warning, the exception
+            # is reraised anyways.
             self.logger.exception('fit_generator failed:')
             raise
 
