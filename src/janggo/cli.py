@@ -61,7 +61,9 @@ app.layout = serve_layer()
 @app.callback(dash.dependencies.Output('page-content', 'children'),
               [dash.dependencies.Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/':
+    if pathname is None:
+        return html.Div([])
+    elif pathname == '/':
         print(args.janggo_results)
         files = glob.glob(os.path.join(args.janggo_results, 'models', '*.png'))
         if not files:
@@ -89,10 +91,10 @@ def display_page(pathname):
                                         'evaluation', pathname[1:],
                                         '*', '*.png'))
         files += glob.glob(os.path.join(args.janggo_results,
-                                       'evaluation', pathname[1:], '*.tsv'))
+                                       'evaluation', pathname[1:], '*.ply'))
         files += glob.glob(os.path.join(args.janggo_results,
                                         'evaluation', pathname[1:],
-                                        '*', '*.tsv'))
+                                        '*', '*.ply'))
         if not files:
             return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
@@ -114,19 +116,42 @@ def update_output(value):
         img = base64.b64encode(open(value, 'rb').read())
         return html.Img(width='100%',
                         src='data:image/png;base64,{}'.format(img.decode()))
-    elif value.endswith('tsv'):
+    elif value.endswith('ply'):
+        dfheader = pd.read_csv(value, sep='\t', header=[0], nrows=0)
+        # read the annotation for the dropdown
+        annot = []
+        for col in dfheader.columns:
+            if col[:len('annot.')] == 'annot.':
+                annot.append(col[len('annot.'):])
 
         return html.Div([
-        html.Div([dcc.Dropdown(id='operation',
-                     options=[{'label': x,
-                               'value': x} for x in ['tsne', 'svd', 'pca']],
-                     value='svd'),
-        dcc.Graph(id='scatter'), dcc.Graph(id='features')],
+            html.Div([
+                dcc.Dropdown(id='xaxis',
+                             options=[{'label': x,
+                                       'value': x} for x in ['Component {}'.format(i) for i in [1,2,3]]],
+                             value='Component 1'),
+                dcc.Dropdown(id='yaxis',
+                             options=[{'label': x,
+                                       'value': x} for x in ['Component {}'.format(i) for i in [1,2,3]]],
+                             value='Component 2'),
+        dcc.Graph(id='scatter')],
                  style={'width': '100%',
                         'display': 'inline-block',
                         'padding': '0 20'}),
-
-        ])
+            html.Div([
+                dcc.Dropdown(id='operation',
+                     options=[{'label': x,
+                               'value': x} for x in ['tsne', 'svd', 'pca']],
+                     value='svd'),
+                dcc.Dropdown(id='annotation',
+                     options=[{'label': x,
+                               'value': x} for x in ['None'] + annot],
+                     value='None'),
+                dcc.Graph(id='features')],
+                 style={'width': '100%',
+                        'display': 'inline-block',
+                        'padding': '0 20'}),
+        ], style={'columnCount': 2})
     else:
         return html.P('Cannot find action for {}'.format(value))
 
@@ -135,81 +160,106 @@ def update_output(value):
 @app.callback(
     dash.dependencies.Output('scatter', 'figure'),
     [dash.dependencies.Input('tag-selection', 'value'),
-     dash.dependencies.Input('operation', 'value')])
-def update_scatter(filename, operation):
-    df = pd.read_csv(filename, sep='\t', header=[0,1,2])
+     dash.dependencies.Input('operation', 'value'),
+     dash.dependencies.Input('xaxis', 'value'),
+     dash.dependencies.Input('yaxis', 'value'),
+     dash.dependencies.Input('annotation', 'value'),
+     ])
+def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
+    df = pd.read_csv(filename, sep='\t', header=[0])
 
     # if 'annot' in df use coloring
-    if 'annot' in df:
-        color = df.pop('annot').values
-    else:
-        color = 'blue'
-    marker = dict(size=1, opacity=.5,
-                  color=color,
-                  colorscale='Viridis')
+    colors=pd.Series(['blue'] * df.shape[0])
+    for col in df:
+        if col[:len('annot.')] == 'annot.':
+            if annotation == col[len('annot.'):]:
+                colors = df[col]
+            df.pop(col)
+        if col == 'row_names':
+            text = df.pop(col)
+
+    marker = dict(size=3, opacity=.5)
     if operation == 'svd':
         u, d, v = svd(df, full_matrices=False)
         trdf = np.dot(u[:,:3], np.diag(d[:3]))
-        print('u', u.shape)
-        print('d', d.shape)
-        print('v', v.shape)
-        print('trdf', trdf.shape)
     elif operation == 'pca':
         pca = PCA(n_components=3)
         trdf = pca.fit_transform(df)
     else:
         tsne = TSNE(n_components=3)
         trdf = tsne.fit_transform(df)
+    trdf = pd.DataFrame(trdf, columns=['Component {}'.format(i) for i in [1,2,3]])
 
-    return {'data': [
-        dict(x=trdf[:,0],
-             y=trdf[:,1],
-             z=trdf[:,2],
-             mode='markers',
-             type='scatter3d',
-             marker=marker)],
+    print(colors.unique())
+    data = []
+    for c in colors.unique():
+        data.append(
+            go.Scatter(
+                x=trdf[xaxis_label][colors==c],
+                y=trdf[yaxis_label][colors==c],
+                text=text,
+                name=c,
+                mode='markers',
+                marker=dict(size=3, opacity=.5)))
+
+    return {'data': data,
         'layout': go.Layout(
             margin={'l': 40, 'b': 30, 't': 10, 'r': 0},
+            xaxis={'title': xaxis_label},
+            yaxis={'title': yaxis_label},
             hovermode='closest',
-            scene = dict(
-                camera = dict(
-                    up=dict(x=0, y=0, z=1),
-                    center=dict(x=0, y=0, z=0),
-                    eye=dict(x=0.08, y=2.2, z=0.08)
-                )
-            ),
             plot_bgcolor = '#E5E5E5',
             paper_bgcolor = '#E5E5E5'
         )
     }
 
 
-
 @app.callback(
     dash.dependencies.Output('features', 'figure'),
     [dash.dependencies.Input('tag-selection', 'value'),
-     dash.dependencies.Input('operation', 'value')])
-def update_features(value, feature):
-    df = pd.read_csv(value, sep='\t', header=[0,1,2])
+     dash.dependencies.Input('operation', 'value'),
+     dash.dependencies.Input('scatter', 'selectedData')])
+def update_features(value, feature, selectedData):
+    df = pd.read_csv(value, sep='\t', header=[0])
     print('update_features')
     linedict = {}
     dimlist = []
-    if 'annot' in df:
-        color = df.pop('annot').values
-    else:
-        color = 0
-    linedict=dict(color=color, colorscale='Viridis')
+
+    for col in df:
+        if col[:len('annot')] == 'annot':
+            df.pop(col)
+        if col == 'row_names':
+            df.pop(col)
+
+    if selectedData is not None:
+        selected_idx = [datum['pointIndex'] for datum in selectedData['points']]
+        df = df.loc[selected_idx, :]
+    linedict=dict(color=0, colorscale='Viridis')
+    mean = df.mean().values
+    std = df.std().values
+    print(df.mean().values)
+    print(df.std().values)
 
     for f in df:
         dimlist.append(dict(range = [df[f].min(), df[f].max()],
                             label=None, values=df[f]))
-    return {'data': [go.Parcoords(
-            line = linedict,
-            dimensions = dimlist
-             )],
+    return {'data': [go.Scatter(
+            x=list(range(len(mean))),
+            y=mean,
+            mode='line',
+            text=df.columns,
+            error_y=dict(
+        type='percent',
+        value=std,
+        thickness=1,
+        width=0,
+        color='#444',
+        opacity=0.8
+    ))],
         'layout': go.Layout(
             plot_bgcolor = '#E5E5E5',
-            paper_bgcolor = '#E5E5E5'
+            paper_bgcolor = '#E5E5E5',
+            yaxis = {'showgrid': False}
         )
     }
 
