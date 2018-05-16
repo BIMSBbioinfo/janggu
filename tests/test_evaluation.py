@@ -139,7 +139,7 @@ def test_output_json_score(tmpdir):
                            "score.json"), 'r') as f:
         content = json.load(f)
         # now nptest was evaluated
-        assert 'nptest,y,random' in content
+        assert 'nptest-y-random' in content
 
 
 def test_output_tsv_score(tmpdir):
@@ -155,7 +155,7 @@ def test_output_tsv_score(tmpdir):
 
     assert pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
                                         "score.tsv"),
-                           sep='\t', header=[0, 1, 2]).iloc[0, 0] == 0.15
+                           sep='\t', header=[0]).iloc[0, 0] == 0.15
 
 
 def test_output_export_score_plot(tmpdir):
@@ -222,9 +222,11 @@ def test_output_export_clustermap(tmpdir):
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "evaluation", bwm.name, "cluster.png"))
+                                       "evaluation", bwm.name, 'hidden',
+                                       "cluster.png"))
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "evaluation", bwm.name, "cluster.eps"))
+                                       "evaluation", bwm.name, 'hidden',
+                                       "cluster.eps"))
 
 
 def test_output_export_tsne(tmpdir):
@@ -259,9 +261,11 @@ def test_output_export_tsne(tmpdir):
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "evaluation", bwm.name, "tsne.png"))
+                                       "evaluation", bwm.name, 'hidden',
+                                       "tsne.png"))
     assert os.path.exists(os.path.join(tmpdir.strpath,
-                                       "evaluation", bwm.name, "tsne.eps"))
+                                       "evaluation", bwm.name, 'hidden',
+                                       "tsne.eps"))
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
