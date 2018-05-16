@@ -265,7 +265,7 @@ def export_json(output_dir, name, results, filesuffix='json',
         json.dump(content, jsonfile)
 
 
-def export_tsv(output_dir, name, results, annot=None, row_names=None):
+def export_tsv(output_dir, name, results, filesuffix='tsv', annot=None, row_names=None):
     """Method that dumps the results as tsv file.
 
     Parameters
@@ -283,7 +283,7 @@ def export_tsv(output_dir, name, results, annot=None, row_names=None):
         List of row names
     """
 
-    filename = os.path.join(output_dir, name + '.tsv')
+    filename = os.path.join(output_dir, name + '.' + filesuffix)
     try:
         # check if the result is iterable
         iter(results[list(results.keys())[0]]['value'])
