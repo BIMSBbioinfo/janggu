@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 import pkg_resources
 from keras import backend as K
 from keras.layers import Conv2D
@@ -18,6 +19,8 @@ from janggo import outputdense
 from janggo.data import Array
 from janggo.data import Dna
 from janggo.utils import export_clustermap
+from janggo.utils import export_json
+from janggo.utils import export_plotly
 from janggo.utils import export_score_plot
 from janggo.utils import export_tsne
 from janggo.utils import export_tsv
@@ -33,7 +36,9 @@ DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2], order=1)
 
 Y = np.zeros((len(DNA), 1))
 Y[:len(X1)] = 1
-LABELS = Array('y', Y, conditions='TF-binding')
+LABELS = Array('y', Y, conditions=['TF-binding'])
+annot = pd.DataFrame(Y[:,0], columns=LABELS.conditions).applymap(
+    lambda x: 'Oct4' if x==1 else 'Mafk').to_dict(orient='list')
 
 
 def wrap_roc(y_true, y_pred):
@@ -55,12 +60,15 @@ prc_eval = InOutScorer('PRC', wrap_prc, exporter=export_score_plot)
 roc_eval = InOutScorer('ROC', wrap_roc, exporter=export_score_plot)
 auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
 heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
-                        exporter_args={'annot': LABELS[:, 0],
+                        exporter_args={'annot': annot,
                                        'z_score': 1})
 tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
-                                                                  'annot': LABELS[:, 0]})
-pred_eval = InScorer('pred', exporter=export_tsv, exporter_args={'annot': LABELS[:, 0]})
-
+                                                                  'annot': annot})
+pred_tsv = InScorer('pred', exporter=export_tsv, exporter_args={'annot': annot})
+pred_json = InScorer('pred', exporter=export_json, exporter_args={'annot': annot})
+pred_plotly = InScorer('pred', exporter=export_plotly,
+                       exporter_args={'annot': annot,
+                                      'row_names': DNA.gindexer.chrs})
 
 # Option 3:
 # Instantiate an ordinary keras model
@@ -84,19 +92,22 @@ model = Janggo.create(template=janggobody,
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
 
-hist = model.fit(DNA, LABELS, epochs=100)
+hist = model.fit(DNA, LABELS, epochs=10)
 
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
-model.evaluate(DNA, LABELS, datatags=['training_set'],
+model.evaluate(DNA, LABELS, datatags=['train'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
-model.predict(DNA, datatags=['training_set'],
+model.predict(DNA, datatags=['train'],
               callbacks=[heatmap_eval, tsne_eval],
               layername='motif')
-model.predict(DNA, datatags=['train', 'motif'],
-              callbacks=[pred_eval], layername='motif')
-model.predict(DNA, datatags=['train', 'output'],
-              callbacks=[pred_eval])
+#model.predict(DNA, datatags=['train'],
+#              callbacks=[pred_tsv, pred_json, pred_plotly,
+#              heatmap_eval, tsne_eval],
+#              layername='motif')
+
+# model.predict(DNA, datatags=['train', 'output'],
+#               callbacks=[pred_eval])

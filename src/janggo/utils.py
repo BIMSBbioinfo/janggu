@@ -16,7 +16,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
-from sklearn.manifold import TSNE
+from sklearn.manifold as TSNE
 
 if sys.version_info[0] < 3:  # pragma: no cover
     from urllib import urlcleanup, urlretrieve
@@ -228,7 +228,8 @@ def get_genome_size_from_bed(bedfile, flank):
     return gsize
 
 
-def export_json(output_dir, name, results, append=True):
+def export_json(output_dir, name, results, filesuffix='json',
+                annot=None, row_names=None):
     """Method that dumps the results in a json file.
 
     Parameters
@@ -239,22 +240,32 @@ def export_json(output_dir, name, results, append=True):
         Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
+    filesuffix : str
+        Target file ending.
+    annot: None, dict
+        Annotation data. If encoded as dict the key indicates the name,
+        while the values holds a list of annotation labels.
+    row_names : None or list
+        Row names.
     """
 
-    filename = os.path.join(output_dir, name + '.json')
-    try:
-        with open(filename, 'r') as jsonfile:
-            content = json.load(jsonfile)
-    except IOError:
-        content = {}  # needed for py27
+    filename = os.path.join(output_dir, name + '.' + filesuffix)
+
+    content = {}  # needed for py27
     with open(filename, 'w') as jsonfile:
-        if not append:
-            content = {}
-        content.update({','.join(key): results[key] for key in results})
+        try:
+            content.update({'-'.join(key): results[key]['value'].tolist() for key in results})
+        except AttributeError:
+            content.update({'-'.join(key): results[key]['value'] for key in results})
+        if annot is not None:
+            content.update({'annot': annot.to_json(orient='split')})
+
+        if row_names is not None:
+            content.update({'row_names': row_names})
         json.dump(content, jsonfile)
 
 
-def export_tsv(output_dir, name, results, annot=None):
+def export_tsv(output_dir, name, results, annot=None, row_names=None):
     """Method that dumps the results as tsv file.
 
     Parameters
@@ -265,22 +276,33 @@ def export_tsv(output_dir, name, results, annot=None):
         Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
-    annot : list, np.array or None
-        Row annotations to store with the dataset. Default: None.
+    annot: None, dict
+        Annotation data. If encoded as dict the key indicates the name,
+        while the values holds a list of annotation labels.
+    row_names : None, list
+        List of row names
     """
 
     filename = os.path.join(output_dir, name + '.tsv')
     try:
         # check if the result is iterable
         iter(results[list(results.keys())[0]]['value'])
-        _rs = {k: results[k]['value'] for k in results}
+        _rs = {'-'.join(k): results[k]['value'] for k in results}
     except TypeError:
         # if the result is not iterable, wrap it up as list
-        _rs = {k: [results[k]['value']] for k in results}
+        _rs = {'-'.join(k): [results[k]['value']] for k in results}
     df = pd.DataFrame.from_dict(_rs)
-    if annot is not None:
-        df['annot'] = annot
+    for an in annot or []:
+        df['annot.'+an] = annot[an]
+    if row_names is not None:
+        df['row_names'] = row_names
     df.to_csv(filename, sep='\t', index=False)
+
+
+def export_plotly(output_dir, name, results, annot=None, row_names=None):
+    # this produces a normal json file, but for the dedicated
+    # purpose of visualization in the dash app.
+    export_tsv(output_dir, name, results, 'ply', annot, row_names)
 
 
 def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
@@ -440,10 +462,11 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,
     """
 
     if annot is not None:
-        dfcontrast = pd.Series(annot)
-        pal = sns.light_palette('blue', len(dfcontrast.unique()))
-        lut = dict(zip(dfcontrast.unique(), pal))
-        row_colors = dfcontrast.map(lut)
+
+        firstkey = list(annot.keys())[0]
+        pal = sns.color_palette('hls', len(set(annot[firstkey])))
+        lut = dict(zip(set(annot[firstkey]), pal))
+        row_colors = [lut[k] for k in annot[firstkey]]
 
     _rs = {k: results[k]['value'] for k in results}
     data = pd.DataFrame.from_dict(_rs)
@@ -487,14 +510,26 @@ def export_tsne(output_dir, name, results, figsize=None,
         fig = plt.figure()
 
     if annot is not None:
-        dfcontrast = pd.Series(annot)
-        pal = sns.color_palette('hls', len(dfcontrast.unique()))
-        lut = dict(zip(dfcontrast.unique(), pal))
-        colors = dfcontrast.map(lut)
+        firstkey = list(annot.keys())[0]
+        pal = sns.color_palette('hls', len(set(annot[firstkey])))
+        lut = dict(zip(set(annot[firstkey]), pal))
+        row_colors = [lut[k] for k in annot[firstkey]]
 
-    plt.scatter(x=embedding[:, 0], y=embedding[:, 1],
-                c=colors, cmap=cmap, norm=norm, alpha=alpha)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        for label in lut:
+
+            plt.scatter(x=embedding[np.asarray(annot[firstkey])==label, 0],
+                        y=embedding[np.asarray(annot[firstkey])==label, 1],
+                        c=lut[label],
+                        label=label,
+                        norm=norm, alpha=alpha)
+
+        plt.legend()
+    else:
+        plt.scatter(x=embedding[annot[firstkey]==label, 0],
+                    y=embedding[annot[firstkey]==label, 1],
+                    c=colors, cmap=cmap,
+                    norm=norm, alpha=alpha)
+        #plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.axis('off')
     if fform is not None:
         fform = fform
