@@ -34,23 +34,21 @@ Janggu is a python package that facilitates deep learning in Genomics.
    :align: center
 
 
-While building and training neural networks can conveniently
-achieved using a number of package, including `keras <https://keras.io>`_,
-preparing Genomics datasets
-for the use with keras as well as consistently evaluating
-model performances for model comparison
-and/or hypothesis testing might cause significant overhead to deal
-with. Janggu facilitates easy **Genomics data acquisition**
+Janggu facilitates neural network modelling in the context
+of genomics.
+Janggu facilitates easy **Genomics data acquisition**
 and **out-of-the-box evaluation** so that you can concentrate
-on designing the neural network architecture primarily.
+on designing the neural network architecture for the purpose
+of quickly testing biological hypothesis.
 
 
-Some of the hallmarks of Janggu are:
+Hallmarks of Janggu:
 
 1. Janggu builds upon keras to define, train and evaluate neural network in a flexible manner.
-2. Janggu provides special data containers for processing genomics data, including nucleotide sequences or coverage tracks from next-generation sequencing.
-3. Janggu facilitates reproducibility and eases model comparison by producing log files, storage of model parameters and evaluating various performance metrics out of the box.
-4. Janggu supports processing of too-large-to-keep-in-memory dataset by loading the data in batches from disk.
+2. Janggu provides special **Genomics datasets**, including for processing nucleotide sequences or coverage tracks from next-generation sequencing experiments.
+3. Janggu supports **processing of large memory** dataset directly from disk.
+4. Janggu facilitates **reproducibility** and eases model comparison by automatically producing log files, storage of model parameters and evaluating various performance metrics out of the box.
+5. Janggu provides a **webinterface** that allows you to browse through the results.
 
 Why Janggu?
 
