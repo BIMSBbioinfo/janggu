@@ -258,7 +258,7 @@ def export_json(output_dir, name, results, filesuffix='json',
         except AttributeError:
             content.update({'-'.join(key): results[key]['value'] for key in results})
         if annot is not None:
-            content.update({'annot': annot.to_json(orient='split')})
+            content.update({'annot': annot})
 
         if row_names is not None:
             content.update({'row_names': row_names})
