@@ -16,7 +16,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
-from sklearn.manifold as TSNE
+from sklearn.manifold import TSNE
 
 if sys.version_info[0] < 3:  # pragma: no cover
     from urllib import urlcleanup, urlretrieve
