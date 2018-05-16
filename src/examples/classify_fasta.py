@@ -44,21 +44,22 @@ PARSER.add_argument('-order', dest='order', type=int,
 
 args = PARSER.parse_args()
 
+# helper function
+def nrows(filename):
+    """Extract the number of rows in the file"""
+    return sum((1 for line in open(filename)))//2
 
 # load the dataset
 DATA_PATH = pkg_resources.resource_filename('janggu', 'resources/')
 SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
-X1 = Dna.create_from_fasta('dna', fastafile=SAMPLE_1,
-                           order=args.order)
 
 DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                             order=args.order)
 
-Y = np.zeros((len(DNA), 1))
-Y[:len(X1)] = 1
+Y = np.asarray([1 for line in range(nrows(SAMPLE_1))] + [0 for line in range(nrows(SAMPLE_2))])
 LABELS = Array('y', Y, conditions=['TF-binding'])
-annot = pd.DataFrame(Y[:, 0], columns=LABELS.conditions).applymap(
+annot = pd.DataFrame(Y[:], columns=LABELS.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
 
 
@@ -144,22 +145,48 @@ model = Janggu.create(template=modeltemplate,
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
 
-hist = model.fit(DNA, LABELS, epochs=150)
+hist = model.fit(DNA, LABELS, epochs=100)
 
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
+SAMPLE_1 = os.path.join(DATA_PATH, 'sample_test.fa')
+SAMPLE_2 = os.path.join(DATA_PATH, 'sample2_test.fa')
+
+DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
+                                 order=args.order)
+
+
+Y = np.asarray([1 for _ in range(nrows(SAMPLE_1))] + [0 for _ in range(nrows(SAMPLE_2))])
+LABELS_TEST = Array('y', Y, conditions=['TF-binding'])
+annot = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
+    lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
+
+# do the evaluation on the training data
 model.evaluate(DNA, LABELS, datatags=['train'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[heatmap_eval, tsne_eval],
-#               layername='motif')
+
 model.predict(DNA, datatags=['train'],
               callbacks=[pred_tsv, pred_json, pred_plotly,
               heatmap_eval, tsne_eval],
               layername='motif')
 
-# model.predict(DNA, datatags=['train', 'output'],
-#               callbacks=[pred_eval])
+# do the evaluation on the test data
+model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
+               callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
+
+
+# clustering plots based on hidden features
+heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
+                        exporter_args={'annot': annot,
+                                       'z_score': 1})
+tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
+                                                                  'annot': annot})
+pred_plotly = InScorer('pred', exporter=export_plotly,
+                       exporter_args={'annot': annot,
+                                      'row_names': DNA_TEST.gindexer.chrs})
+model.predict(DNA_TEST, datatags=['test'],
+              callbacks=[pred_plotly, heatmap_eval, tsne_eval],
+              layername='motif')
