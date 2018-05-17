@@ -154,6 +154,10 @@ class GenomicIndexer(object):
             raise ValueError('Resolution must be positive and divisible by stepsize')
         self._resolution = value
 
+    def tostr(self):
+        """Returns representing the region."""
+        return ['{}:{}-{}'.format(iv.chrom, iv.start, iv.end) for iv in self]
+
     def idx_by_chrom(self, include=None, exclude=None):
         """idx_by_chrom filters for chromosome ids.
 
