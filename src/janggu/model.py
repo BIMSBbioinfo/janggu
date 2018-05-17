@@ -548,7 +548,7 @@ class Janggu(object):
             else:
                 datatags.append(layername)
         for callback in callbacks or []:
-            callback.score(prd, model=model, datatags=datatags)
+            callback.score(model, prd, datatags=datatags)
         return preds
 
     def evaluate(self, inputs=None, outputs=None,
@@ -614,7 +614,7 @@ class Janggu(object):
         preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
-            callback.score(outputs, preds, model=self, datatags=datatags)
+            callback.score(self, preds, outputs=outputs, datatags=datatags)
         return values
 
     def __dim_logging(self, data):

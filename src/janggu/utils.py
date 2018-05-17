@@ -355,7 +355,7 @@ def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
 def export_bigwig(output_dir, name, results, gindexer=None):
     """Export predictions to bigwig.
 
-    This function can be used as exporter with :class:`InOutScorer`.
+    This function can be used as exporter with :class:`Scorer`.
     """
 
     if gindexer is None:
@@ -408,7 +408,7 @@ def export_bigwig(output_dir, name, results, gindexer=None):
 def export_bed(output_dir, name, results, gindexer=None):
     """Export predictions to bed.
 
-    This function can be used as exporter with :class:`InOutScorer`.
+    This function can be used as exporter with :class:`Scorer`.
     """
 
     if gindexer is None:

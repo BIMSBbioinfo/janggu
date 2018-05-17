@@ -13,8 +13,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from janggu import InOutScorer
-from janggu import InScorer
+from janggu import Scorer
 from janggu import Janggu
 from janggu import inputlayer
 from janggu import outputdense
@@ -80,27 +79,27 @@ def wrap_prc(y_true, y_pred):
 
 # instantiate various evaluation callback objects
 # score metrics
-auc_eval = InOutScorer('auROC', roc_auc_score, exporter=export_tsv)
-prc_eval = InOutScorer('PRC', wrap_prc, exporter=export_score_plot)
-roc_eval = InOutScorer('ROC', wrap_roc, exporter=export_score_plot)
-auprc_eval = InOutScorer('auPRC', average_precision_score, exporter=export_tsv)
+auc_eval = Scorer('auROC', roc_auc_score, exporter=export_tsv)
+prc_eval = Scorer('PRC', wrap_prc, exporter=export_score_plot)
+roc_eval = Scorer('ROC', wrap_roc, exporter=export_score_plot)
+auprc_eval = Scorer('auPRC', average_precision_score, exporter=export_tsv)
 
 # clustering plots based on hidden features
-heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
-                        exporter_args={'annot': annot,
-                                       'z_score': 1})
-tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
-                                                                  'annot': annot})
+heatmap_eval = Scorer('heatmap', exporter=export_clustermap,
+                      exporter_args={'annot': annot,
+                                     'z_score': 1})
+tsne_eval = Scorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
+                                                                'annot': annot})
 
 # output the predictions as tables or json files
-pred_tsv = InScorer('pred', exporter=export_tsv, exporter_args={'annot': annot})
-pred_json = InScorer('pred', exporter=export_json, exporter_args={'annot': annot})
+pred_tsv = Scorer('pred', exporter=export_tsv, exporter_args={'annot': annot})
+pred_json = Scorer('pred', exporter=export_json, exporter_args={'annot': annot})
 
 # plotly will export a special table that is used for interactive browsing
 # of the results
-pred_plotly = InScorer('pred', exporter=export_plotly,
-                       exporter_args={'annot': annot,
-                                      'row_names': DNA.gindexer.chrs})
+pred_plotly = Scorer('pred', exporter=export_plotly,
+                     exporter_args={'annot': annot,
+                                    'row_names': DNA.gindexer.chrs})
 
 # Define the model templates
 @inputlayer
@@ -179,12 +178,12 @@ model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
 
 
 # clustering plots based on hidden features
-heatmap_eval = InScorer('heatmap', exporter=export_clustermap,
+heatmap_eval = Scorer('heatmap', exporter=export_clustermap,
                         exporter_args={'annot': annot,
                                        'z_score': 1})
-tsne_eval = InScorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
+tsne_eval = Scorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
                                                                   'annot': annot})
-pred_plotly = InScorer('pred', exporter=export_plotly,
+pred_plotly = Scorer('pred', exporter=export_plotly,
                        exporter_args={'annot': annot,
                                       'row_names': DNA_TEST.gindexer.chrs})
 model.predict(DNA_TEST, datatags=['test'],

@@ -5,8 +5,7 @@ __version__ = '0.6.4'
 from janggu.decorators import inputlayer  # noqa
 from janggu.decorators import outputconv  # noqa
 from janggu.decorators import outputdense  # noqa
-from janggu.evaluation import InOutScorer  # noqa
-from janggu.evaluation import InScorer  # noqa
+from janggu.evaluation import Scorer  # noqa
 from janggu.layers import Complement  # noqa
 from janggu.layers import LocalAveragePooling2D  # noqa
 from janggu.layers import Reverse  # noqa

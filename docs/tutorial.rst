@@ -375,23 +375,23 @@ This allows you to determine different performance metrics and/or
 export the results in various ways, e.g. as tsv file, as plot or
 as bigwig or bed file.
 
-There are two callback classes :code:`InOutScorer` and :code:`InScorer`,
+There are two callback classes :code:`Scorer` and :code:`Scorer`,
 which can be used with :code:`evaluate` and :code:`predict`, respectively.
 
 Both of them maintain a name, a scoring function and an exporter function.
 
-An example of using :code:`InOutScorer` to
+An example of using :code:`Scorer` to
 write the area under the ROC curve (auROC)
 into a tsv file is illustrate in the following
 
 .. code:: python
 
    from sklearn.metrics import roc_auc_score
-   from janggu import InOutScorer
+   from janggu import Scorer
    from janggu.utils import export_tsv
 
    # create a scorer
-   score_auroc = InOutScorer('auROC',
+   score_auroc = Scorer('auROC',
                              roc_auc_score,
                              exporter=export_tsv)
 
@@ -401,16 +401,16 @@ into a tsv file is illustrate in the following
 After the evaluation, you will find the results
 in :code:`<results-root>/evaluation/<modelname>/auROC.tsv`.
 
-Similarly, you can use :code:`InScorer` to export the predictions
+Similarly, you can use :code:`Scorer` to export the predictions
 of the model into a json file
 
 .. code:: python
 
-   from janggu import InScorer
+   from janggu import Scorer
 
    # create scorer
    # in this case, the scoring function is optional.
-   pred_scorer = InScorer('predict', exporter=export_json)
+   pred_scorer = Scorer('predict', exporter=export_json)
 
    # Evaluate predictions
    model.predict(DNA, datatags=['training_set'],
@@ -418,7 +418,7 @@ of the model into a json file
 
 The Scorer objects support a number of scoring and exporter function
 combinations that can be used to analyze the model results.
-For example, you can :code:`InOutScorer` with other `sklearn.metrics`, including
+For example, you can :code:`Scorer` with other `sklearn.metrics`, including
 `roc_curve` or `precision_recall_curve` and create a plot using :code:`export_score_plot`.
 Or you can export prediction to a bigwig or bed file using :code:`export_bigwig`
 and :code:`export_bed`, respectively.
@@ -428,7 +428,7 @@ Alternatively, you can supply custom scoring and exporter functions
 .. code:: python
 
    # computes the per-data point loss
-   score_loss = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
+   score_loss = Scorer('loss', lambda t, p: -t * numpy.log(p),
                             exporter=export_json)
 
 Further examples are illustrated in the reference section and

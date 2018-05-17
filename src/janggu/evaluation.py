@@ -76,7 +76,7 @@ class Scorer(object):
 
     This class implements the callback interface that is used
     with Janggu.evaluate.
-    An InOutScorer can apply a desired scoring metric, e.g. from sklearn.
+    An Scorer can apply a desired scoring metric, e.g. from sklearn.
     and write the results into a desired output file, e.g. json, tsv
     or a plot.
 
@@ -84,6 +84,14 @@ class Scorer(object):
     ----------
     name : str
         Name of the score to be performed.
+    score_fct : None or callable
+        Score function that is invoked upon calling score.
+        This function must satisfy the signature
+        :code:`fct(y_true, y_pred, **kwargs)` if used with
+        :code:`Janggu.evaluate` and :code:`fct(y_pred, **kwargs)` if
+        used with :code:`Janggu.predict`.
+    score_args : dict or None
+        Optional keyword args to be passed down to score_fct.
     conditions : list(str) or None
         List of strings describing the conditions dimension of the dataset
         that is processed. If None, conditions are extracted from the
@@ -105,13 +113,18 @@ class Scorer(object):
         means the results are stored in the 'evaluation' subdir.
     """
 
-    def __init__(self, name,
+    def __init__(self, name, score_fct=None, score_args=None,
                  conditions=None,
                  exporter=export_json, exporter_args=None,
                  immediate_export=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         self.score_name = name
+        self.score_fct = score_fct
+
+        if score_args is None:
+            score_args = {}
+        self.score_args = score_args
         self.results = dict()
         self._exporter = exporter
         if exporter_args is None:
@@ -151,61 +164,7 @@ class Scorer(object):
             self._exporter(output_path, self.score_name,
                            self.results, **self.exporter_args)
 
-
-class InOutScorer(Scorer):
-    """InOutScorer class.
-
-    This class implements the callback interface that is used
-    with Janggu.evaluate.
-    An InOutScorer can apply a desired scoring metric, e.g. from sklearn.
-    and write the results into a desired output file, e.g. json, tsv
-    or a plot.
-
-    Parameters
-    ----------
-    name : str
-        Name of the score to be performed.
-    score_fct : callable
-        Score function that is invoked upon calling score.
-        This function must satisfy the signature
-        :code:`fct(y_true, y_pred, **kwargs)`.
-    score_args : dict or None
-        Optional keyword args to be passed down to score_fct.
-    conditions : list(str) or None
-        List of strings describing the conditions dimension of the dataset
-        that is processed. If None, conditions are extracted from the
-        y_true Dataset, if available. Otherwise, the conditions are integers
-        ranging from zero to :code:`len(conditions) - 1`.
-    exporter : callable
-        Exporter function is used to export the results in the desired manner,
-        e.g. as json or tsv file. This function must satisfy the signature
-        :code:`fct(output_path, filename_prefix, results, **kwargs)`.
-    exporter_args : dict or None
-        Optional keyword args to be passed down to exporter.
-    immediate_export : boolean
-        If set to True, the exporter function will be invoked immediately
-        after the evaluation of the dataset. If set to False, the results
-        are maintained in memory which allows to export the results as a
-        collection rather than individually.
-    subdir : str
-        Name of the subdir to store the output in. Default: None
-        means the results are stored in the 'evaluation' subdir.
-    """
-
-    def __init__(self, name, score_fct, score_args=None,
-                 conditions=None,
-                 exporter=export_json, exporter_args=None,
-                 immediate_export=True,
-                 subdir=None):
-        super(InOutScorer, self).__init__(name,
-                                          conditions, exporter, exporter_args,
-                                          immediate_export, subdir)
-        self.score_fct = score_fct
-        if score_args is None:
-            score_args = {}
-        self.score_args = score_args
-
-    def score(self, outputs, predicted, model, datatags=None):
+    def score(self, model, predicted, outputs=None, datatags=None):
         """Scoring of the predictions relative to true outputs.
 
         When calling score, the provided
@@ -218,12 +177,14 @@ class InOutScorer(Scorer):
 
         Parameters
         ----------
-        outputs : dict{name: Dataset}
-            True output labels.
-        predicted: dict{name: np.array}
-            Predicted outputs.
         model : :class:`Janggu`
             a Janggu object representing the current model.
+        predicted: dict{name: np.array}
+            Predicted outputs.
+        outputs : dict{name: Dataset} or None
+            True output labels. The Scorer is used with :code:`Janggu.evaluate`
+            this argument will be present. With :code:`Janggu.evaluate` it is
+            absent.
         datatags : list(str) or None
             Optional tags describing the dataset, e.g. 'test_set'.
         """
@@ -231,22 +192,39 @@ class InOutScorer(Scorer):
         if not datatags:
             datatags = []
 
-        _out = _reshape(outputs)
+        if outputs is not None:
+            _out = _reshape(outputs)
         _pre = _reshape(predicted)
+        score_fct = self.score_fct
+        if score_fct is None and outputs is not None:
+            raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')
+
+        if score_fct is None:
+            score_fct = lambda x: x
 
         for layername in model.get_config()['output_layers']:
-            lout = _out[layername[0]]
-            pout = _pre[layername[0]]
-            for idx in range(_out[layername[0]].shape[-1]):
+            #lout = _out[layername[0]]
+            #pout = _pre[layername[0]]
+            for idx in range(_pre[layername[0]].shape[-1]):
 
-                score = self.score_fct(lout[:, idx], pout[:, idx], **self.score_args)
+                if outputs is None:
+                    score = score_fct(_pre[layername[0]][:, idx],
+                                      **self.score_args)
+                else:
+                    score = score_fct(_out[layername[0]][:, idx],
+                                      _pre[layername[0]][:, idx],
+                                      **self.score_args)
 
                 if self.conditions is not None and \
-                   len(self.conditions) == pout.shape[-1]:
+                   len(self.conditions) == _pre[layername[0]].shape[-1]:
+                   # conditions were supplied manually
                     condition = self.conditions[idx]
-                elif hasattr(outputs[layername[0]], "conditions"):
+                elif outputs is not None and hasattr(outputs[layername[0]],
+                                                     "conditions"):
+                    # conditions are extracted from the outputs dataset
                     condition = outputs[layername[0]].conditions[idx]
                 else:
+                    # not conditions present, just number them.
                     condition = str(idx)
 
                 self.results[model.name, layername[0], condition] = \
@@ -257,118 +235,6 @@ class InOutScorer(Scorer):
             # export directly if required
             output_dir = os.path.join(model.outputdir, self.subdir)
 
-            self.export(output_dir, model.name, datatags)
-
-            # reset the results
-            self.results = {}
-
-
-class InScorer(Scorer):
-    """InScorer class.
-
-    This class implements the callback interface that is used
-    with Janggu.predict.
-    An InScorer can apply a desired transformation, e.g. np.log
-    and write the results into a desired output file, e.g. json, tsv
-    or a plot.
-
-    Parameters
-    ----------
-    name : str
-        Name of the score to be performed.
-    extractor : callable or None
-        Extractor function that is invoked upon calling score.
-        This function must satisfy the signature
-        :code:`fct(y_pred, **kwargs)`.
-    extractor_args : dict or None
-        Optional keyword args to be passed down to score_fct.
-    conditions : list(str) or None
-        List of strings describing the conditions dimension of the dataset
-        that is processed. If None, conditions are extracted from the
-        y_true Dataset, if available. Otherwise, the conditions are integers
-        ranging from zero to :code:`len(conditions) - 1`.
-    exporter : callable
-        Exporter function is used to export the results in the desired manner,
-        e.g. as json or tsv file. This function must satisfy the signature
-        :code:`fct(output_path, filename_prefix, results, **kwargs)`.
-    exporter_args : dict or None
-        Optional keyword args to be passed down to exporter.
-    immediate_export : boolean
-        If set to True, the exporter function will be invoked immediately
-        after the evaluation of the dataset. If set to False, the results
-        are maintained in memory which allows to export the results as a
-        collection rather than individually.
-    subdir : str
-        Name of the subdir to store the output in. Default: None
-        means the results are stored in the 'prediction' subdir.
-    """
-
-    def __init__(self, name, extractor=None,
-                 extractor_args=None,
-                 conditions=None,
-                 exporter=export_json,
-                 exporter_args=None,
-                 immediate_export=True,
-                 subdir=None):
-        # append the path by a folder 'AUC'
-        super(InScorer, self).__init__(name,
-                                       conditions, exporter, exporter_args,
-                                       immediate_export, subdir)
-
-        self.extractor = extractor
-        if extractor_args is None:
-            extractor_args = {}
-        self.extractor_args = extractor_args
-
-    def score(self, predicted, model, datatags=None):
-        """Scoring of the predictions.
-
-        When calling score, the provided
-        extractor function is applied
-        for each layer and condition separately, if available.
-        Otherwise the original predictions are further processed.
-        The results are maintained in a dict that uses
-        :code:`(modelname, layername, conditionname)` as key
-        and as values another dict of the form:
-        :code:`{'date':<currenttime>, 'value': transformed_predict, 'tags':datatags}`.
-
-        Parameters
-        ----------
-        predicted: dict{name: np.array}
-            Predicted outputs.
-        model : :class:`Janggu`
-            a Janggu object representing the current model.
-        datatags : list(str) or None
-            Optional tags describing the dataset, e.g. 'test_set'.
-        """
-
-        if datatags is None:
-            datatags = []
-
-        _pre = _reshape(predicted)
-
-        for layername in model.get_config()['output_layers']:
-            pout = _pre[layername[0]]
-            for idx in range(pout.shape[-1]):
-
-                if self.extractor is not None:
-                    feat = self.extractor(pout[:, idx])
-                else:
-                    feat = pout[:, idx]
-
-                if self.conditions is not None and \
-                   len(self.conditions) == pout.shape[-1]:
-                    condition = self.conditions[idx]
-                else:
-                    condition = str(idx)
-
-                self.results[model.name, layername[0], condition] = \
-                    {'date': str(datetime.datetime.utcnow()),
-                     'value': feat}
-
-        if self.immediate_export:
-            # export directly if required
-            output_dir = os.path.join(model.outputdir, self.subdir)
             self.export(output_dir, model.name, datatags)
 
             # reset the results

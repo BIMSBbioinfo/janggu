@@ -17,8 +17,7 @@ from janggu import outputconv
 from janggu import outputdense
 from janggu.data import Array
 from janggu.data import GenomicIndexer
-from janggu.evaluation import InOutScorer
-from janggu.evaluation import InScorer
+from janggu.evaluation import Scorer
 from janggu.evaluation import _dimension_match
 from janggu.utils import export_bed
 from janggu.utils import export_bigwig
@@ -130,7 +129,7 @@ def test_output_json_score(tmpdir):
 
     bwm = get_janggu(inputs, outputs, tmpdir)
 
-    dummy_eval = InOutScorer('score', lambda y_true, y_pred: 0.15)
+    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
@@ -149,7 +148,7 @@ def test_output_tsv_score(tmpdir):
 
     bwm = get_janggu(inputs, outputs, tmpdir)
 
-    dummy_eval = InOutScorer('score', lambda y_true, y_pred: 0.15, exporter=export_tsv)
+    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15, exporter=export_tsv)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
@@ -165,13 +164,13 @@ def test_output_export_score_plot(tmpdir):
 
     bwm = get_janggu(inputs, outputs, tmpdir)
 
-    dummy_eval = InOutScorer('score',
+    dummy_eval = Scorer('score',
                              lambda y_true, y_pred:
                              ([0., 0.5, 0.5, 1.],
                               [0.5, 0.5, 1., 1.],
                               [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot)
 
-    dummy_eval_par = InOutScorer('score',
+    dummy_eval_par = Scorer('score',
                                  lambda y_true, y_pred:
                                  ([0., 0.5, 0.5, 1.],
                                   [0.5, 0.5, 1., 1.],
@@ -210,10 +209,10 @@ def test_output_export_clustermap(tmpdir):
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    dummy_eval = InScorer('cluster',
+    dummy_eval = Scorer('cluster',
                           exporter=export_clustermap)
 
-    dummy_eval_par = InScorer('cluster',
+    dummy_eval_par = Scorer('cluster',
                               exporter=export_clustermap,
                               exporter_args={'fform': 'eps'})
 
@@ -249,10 +248,10 @@ def test_output_export_tsne(tmpdir):
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    dummy_eval = InScorer('tsne',
+    dummy_eval = Scorer('tsne',
                           exporter=export_tsne)
 
-    dummy_eval_par = InScorer('tsne',
+    dummy_eval_par = Scorer('tsne',
                               exporter=export_tsne,
                               exporter_args={'fform': 'eps'})
 
@@ -285,7 +284,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
                                          stepsize=200,
                                          resolution=200)
 
-    dummy_eval = InOutScorer('loss', lambda t, p: [0.1] * len(t),
+    dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
                              exporter=export_bed, exporter_args={'gindexer': gi})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
@@ -324,9 +323,9 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
                                          stepsize=200,
                                          resolution=50)
 
-    # dummy_eval = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
+    # dummy_eval = Scorer('loss', lambda t, p: -t * numpy.log(p),
     #                    exporter=export_bed, export_args={'gindexer': gi})
-    dummy_eval = InOutScorer('loss', lambda t, p: [0.1] * len(t),
+    dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
                              exporter=export_bed, exporter_args={'gindexer': gi})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
@@ -365,7 +364,7 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
                                          stepsize=200,
                                          resolution=200)
 
-    dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
+    dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                           exporter=export_bed, exporter_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
@@ -405,7 +404,7 @@ def test_output_bed_predict_denseout(tmpdir):
                                          stepsize=200,
                                          resolution=200)
 
-    dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
+    dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                           exporter=export_bed, exporter_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
@@ -445,7 +444,7 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
                                          stepsize=200,
                                          resolution=50)
 
-    dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
+    dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                           exporter=export_bed, exporter_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
@@ -485,7 +484,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
                                          stepsize=200,
                                          resolution=200)
 
-    dummy_eval = InScorer('pred', lambda p: [0.1] * len(p),
+    dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                           exporter=export_bigwig, exporter_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
@@ -521,7 +520,7 @@ def test_output_bigwig_predict_convout(tmpdir):
                                          stepsize=200,
                                          resolution=50)
 
-    dummy_eval = InScorer('pred', lambda p: [0.2] * len(p),
+    dummy_eval = Scorer('pred', lambda p: [0.2] * len(p),
                           exporter=export_bigwig, exporter_args={'gindexer': gi},
                           conditions=['c1', 'c2', 'c3', 'c4'])
 
@@ -557,9 +556,9 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
                                          stepsize=200,
                                          resolution=50)
 
-    # dummy_eval = InOutScorer('loss', lambda t, p: -t * numpy.log(p),
+    # dummy_eval = Scorer('loss', lambda t, p: -t * numpy.log(p),
     #                    exporter=export_bed, export_args={'gindexer': gi})
-    dummy_eval = InOutScorer('loss', lambda t, p: [0.2] * len(t),
+    dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
                              exporter=export_bigwig, exporter_args={'gindexer': gi})
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
