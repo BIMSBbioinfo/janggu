@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 from scipy.linalg import svd
+from scipy.stats import zscore
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
@@ -206,6 +207,7 @@ def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
                 y=trdf[yaxis_label][colors == c],
                 text=text,
                 name=c,
+                customdata=colors[colors == c].index,
                 mode='markers',
                 marker=dict(size=3, opacity=.5)))
 
@@ -229,6 +231,7 @@ def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
 def update_features(value, feature, selectedData):
     df = pd.read_csv(value, sep='\t', header=[0])
     df.reindex_axis(sorted(df.columns), axis=1)
+
     print('update_features')
 
     for col in df:
@@ -237,9 +240,13 @@ def update_features(value, feature, selectedData):
         if col == 'row_names':
             df.pop(col)
 
+    print(selectedData)
+    df = df.apply(zscore)
     if selectedData is not None:
-        selected_idx = [datum['pointIndex'] for datum in selectedData['points']]
-        df = df.loc[selected_idx, :]
+        selected_idx = [datum['customdata'] for datum in selectedData['points']]
+        df = df.iloc[selected_idx, :]
+        print(selected_idx)
+        print(df.shape)
 
     mean = df.mean().values
     std = df.std().values
@@ -261,7 +268,7 @@ def update_features(value, feature, selectedData):
                 xaxis={'title': 'Features'},
                 plot_bgcolor='#E5E5E5',
                 paper_bgcolor='#E5E5E5',
-                yaxis={'showgrid': False, 'title': 'Activities'}
+                yaxis={'showgrid': False, 'title': 'Activities (z-score)'}
             )
            }
 
