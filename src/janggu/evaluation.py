@@ -90,8 +90,6 @@ class Scorer(object):
         :code:`fct(y_true, y_pred, **kwargs)` if used with
         :code:`Janggu.evaluate` and :code:`fct(y_pred, **kwargs)` if
         used with :code:`Janggu.predict`.
-    score_args : dict or None
-        Optional keyword args to be passed down to score_fct.
     conditions : list(str) or None
         List of strings describing the conditions dimension of the dataset
         that is processed. If None, conditions are extracted from the
@@ -101,8 +99,6 @@ class Scorer(object):
         Exporter function is used to export the results in the desired manner,
         e.g. as json or tsv file. This function must satisfy the signature
         :code:`fct(output_path, filename_prefix, results, **kwargs)`.
-    exporter_args : dict or None
-        Optional keyword args to be passed down to exporter.
     immediate_export : boolean
         If set to True, the exporter function will be invoked immediately
         after the evaluation of the dataset. If set to False, the results
@@ -113,30 +109,25 @@ class Scorer(object):
         means the results are stored in the 'evaluation' subdir.
     """
 
-    def __init__(self, name, score_fct=None, score_args=None,
+    def __init__(self, name, score_fct=None,
                  conditions=None,
-                 exporter=export_json, exporter_args=None,
+                 exporter=export_json,
                  immediate_export=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         self.score_name = name
         self.score_fct = score_fct
 
-        if score_args is None:
-            score_args = {}
-        self.score_args = score_args
         self.results = dict()
         self._exporter = exporter
-        if exporter_args is None:
-            exporter_args = {}
-        self.exporter_args = exporter_args
+
         self.immediate_export = immediate_export
         self.conditions = conditions
         if subdir is None:
             subdir = 'evaluation'
         self.subdir = subdir
 
-    def export(self, path, collection_name, datatags=None):
+    def export(self, path, collection_name, datatags=None, **kwargs):
         """Exporting of the results.
 
         When calling export, the results which have been collected
@@ -152,6 +143,8 @@ class Scorer(object):
         datatags : list(str) or None
             Optional tags describing the dataset. E.g. 'training_set'.
             Default: None
+        **kwargs :
+            Optional kwargs that are passed on to exporter.
         """
         output_path = os.path.join(path, collection_name)
         if datatags is not None:
@@ -162,9 +155,10 @@ class Scorer(object):
         if self.results:
             # if there are some results, export them
             self._exporter(output_path, self.score_name,
-                           self.results, **self.exporter_args)
+                           self.results, **kwargs)
 
-    def score(self, model, predicted, outputs=None, datatags=None):
+    def score(self, model, predicted, outputs=None, datatags=None,
+              score_kwargs=None, exporter_kwargs=None):
         """Scoring of the predictions relative to true outputs.
 
         When calling score, the provided
@@ -187,6 +181,10 @@ class Scorer(object):
             absent.
         datatags : list(str) or None
             Optional tags describing the dataset, e.g. 'test_set'.
+        score_kwargs : dict or None
+            Optional kwargs that are passed on to score_fct.
+        exporter_kwargs : dict or None
+            Optional kwargs that are passed on to exporter.
         """
 
         if not datatags:
@@ -200,24 +198,25 @@ class Scorer(object):
             raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')
 
         if score_fct is None:
-            score_fct = lambda x: x
+            def score_fct(x): return x
 
+        score_kwargs = score_kwargs if score_kwargs is not None else {}
+        exporter_kwargs = exporter_kwargs if exporter_kwargs is not None else {}
         for layername in model.get_config()['output_layers']:
-            #lout = _out[layername[0]]
-            #pout = _pre[layername[0]]
+
             for idx in range(_pre[layername[0]].shape[-1]):
 
                 if outputs is None:
                     score = score_fct(_pre[layername[0]][:, idx],
-                                      **self.score_args)
+                                      **score_kwargs)
                 else:
                     score = score_fct(_out[layername[0]][:, idx],
                                       _pre[layername[0]][:, idx],
-                                      **self.score_args)
+                                      **score_kwargs)
 
                 if self.conditions is not None and \
                    len(self.conditions) == _pre[layername[0]].shape[-1]:
-                   # conditions were supplied manually
+                    # conditions were supplied manually
                     condition = self.conditions[idx]
                 elif outputs is not None and hasattr(outputs[layername[0]],
                                                      "conditions"):
@@ -235,7 +234,7 @@ class Scorer(object):
             # export directly if required
             output_dir = os.path.join(model.outputdir, self.subdir)
 
-            self.export(output_dir, model.name, datatags)
+            self.export(output_dir, model.name, datatags, **exporter_kwargs)
 
             # reset the results
             self.results = {}

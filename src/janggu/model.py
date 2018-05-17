@@ -488,6 +488,8 @@ class Janggu(object):
                 layername=None,
                 datatags=None,
                 callbacks=None,
+                score_kwargs=None,
+                exporter_kwargs=None,
                 workers=1):
 
         """Performs a prediction.
@@ -548,7 +550,9 @@ class Janggu(object):
             else:
                 datatags.append(layername)
         for callback in callbacks or []:
-            callback.score(model, prd, datatags=datatags)
+            callback.score(model, prd, datatags=datatags,
+                           score_kwargs=score_kwargs,
+                           exporter_kwargs=exporter_kwargs)
         return preds
 
     def evaluate(self, inputs=None, outputs=None,
@@ -558,6 +562,8 @@ class Janggu(object):
                  use_multiprocessing=False,
                  datatags=None,
                  callbacks=None,
+                 score_kwargs=None,
+                 exporter_kwargs=None,
                  workers=1):
         """Evaluates the performance.
 
@@ -614,7 +620,9 @@ class Janggu(object):
         preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
-            callback.score(self, preds, outputs=outputs, datatags=datatags)
+            callback.score(self, preds, outputs=outputs, datatags=datatags,
+                           score_kwargs=score_kwargs,
+                           exporter_kwargs=exporter_kwargs)
         return values
 
     def __dim_logging(self, data):

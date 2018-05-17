@@ -43,10 +43,17 @@ PARSER.add_argument('-order', dest='order', type=int,
 
 args = PARSER.parse_args()
 
+
 # helper function
 def nrows(filename):
-    """Extract the number of rows in the file"""
+    """Extract the number of rows in the file.
+
+    Note however, that this is a simplification
+    that might not always work. In general, one would
+    need to parse for '>' occurrences.
+    """
     return sum((1 for line in open(filename)))//2
+
 
 # load the dataset
 DATA_PATH = pkg_resources.resource_filename('janggu', 'resources/')
@@ -56,7 +63,8 @@ SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                             order=args.order)
 
-Y = np.asarray([1 for line in range(nrows(SAMPLE_1))] + [0 for line in range(nrows(SAMPLE_2))])
+Y = np.asarray([1 for line in range(nrows(SAMPLE_1))] +
+               [0 for line in range(nrows(SAMPLE_2))])
 LABELS = Array('y', Y, conditions=['TF-binding'])
 annot = pd.DataFrame(Y[:], columns=LABELS.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
@@ -85,21 +93,16 @@ roc_eval = Scorer('ROC', wrap_roc, exporter=export_score_plot)
 auprc_eval = Scorer('auPRC', average_precision_score, exporter=export_tsv)
 
 # clustering plots based on hidden features
-heatmap_eval = Scorer('heatmap', exporter=export_clustermap,
-                      exporter_args={'annot': annot,
-                                     'z_score': 1})
-tsne_eval = Scorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
-                                                                'annot': annot})
+heatmap_eval = Scorer('heatmap', exporter=export_clustermap)
+tsne_eval = Scorer('tsne', exporter=export_tsne)
 
 # output the predictions as tables or json files
-pred_tsv = Scorer('pred', exporter=export_tsv, exporter_args={'annot': annot})
-pred_json = Scorer('pred', exporter=export_json, exporter_args={'annot': annot})
+pred_tsv = Scorer('pred', exporter=export_tsv)
+pred_json = Scorer('pred', exporter=export_json)
 
 # plotly will export a special table that is used for interactive browsing
 # of the results
-pred_plotly = Scorer('pred', exporter=export_plotly,
-                     exporter_args={'annot': annot,
-                                    'row_names': DNA.gindexer.chrs})
+pred_plotly = Scorer('pred', exporter=export_plotly)
 
 # Define the model templates
 @inputlayer
@@ -158,9 +161,10 @@ DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                                  order=args.order)
 
 
-Y = np.asarray([1 for _ in range(nrows(SAMPLE_1))] + [0 for _ in range(nrows(SAMPLE_2))])
+Y = np.asarray([1 for _ in range(nrows(SAMPLE_1))] +
+               [0 for _ in range(nrows(SAMPLE_2))])
 LABELS_TEST = Array('y', Y, conditions=['TF-binding'])
-annot = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
+annot_test = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
 
 # do the evaluation on the training data
@@ -168,24 +172,37 @@ model.evaluate(DNA, LABELS, datatags=['train'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
 
 model.predict(DNA, datatags=['train'],
-              callbacks=[pred_tsv, pred_json, pred_plotly,
-              heatmap_eval, tsne_eval],
-              layername='motif')
+              callbacks=[pred_tsv, pred_json, pred_plotly],
+              layername='motif',
+              exporter_kwargs={'annot': annot,
+                             'row_names': DNA.gindexer.chrs})
+model.predict(DNA, datatags=['train'],
+              callbacks=[heatmap_eval],
+              layername='motif',
+              exporter_kwargs={'annot': annot,
+                             'z_score': 1})
+model.predict(DNA, datatags=['train'],
+              callbacks=[tsne_eval],
+              layername='motif',
+              exporter_kwargs={'annot': annot,
+                             'alpha': .1})
 
-# do the evaluation on the test data
+# do the evaluation on the independent test data
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
 
-
-# clustering plots based on hidden features
-heatmap_eval = Scorer('heatmap', exporter=export_clustermap,
-                        exporter_args={'annot': annot,
-                                       'z_score': 1})
-tsne_eval = Scorer('tsne', exporter=export_tsne, exporter_args={'alpha': .1,
-                                                                  'annot': annot})
-pred_plotly = Scorer('pred', exporter=export_plotly,
-                       exporter_args={'annot': annot,
-                                      'row_names': DNA_TEST.gindexer.chrs})
 model.predict(DNA_TEST, datatags=['test'],
-              callbacks=[pred_plotly, heatmap_eval, tsne_eval],
-              layername='motif')
+              callbacks=[pred_tsv, pred_json, pred_plotly],
+              layername='motif',
+              exporter_kwargs={'annot': annot_test,
+                             'row_names': DNA_TEST.gindexer.chrs})
+model.predict(DNA_TEST, datatags=['test'],
+              callbacks=[heatmap_eval],
+              layername='motif',
+              exporter_kwargs={'annot': annot_test,
+                             'z_score': 1})
+model.predict(DNA_TEST, datatags=['test'],
+              callbacks=[tsne_eval],
+              layername='motif',
+              exporter_kwargs={'annot': annot_test,
+                             'alpha': .1})

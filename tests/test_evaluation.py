@@ -165,22 +165,17 @@ def test_output_export_score_plot(tmpdir):
     bwm = get_janggu(inputs, outputs, tmpdir)
 
     dummy_eval = Scorer('score',
-                             lambda y_true, y_pred:
-                             ([0., 0.5, 0.5, 1.],
-                              [0.5, 0.5, 1., 1.],
-                              [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot)
+                        lambda y_true, y_pred:
+                        ([0., 0.5, 0.5, 1.],
+                         [0.5, 0.5, 1., 1.],
+                         [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot)
 
-    dummy_eval_par = Scorer('score',
-                                 lambda y_true, y_pred:
-                                 ([0., 0.5, 0.5, 1.],
-                                  [0.5, 0.5, 1., 1.],
-                                  [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot,
-                                 exporter_args={'figsize': (10, 12),
-                                                'xlabel': 'FPR',
-                                                'ylabel': 'TPR',
-                                                'fform': 'eps'})
-
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval, dummy_eval_par])
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
+                 exporter_kwargs={'figsize': (10, 12),
+                                  'xlabel': 'FPR',
+                                  'ylabel': 'TPR',
+                                  'fform': 'eps'})
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
@@ -209,15 +204,14 @@ def test_output_export_clustermap(tmpdir):
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    dummy_eval = Scorer('cluster',
-                          exporter=export_clustermap)
-
-    dummy_eval_par = Scorer('cluster',
-                              exporter=export_clustermap,
-                              exporter_args={'fform': 'eps'})
+    dummy_eval = Scorer('cluster', exporter=export_clustermap)
 
     bwm.predict(inputs, layername='hidden',
-                callbacks=[dummy_eval, dummy_eval_par])
+                callbacks=[dummy_eval])
+
+    bwm.predict(inputs, layername='hidden',
+                callbacks=[dummy_eval],
+                exporter_kwargs={'fform': 'eps'})
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
@@ -249,15 +243,13 @@ def test_output_export_tsne(tmpdir):
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
     dummy_eval = Scorer('tsne',
-                          exporter=export_tsne)
-
-    dummy_eval_par = Scorer('tsne',
-                              exporter=export_tsne,
-                              exporter_args={'fform': 'eps'})
+                        exporter=export_tsne)
 
     bwm.predict(inputs, layername='hidden',
-                callbacks=[dummy_eval, dummy_eval_par])
-
+                callbacks=[dummy_eval])
+    bwm.predict(inputs, layername='hidden',
+                callbacks=[dummy_eval],
+                exporter_kwargs={'fform': 'eps'})
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
                                        "evaluation", bwm.name, 'hidden',
@@ -285,9 +277,10 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
                                          resolution=200)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
-                             exporter=export_bed, exporter_args={'gindexer': gi})
+                        exporter=export_bed)
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
+                 exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -326,9 +319,10 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     # dummy_eval = Scorer('loss', lambda t, p: -t * numpy.log(p),
     #                    exporter=export_bed, export_args={'gindexer': gi})
     dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
-                             exporter=export_bed, exporter_args={'gindexer': gi})
+                        exporter=export_bed)
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
+                 exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -342,7 +336,6 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     for reg in bed:
         numpy.testing.assert_equal(reg.score, 0.1)
         nreg += 1
-#        numpy.testing.assert_equal(breg.score, value)
 
     assert nreg == 28, 'There should be 28 regions in the bed file.'
 
@@ -365,10 +358,11 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
                                          resolution=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                          exporter=export_bed, exporter_args={'gindexer': gi},
-                          conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=export_bed,
+                        conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval])
+    bwm.predict(inputs, callbacks=[dummy_eval],
+                exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -382,7 +376,6 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
     for reg in bed:
         numpy.testing.assert_equal(reg.score, 0.1)
         nreg += 1
-#        numpy.testing.assert_equal(breg.score, value)
 
     assert nreg == 7, 'There should be 7 regions in the bed file.'
 
@@ -405,10 +398,10 @@ def test_output_bed_predict_denseout(tmpdir):
                                          resolution=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                          exporter=export_bed, exporter_args={'gindexer': gi},
-                          conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=export_bed,
+                        conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval])
+    bwm.predict(inputs, callbacks=[dummy_eval], exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -422,7 +415,6 @@ def test_output_bed_predict_denseout(tmpdir):
     for reg in bed:
         numpy.testing.assert_equal(reg.score, 0.1)
         nreg += 1
-#        numpy.testing.assert_equal(breg.score, value)
 
     assert nreg == 7, 'There should be 7 regions in the bed file.'
 
@@ -445,10 +437,11 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
                                          resolution=50)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                          exporter=export_bed, exporter_args={'gindexer': gi},
-                          conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=export_bed,
+                        conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval])
+    bwm.predict(inputs, callbacks=[dummy_eval],
+                exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -462,7 +455,6 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
     for reg in bed:
         numpy.testing.assert_equal(reg.score, 0.1)
         nreg += 1
-#        numpy.testing.assert_equal(breg.score, value)
 
     assert nreg == 28, 'There should be 28 regions in the bed file.'
 
@@ -485,10 +477,11 @@ def test_output_bigwig_predict_denseout(tmpdir):
                                          resolution=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                          exporter=export_bigwig, exporter_args={'gindexer': gi},
-                          conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=export_bigwig,
+                        conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval])
+    bwm.predict(inputs, callbacks=[dummy_eval],
+                exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -521,10 +514,11 @@ def test_output_bigwig_predict_convout(tmpdir):
                                          resolution=50)
 
     dummy_eval = Scorer('pred', lambda p: [0.2] * len(p),
-                          exporter=export_bigwig, exporter_args={'gindexer': gi},
-                          conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=export_bigwig,
+                        conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval])
+    bwm.predict(inputs, callbacks=[dummy_eval],
+                exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -556,12 +550,11 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
                                          stepsize=200,
                                          resolution=50)
 
-    # dummy_eval = Scorer('loss', lambda t, p: -t * numpy.log(p),
-    #                    exporter=export_bed, export_args={'gindexer': gi})
     dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
-                             exporter=export_bigwig, exporter_args={'gindexer': gi})
+                        exporter=export_bigwig)
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
+                 exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bigwig')
