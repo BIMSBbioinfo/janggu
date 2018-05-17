@@ -295,7 +295,7 @@ Fit a neural network on DNA sequences
 In the previous sections, we learned how to acquire data and
 how to instantiate neural networks. Now let's
 create and fit a simple convolutional neural network that learns
-to classify DNA sequence:
+to discriminate between two classes of sequences:
 
 .. code:: python
 
@@ -304,17 +304,20 @@ to classify DNA sequence:
    from janggu import inputlayer
    from janggu import outputconv
 
-   refgenome = resource_filename('janggu', 'resources/sample_genome.fa')
-   bed_file = resource_filename('janggu', 'resources/sample.bed')
-   score_file = resource_filename('janggu', 'resources/scored_sample.bed')
+   # load the dataset
+   SAMPLE_1 = resource_filename('janggu', 'resources/', 'sample.fa')
+   SAMPLE_2 = resource_filename('janggu', 'resources/', 'sample2.fa')
 
-   # 1. get data
-   DNA = Dna.create_from_refgenome('dna',
-                                   refgenome=refgenome,
-                                   regions=bed_file)
-   LABELS = Cover.create_from_bed('peaks',
-                                  bedfiles=score_file,
-                                  regions=bed_file)
+   DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
+                               order=args.order)
+
+   # helper function returns the number of sequences
+   def nseqs(filename):
+      return sum((1 for line in open(filename) if line[0] == '>'))
+
+   Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
+                  [0 for line in range(nseqs(SAMPLE_2))])
+   LABELS = Array('y', Y, conditions=['TF-binding'])
 
    # 2. define a simple conv net with 30 filters of length 15 bp
    # and relu activation
@@ -337,11 +340,12 @@ to classify DNA sequence:
    model.fit(DNA, LABELS)
 
 
-The network takes as input a 200 bp nucleotide sequence. It uses
-30 convolution kernels of length 21 bp, average pooling and another convolution
-layer that combines the activities of the 30 kernels
-to predict binary valued peaks.
+The sequences in the fasta file are of length 200 bp each.
+The network then uses
+30 convolution kernels of length 21 bp, average pooling and
+to predict the outputs at the final layer.
 
+An illustration of the network architecture is depicted below.
 Upon creation of the model a network depiction is
 automatically produced in :code:`<results_root>/models` which is illustrated
 below
@@ -351,79 +355,82 @@ below
    :alt: Prediction from DNA to peaks
    :align: center
 
-Logging information about the model fitting, model and dataset dimensions
+After the model has been trained, the model parameters and the
+illustration of the architecture are stored in :code:`<results_root>/models`.
+Furthermore, information about the model fitting, model and dataset dimensions
 are written to :code:`<results_root>/logs`.
 
 
-Evaluation
-----------
+Evaluation through Scorer callbacks
+------------------------------------
 
 Finally, we would like to evaluate various aspects of the model performance
 and investigate the predictions. This can be done by invoking
 
 .. code-block:: python
 
-   model.evaluate(DNA, LABELS)
-   model.predict(DNA)
+   model.evaluate(DNA_TEST, LABELS_TEST)
+   model.predict(DNA_TEST)
 
 which resemble the familiar keras methods.
-Janggu additinally offers features to simplify the
-analysis of the results through callback objects that you can
-attach when invoking
+Janggu additinally offers a simple way to evaluate and export
+the results, for example on independent test data.
+To this end, objects of :code:`Scorer` can be created
+and passed to
 :code:`model.evaluate` and :code:`model.predict`.
 This allows you to determine different performance metrics and/or
 export the results in various ways, e.g. as tsv file, as plot or
 as bigwig or bed file.
 
-There are two callback classes :code:`Scorer` and :code:`Scorer`,
-which can be used with :code:`evaluate` and :code:`predict`, respectively.
-
-Both of them maintain a name, a scoring function and an exporter function.
+A :code:`Scorer` maintains a **name**, a **scoring function** and
+an **exporter function**. The latter two dictate which score is evaluated
+and how the results should be stored.
 
 An example of using :code:`Scorer` to
-write the area under the ROC curve (auROC)
-into a tsv file is illustrate in the following
+evaluate the ROC curve and the area under the ROC curve (auROC)
+and export it as plot and into a tsv file, respectively, is shown below
 
 .. code:: python
 
    from sklearn.metrics import roc_auc_score
+   from sklearn.metrics import roc_curve
    from janggu import Scorer
    from janggu.utils import export_tsv
+   from janggu.utils import export_score_plot
 
    # create a scorer
    score_auroc = Scorer('auROC',
-                             roc_auc_score,
-                             exporter=export_tsv)
-
+                        roc_auc_score,
+                        exporter=export_tsv)
+   score_roc = Scorer('ROC',
+                        roc_curve,
+                        exporter=export_score_plot)
    # determine the auROC
-   model.evaluate(DNA, LABELS, callbacks=[score_auroc])
+   model.evaluate(DNA, LABELS, callbacks=[score_auroc, score_roc])
 
-After the evaluation, you will find the results
-in :code:`<results-root>/evaluation/<modelname>/auROC.tsv`.
+After the evaluation, you will find :code:`auROC.tsv` and :code:`ROC.png`
+in :code:`<results-root>/evaluation/<modelname>/`.
 
 Similarly, you can use :code:`Scorer` to export the predictions
-of the model into a json file
+of the model. Below, the output predictions are exported in json format.
 
 .. code:: python
 
    from janggu import Scorer
+   from janggu import export_json
 
    # create scorer
-   # in this case, the scoring function is optional.
    pred_scorer = Scorer('predict', exporter=export_json)
 
    # Evaluate predictions
-   model.predict(DNA, datatags=['training_set'],
-                 callbacks=[pred_scorer])
+   model.predict(DNA, callbacks=[pred_scorer])
 
-The Scorer objects support a number of scoring and exporter function
-combinations that can be used to analyze the model results.
-For example, you can :code:`Scorer` with other `sklearn.metrics`, including
-`roc_curve` or `precision_recall_curve` and create a plot using :code:`export_score_plot`.
-Or you can export prediction to a bigwig or bed file using :code:`export_bigwig`
-and :code:`export_bed`, respectively.
+Using the Scorer callback objects, a number of evaluations can
+be run out of the box. For example, with different `sklearn.metrics`
+and different exporter options. A list of available exporters
+can be found in the Reference section.
 
-Alternatively, you can supply custom scoring and exporter functions
+Alternatively, you can also plug in custom functions
 
 .. code:: python
 
@@ -431,5 +438,30 @@ Alternatively, you can supply custom scoring and exporter functions
    score_loss = Scorer('loss', lambda t, p: -t * numpy.log(p),
                             exporter=export_json)
 
-Further examples are illustrated in the reference section and
-in the module :code:`janggu.utils`.
+
+Browse through the results
+------------------------------------
+Finally, after you have fitted and evaluated your results,
+the produced outputs can be conveniently browsed through
+using the Dash-based Janggu web application.
+To start the application server just run
+
+..code:: bash
+   janggu -path <results-root>
+
+Then you can inspect the outputs in a browser of your choice.
+
+Screenshot examples of the application are shown below:
+
+The main page summarizes the trained models
+.. image:: janggu_main.png
+   :width: 70%
+   :alt: Main page of the application
+   :align: center
+
+Selecting a particular model allows you to study the evaluation
+results
+.. image:: janggu_example.png
+   :width: 70%
+   :alt: Prediction from DNA to peaks
+   :align: center

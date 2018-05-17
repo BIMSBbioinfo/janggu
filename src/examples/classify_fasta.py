@@ -45,14 +45,14 @@ args = PARSER.parse_args()
 
 
 # helper function
-def nrows(filename):
+def nseqs(filename):
     """Extract the number of rows in the file.
 
     Note however, that this is a simplification
     that might not always work. In general, one would
     need to parse for '>' occurrences.
     """
-    return sum((1 for line in open(filename)))//2
+    return sum((1 for line in open(filename) if line[0] == '>'))
 
 
 # load the dataset
@@ -161,8 +161,8 @@ DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                                  order=args.order)
 
 
-Y = np.asarray([1 for _ in range(nrows(SAMPLE_1))] +
-               [0 for _ in range(nrows(SAMPLE_2))])
+Y = np.asarray([1 for _ in range(nseqs(SAMPLE_1))] +
+               [0 for _ in range(nseqs(SAMPLE_2))])
 LABELS_TEST = Array('y', Y, conditions=['TF-binding'])
 annot_test = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
