@@ -15,4 +15,5 @@ from janggu.utils import export_bigwig  # noqa
 from janggu.utils import export_clustermap  # noqa
 from janggu.utils import export_json  # noqa
 from janggu.utils import export_score_plot  # noqa
+from janggu.utils import export_tsne  # noqa
 from janggu.utils import export_tsv  # noqa
