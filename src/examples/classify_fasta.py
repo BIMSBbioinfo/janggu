@@ -30,6 +30,7 @@ from janggu.utils import export_tsv
 
 np.random.seed(1234)
 
+
 # Fetch parser arguments
 PARSER = argparse.ArgumentParser(description='Command description.')
 PARSER.add_argument('model', choices=['single', 'double'],
@@ -43,7 +44,7 @@ PARSER.add_argument('-order', dest='order', type=int,
 
 args = PARSER.parse_args()
 
-
+os.environ['JANGGU_OUTPUT']=args.path
 # helper function
 def nseqs(filename):
     """Extract the number of rows in the file.
@@ -61,10 +62,10 @@ SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 
 DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                            order=args.order)
+                            order=args.order, datatags=['train'])
 
-Y = np.asarray([1 for line in range(nrows(SAMPLE_1))] +
-               [0 for line in range(nrows(SAMPLE_2))])
+Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
+               [0 for line in range(nseqs(SAMPLE_2))])
 LABELS = Array('y', Y, conditions=['TF-binding'])
 annot = pd.DataFrame(Y[:], columns=LABELS.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
@@ -141,8 +142,7 @@ K.clear_session()
 model = Janggu.create(template=modeltemplate,
                       modelparams=(30, 21, 'relu'),
                       inputs=DNA,
-                      outputs=LABELS,
-                      outputdir=args.path)
+                      outputs=LABELS)
 
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
@@ -158,7 +158,7 @@ SAMPLE_1 = os.path.join(DATA_PATH, 'sample_test.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2_test.fa')
 
 DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                                 order=args.order)
+                                 order=args.order, datatags=['test'])
 
 
 Y = np.asarray([1 for _ in range(nseqs(SAMPLE_1))] +
