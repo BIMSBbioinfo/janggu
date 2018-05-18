@@ -17,6 +17,7 @@ from janggu.data.data import _data_props
 from janggu.layers import Complement
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
+from janggu.utils import _get_output_root_directory
 
 
 def _convert_data(kerasmodel, data, layer):
@@ -83,9 +84,6 @@ class Janggu(object):
         Output layer or list of outputs. See https://keras.io/.
     name : str
         Name of the model.
-    outputdir : str
-        Output folder in which the log-files and model parameters
-        are stored. Default: `/home/user/janggu_results`.
 
     Examples
     --------
@@ -112,8 +110,7 @@ class Janggu(object):
     timer = None
     _name = None
 
-    def __init__(self, inputs, outputs, name=None,
-                 outputdir=None):
+    def __init__(self, inputs, outputs, name=None):
 
         self.kerasmodel = Model(inputs, outputs, name='janggu')
 
@@ -126,24 +123,17 @@ class Janggu(object):
 
         self.name = name
 
-        if not outputdir:  # pragma: no cover
-            # this is excluded from the unit tests for which
-            # only temporary directories should be used.
-            if "JANGGU_OUTPUT" in os.environ:
-                outputdir = os.environ['JANGGU_OUTPUT']
-            else:
-                outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
-        self.outputdir = outputdir
+        self.outputdir = _get_output_root_directory()
 
-        if not os.path.exists(outputdir):  # pragma: no cover
+        if not os.path.exists(self.outputdir):  # pragma: no cover
             # this is excluded from unit tests, because the testing
             # framework always provides a directory
-            os.makedirs(outputdir)
+            os.makedirs(self.outputdir)
 
-        if not os.path.exists(os.path.join(outputdir, 'logs')):
-            os.makedirs(os.path.join(outputdir, 'logs'))
+        if not os.path.exists(os.path.join(self.outputdir, 'logs')):
+            os.makedirs(os.path.join(self.outputdir, 'logs'))
 
-        logfile = os.path.join(outputdir, 'logs', 'janggu.log')
+        logfile = os.path.join(self.outputdir, 'logs', 'janggu.log')
 
         self.logger = logging.getLogger(self.name)
 
@@ -155,7 +145,7 @@ class Janggu(object):
         self.kerasmodel.summary(print_fn=self.logger.info)
 
     @classmethod
-    def create_by_name(cls, name, outputdir=None):
+    def create_by_name(cls, name):
         """Creates a Janggu object by name.
 
         This option is used to load a pre-trained model.
@@ -164,8 +154,6 @@ class Janggu(object):
         ----------
         name : str
             Name of the model.
-        outputdir : str
-            Output directory. Default: `/home/user/janggu_results`.
 
         Examples
         --------
@@ -179,7 +167,7 @@ class Janggu(object):
           # Instantiate a model.
           model = Janggu(inputs=in_, outputs=output, name='test_model')
 
-          # saves the model to /home/user/janggu_results/models
+          # saves the model to <janggu_results>/models
           model.save()
 
           # remove the original model
@@ -188,17 +176,14 @@ class Janggu(object):
           # reload the model
           model = Janggu.create_by_name('test_model')
         """
-        if not outputdir:  # pragma: no cover
-            # this is excluded from the unit tests for which
-            # only temporary directories should be used.
-            outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
-        path = cls._storage_path(name, outputdir)
+
+        path = cls._storage_path(name, _get_output_root_directory())
 
         model = load_model(path,
                            custom_objects={'Reverse': Reverse,
                                            'Complement': Complement,
                                            'LocalAveragePooling2D': LocalAveragePooling2D})
-        return cls(model.inputs, model.outputs, name, outputdir)
+        return cls(model.inputs, model.outputs, name)
 
     @property
     def name(self):
@@ -242,8 +227,7 @@ class Janggu(object):
 
     @classmethod
     def create(cls, template, modelparams=None, inputs=None,
-               outputs=None, name=None,
-               outputdir=None):
+               outputs=None, name=None):
         """Janggu constructor method.
 
         This method instantiates a Janggu model with
@@ -274,10 +258,6 @@ class Janggu(object):
         name : str or None
             Model name. If None, a unique model name is generated
             based on the model configuration and network architecture.
-        outputdir : str or None
-            Root output directory in which the log files, model parameters etc.
-            will be stored. If None, the outputdir is set
-            to `/home/user/janggu_results`.
 
         Examples
         --------
@@ -345,8 +325,7 @@ class Janggu(object):
         input_tensors, output_tensors = modelfct(None, inputs_,
                                                  outputs_, modelparams)
 
-        jmodel = cls(inputs=input_tensors, outputs=output_tensors, name=name,
-                     outputdir=outputdir)
+        jmodel = cls(inputs=input_tensors, outputs=output_tensors, name=name)
 
         return jmodel
 
@@ -523,8 +502,7 @@ class Janggu(object):
         if layername:
             model = Janggu(self.kerasmodel.input,
                            self.kerasmodel.get_layer(layername).output,
-                           name=self.name,
-                           outputdir=self.outputdir)
+                           name=self.name)
         else:
             model = self
 

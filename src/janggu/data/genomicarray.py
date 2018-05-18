@@ -5,6 +5,7 @@ import os
 import h5py
 import numpy
 from HTSeq import GenomicInterval
+from janggu.utils import _get_output_data_location
 
 
 class GenomicArray(object):
@@ -82,26 +83,6 @@ class GenomicArray(object):
     def condition(self, conditions):
         self._condition = conditions
 
-def _get_output_location(datatags):
-    """Function returns the output location for the dataset.
-
-    Parameters
-    ------------
-    datatags : list(str)
-        Tags describing the dataset. E.g. ['testdna'].
-    """
-    if "JANGGU_OUTPUT" in os.environ:
-        outputdir = os.environ['JANGGU_OUTPUT']
-    else:
-        outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
-    print('getloc', os.environ['JANGGU_OUTPUT'])
-
-    args = (outputdir, 'datasets')
-    if datatags is not None:
-        args += tuple(datatags)
-
-    return os.path.join(*args)
-
 
 class HDF5GenomicArray(GenomicArray):
     """GenomicArray stores multi-dimensional genomic information.
@@ -147,7 +128,7 @@ class HDF5GenomicArray(GenomicArray):
         if stranded:
             datatags = datatags + ['stranded'] if datatags else ['stranded']
 
-        memmap_dir = _get_output_location(datatags)
+        memmap_dir = _get_output_data_location(datatags)
 
         filename = 'storage.h5'
 
@@ -218,7 +199,7 @@ class NPGenomicArray(GenomicArray):
         if stranded:
             datatags = datatags + ['stranded'] if datatags else ['stranded']
 
-        memmap_dir = _get_output_location(datatags)
+        memmap_dir = _get_output_data_location(datatags)
 
         filename = 'storage.npz'
         if cache and not os.path.exists(memmap_dir):

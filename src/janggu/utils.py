@@ -24,6 +24,30 @@ else:
     from urllib.request import urlcleanup, urlretrieve
 
 
+def _get_output_root_directory():
+    if "JANGGU_OUTPUT" not in os.environ:
+        os.environ['JANGGU_OUTPUT'] = os.path.join(os.path.expanduser("~"),
+                                                   'janggu_results')
+    return os.environ['JANGGU_OUTPUT']
+
+
+def _get_output_data_location(datatags):
+    """Function returns the output location for the dataset.
+
+    Parameters
+    ------------
+    datatags : list(str)
+        Tags describing the dataset. E.g. ['testdna'].
+    """
+    outputdir = _get_output_root_directory()
+
+    args = (outputdir, 'datasets')
+    if datatags is not None:
+        args += tuple(datatags)
+
+    return os.path.join(*args)
+
+
 def sequences_from_fasta(fasta):
     """Obtains nucleotide sequences from a fasta file.
 

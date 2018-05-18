@@ -83,7 +83,7 @@ def test_output_dims():
     assert _dimension_match(m, None, 'output_layers')
 
 
-def get_janggu(inputs, outputs, tmpdir):
+def get_janggu(inputs, outputs):
     @inputlayer
     @outputdense('sigmoid')
     def _model(inputs, inp, oup, params):
@@ -92,17 +92,16 @@ def get_janggu(inputs, outputs, tmpdir):
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=bwm.outputdir)
     assert not os.path.exists(storage)
     return bwm
 
 
-def get_janggu_conv(inputs, outputs, tmpdir):
+def get_janggu_conv(inputs, outputs):
     @inputlayer
     @outputconv('sigmoid')
     def _model(inputs, inp, oup, params):
@@ -111,23 +110,23 @@ def get_janggu_conv(inputs, outputs, tmpdir):
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=bwm.outputdir)
     assert not os.path.exists(storage)
     return bwm
 
 
 def test_output_json_score(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
 
     dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15)
 
@@ -142,11 +141,12 @@ def test_output_json_score(tmpdir):
 
 
 def test_output_tsv_score(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
 
     dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15, exporter=export_tsv)
 
@@ -158,11 +158,12 @@ def test_output_tsv_score(tmpdir):
 
 
 def test_output_export_score_plot(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
 
     dummy_eval = Scorer('score',
                         lambda y_true, y_pred:
@@ -185,6 +186,7 @@ def test_output_export_score_plot(tmpdir):
 
 
 def test_output_export_clustermap(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -199,8 +201,7 @@ def test_output_export_clustermap(tmpdir):
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
@@ -223,6 +224,7 @@ def test_output_export_clustermap(tmpdir):
 
 
 def test_output_export_tsne(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -237,8 +239,7 @@ def test_output_export_tsne(tmpdir):
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
@@ -260,6 +261,7 @@ def test_output_export_tsne(tmpdir):
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -267,7 +269,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 1, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu_conv(inputs, outputs, tmpdir)
+    bwm = get_janggu_conv(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -300,6 +302,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
 
 
 def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -307,7 +310,7 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -341,6 +344,7 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
 
 
 def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -348,7 +352,7 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 1, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu_conv(inputs, outputs, tmpdir)
+    bwm = get_janggu_conv(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -381,6 +385,7 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
 
 
 def test_output_bed_predict_denseout(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -388,7 +393,7 @@ def test_output_bed_predict_denseout(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -420,6 +425,7 @@ def test_output_bed_predict_denseout(tmpdir):
 
 
 def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -427,7 +433,7 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -460,6 +466,7 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
 
 
 def test_output_bigwig_predict_denseout(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -467,7 +474,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -497,6 +504,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
 
 
 def test_output_bigwig_predict_convout(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -504,7 +512,7 @@ def test_output_bigwig_predict_convout(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu_conv(inputs, outputs, tmpdir)
+    bwm = get_janggu_conv(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
@@ -534,6 +542,7 @@ def test_output_bigwig_predict_convout(tmpdir):
 
 
 def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -541,7 +550,7 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
     outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
                     conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm = get_janggu(inputs, outputs, tmpdir)
+    bwm = get_janggu(inputs, outputs)
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/10regions.bed')
 
