@@ -88,14 +88,19 @@ def _get_output_location(datatags):
     Parameters
     ------------
     datatags : list(str)
-        Tags describing the dataset. E.g. ['dna'].
+        Tags describing the dataset. E.g. ['testdna'].
     """
     if "JANGGU_OUTPUT" in os.environ:
         outputdir = os.environ['JANGGU_OUTPUT']
     else:
         outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
-    print('getloc', os.environ['JANGGO_OUTPUT'])
-    return os.path.join(outputdir, 'datasets', *datatags)
+    print('getloc', os.environ['JANGGU_OUTPUT'])
+
+    args = (outputdir, 'datasets')
+    if datatags is not None:
+        args += tuple(datatags)
+
+    return os.path.join(*args)
 
 
 class HDF5GenomicArray(GenomicArray):
@@ -218,26 +223,28 @@ class NPGenomicArray(GenomicArray):
         filename = 'storage.npz'
         if cache and not os.path.exists(memmap_dir):
             os.makedirs(memmap_dir)
-        if cache and not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite or not cache:
+
+        print(os.path.join(memmap_dir, filename))
+        print(os.path.exists(os.path.join(memmap_dir, filename)))
+        if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
+            or overwrite or not cache:
             print('create {}'.format(os.path.join(memmap_dir, filename)))
             data = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
-                                                     2 if stranded else 1,
-                                                     len(self.condition)),
-                                              dtype=self.typecode) for chrom in chroms}
+                                              2 if stranded else 1,
+                                              len(self.condition)),
+                                       dtype=self.typecode) for chrom in chroms}
             self.handle = data
-
-            condition = [numpy.string_(x) for x in conditions]
 
             # invoke the loader
             if loader:
                 loader(self, *loader_args)
 
+            condition = [numpy.string_(x) for x in self.condition]
             names = [x for x in data]
-            data['conditions'] = [numpy.string_(x) for x in conditions]
+            data['conditions'] = condition
 
             if cache:
                 numpy.savez(os.path.join(memmap_dir, filename), **data)
-
 
         if cache:
             print('reload {}'.format(os.path.join(memmap_dir, filename)))
@@ -256,7 +263,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                          storage='hdf5', datatags=None, cache=True, overwrite=False,
                          loader=None, loader_args=None):
     """Factory function for creating a GenomicArray."""
-
+    print('datatags',  datatags)
     if storage == 'hdf5':
         return HDF5GenomicArray(chroms, stranded=stranded,
                                 conditions=conditions,
@@ -268,12 +275,12 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                                 loader_args=loader_args)
     elif storage == 'ndarray':
         return NPGenomicArray(chroms, stranded=stranded,
-                                conditions=conditions,
-                                typecode=typecode,
-                                datatags=datatags,
-                                cache=cache,
-                                overwrite=overwrite,
-                                loader=loader,
-                                loader_args=loader_args)
+                              conditions=conditions,
+                              typecode=typecode,
+                              datatags=datatags,
+                              cache=cache,
+                              overwrite=overwrite,
+                              loader=loader,
+                              loader_args=loader_args)
     else:
         raise Exception("Storage type must be 'hdf5' or 'ndarray'")

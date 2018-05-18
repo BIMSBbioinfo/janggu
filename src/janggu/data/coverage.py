@@ -25,7 +25,7 @@ class Cover(Dataset):
     -----------
     name : str
         Name of the dataset
-    covers : :class:`BlgGenomicArray`
+    covers : :class:`GenomicArray`
         A genomic array that holds the coverage data
     gindexer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
@@ -158,7 +158,7 @@ class Cover(Dataset):
 
             return cover
 
-        datatags = [name] + datatags if datatags else []
+        datatags = [name] + datatags if datatags else [name]
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
@@ -266,7 +266,7 @@ class Cover(Dataset):
                     cover[interval, i] = vals
             return cover
 
-        datatags = [name] + datatags if datatags else []
+        datatags = [name] + datatags if datatags else [name]
 
         for chrom in gsize:
             gsize[chrom] //= resolution
@@ -415,7 +415,7 @@ class Cover(Dataset):
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
 
-        datatags = [name] + datatags if datatags else []
+        datatags = [name] + datatags if datatags else [name]
 
         for chrom in gsize:
             gsize[chrom] //= resolution

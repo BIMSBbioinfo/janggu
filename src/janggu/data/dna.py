@@ -96,7 +96,7 @@ class Dna(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        datatags = [name] + datatags if datatags else []
+        datatags = [name] + datatags if datatags else [name]
 
         cover = create_genomic_array(chromlens, stranded=False,
                                      storage=storage,

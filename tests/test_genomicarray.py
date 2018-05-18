@@ -5,7 +5,7 @@ from janggu.data import create_genomic_array
 
 
 def test_bwga_instance_unstranded(tmpdir):
-    os.environ['JANGGO_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     iv = GenomicInterval('chr10', 100, 120, '.')
     ga = create_genomic_array({'chr10': 300}, stranded=False, typecode='int8',
                               storage='ndarray', datatags='test_bwga_instance_unstranded')
@@ -34,7 +34,7 @@ def test_bwga_instance_unstranded(tmpdir):
 
 
 def test_bwga_instance_stranded(tmpdir):
-    os.environ['JANGGO_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     iv = GenomicInterval('chr10', 100, 120, '+')
     ga = create_genomic_array({'chr10': 300}, stranded=True, typecode='int8',
                               storage='ndarray')
