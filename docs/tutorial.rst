@@ -446,7 +446,8 @@ the produced outputs can be conveniently browsed through
 using the Dash-based Janggu web application.
 To start the application server just run
 
-..code:: bash
+::
+
    janggu -path <results-root>
 
 Then you can inspect the outputs in a browser of your choice.
@@ -454,6 +455,7 @@ Then you can inspect the outputs in a browser of your choice.
 Screenshot examples of the application are shown below:
 
 The main page summarizes the trained models
+
 .. image:: janggu_main.png
    :width: 70%
    :alt: Main page of the application
@@ -461,6 +463,7 @@ The main page summarizes the trained models
 
 Selecting a particular model allows you to study the evaluation
 results
+
 .. image:: janggu_example.png
    :width: 70%
    :alt: Prediction from DNA to peaks
