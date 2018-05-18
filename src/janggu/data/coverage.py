@@ -64,7 +64,7 @@ class Cover(Dataset):
                         flank=0, storage='ndarray',
                         dtype='int',
                         overwrite=False,
-                        cachedir=None):
+                        datatags=None, cache=True):
         """Create a Cover class from a bam-file (or files).
 
         Parameters
@@ -102,8 +102,10 @@ class Cover(Dataset):
             Default: 'int'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
-        cachedir : str or None
-            Directory in which the cachefiles are located. Default: None.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
         """
 
         gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize)
@@ -156,15 +158,13 @@ class Cover(Dataset):
 
             return cover
 
-        if cachedir:
-            memmap_dir = os.path.join(cachedir, name)
-        else:
-            memmap_dir = None
+        datatags = [name] + datatags if datatags else []
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
         cover = create_genomic_array(gsize, stranded=True,
-                                     storage=storage, memmap_dir=memmap_dir,
+                                     storage=storage, datatags=datatags,
+                                     cache=cache,
                                      conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
@@ -183,7 +183,7 @@ class Cover(Dataset):
                            dtype='float32',
                            overwrite=False,
                            dimmode='all',
-                           cachedir=None):
+                           datatags=None, cache=True):
         """Create a Cover class from a bigwig-file (or files).
 
         Parameters
@@ -228,8 +228,10 @@ class Cover(Dataset):
             Default: 'all'.
         overwrite : boolean
             overwrite cachefiles. Default: False.
-        cachedir : str or None
-            Directory in which the cachefiles are located. Default: None.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
         """
 
         gindexer = GenomicIndexer.create_from_file(regions, binsize,
@@ -264,16 +266,14 @@ class Cover(Dataset):
                     cover[interval, i] = vals
             return cover
 
-        if cachedir:
-            memmap_dir = os.path.join(cachedir, name)
-        else:
-            memmap_dir = None
+        datatags = [name] + datatags if datatags else []
 
         for chrom in gsize:
             gsize[chrom] //= resolution
 
         cover = create_genomic_array(gsize, stranded=False,
-                                     storage=storage, memmap_dir=memmap_dir,
+                                     storage=storage, datatags=datatags,
+                                     cache=cache,
                                      conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
@@ -293,7 +293,7 @@ class Cover(Dataset):
                         dimmode='all',
                         mode='binary',
                         overwrite=False,
-                        cachedir=None):
+                        datatags=None, cache=True):
         """Create a Cover class from a bed-file (or files).
 
         Parameters
@@ -341,8 +341,10 @@ class Cover(Dataset):
             Default: binary.
         overwrite : boolean
             overwrite cachefiles. Default: False.
-        cachedir : str or None
-            Directory in which the cachefiles are located. Default: None.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
         """
 
         gindexer = GenomicIndexer.create_from_file(regions, binsize,
@@ -412,16 +414,15 @@ class Cover(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        if cachedir:
-            memmap_dir = os.path.join(cachedir, name)
-        else:
-            memmap_dir = None
+
+        datatags = [name] + datatags if datatags else []
 
         for chrom in gsize:
             gsize[chrom] //= resolution
 
         cover = create_genomic_array(gsize, stranded=False,
-                                     storage=storage, memmap_dir=memmap_dir,
+                                     storage=storage, datatags=datatags,
+                                     cache=cache,
                                      conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,

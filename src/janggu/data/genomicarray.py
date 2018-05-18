@@ -82,6 +82,21 @@ class GenomicArray(object):
     def condition(self, conditions):
         self._condition = conditions
 
+def _get_output_location(datatags):
+    """Function returns the output location for the dataset.
+
+    Parameters
+    ------------
+    datatags : list(str)
+        Tags describing the dataset. E.g. ['dna'].
+    """
+    if "JANGGU_OUTPUT" in os.environ:
+        outputdir = os.environ['JANGGU_OUTPUT']
+    else:
+        outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
+    print('getloc', os.environ['JANGGO_OUTPUT'])
+    return os.path.join(outputdir, 'datasets', *datatags)
+
 
 class HDF5GenomicArray(GenomicArray):
     """GenomicArray stores multi-dimensional genomic information.
@@ -95,29 +110,42 @@ class HDF5GenomicArray(GenomicArray):
     Parameters
     ----------
     chroms : dict
-     Dictionary with chromosome names as keys and chromosome lengths
-     as values.
+        Dictionary with chromosome names as keys and chromosome lengths
+        as values.
     stranded : bool
-     Consider stranded profiles. Default: True.
+        Consider stranded profiles. Default: True.
     conditions : list(str) or None
-     List of cell-type or condition labels associated with the corresponding
-     array dimensions. Default: None means a one-dimensional array is produced.
+        List of cell-type or condition labels associated with the corresponding
+        array dimensions. Default: None means a one-dimensional array is produced.
     typecode : str
-     Datatype. Default: 'd'.
-    storage : str
-     Storage type can be 'ndarray', 'memmap' or 'hdf5'.
-     The first loads the data into a numpy array directly, while
-     the latter two can be used to fetch the data from disk.
-    memmap_dir : str
-     Directory in which to store the cachefiles. Used only with
-     'memmap' and 'hdf5'. Default: "".
+        Datatype. Default: 'd'.
+    datatags : list(str) or None
+        Tags describing the dataset. This is used to store the cache file.
+    cache : boolean
+        Whether to cache the dataset. Default: True
+    overwrite : boolean
+        Whether to overwrite the cache. Default: False
+    loader : callable or None
+        Function to be called for loading the genomic array.
+    loader_args : tuple or None
+        Arguments for loader.
     """
 
     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 memmap_dir="", overwrite=False, loader=None, loader_args=None):
+                 datatags=None, cache=True,
+                 overwrite=False, loader=None, loader_args=None):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode)
 
-        filename = 'storage.stranded.h5' if stranded else 'storage.unstranded.h5'
+        if not cache:
+            raise ValueError('HDF5 format requires cache=True')
+
+        if stranded:
+            datatags = datatags + ['stranded'] if datatags else ['stranded']
+
+        memmap_dir = _get_output_location(datatags)
+
+        filename = 'storage.h5'
+
         if not os.path.exists(memmap_dir):
             os.makedirs(memmap_dir)
         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
@@ -155,49 +183,97 @@ class NPGenomicArray(GenomicArray):
     Parameters
     ----------
     chroms : dict
-     Dictionary with chromosome names as keys and chromosome lengths
-     as values.
+        Dictionary with chromosome names as keys and chromosome lengths
+        as values.
     stranded : bool
-     Consider stranded profiles. Default: True.
+        Consider stranded profiles. Default: True.
     conditions : list(str) or None
-     List of cell-type or condition labels associated with the corresponding
-     array dimensions. Default: None means a one-dimensional array is produced.
+        List of cell-type or condition labels associated with the corresponding
+        array dimensions. Default: None means a one-dimensional array is produced.
     typecode : str
-     Datatype. Default: 'd'.
-    storage : str
-     Storage type can be 'ndarray', 'memmap' or 'hdf5'.
-     The first loads the data into a numpy array directly, while
-     the latter two can be used to fetch the data from disk.
-    memmap_dir : str
-     Directory in which to store the cachefiles. Used only with
-     'memmap' and 'hdf5'. Default: "".
+        Datatype. Default: 'd'.
+    datatags : list(str) or None
+        Tags describing the dataset. This is used to store the cache file.
+    cache : boolean
+        Whether to cache the dataset. Default: True
+    overwrite : boolean
+        Whether to overwrite the cache. Default: False
+    loader : callable or None
+        Function to be called for loading the genomic array.
+    loader_args : tuple or None
+        Arguments for loader.
     """
 
     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 loader=None, loader_args=None):
+                 datatags=None, cache=True,
+                 overwrite=False, loader=None, loader_args=None):
 
         super(NPGenomicArray, self).__init__(stranded, conditions, typecode)
 
-        self.handle = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
-                                                 2 if stranded else 1,
-                                                 len(self.condition)),
-                                          dtype=self.typecode) for chrom in chroms}
+        if stranded:
+            datatags = datatags + ['stranded'] if datatags else ['stranded']
 
-        # invoke the loader
-        if loader:
-            loader(self, *loader_args)
+        memmap_dir = _get_output_location(datatags)
+
+        filename = 'storage.npz'
+        if cache and not os.path.exists(memmap_dir):
+            os.makedirs(memmap_dir)
+        if cache and not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite or not cache:
+            print('create {}'.format(os.path.join(memmap_dir, filename)))
+            data = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
+                                                     2 if stranded else 1,
+                                                     len(self.condition)),
+                                              dtype=self.typecode) for chrom in chroms}
+            self.handle = data
+
+            condition = [numpy.string_(x) for x in conditions]
+
+            # invoke the loader
+            if loader:
+                loader(self, *loader_args)
+
+            names = [x for x in data]
+            data['conditions'] = [numpy.string_(x) for x in conditions]
+
+            if cache:
+                numpy.savez(os.path.join(memmap_dir, filename), **data)
+
+
+        if cache:
+            print('reload {}'.format(os.path.join(memmap_dir, filename)))
+            data = numpy.load(os.path.join(memmap_dir, filename))
+            names = [x for x in data.files if x != 'conditions']
+            condition = data['conditions']
+
+        # here we get either the freshly loaded data or the reloaded
+        # data from numpy.load.
+        self.handle = {key: data[key] for key in names}
+
+        self.condition = condition
 
 
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
-                         storage='hdf5', memmap_dir="", overwrite=False,
+                         storage='hdf5', datatags=None, cache=True, overwrite=False,
                          loader=None, loader_args=None):
     """Factory function for creating a GenomicArray."""
 
     if storage == 'hdf5':
-        return HDF5GenomicArray(chroms, stranded, conditions, typecode,
-                                memmap_dir, overwrite, loader, loader_args)
+        return HDF5GenomicArray(chroms, stranded=stranded,
+                                conditions=conditions,
+                                typecode=typecode,
+                                datatags=datatags,
+                                cache=cache,
+                                overwrite=overwrite,
+                                loader=loader,
+                                loader_args=loader_args)
     elif storage == 'ndarray':
-        return NPGenomicArray(chroms, stranded, conditions, typecode,
-                              loader, loader_args)
+        return NPGenomicArray(chroms, stranded=stranded,
+                                conditions=conditions,
+                                typecode=typecode,
+                                datatags=datatags,
+                                cache=cache,
+                                overwrite=overwrite,
+                                loader=loader,
+                                loader_args=loader_args)
     else:
         raise Exception("Storage type must be 'hdf5' or 'ndarray'")

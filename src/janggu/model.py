@@ -129,7 +129,10 @@ class Janggu(object):
         if not outputdir:  # pragma: no cover
             # this is excluded from the unit tests for which
             # only temporary directories should be used.
-            outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
+            if "JANGGU_OUTPUT" in os.environ:
+                outputdir = os.environ['JANGGU_OUTPUT']
+            else:
+                outputdir = os.path.join(os.path.expanduser("~"), 'janggu_results')
         self.outputdir = outputdir
 
         if not os.path.exists(outputdir):  # pragma: no cover

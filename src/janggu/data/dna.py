@@ -23,11 +23,6 @@ class Dna(Dataset):
     Upon indexing or slicing of the dataset, the one-hot representation
     for the respective locus will be returned.
 
-    Note
-    ----
-    Caching is only used with storage mode 'memmap' or 'hdf5'.
-    We recommend to use 'hdf5' for performance reasons.
-
     Parameters
     -----------
     name : str
@@ -42,9 +37,6 @@ class Dna(Dataset):
         Default: 150.
     order : int
         Order for the one-hot representation. Default: 1.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
-
     """
 
     _order = None
@@ -62,7 +54,7 @@ class Dna(Dataset):
         Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _make_genomic_array(name, fastafile, order, storage, cachedir='',
+    def _make_genomic_array(name, fastafile, order, storage, cache=True, datatags=None,
                             overwrite=False):
         """Create a genomic array or reload an existing one."""
 
@@ -104,10 +96,13 @@ class Dna(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
+        datatags = [name] + datatags if datatags else []
 
         cover = create_genomic_array(chromlens, stranded=False,
                                      storage=storage,
-                                     memmap_dir=os.path.join(cachedir, name),
+                                     datatags=datatags,
+                                     cache=cache,
+                                     conditions=[str(i) for i in range(pow(4, order))],
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_dna_loader,
@@ -119,7 +114,8 @@ class Dna(Dataset):
     def create_from_refgenome(cls, name, refgenome, regions,
                               stepsize=200, binsize=200,
                               flank=0, order=1, storage='ndarray',
-                              cachedir='', overwrite=False):
+                              datatags=None,
+                              cache=True, overwrite=False):
         """Create a Dna class from a reference genome.
 
         This requires a reference genome in fasta format as well as a bed-file
@@ -145,8 +141,12 @@ class Dna(Dataset):
         storage : str
             Storage mode for storing the sequence may be 'ndarray', 'memmap' or
             'hdf5'. Default: 'hdf5'.
-        cachedir : str
-            Directory in which the cachefiles are located. Default: ''.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
+        overwrite : boolean
+            Overwrite the cachefiles. Default: False.
         """
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
@@ -154,14 +154,15 @@ class Dna(Dataset):
         gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
-                                         cachedir=cachedir,
+                                         datatags=datatags,
+                                         cache=cache,
                                          overwrite=overwrite)
 
         return cls(name, garray, gindexer, flank, order)
 
     @classmethod
     def create_from_fasta(cls, name, fastafile, storage='ndarray',
-                          order=1, cachedir='', overwrite=False):
+                          order=1, datatags=None, cache=True, overwrite=False):
         """Create a Dna class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
@@ -178,13 +179,15 @@ class Dna(Dataset):
         storage : str
             Storage mode for storing the sequence may be 'ndarray', 'memmap' or
             'hdf5'. Default: 'ndarray'.
-        cachedir : str
-            Directory in which the cachefiles are located. Default: ''.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
         garray = cls._make_genomic_array(name, fastafile, order, storage,
-                                         cachedir=cachedir,
+                                         cache=cache, datatags=datatags,
                                          overwrite=overwrite)
 
         seqs = []
