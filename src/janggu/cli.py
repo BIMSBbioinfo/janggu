@@ -86,18 +86,19 @@ def display_page(pathname):
                  for name in encoding],
                 className='table table-bordered')])
     else:
-        pathlen = len(os.path.join(args.janggu_results,
-                                   'evaluation', pathname[1:])) + 1
-        files = glob.glob(os.path.join(args.janggu_results,
-                                       'evaluation', pathname[1:], '*.png'))
-        files += glob.glob(os.path.join(args.janggu_results,
-                                        'evaluation', pathname[1:],
-                                        '*', '*.png'))
-        files += glob.glob(os.path.join(args.janggu_results,
-                                        'evaluation', pathname[1:], '*.ply'))
-        files += glob.glob(os.path.join(args.janggu_results,
-                                        'evaluation', pathname[1:],
-                                        '*', '*.ply'))
+        files = []
+        root = os.path.join(args.janggu_results, 'evaluation', pathname[1:])
+        pathlen = len(root) + 1
+        for root, dirnames, filenames in os.walk(root):
+            for filename in filenames:
+                if filename.endswith('.png') or \
+                    filename.endswith('.tsv') or filename.endswith('.ply'):
+                    print(dirnames,filename)
+                    path = tuple(dirnames) + (filename,)
+
+                    files += [os.path.join(root, *path)]
+                    print(files)
+
         if not files:
             return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
@@ -119,6 +120,23 @@ def update_output(value):
         img = base64.b64encode(open(value, 'rb').read())
         return html.Img(width='100%',
                         src='data:image/png;base64,{}'.format(img.decode()))
+
+    elif value.endswith('tsv'):
+        max_rows = 20
+        df_ = pd.read_csv(value, sep='\t', header=[0])
+        if df_.shape[0] == 1:
+            df_ = df_.transpose()
+            df_.columns = ['score']
+        return html.Table(
+            # Header
+            [html.Tr([html.Th(col) for col in df_.columns])] +
+
+            # Body
+            [html.Tr([
+                html.Td(df_.iloc[i][col]) for col in df_.columns
+            ]) for i in range(min(len(df_), max_rows))]
+        )
+
     elif value.endswith('ply'):
         dfheader = pd.read_csv(value, sep='\t', header=[0], nrows=0)
         # read the annotation for the dropdown
