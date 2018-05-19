@@ -181,7 +181,7 @@ class NPGenomicArray(GenomicArray):
     datatags : list(str) or None
         Tags describing the dataset. This is used to store the cache file.
     cache : boolean
-        Whether to cache the dataset. Default: True
+        Specifies whether to cache the dataset. Default: True
     overwrite : boolean
         Whether to overwrite the cache. Default: False
     loader : callable or None
@@ -205,11 +205,9 @@ class NPGenomicArray(GenomicArray):
         if cache and not os.path.exists(memmap_dir):
             os.makedirs(memmap_dir)
 
-        print(os.path.join(memmap_dir, filename))
-        print(os.path.exists(os.path.join(memmap_dir, filename)))
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
             or overwrite or not cache:
-            print('create {}'.format(os.path.join(memmap_dir, filename)))
+            print('load {}'.format(os.path.join(memmap_dir, filename)))
             data = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
                                               2 if stranded else 1,
                                               len(self.condition)),
@@ -244,7 +242,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                          storage='hdf5', datatags=None, cache=True, overwrite=False,
                          loader=None, loader_args=None):
     """Factory function for creating a GenomicArray."""
-    print('datatags',  datatags)
+
     if storage == 'hdf5':
         return HDF5GenomicArray(chroms, stranded=stranded,
                                 conditions=conditions,

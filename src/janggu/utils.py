@@ -353,7 +353,6 @@ def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
     ax_.set_title(name)
     for mname, lname, cname in results:
         # avg might be returned using a custom function
-        print(mname, lname, cname)
         x_score, y_score, auxstr = results[mname, lname, cname]['value']
         label = "{}".format('-'.join([mname[:8], lname, cname]))
         if isinstance(auxstr, str):
