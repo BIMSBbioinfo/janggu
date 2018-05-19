@@ -183,6 +183,7 @@ class Cover(Dataset):
                            dtype='float32',
                            overwrite=False,
                            dimmode='all',
+                           aggregate=np.mean,
                            datatags=None, cache=True):
         """Create a Cover class from a bigwig-file (or files).
 
@@ -230,6 +231,9 @@ class Cover(Dataset):
             overwrite cachefiles. Default: False.
         datatags : list(str) or None
             List of datatags. Default: None.
+        aggregate : callable
+            Aggregation operation for loading genomic array for a given resolution.
+            Default: numpy.mean
         cache : boolean
             Whether to cache the dataset. Default: True.
         """
@@ -238,32 +242,38 @@ class Cover(Dataset):
                                                    stepsize,
                                                    resolution=resolution)
 
-        # automatically determine genomesize from largest region
-        if not genomesize:
-            gsize = get_genome_size_from_bed(regions, flank*resolution)
-        else:
-            gsize = genomesize.copy()
-
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
+
+        if genomesize is None:
+            bwfile = pyBigWig.open(bigwigfiles[0], 'r')
+            gsize = bwfile.chroms()
+        else:
+            gsize = genomesize.copy()
 
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
 
-        def _bigwig_loader(cover, bigwigfiles, gindexer):
+        def _bigwig_loader(cover, aggregate):
             print("load from bigwig")
             for i, sample_file in enumerate(bigwigfiles):
                 bwfile = pyBigWig.open(sample_file)
 
-                for interval in gindexer:
-                    vals = np.asarray(bwfile.values(
-                        interval.chrom,
-                        int(interval.start*gindexer.resolution),
-                        int(interval.end*gindexer.resolution)))
-                    vals = vals.reshape((interval.end-interval.start, resolution))
-                    vals = vals.mean(axis=1)
+                for chrom in gsize:
+                    print()
+                    print(chrom, resolution, gsize[chrom])
 
-                    cover[interval, i] = vals
+                    vals = np.empty((gsize[chrom]))
+                    for start in range(0, gsize[chrom]):
+
+                        vals[start] = aggregate(np.asarray(bwfile.values(
+                            chrom,
+                            int(start*resolution),
+                            int(min((start+1)*resolution,
+                            gsize[chrom]*resolution)))))
+                        # not sure what to do with nan yet.
+
+                    cover[GenomicInterval(chrom, 0, gsize[chrom]), i] = vals
             return cover
 
         datatags = [name] + datatags if datatags else [name]
@@ -279,7 +289,7 @@ class Cover(Dataset):
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_bigwig_loader,
-                                     loader_args=(bigwigfiles, gindexer))
+                                     loader_args=(aggregate,))
 
         return cls(name, cover, gindexer, flank, stranded=False,
                    padding_value=0, dimmode=dimmode)
