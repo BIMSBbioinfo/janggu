@@ -57,12 +57,12 @@ ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
 PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
-DNA = Dna.create_from_refgenome('dna', refgenome=REFGENOME, regions=ROI_FILE, cache=False,
+DNA = Dna.create_from_refgenome('dna', refgenome=REFGENOME, regions=ROI_FILE,
                                 order=args.order, datatags=['ref'])
 
 LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
                                bedfiles=PEAK_FILE,
-                               datatags=['train'], cache=False)
+                               datatags=['train'])
 
 
 # evaluation metrics from sklearn.metrics
@@ -157,12 +157,12 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 DNA_TEST = Dna.create_from_refgenome('dna', refgenome=REFGENOME,
                                      regions=ROI_FILE,
-                                     order=args.order, datatags=['ref'], cache=False)
+                                     order=args.order, datatags=['ref'])
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
                                     regions=ROI_FILE,
-                                    datatags=['test'], cache=False)
+                                    datatags=['test'])
 
 # do the evaluation on the training data
 # model.evaluate(DNA, LABELS, datatags=['train'],
