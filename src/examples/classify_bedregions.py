@@ -47,20 +47,22 @@ args = PARSER.parse_args()
 os.environ['JANGGU_OUTPUT'] = args.path
 
 # load the dataset
+# The pseudo genome represents just a concatenation of all sequences
+# in sample.fa and sample2.fa. Therefore, the results should be almost
+# identically to the models obtained from classify_fasta.py.
 REFGENOME = resource_filename('janggu', 'resources/pseudo_genome.fa')
 # ROI contains regions spanning positive and negative examples
-ROI_FILE = resource_filename('janggu', 'resources/training_regions.bed')
+ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
 # PEAK_FILE only contains positive examples
-PEAK_FILE = resource_filename('janggu', 'resources/training_scores.bed')
+PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
-DNA = Dna.create_from_refgenome('dna', refgenome=REFGENOME,
-                                regions=ROI_FILE,
+DNA = Dna.create_from_refgenome('dna', refgenome=REFGENOME, regions=ROI_FILE, cache=False,
                                 order=args.order, datatags=['ref'])
 
 LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
                                bedfiles=PEAK_FILE,
-                               datatags=['train'])
+                               datatags=['train'], cache=False)
 
 
 # evaluation metrics from sklearn.metrics
@@ -148,19 +150,19 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
-ROI_FILE = resource_filename('janggu', 'resources/test_regions.bed')
+ROI_FILE = resource_filename('janggu', 'resources/roi_test.bed')
 # PEAK_FILE only contains positive examples
-PEAK_FILE = resource_filename('janggu', 'resources/test_scores.bed')
+PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
 DNA_TEST = Dna.create_from_refgenome('dna', refgenome=REFGENOME,
                                      regions=ROI_FILE,
-                                     order=args.order, datatags=['ref'])
+                                     order=args.order, datatags=['ref'], cache=False)
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
                                     regions=ROI_FILE,
-                                    datatags=['test'])
+                                    datatags=['test'], cache=False)
 
 # do the evaluation on the training data
 # model.evaluate(DNA, LABELS, datatags=['train'],
