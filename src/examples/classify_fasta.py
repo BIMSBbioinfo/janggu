@@ -62,7 +62,7 @@ SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 
 DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                            order=args.order, datatags=['train'])
+                            order=args.order, datatags=['train'], cache=True)
 
 Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
                [0 for line in range(nseqs(SAMPLE_2))])
@@ -158,7 +158,7 @@ SAMPLE_1 = os.path.join(DATA_PATH, 'sample_test.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2_test.fa')
 
 DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                                 order=args.order, datatags=['test'])
+                                 order=args.order, datatags=['test'], cache=True)
 
 
 Y = np.asarray([1 for _ in range(nseqs(SAMPLE_1))] +
