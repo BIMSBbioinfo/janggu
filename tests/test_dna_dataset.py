@@ -308,7 +308,7 @@ def test_dna_dataset_sanity(tmpdir):
                               regions=bed_file, order=1)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'datasets', 'train',
-                                       'storage.h5'))
+                                       'order1', 'storage.h5'))
 
 
 def test_read_dna_from_fasta_order_1():

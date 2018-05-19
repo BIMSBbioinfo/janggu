@@ -267,6 +267,7 @@ class Cover(Dataset):
             return cover
 
         datatags = [name] + datatags if datatags else [name]
+        datatags += ['resolution{}'.format(resolution)]
 
         for chrom in gsize:
             gsize[chrom] //= resolution
@@ -416,6 +417,7 @@ class Cover(Dataset):
         # in each bw-file as unstranded
 
         datatags = [name] + datatags if datatags else [name]
+        datatags += ['resolution{}'.format(resolution)]
 
         for chrom in gsize:
             gsize[chrom] //= resolution
