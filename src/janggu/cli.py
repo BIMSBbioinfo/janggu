@@ -47,8 +47,9 @@ app.config['suppress_callback_exceptions'] = True
 def serve_layer():
     return html.Div([
         dcc.Location(id='url', refresh=False),
-        html.Nav(html.Div(dcc.Link(html.H2('Janggu'), href='/',
+        html.Nav(html.Div([dcc.Link(html.H2('Janggu'), href='/',
                                    className='navbar-brand'),
+                          dcc.Link('Logs', href='/logs')],
                           className='navbar-header'),
                  className='navbar navbar-default navbar-expand-lg navbar-dark'),
         html.Br(),
@@ -85,6 +86,10 @@ def display_page(pathname):
                                   encoding[name].decode())))])
                  for name in encoding],
                 className='table table-bordered')])
+    elif pathname == '/logs':
+        return html.Div(
+            html.Pre(open(os.path.join(args.janggu_results, 'logs', 'janggu.log')).read())
+        )
     else:
         files = []
         root = os.path.join(args.janggu_results, 'evaluation', pathname[1:])
