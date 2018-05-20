@@ -135,7 +135,7 @@ class Janggu(object):
 
         logfile = os.path.join(self.outputdir, 'logs', 'janggu.log')
 
-        self.logger = logging.getLogger(self.name)
+        self.logger = logging.getLogger(self.name[:8])
 
         logging.basicConfig(filename=logfile,
                             level=logging.DEBUG,
@@ -406,17 +406,17 @@ class Janggu(object):
         for par_ in hyper_params:
             self.logger.info('%s: %s', par_, str(hyper_params[par_]))
 
-        if callbacks:
+        if callbacks is None:
+            callbacks = []
 
-            callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: self.logger.info(
-                "epoch %s: %s",
-                epoch + 1,
-                ' '.join(["{}={}".format(k, logs[k]) for k in logs]))))
-        else:
-            callbacks = [LambdaCallback(on_epoch_end=lambda epoch, logs: self.logger.info(
-                "epoch %s: %s",
-                epoch + 1,
-                ' '.join(["{}={}".format(k, logs[k]) for k in logs])))]
+        callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: self.logger.info(
+            "epoch %s: %s",
+            epoch + 1,
+            ' '.join(["{}=".format(k) +
+                      ('{:.4f}' if
+                       abs(logs[k]) > 1e-3
+                       else '{:.4e}').format(logs[k]) for k in logs]))))
+
         if not batch_size:
             batch_size = 32
         jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
