@@ -1,6 +1,6 @@
 """Janggu model and utilities for deep learning in genomics."""
 
-__version__ = '0.6.4'
+__version__ = '0.6.5'
 
 from janggu.decorators import inputlayer  # noqa
 from janggu.decorators import outputconv  # noqa
