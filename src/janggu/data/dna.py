@@ -103,7 +103,7 @@ class Dna(Dataset):
                                      storage=storage,
                                      datatags=datatags,
                                      cache=cache,
-                                     conditions=[str(i) for i in range(pow(4, order))],
+                                     conditions=['idx'],
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_dna_loader,
