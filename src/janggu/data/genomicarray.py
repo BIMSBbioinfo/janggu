@@ -39,13 +39,22 @@ class GenomicArray(object):
     """
     handle = dict()
     _condition = None
+    _resolution = None
+    _order = None
 
-    def __init__(self, stranded=True, conditions=None, typecode='d'):
+    def __init__(self, stranded=True, conditions=None, typecode='d',
+                 resolution=1, order=1):
         self.stranded = stranded
         if conditions is None:
             conditions = ['sample']
 
         self.condition = conditions
+        self.order = order
+        if not isinstance(order, int) or order < 1:
+            raise Exception('order must be a positive integer')
+        if order > 4:
+            raise Exception('order support only up to order=4.')
+        self.resolution = resolution
         self.typecode = typecode
 
     def __setitem__(self, index, value):
@@ -53,8 +62,8 @@ class GenomicArray(object):
         condition = index[1]
         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
             chrom = interval.chrom
-            start = interval.start
-            end = interval.end
+            start = interval.start // self.resolution
+            end = interval.end // self.resolution
             strand = interval.strand
             self.handle[chrom][start:end,
                                1 if self.stranded and strand == '-' else 0,
@@ -67,8 +76,8 @@ class GenomicArray(object):
         if isinstance(index, GenomicInterval):
             interval = index
             chrom = interval.chrom
-            start = interval.start
-            end = interval.end
+            start = interval.start // self.resolution
+            end = interval.end // self.resolution
 
             return self.handle[chrom][start:end]
         else:
@@ -82,6 +91,28 @@ class GenomicArray(object):
     @condition.setter
     def condition(self, conditions):
         self._condition = conditions
+
+    @property
+    def resolution(self):
+        """resolution"""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, resolution):
+        if resolution <= 0:
+            raise ValueError('resolution must be greater than zero')
+        self._resolution = resolution
+
+    @property
+    def order(self):
+        """order"""
+        return self._order
+
+    @order.setter
+    def order(self, order):
+        if order <= 0:
+            raise ValueError('order must be greater than zero')
+        self._order = order
 
 
 class HDF5GenomicArray(GenomicArray):
@@ -118,9 +149,12 @@ class HDF5GenomicArray(GenomicArray):
     """
 
     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 datatags=None, cache=True,
+                 datatags=None, resolution=1,
+                 order=1, cache=True,
                  overwrite=False, loader=None, loader_args=None):
-        super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode)
+        super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
+                                               resolution,
+                                               order)
 
         if not cache:
             raise ValueError('HDF5 format requires cache=True')
@@ -141,10 +175,13 @@ class HDF5GenomicArray(GenomicArray):
             for chrom in chroms:
                 shape = (chroms[chrom] + 1, 2 if stranded else 1, len(self.condition))
                 self.handle.create_dataset(chrom, shape,
-                                           dtype=self.typecode, compression='lzf',
+                                           dtype=self.typecode, compression='gzip',
                                            data=numpy.zeros(shape, dtype=self.typecode))
 
             self.handle.attrs['conditions'] = [numpy.string_(x) for x in self.condition]
+            self.handle.attrs['order'] = self.order
+            self.handle.attrs['resolution'] = self.resolution
+
 
             # invoke the loader
             if loader:
@@ -155,6 +192,8 @@ class HDF5GenomicArray(GenomicArray):
                                 driver='stdio')
 
         self.condition = self.handle.attrs['conditions']
+        self.order = self.handle.attrs['order']
+        self.resolution = self.handle.attrs['resolution']
 
 
 class NPGenomicArray(GenomicArray):
@@ -191,10 +230,13 @@ class NPGenomicArray(GenomicArray):
     """
 
     def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 datatags=None, cache=True,
+                 datatags=None, resolution=1,
+                 order=1, cache=True,
                  overwrite=False, loader=None, loader_args=None):
 
-        super(NPGenomicArray, self).__init__(stranded, conditions, typecode)
+        super(NPGenomicArray, self).__init__(stranded, conditions, typecode,
+                                             resolution,
+                                             order)
 
         if stranded:
             datatags = datatags + ['stranded'] if datatags else ['stranded']
@@ -221,6 +263,9 @@ class NPGenomicArray(GenomicArray):
             condition = [numpy.string_(x) for x in self.condition]
             names = [x for x in data]
             data['conditions'] = condition
+            data['order'] = order
+            data['resolution'] = resolution
+
 
             if cache:
                 numpy.savez(os.path.join(memmap_dir, filename), **data)
@@ -228,18 +273,24 @@ class NPGenomicArray(GenomicArray):
         if cache:
             print('reload {}'.format(os.path.join(memmap_dir, filename)))
             data = numpy.load(os.path.join(memmap_dir, filename))
-            names = [x for x in data.files if x != 'conditions']
+            names = [x for x in data.files if x not in ['conditions', 'order', 'resolution']]
             condition = data['conditions']
+            order = data['order']
+            resolution = data['resolution']
 
         # here we get either the freshly loaded data or the reloaded
         # data from numpy.load.
         self.handle = {key: data[key] for key in names}
 
         self.condition = condition
+        self.resolution = resolution
+        self.order = order
 
 
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
-                         storage='hdf5', datatags=None, cache=True, overwrite=False,
+                         storage='hdf5', resolution=1,
+                         order=1,
+                         datatags=None, cache=True, overwrite=False,
                          loader=None, loader_args=None):
     """Factory function for creating a GenomicArray."""
 
@@ -248,6 +299,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                                 conditions=conditions,
                                 typecode=typecode,
                                 datatags=datatags,
+                                resolution=resolution,
+                                order=order,
                                 cache=cache,
                                 overwrite=overwrite,
                                 loader=loader,
@@ -257,6 +310,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                               conditions=conditions,
                               typecode=typecode,
                               datatags=datatags,
+                              resolution=resolution,
+                              order=order,
                               cache=cache,
                               overwrite=overwrite,
                               loader=loader,

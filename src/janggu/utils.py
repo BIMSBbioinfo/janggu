@@ -67,7 +67,7 @@ def sequences_from_fasta(fasta):
     return seqs
 
 
-LETTERMAP = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'a': 0, 'c': 1, 'g': 2, 't': 3}
+LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.unambiguous_dna.letters))}
 
 NMAP = defaultdict(lambda: -1024)
 NMAP.update(LETTERMAP)
@@ -95,7 +95,7 @@ def dna2ind(seq):
     if isinstance(seq, SeqRecord):
         seq = seq.seq
     if isinstance(seq, (str, Seq)):
-        return [NMAP[x] for x in seq]
+        return [NMAP[x.upper()] for x in seq]
     else:
         raise TypeError('dna2ind: Format is not supported')
 
@@ -122,7 +122,7 @@ def as_onehot(idna, order):
     numpy.array
         One-hot representation of the batch. The dimension
         of the array is given by
-        `(batch_size, sequence length, pow(4, order), 1)`
+        `(batch_size, sequence length, pow(nletters, order), 1)`
     """
 
     onehot = np.zeros((len(idna),
@@ -134,12 +134,12 @@ def as_onehot(idna, order):
 
 
 def _complement_index(idx, order):
-    rev_idx = np.arange(4)[::-1]
+    rev_idx = np.arange(len(LETTERMAP))[::-1]
     irc = 0
     for iord in range(order):
-        nuc = idx % 4
-        idx = idx // 4
-        irc += rev_idx[nuc] * pow(4, order - iord - 1)
+        nuc = idx % len(LETTERMAP)
+        idx = idx // len(LETTERMAP)
+        irc += rev_idx[nuc] * pow(len(LETTERMAP), order - iord - 1)
 
     return irc
 
@@ -158,8 +158,8 @@ def complement_permmatrix(order):
     np.array
         Permutation matrix
     """
-    perm = np.zeros((pow(4, order), pow(4, order)))
-    for idx in range(pow(4, order)):
+    perm = np.zeros((pow(len(LETTERMAP), order), pow(len(LETTERMAP), order)))
+    for idx in range(pow(len(LETTERMAP), order)):
         jdx = _complement_index(idx, order)
         perm[jdx, idx] = 1
     return perm
@@ -375,7 +375,7 @@ def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
                 bbox_extra_artists=(lgd,), bbox_inches="tight")
 
 
-def export_bigwig(output_dir, name, results, gindexer=None):
+def export_bigwig(output_dir, name, results, gindexer=None, resolution=None):
     """Export predictions to bigwig.
 
     This function can be used as exporter with :class:`Scorer`.
@@ -383,6 +383,10 @@ def export_bigwig(output_dir, name, results, gindexer=None):
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bigiwig')
+    if resolution is None:
+        raise ValueError('Resolution must be specify')
+    if gindexer.stepsize < gindexer.binsize:
+        raise ValueError('GenomicIndexer stepsize must be at least as long as binsize')
 
     genomesize = {}
 
@@ -401,7 +405,7 @@ def export_bigwig(output_dir, name, results, gindexer=None):
         if genomesize[region.chrom] < region.end:
             genomesize[region.chrom] = region.end
 
-    bw_header = [(chrom, genomesize[chrom]*gindexer.resolution)
+    bw_header = [(chrom, genomesize[chrom])
                  for chrom in genomesize]
 
     # the last dimension holds the conditions. Each condition
@@ -418,17 +422,17 @@ def export_bigwig(output_dir, name, results, gindexer=None):
         for idx, region in enumerate(gindexer):
 
             val = [p for p in pred[idx:(idx+nsplit)]
-                   for _ in range(gindexer.resolution)]
+                   for _ in range(resolution)]
 
             bw_file.addEntries(region.chrom,
-                               int(region.start*gindexer.resolution),
+                               int(region.start),
                                values=val,
                                span=1,
                                step=1)
         bw_file.close()
 
 
-def export_bed(output_dir, name, results, gindexer=None):
+def export_bed(output_dir, name, results, gindexer=None, resolution=None):
     """Export predictions to bed.
 
     This function can be used as exporter with :class:`Scorer`.
@@ -436,7 +440,8 @@ def export_bed(output_dir, name, results, gindexer=None):
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bed')
-
+    if resolution is None:
+        raise ValueError('Resolution must be specify')
     # the last dimension holds the conditions. Each condition
     # needs to be stored in a separate file
 
@@ -446,19 +451,22 @@ def export_bed(output_dir, name, results, gindexer=None):
         for ridx, region in enumerate(gindexer):
             pred = results[modelname, layername, condition]['value']
 
-            nsplit = len(pred)//len(gindexer)
-            stepsize = (region.end-region.start)//nsplit
+            #nsplit = len(pred)//len(gindexer)
+            nsplit = (region.end-region.start)//resolution
+
             starts = list(range(region.start,
                                 region.end,
-                                stepsize))
-            ends = list(range(region.start + stepsize,
-                              region.end + stepsize,
-                              stepsize))
+                                resolution))
+            ends = list(range(region.start + resolution,
+                              region.end + resolution,
+                              resolution))
             cont = {'chr': [region.chrom] * nsplit,
-                    'start': [s*gindexer.resolution for s in starts],
-                    'end': [e*gindexer.resolution for e in ends],
+                    'start': [s for s in starts],
+                    'end': [e for e in ends],
                     'name': ['.'] * nsplit,
                     'score': pred[ridx*nsplit:((ridx+1)*nsplit)]}
+            print(cont)
+
             bed_entry = pd.DataFrame(cont)
             bed_content = bed_content.append(bed_entry, ignore_index=True)
 

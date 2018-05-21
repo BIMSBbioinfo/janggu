@@ -23,11 +23,9 @@ def test_gindexer_errors():
                                                      'sample.bed'),
                                         binsize=10, stepsize=0)
     with pytest.raises(ValueError):
-        # due to resolution > stepsize
-        GenomicIndexer.create_from_file(os.path.join(data_path,
-                                                     'sample.bed'),
-                                        binsize=200, stepsize=50,
-                                        resolution=100)
+        # due to flank < 0
+        GenomicIndexer.create_from_file(os.path.join(data_path, 'sample.bed'),
+                                        binsize=200, stepsize=50, flank=-1)
 
 
 def test_gindexer_merged():

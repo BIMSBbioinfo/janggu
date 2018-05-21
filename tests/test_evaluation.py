@@ -275,14 +275,13 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=200)
+                                         stepsize=200)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
                         exporter=export_bed)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi})
+                 exporter_kwargs={'gindexer': gi, 'resolution':200})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -316,8 +315,7 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=50)
+                                         stepsize=200)
 
     # dummy_eval = Scorer('loss', lambda t, p: -t * numpy.log(p),
     #                    exporter=export_bed, export_args={'gindexer': gi})
@@ -325,7 +323,7 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
                         exporter=export_bed)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi})
+                 exporter_kwargs={'gindexer': gi, 'resolution': 50})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -358,15 +356,14 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=200)
+                                         stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                         exporter=export_bed,
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi})
+                exporter_kwargs={'gindexer': gi, 'resolution': 200})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -399,14 +396,13 @@ def test_output_bed_predict_denseout(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=200)
+                                         stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                         exporter=export_bed,
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval], exporter_kwargs={'gindexer': gi})
+    bwm.predict(inputs, callbacks=[dummy_eval], exporter_kwargs={'gindexer': gi, 'resolution': 200})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -439,15 +435,14 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=50)
+                                         stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                         exporter=export_bed,
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi})
+                exporter_kwargs={'gindexer': gi, 'resolution': 50})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -480,15 +475,14 @@ def test_output_bigwig_predict_denseout(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=200)
+                                         stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
                         exporter=export_bigwig,
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi})
+                exporter_kwargs={'gindexer': gi, 'resolution': 200})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -518,15 +512,14 @@ def test_output_bigwig_predict_convout(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=50)
+                                         stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.2] * len(p),
                         exporter=export_bigwig,
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi})
+                exporter_kwargs={'gindexer': gi, 'resolution': 50})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -556,14 +549,13 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200,
-                                         resolution=50)
+                                         stepsize=200)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
                         exporter=export_bigwig)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi})
+                 exporter_kwargs={'gindexer': gi, 'resolution': 50})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bigwig')

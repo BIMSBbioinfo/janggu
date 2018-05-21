@@ -42,14 +42,12 @@ class Dna(Dataset):
     _order = None
     _flank = None
 
-    def __init__(self, name, garray, gindexer, flank=150, order=1):
+    def __init__(self, name, garray, gindexer):
 
-        self.flank = flank
-        self.order = order
         self.garray = garray
         self.gindexer = gindexer
-        self._rcindex = [_complement_index(idx, order)
-                         for idx in range(pow(4, order))]
+        self._rcindex = [_complement_index(idx, garray.order)
+                         for idx in range(pow(4, garray.order))]
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -103,6 +101,7 @@ class Dna(Dataset):
                                      storage=storage,
                                      datatags=datatags,
                                      cache=cache,
+                                     order=order,
                                      conditions=['idx'],
                                      overwrite=overwrite,
                                      typecode=dtype,
@@ -152,14 +151,14 @@ class Dna(Dataset):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize)
+        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize, flank)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite)
 
-        return cls(name, garray, gindexer, flank, order)
+        return cls(name, garray, gindexer)
 
     @classmethod
     def create_from_fasta(cls, name, fastafile, storage='ndarray',
@@ -212,19 +211,17 @@ class Dna(Dataset):
         flank = 0
         stepsize = 1
 
-        gindexer = GenomicIndexer(reglen, stepsize, 1)
+        gindexer = GenomicIndexer(reglen, stepsize, flank)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
         gindexer.inregionidx = [0]*len(lens)
         gindexer.strand = ['.']*len(lens)
         gindexer.rel_end = [reglen + 2*flank]*len(lens)
 
-        return cls(name, garray, gindexer, flank, order)
+        return cls(name, garray, gindexer)
 
     def __repr__(self):  # pragma: no cover
-        return 'Dna("{}", <garray>, <gindexer>, \
-                flank={}, order={})'\
-                .format(self.name, self.flank, self.order)
+        return 'Dna("{}")'.format(self.name,)
 
     def idna4idx(self, idxs):
         """Extracts the DNA sequence for set of indices.
@@ -247,12 +244,12 @@ class Dna(Dataset):
 
         # for each index read use the adaptor indices to retrieve the seq.
         idna = np.zeros((len(idxs), self.gindexer.binsize +
-                         2*self.flank - self.order + 1), dtype="int16")
+                         2*self.gindexer.flank - self.garray.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
-            interval.start -= self.flank
-            interval.end += self.flank - self.order + 1
+
+            interval.end += - self.garray.order + 1
 
             # Computing the forward or reverse complement of the
             # sequence, depending on the strand flag.
@@ -277,7 +274,7 @@ class Dna(Dataset):
             raise IndexError('Dna.__getitem__: '
                              + 'index must be iterable')
 
-        data = as_onehot(self.idna4idx(idxs), self.order)
+        data = as_onehot(self.idna4idx(idxs), self.garray.order)
 
         for transform in self.transformations:
             data = transform(data)
@@ -291,28 +288,5 @@ class Dna(Dataset):
     def shape(self):
         """Shape of the dataset"""
         return (len(self), self.gindexer.binsize +
-                2*self.flank - self.order + 1, pow(4, self.order), 1)
-
-    @property
-    def order(self):
-        """Order of the one-hot representation"""
-        return self._order
-
-    @order.setter
-    def order(self, value):
-        if not isinstance(value, int) or value < 1:
-            raise Exception('order must be a positive integer')
-        if value > 4:
-            raise Exception('order support only up to order=4.')
-        self._order = value
-
-    @property
-    def flank(self):
-        """Flanking bins"""
-        return self._flank
-
-    @flank.setter
-    def flank(self, value):
-        if not isinstance(value, int) or value < 0:
-            raise Exception('_flank must be a non-negative integer')
-        self._flank = value
+                2*self.gindexer.flank - self.garray.order + 1,
+                pow(4, self.garray.order), 1)
