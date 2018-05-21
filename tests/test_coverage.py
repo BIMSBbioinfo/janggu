@@ -11,7 +11,9 @@ import pytest
 from janggu.data import Cover
 
 
-def test_cover_from_bam_sanity():
+def test_cover_from_bam_sanity(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    print(os.environ['JANGGU_OUTPUT'])
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -59,7 +61,8 @@ def test_cover_from_bam_sanity():
             storage='ndarray')
 
 
-def test_cover_from_bigwig_sanity():
+def test_cover_from_bigwig_sanity(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -118,7 +121,8 @@ def test_cover_from_bigwig_sanity():
             storage='ndarray')
 
 
-def test_cover_from_bed_sanity():
+def test_cover_from_bed_sanity(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -187,6 +191,7 @@ def test_cover_from_bed_sanity():
 
 
 def test_cover_bam(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample.bam")
     gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
@@ -206,8 +211,7 @@ def test_cover_bam(tmpdir):
             bamfiles=bamfile_,
             regions=bed_file,
             genomesize=gsize,
-            storage=store,
-            cachedir=tmpdir.strpath if store == 'hdf5' else None)
+            storage=store)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 200, 2, 1))
@@ -241,6 +245,7 @@ def test_cover_bam(tmpdir):
 
 
 def test_load_cover_bigwig_default(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bwfile_ = os.path.join(data_path, "sample.bw")
@@ -251,8 +256,6 @@ def test_load_cover_bigwig_default(tmpdir):
 
     bed_file = os.path.join(data_path, "sample.bed")
 
-    cachedir = tmpdir.strpath
-
     for store in ['ndarray', 'hdf5']:
         # base pair binsize
         print(store)
@@ -261,8 +264,7 @@ def test_load_cover_bigwig_default(tmpdir):
             bigwigfiles=bwfile_,
             regions=bed_file,
             genomesize=gsize,
-            storage=store,
-            cachedir=cachedir if store == 'hdf5' else None)
+            storage=store)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
@@ -273,13 +275,12 @@ def test_load_cover_bigwig_default(tmpdir):
 
 
 def test_load_cover_bigwig_resolution1(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bwfile_ = os.path.join(data_path, "sample.bw")
 
     bed_file = os.path.join(data_path, "sample.bed")
-
-    cachedir = tmpdir.strpath
 
     for store in ['ndarray', 'hdf5']:
         # base pair binsize
@@ -289,8 +290,7 @@ def test_load_cover_bigwig_resolution1(tmpdir):
             bigwigfiles=bwfile_,
             regions=bed_file,
             resolution=1,
-            storage=store,
-            cachedir=cachedir if store == 'hdf5' else None)
+            storage=store)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
@@ -329,8 +329,8 @@ def test_load_cover_bigwig_resolution1(tmpdir):
          0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
 
 
-def test_load_cover_bed_binary():
-
+def test_load_cover_bed_binary(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
@@ -347,7 +347,7 @@ def test_load_cover_bed_binary():
     np.testing.assert_equal(cover[4].sum(), 1)
 
     cover = Cover.create_from_bed(
-        "cov",
+        "cov50",
         bedfiles=score_file,
         regions=bed_file,
         resolution=50,
@@ -359,7 +359,7 @@ def test_load_cover_bed_binary():
     np.testing.assert_equal(cover[4].sum(), 4*1)
 
     cover = Cover.create_from_bed(
-        "cov",
+        "cov50",
         bedfiles=score_file,
         regions=bed_file,
         resolution=50,
@@ -372,8 +372,8 @@ def test_load_cover_bed_binary():
     np.testing.assert_equal(cover[4].sum(), 1)
 
 
-def test_load_cover_bed_scored():
-
+def test_load_cover_bed_scored(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
@@ -390,7 +390,7 @@ def test_load_cover_bed_scored():
     np.testing.assert_equal(cover[4].sum(), 5)
 
     cover = Cover.create_from_bed(
-        "cov",
+        "cov50",
         bedfiles=score_file,
         regions=bed_file,
         resolution=50,
@@ -402,7 +402,7 @@ def test_load_cover_bed_scored():
     np.testing.assert_equal(cover[4].sum(), 4*5)
 
     cover = Cover.create_from_bed(
-        "cov",
+        "cov50",
         bedfiles=score_file,
         regions=bed_file,
         resolution=50,
@@ -415,8 +415,8 @@ def test_load_cover_bed_scored():
     np.testing.assert_equal(cover[4].sum(), 5)
 
 
-def test_load_cover_bed_categorical():
-
+def test_load_cover_bed_categorical(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
@@ -433,7 +433,7 @@ def test_load_cover_bed_categorical():
     np.testing.assert_equal(cover[4].sum(), 1)
 
     cover = Cover.create_from_bed(
-        "cov",
+        "cov50",
         bedfiles=score_file,
         regions=bed_file,
         resolution=50,
@@ -445,7 +445,7 @@ def test_load_cover_bed_categorical():
     np.testing.assert_equal(cover[4].sum(), 4*1)
 
     cover = Cover.create_from_bed(
-        "cov",
+        "cov50",
         bedfiles=score_file,
         regions=bed_file,
         resolution=50,

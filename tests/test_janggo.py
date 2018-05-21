@@ -24,6 +24,7 @@ matplotlib.use('AGG')
 
 
 def test_localaveragepooling2D(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     # some test data
     testin = np.ones((1, 10, 1, 3))
     testin[:, :, :, 1] += 1
@@ -32,7 +33,7 @@ def test_localaveragepooling2D(tmpdir):
     # test local average pooling
     lin = Input((10, 1, 3))
     out = LocalAveragePooling2D(3)(lin)
-    m = Janggu(lin, out, outputdir=tmpdir.strpath)
+    m = Janggu(lin, out)
 
     testout = m.predict(testin)
     np.testing.assert_equal(testout, testin[:, :8, :, :])
@@ -46,7 +47,7 @@ def test_localaveragepooling2D(tmpdir):
     # test local average pooling
     lin = Input((3, 1, 2))
     out = LocalAveragePooling2D(3)(lin)
-    m = Janggu(lin, out, outputdir=tmpdir.strpath)
+    m = Janggu(lin, out)
 
     testout = m.predict(testin)
     np.testing.assert_equal(testout.shape, (1, 1, 1, 2))
@@ -55,6 +56,7 @@ def test_localaveragepooling2D(tmpdir):
 
 
 def test_janggu_generate_name(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     def _cnn_model(inputs, inp, oup, params):
         inputs = Input((10, 1))
@@ -62,20 +64,21 @@ def test_janggu_generate_name(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
 
-    bwm = Janggu.create(_cnn_model, modelparams=(2,), outputdir=tmpdir.strpath)
+    bwm = Janggu.create(_cnn_model, modelparams=(2,))
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    storage = bwm._storage_path(bwm.name, outputdir=bwm.outputdir)
 
     bwm.save()
     bwm.summary()
 
     assert os.path.exists(storage)
 
-    Janggu.create_by_name(bwm.name, outputdir=tmpdir.strpath)
+    Janggu.create_by_name(bwm.name)
 
 
 def test_janggu_instance_dense(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     """Test Janggu creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
@@ -105,8 +108,7 @@ def test_janggu_instance_dense(tmpdir):
         bwm = Janggu.create(_cnn_model, modelparams=(2,),
                             inputs=dna,
                             outputs=ctcf,
-                            name='dna_ctcf_HepG2-cnn',
-                            outputdir=tmpdir.strpath)
+                            name='dna_ctcf_HepG2-cnn')
 
     @inputlayer
     @outputdense('sigmoid')
@@ -123,8 +125,7 @@ def test_janggu_instance_dense(tmpdir):
         bwm = Janggu.create(_cnn_model, modelparams=(2,),
                             inputs=dna,
                             outputs=ctcf,
-                            name='dna_ctcf_HepG2-cnn',
-                            outputdir=tmpdir.strpath)
+                            name='dna_ctcf_HepG2-cnn')
 
     @inputlayer
     @outputdense('sigmoid')
@@ -141,28 +142,24 @@ def test_janggu_instance_dense(tmpdir):
         bwm = Janggu.create(_cnn_model, modelparams=(2,),
                             inputs=dna,
                             outputs=ctcf,
-                            name='dna_ctcf_HepG2.cnn',
-                            outputdir=tmpdir.strpath)
+                            name='dna_ctcf_HepG2.cnn')
     with pytest.raises(Exception):
         # name with must be string
         bwm = Janggu.create(_cnn_model, modelparams=(2,),
                             inputs=dna,
                             outputs=ctcf,
-                            name=12342134,
-                            outputdir=tmpdir.strpath)
+                            name=12342134)
 
     # test with given model name
     bwm = Janggu.create(_cnn_model, modelparams=(2,),
                         inputs=dna,
                         outputs=ctcf,
-                        name='dna_ctcf_HepG2-cnn',
-                        outputdir=tmpdir.strpath)
+                        name='dna_ctcf_HepG2-cnn')
     # test with auto. generated modelname.
     bwm = Janggu.create(_cnn_model, modelparams=(2,),
                         inputs=dna,
                         outputs=ctcf,
-                        name='dna_ctcf_HepG2-cnn',
-                        outputdir=tmpdir.strpath)
+                        name='dna_ctcf_HepG2-cnn')
 
     @inputlayer
     @outputdense('sigmoid')
@@ -176,8 +173,7 @@ def test_janggu_instance_dense(tmpdir):
     bwm = Janggu.create(_cnn_model, modelparams=(2,),
                         inputs=dna,
                         outputs=ctcf,
-                        name='dna_ctcf_HepG2-cnn',
-                        outputdir=tmpdir.strpath)
+                        name='dna_ctcf_HepG2-cnn')
 
     @inputlayer
     @outputdense('sigmoid')
@@ -191,8 +187,7 @@ def test_janggu_instance_dense(tmpdir):
     bwm = Janggu.create(_cnn_model, modelparams=(2,),
                         inputs=dna,
                         outputs=ctcf,
-                        name='dna_ctcf_HepG2-cnn',
-                        outputdir=tmpdir.strpath)
+                        name='dna_ctcf_HepG2-cnn')
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
 
@@ -201,10 +196,11 @@ def test_janggu_instance_dense(tmpdir):
 
     assert os.path.exists(storage)
 
-    Janggu.create_by_name('dna_ctcf_HepG2-cnn', outputdir=tmpdir.strpath)
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
 
 def test_janggu_instance_conv(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     """Test Janggu creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
@@ -239,8 +235,7 @@ def test_janggu_instance_conv(tmpdir):
     bwm = Janggu.create(_cnn_model, modelparams=(2,),
                         inputs=dna,
                         outputs=ctcf,
-                        name='dna_ctcf_HepG2-cnn',
-                        outputdir=tmpdir.strpath)
+                        name='dna_ctcf_HepG2-cnn')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
@@ -250,10 +245,11 @@ def test_janggu_instance_conv(tmpdir):
 
     assert os.path.exists(storage)
 
-    Janggu.create_by_name('dna_ctcf_HepG2-cnn', outputdir=tmpdir.strpath)
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
 
 def test_janggu_train_predict_option1(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     """Train, predict and evaluate on dummy data.
 
     create: by_shape
@@ -272,8 +268,7 @@ def test_janggu_train_predict_option1(tmpdir):
     bwm = Janggu.create(test_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
@@ -291,6 +286,7 @@ def test_janggu_train_predict_option1(tmpdir):
 
 
 def test_janggu_train_predict_option2(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     """Train, predict and evaluate on dummy data.
 
     create: NO
@@ -301,16 +297,15 @@ def test_janggu_train_predict_option2(tmpdir):
     outputs = Array('y', np.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    def _model(path):
+    def _model():
         inputs = Input((10,), name='x')
         output = Dense(1, activation='sigmoid', name='y')(inputs)
-        model = Janggu(inputs=inputs, outputs=output, name='test',
-                       outputdir=path)
+        model = Janggu(inputs=inputs, outputs=output, name='test')
         model.compile(optimizer='adadelta', loss='binary_crossentropy',
                       metrics=['accuracy'])
         return model
 
-    bwm = _model(tmpdir.strpath)
+    bwm = _model()
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
@@ -334,19 +329,20 @@ def test_janggu_train_predict_option3(tmpdir):
     Input args: list(np.array)
     """
 
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+
     inputs = np.random.random((100, 10))
     outputs = np.random.randint(2, size=(100, 1))
 
-    def _model(path):
+    def _model():
         inputs = Input((10,), name='x')
         output = Dense(1, activation='sigmoid')(inputs)
-        model = Janggu(inputs=inputs, outputs=output, name='test',
-                       outputdir=path)
+        model = Janggu(inputs=inputs, outputs=output, name='test')
         model.compile(optimizer='adadelta', loss='binary_crossentropy',
                       metrics=['accuracy'])
         return model
 
-    bwm = _model(tmpdir.strpath)
+    bwm = _model()
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
@@ -374,6 +370,7 @@ def test_janggu_train_predict_option4(tmpdir):
     create: NO
     Input args: np.array
     """
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     inputs = np.random.random((100, 10))
     outputs = np.random.randint(2, size=(100, 1))
@@ -381,8 +378,7 @@ def test_janggu_train_predict_option4(tmpdir):
     def _model(path):
         inputs = Input((10,), name='x')
         output = Dense(1, activation='sigmoid')(inputs)
-        model = Janggu(inputs=inputs, outputs=output, name='test',
-                       outputdir=path)
+        model = Janggu(inputs=inputs, outputs=output, name='test')
         model.compile(optimizer='adadelta', loss='binary_crossentropy',
                       metrics=['accuracy'])
         return model
@@ -418,20 +414,20 @@ def test_janggu_train_predict_option5(tmpdir):
     Input args: list(Dataset)
     """
 
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     inputs = Array("x", np.random.random((100, 10)))
     outputs = Array('y', np.random.randint(2, size=(100, 1)),
                     conditions=['random'])
 
-    def _model(path):
+    def _model():
         inputs = Input((10,), name='x')
         output = Dense(1, name='y', activation='sigmoid')(inputs)
-        model = Janggu(inputs=inputs, outputs=output, name='test_model',
-                       outputdir=path)
+        model = Janggu(inputs=inputs, outputs=output, name='test_model')
         model.compile(optimizer='adadelta', loss='binary_crossentropy',
                       metrics=['accuracy'])
         return model
 
-    bwm = _model(tmpdir.strpath)
+    bwm = _model()
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
@@ -455,6 +451,7 @@ def test_janggu_train_predict_option6(tmpdir):
     create: YES
     Input args: Dataset
     """
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     inputs = Array("x", np.random.random((100, 10)))
     outputs = Array('y', np.random.randint(2, size=(100, 1)),
@@ -468,8 +465,7 @@ def test_janggu_train_predict_option6(tmpdir):
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
@@ -497,6 +493,7 @@ def test_janggu_train_predict_option7(tmpdir):
     validation_set: YES
     batch_size: None
     """
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     inputs = Array("x", np.random.random((100, 10)))
     outputs = Array('y', np.random.randint(2, size=(100, 1)),
@@ -510,12 +507,15 @@ def test_janggu_train_predict_option7(tmpdir):
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
-                        name='nptest',
-                        outputdir=tmpdir.strpath)
+                        name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    print('storage', storage)
+    print('env', os.environ['JANGGU_OUTPUT'])
+    print('name', bwm.name)
+    print('outputdir', bwm.outputdir)
     assert not os.path.exists(storage)
 
     bwm.fit(inputs, outputs, epochs=2,

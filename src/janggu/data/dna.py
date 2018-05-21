@@ -23,11 +23,6 @@ class Dna(Dataset):
     Upon indexing or slicing of the dataset, the one-hot representation
     for the respective locus will be returned.
 
-    Note
-    ----
-    Caching is only used with storage mode 'memmap' or 'hdf5'.
-    We recommend to use 'hdf5' for performance reasons.
-
     Parameters
     -----------
     name : str
@@ -42,27 +37,22 @@ class Dna(Dataset):
         Default: 150.
     order : int
         Order for the one-hot representation. Default: 1.
-    cachedir : str or None
-        Directory in which the cachefiles are located. Default: None.
-
     """
 
     _order = None
     _flank = None
 
-    def __init__(self, name, garray, gindexer, flank=150, order=1):
+    def __init__(self, name, garray, gindexer):
 
-        self.flank = flank
-        self.order = order
         self.garray = garray
         self.gindexer = gindexer
-        self._rcindex = [_complement_index(idx, order)
-                         for idx in range(pow(4, order))]
+        self._rcindex = [_complement_index(idx, garray.order)
+                         for idx in range(pow(4, garray.order))]
 
         Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _make_genomic_array(name, fastafile, order, storage, cachedir='',
+    def _make_genomic_array(name, fastafile, order, storage, cache=True, datatags=None,
                             overwrite=False):
         """Create a genomic array or reload an existing one."""
 
@@ -104,10 +94,15 @@ class Dna(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
+        datatags = [name] + datatags if datatags else [name]
+        datatags += ['order{}'.format(order)]
 
         cover = create_genomic_array(chromlens, stranded=False,
                                      storage=storage,
-                                     memmap_dir=os.path.join(cachedir, name),
+                                     datatags=datatags,
+                                     cache=cache,
+                                     order=order,
+                                     conditions=['idx'],
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      loader=_dna_loader,
@@ -119,7 +114,8 @@ class Dna(Dataset):
     def create_from_refgenome(cls, name, refgenome, regions,
                               stepsize=200, binsize=200,
                               flank=0, order=1, storage='ndarray',
-                              cachedir='', overwrite=False):
+                              datatags=None,
+                              cache=True, overwrite=False):
         """Create a Dna class from a reference genome.
 
         This requires a reference genome in fasta format as well as a bed-file
@@ -145,23 +141,28 @@ class Dna(Dataset):
         storage : str
             Storage mode for storing the sequence may be 'ndarray', 'memmap' or
             'hdf5'. Default: 'hdf5'.
-        cachedir : str
-            Directory in which the cachefiles are located. Default: ''.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
+        overwrite : boolean
+            Overwrite the cachefiles. Default: False.
         """
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize)
+        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize, flank)
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
-                                         cachedir=cachedir,
+                                         datatags=datatags,
+                                         cache=cache,
                                          overwrite=overwrite)
 
-        return cls(name, garray, gindexer, flank, order)
+        return cls(name, garray, gindexer)
 
     @classmethod
     def create_from_fasta(cls, name, fastafile, storage='ndarray',
-                          order=1, cachedir='', overwrite=False):
+                          order=1, datatags=None, cache=True, overwrite=False):
         """Create a Dna class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
@@ -178,13 +179,15 @@ class Dna(Dataset):
         storage : str
             Storage mode for storing the sequence may be 'ndarray', 'memmap' or
             'hdf5'. Default: 'ndarray'.
-        cachedir : str
-            Directory in which the cachefiles are located. Default: ''.
+        datatags : list(str) or None
+            List of datatags. Default: None.
+        cache : boolean
+            Whether to cache the dataset. Default: True.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
         garray = cls._make_genomic_array(name, fastafile, order, storage,
-                                         cachedir=cachedir,
+                                         cache=cache, datatags=datatags,
                                          overwrite=overwrite)
 
         seqs = []
@@ -208,19 +211,17 @@ class Dna(Dataset):
         flank = 0
         stepsize = 1
 
-        gindexer = GenomicIndexer(reglen, stepsize, 1)
+        gindexer = GenomicIndexer(reglen, stepsize, flank)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
         gindexer.inregionidx = [0]*len(lens)
         gindexer.strand = ['.']*len(lens)
         gindexer.rel_end = [reglen + 2*flank]*len(lens)
 
-        return cls(name, garray, gindexer, flank, order)
+        return cls(name, garray, gindexer)
 
     def __repr__(self):  # pragma: no cover
-        return 'Dna("{}", <garray>, <gindexer>, \
-                flank={}, order={})'\
-                .format(self.name, self.flank, self.order)
+        return 'Dna("{}")'.format(self.name,)
 
     def idna4idx(self, idxs):
         """Extracts the DNA sequence for set of indices.
@@ -243,12 +244,12 @@ class Dna(Dataset):
 
         # for each index read use the adaptor indices to retrieve the seq.
         idna = np.zeros((len(idxs), self.gindexer.binsize +
-                         2*self.flank - self.order + 1), dtype="int16")
+                         2*self.gindexer.flank - self.garray.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
-            interval.start -= self.flank
-            interval.end += self.flank - self.order + 1
+
+            interval.end += - self.garray.order + 1
 
             # Computing the forward or reverse complement of the
             # sequence, depending on the strand flag.
@@ -273,7 +274,7 @@ class Dna(Dataset):
             raise IndexError('Dna.__getitem__: '
                              + 'index must be iterable')
 
-        data = as_onehot(self.idna4idx(idxs), self.order)
+        data = as_onehot(self.idna4idx(idxs), self.garray.order)
 
         for transform in self.transformations:
             data = transform(data)
@@ -287,28 +288,5 @@ class Dna(Dataset):
     def shape(self):
         """Shape of the dataset"""
         return (len(self), self.gindexer.binsize +
-                2*self.flank - self.order + 1, pow(4, self.order), 1)
-
-    @property
-    def order(self):
-        """Order of the one-hot representation"""
-        return self._order
-
-    @order.setter
-    def order(self, value):
-        if not isinstance(value, int) or value < 1:
-            raise Exception('order must be a positive integer')
-        if value > 4:
-            raise Exception('order support only up to order=4.')
-        self._order = value
-
-    @property
-    def flank(self):
-        """Flanking bins"""
-        return self._flank
-
-    @flank.setter
-    def flank(self, value):
-        if not isinstance(value, int) or value < 0:
-            raise Exception('_flank must be a non-negative integer')
-        self._flank = value
+                2*self.gindexer.flank - self.garray.order + 1,
+                pow(4, self.garray.order), 1)

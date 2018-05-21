@@ -28,7 +28,8 @@ def datalen(bed_file):
     return binsizes
 
 
-def test_dna_dims_order_1():
+def test_dna_dims_order_1(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     order = 1
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.gtf')
@@ -79,7 +80,8 @@ def test_dna_dims_order_1():
                             dtype='int8'))
 
 
-def test_dna_dims_order_2():
+def test_dna_dims_order_2(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     order = 2
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.bed')
@@ -184,23 +186,28 @@ def complement_layer(order):
     np.testing.assert_equal(dna, ccdna)
 
 
-def test_reverse_order_1():
+def test_reverse_order_1(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     reverse_layer(1)
 
 
-def test_reverse_order_2():
+def test_reverse_order_2(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     reverse_layer(2)
 
 
-def test_complement_order_1():
+def test_complement_order_1(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     complement_layer(1)
 
 
-def test_complement_order_2():
+def test_complement_order_2(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     complement_layer(2)
 
 
-def test_revcomp_rcmatrix():
+def test_revcomp_rcmatrix(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     rcmatrix = complement_permmatrix(1)
 
@@ -248,6 +255,7 @@ def test_rcmatrix_identity():
 
 
 def test_dna_dataset_sanity(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -290,28 +298,27 @@ def test_dna_dataset_sanity(tmpdir):
     with pytest.raises(Exception):
         Dna.create_from_refgenome('train', refgenome=refgenome,
                                   storage='step',
-                                  regions=bed_file, order=1,
-                                  cachedir=tmpdir.strpath)
+                                  regions=bed_file, order=1)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
-                                           'storage.unstranded.h5'))
+                                           'storage.h5'))
 
     Dna.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
-                              regions=bed_file, order=1,
-                              cachedir=tmpdir.strpath)
+                              regions=bed_file, order=1)
 
-    assert os.path.exists(os.path.join(tmpdir.strpath, 'train',
-                                       'storage.unstranded.h5'))
+    assert os.path.exists(os.path.join(tmpdir.strpath, 'datasets', 'train',
+                                       'order1', 'storage.h5'))
 
 
 def test_read_dna_from_fasta_order_1():
+
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     order = 1
     filename = os.path.join(data_path, 'sample.fa')
     data = Dna.create_from_fasta('train', fastafile=filename,
-                                 order=order)
+                                 order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)
     np.testing.assert_equal(data.shape, (3897, 200, 4, 1))
@@ -335,7 +342,7 @@ def test_read_dna_from_fasta_order_2():
     order = 2
     filename = os.path.join(data_path, 'sample.fa')
     data = Dna.create_from_fasta('train', fastafile=filename,
-                                 order=order)
+                                 order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)
     np.testing.assert_equal(data.shape, (3897, 199, 16, 1))

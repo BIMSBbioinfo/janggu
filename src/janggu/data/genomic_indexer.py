@@ -20,13 +20,11 @@ class GenomicIndexer(object):
         Interval size in bins.
     stepsize : int
         stepsize (step size) for traversing the region.
-    resolution : int
-        resolution in base pairs.
     """
 
     _stepsize = None
     _binsize = None
-    _resolution = None
+    _flank = None
     chrs = None
     offsets = None
     inregionidx = None
@@ -34,7 +32,7 @@ class GenomicIndexer(object):
     rel_end = None
 
     @classmethod
-    def create_from_file(cls, regions, binsize, stepsize, resolution=1,
+    def create_from_file(cls, regions, binsize, stepsize, flank=0,
                          fixed_size_batches=True):
         """Creates a GenomicIndexer object.
 
@@ -49,10 +47,6 @@ class GenomicIndexer(object):
             Binsize in base pairs.
         stepsize : int
             Stepsize in base pairs.
-        resolution : int
-            Resolution in base pairs. This is used to aggregate
-            a signal, e.g. by averaging. Note that stepsize must be
-            a multiple of the resolution.
         fixed_size_batches : bool
             Indicates that all regions must be equally long, as given by
             the binsize. If False, variable region lengths are allowed.
@@ -60,7 +54,7 @@ class GenomicIndexer(object):
 
         regions_ = _get_genomic_reader(regions)
 
-        gind = cls(binsize, stepsize, resolution)
+        gind = cls(binsize, stepsize, flank)
 
         chrs = []
         offsets = []
@@ -94,29 +88,29 @@ class GenomicIndexer(object):
         gind.rel_end = rel_end
         return gind
 
-    def __init__(self, binsize, stepsize, resolution):
+    def __init__(self, binsize, stepsize, flank=0):
 
         self.binsize = binsize
         self.stepsize = stepsize
-        self.resolution = resolution
+        self.flank = flank
 
     def __len__(self):
         return len(self.chrs)
 
     def __repr__(self):  # pragma: no cover
         return "GenomicIndexer(<regions>, " \
-            + "binsize={}, stepsize={}, resolution={})".format(self.binsize,
-                                                               self.stepsize,
-                                                               self.resolution)
+            + "binsize={}, stepsize={}, flank={})".format(self.binsize,
+                                                          self.stepsize,
+                                                          self.flank)
 
     def __getitem__(self, index):
         if isinstance(index, int):
             start = (self.offsets[index] +
-                     self.inregionidx[index]*self.stepsize) // self.resolution
-            val = self.rel_end[index] // self.resolution
+                     self.inregionidx[index]*self.stepsize)
+            val = self.rel_end[index]
             end = start + (val if val > 0 else 1)
-            return GenomicInterval(self.chrs[index], start,
-                                   end, self.strand[index])
+            return GenomicInterval(self.chrs[index], start - self.flank,
+                                   end + self.flank, self.strand[index])
 
         raise IndexError('Index support only for "int". Given {}'.format(
             type(index)))
@@ -144,15 +138,16 @@ class GenomicIndexer(object):
         self._stepsize = value
 
     @property
-    def resolution(self):
-        """resolution property"""
-        return self._resolution
+    def flank(self):
+        """Flanking bins"""
+        return self._flank
 
-    @resolution.setter
-    def resolution(self, value):
-        if value <= 0 or (self.stepsize % value) > 0:
-            raise ValueError('Resolution must be positive and divisible by stepsize')
-        self._resolution = value
+    @flank.setter
+    def flank(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise ValueError('_flank must be a non-negative integer')
+        self._flank = value
+
 
     def tostr(self):
         """Returns representing the region."""

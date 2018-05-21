@@ -47,10 +47,19 @@ app.config['suppress_callback_exceptions'] = True
 def serve_layer():
     return html.Div([
         dcc.Location(id='url', refresh=False),
-        html.Nav(html.Div(dcc.Link(html.H2('Janggu'), href='/',
-                                   className='navbar-brand'),
-                          className='navbar-header'),
-                 className='navbar navbar-default navbar-expand-lg navbar-dark'),
+        html.Nav(
+            html.Div(
+                [html.Div([
+                    dcc.Link(html.H2('Janggu'),
+                             href='/', className='navbar-brand')],
+                    className='navbar-header'),
+                html.Div(
+                    html.Ul([html.Li(dcc.Link('Logs', href='/logs')),
+                             html.Li(dcc.Link('Model Comparison',
+                                      href='/model_comparison'))],
+                    className='nav navbar-nav'),
+                 className='container-fluid')],
+                 className='navbar navbar-default navbar-expand-lg navbar-dark')),
         html.Br(),
         html.Div(id='page-content')
     ], className='container')
@@ -85,19 +94,26 @@ def display_page(pathname):
                                   encoding[name].decode())))])
                  for name in encoding],
                 className='table table-bordered')])
+    elif pathname == '/logs':
+        return html.Div(
+            html.Pre(open(os.path.join(args.janggu_results, 'logs', 'janggu.log')).read())
+        )
+    elif pathname == '/model_comparison':
+        return model_comparison_page()
     else:
-        pathlen = len(os.path.join(args.janggu_results,
-                                   'evaluation', pathname[1:])) + 1
-        files = glob.glob(os.path.join(args.janggu_results,
-                                       'evaluation', pathname[1:], '*.png'))
-        files += glob.glob(os.path.join(args.janggu_results,
-                                        'evaluation', pathname[1:],
-                                        '*', '*.png'))
-        files += glob.glob(os.path.join(args.janggu_results,
-                                        'evaluation', pathname[1:], '*.ply'))
-        files += glob.glob(os.path.join(args.janggu_results,
-                                        'evaluation', pathname[1:],
-                                        '*', '*.ply'))
+        files = []
+        root = os.path.join(args.janggu_results, 'evaluation', pathname[1:])
+        pathlen = len(root) + 1
+        for root, dirnames, filenames in os.walk(root):
+            for filename in filenames:
+                if filename.endswith('.png') or \
+                    filename.endswith('.tsv') or filename.endswith('.ply'):
+                    print(dirnames,filename)
+                    path = tuple(dirnames) + (filename,)
+
+                    files += [os.path.join(root, *path)]
+                    print(files)
+
         if not files:
             return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
@@ -107,6 +123,69 @@ def display_page(pathname):
                                                 'value': f} for f in files],
                                       value=files[0]),
                          html.Div(id='output-plot')])
+
+
+
+
+def model_comparison_page():
+    print('model_comparison_page')
+    combined_tables = {}
+    #
+    root = os.path.join(args.janggu_results, 'evaluation')
+
+    for root, dirnames, filenames in os.walk(root):
+
+        for filename in filenames:
+            if filename.endswith('.tsv'):
+                df_ = pd.read_csv(os.path.join(root, filename),
+                                  sep='\t', header=[0], nrows=2)
+                if df_.shape[0] > 1:
+                    continue
+                scorename = os.path.splitext(filename)[0]
+                if scorename not in combined_tables:
+                    combined_tables[scorename] = []
+                combined_tables[scorename].append(os.path.join(root, filename))
+    return html.Div([html.H3('Model Comparison'),
+                 dcc.Dropdown(id='score-selection',
+                              options=[{'label': f,
+                                        'value': (f,combined_tables[f])} for f in combined_tables],
+                              value='Select a score'),
+
+                 html.Div(id='output-modelcomparison')])
+
+
+@app.callback(
+    dash.dependencies.Output('output-modelcomparison', 'children'),
+    [dash.dependencies.Input('score-selection', 'value')])
+def update_modelcomparison(results):
+    print('update_modelcomparison',  results)
+
+    if results is None:
+        return html.P('update_modelcomparison no results.')
+
+    label = results[0]
+    results = results[1]
+    header = ['Model', 'Layer', 'Condition', label]
+    thead = [html.Tr([html.Th(h) for h in header])]
+    tbody = []
+    allresults = pd.DataFrame([], columns=header)
+    for tab in results:
+        df_ = pd.read_csv(tab, sep='\t', header=[0])
+        print(df_.columns[0].split('-'))
+        names = df_.columns[0].split('-')
+        mname, lname, cname = names[0], names[1], '-'.join(names[2:])
+        allresults = allresults.append({'Model': mname,
+                                        'Layer': lname,
+                                        'Condition': cname,
+                                        label: df_[df_.columns[0]][0]},
+                                       ignore_index=True)
+    allresults.sort_values(label, ascending=False, inplace=True)
+
+    tbody = [html.Tr([
+        html.Td(allresults.iloc[i][col]) for col in header
+    ]) for i in range(len(allresults))]
+
+    return html.Table(thead + tbody)
 
 
 @app.callback(
@@ -119,6 +198,23 @@ def update_output(value):
         img = base64.b64encode(open(value, 'rb').read())
         return html.Img(width='100%',
                         src='data:image/png;base64,{}'.format(img.decode()))
+
+    elif value.endswith('tsv'):
+        max_rows = 20
+        df_ = pd.read_csv(value, sep='\t', header=[0])
+        if df_.shape[0] == 1:
+            df_ = df_.transpose()
+            df_.columns = ['score']
+        return html.Table(
+            # Header
+            [html.Tr([html.Th(col) for col in df_.columns])] +
+
+            # Body
+            [html.Tr([
+                html.Td(df_.iloc[i][col]) for col in df_.columns
+            ]) for i in range(min(len(df_), max_rows))]
+        )
+
     elif value.endswith('ply'):
         dfheader = pd.read_csv(value, sep='\t', header=[0], nrows=0)
         # read the annotation for the dropdown

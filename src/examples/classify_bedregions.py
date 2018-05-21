@@ -3,10 +3,9 @@ import os
 
 import numpy as np
 import pandas as pd
-import pkg_resources
+from pkg_resources import resource_filename
 from keras import backend as K
 from keras.layers import Conv2D
-from keras.layers import GlobalAveragePooling2D
 from keras.layers import Maximum
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
@@ -16,11 +15,12 @@ from sklearn.metrics import roc_curve
 from janggu import Scorer
 from janggu import Janggu
 from janggu import inputlayer
-from janggu import outputdense
-from janggu.data import Array
+from janggu import outputconv
+from janggu.data import Cover
 from janggu.data import Dna
 from janggu.layers import Complement
 from janggu.layers import Reverse
+from janggu.layers import LocalAveragePooling2D
 from janggu.utils import export_clustermap
 from janggu.utils import export_json
 from janggu.utils import export_plotly
@@ -44,31 +44,25 @@ PARSER.add_argument('-order', dest='order', type=int,
 
 args = PARSER.parse_args()
 
-os.environ['JANGGU_OUTPUT']=args.path
-# helper function
-def nseqs(filename):
-    """Extract the number of rows in the file.
-
-    Note however, that this is a simplification
-    that might not always work. In general, one would
-    need to parse for '>' occurrences.
-    """
-    return sum((1 for line in open(filename) if line[0] == '>'))
-
+os.environ['JANGGU_OUTPUT'] = args.path
 
 # load the dataset
-DATA_PATH = pkg_resources.resource_filename('janggu', 'resources/')
-SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
-SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
+# The pseudo genome represents just a concatenation of all sequences
+# in sample.fa and sample2.fa. Therefore, the results should be almost
+# identically to the models obtained from classify_fasta.py.
+REFGENOME = resource_filename('janggu', 'resources/pseudo_genome.fa')
+# ROI contains regions spanning positive and negative examples
+ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
+# PEAK_FILE only contains positive examples
+PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
-DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                            order=args.order, datatags=['train'], cache=True)
 
-Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
-               [0 for line in range(nseqs(SAMPLE_2))])
-LABELS = Array('y', Y, conditions=['TF-binding'])
-annot = pd.DataFrame(Y[:], columns=LABELS.conditions).applymap(
-    lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
+DNA = Dna.create_from_refgenome('dna', refgenome=REFGENOME, regions=ROI_FILE,
+                                order=args.order, datatags=['ref'])
+
+LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
+                               bedfiles=PEAK_FILE,
+                               datatags=['train'])
 
 
 # evaluation metrics from sklearn.metrics
@@ -107,17 +101,18 @@ pred_plotly = Scorer('pred', exporter=export_plotly)
 
 # Define the model templates
 @inputlayer
-@outputdense('sigmoid')
+@outputconv('sigmoid')
 def single_stranded_model(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         layer = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
                        activation=params[2])(layer)
-    output = GlobalAveragePooling2D(name='motif')(layer)
+    output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
+                                   name='motif')(layer)
     return inputs, output
 
 
 @inputlayer
-@outputdense('sigmoid')
+@outputconv('sigmoid')
 def double_stranded_model(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         forward = layer
@@ -130,7 +125,8 @@ def double_stranded_model(inputs, inp, oup, params):
     revcomp = convlayer(revcomp)
     revcomp = Reverse()(revcomp)
     layer = Maximum()([forward, revcomp])
-    output = GlobalAveragePooling2D(name='motif')(layer)
+    output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
+                                   name='motif')(layer)
     return inputs, output
 
 
@@ -154,18 +150,19 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
-SAMPLE_1 = os.path.join(DATA_PATH, 'sample_test.fa')
-SAMPLE_2 = os.path.join(DATA_PATH, 'sample2_test.fa')
-
-DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                                 order=args.order, datatags=['test'], cache=True)
+ROI_FILE = resource_filename('janggu', 'resources/roi_test.bed')
+# PEAK_FILE only contains positive examples
+PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
-Y = np.asarray([1 for _ in range(nseqs(SAMPLE_1))] +
-               [0 for _ in range(nseqs(SAMPLE_2))])
-LABELS_TEST = Array('y', Y, conditions=['TF-binding'])
-annot_test = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
-    lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
+DNA_TEST = Dna.create_from_refgenome('dna', refgenome=REFGENOME,
+                                     regions=ROI_FILE,
+                                     order=args.order, datatags=['ref'])
+
+LABELS_TEST = Cover.create_from_bed('peaks',
+                                    bedfiles=PEAK_FILE,
+                                    regions=ROI_FILE,
+                                    datatags=['test'])
 
 # do the evaluation on the training data
 # model.evaluate(DNA, LABELS, datatags=['train'],
@@ -174,18 +171,15 @@ annot_test = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
 # model.predict(DNA, datatags=['train'],
 #               callbacks=[pred_tsv, pred_json, pred_plotly],
 #               layername='motif',
-#               exporter_kwargs={'annot': annot,
-#                              'row_names': DNA.gindexer.chrs})
+#               exporter_kwargs={'row_names': DNA.gindexer.chrs})
 # model.predict(DNA, datatags=['train'],
 #               callbacks=[heatmap_eval],
 #               layername='motif',
-#               exporter_kwargs={'annot': annot,
-#                              'z_score': 1})
+#               exporter_kwargs={'z_score': 1})
 # model.predict(DNA, datatags=['train'],
 #               callbacks=[tsne_eval],
 #               layername='motif',
-#               exporter_kwargs={'annot': annot,
-#                              'alpha': .1})
+#               exporter_kwargs={'alpha': .1})
 
 # do the evaluation on the independent test data
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
@@ -194,15 +188,12 @@ model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
 model.predict(DNA_TEST, datatags=['test'],
               callbacks=[pred_tsv, pred_json, pred_plotly],
               layername='motif',
-              exporter_kwargs={'annot': annot_test,
-                             'row_names': DNA_TEST.gindexer.chrs})
+              exporter_kwargs={'row_names': DNA_TEST.gindexer.chrs})
 model.predict(DNA_TEST, datatags=['test'],
               callbacks=[heatmap_eval],
               layername='motif',
-              exporter_kwargs={'annot': annot_test,
-                             'z_score': 1})
+              exporter_kwargs={'z_score': 1})
 # model.predict(DNA_TEST, datatags=['test'],
 #               callbacks=[tsne_eval],
 #               layername='motif',
-#               exporter_kwargs={'annot': annot_test,
-#                              'alpha': .1})
+#               exporter_kwargs={'alpha': .1})

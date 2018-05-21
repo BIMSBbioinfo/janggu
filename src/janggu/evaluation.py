@@ -154,6 +154,7 @@ class Scorer(object):
 
         if self.results:
             # if there are some results, export them
+            print('exporting', self.score_name, 'to', output_path)
             self._exporter(output_path, self.score_name,
                            self.results, **kwargs)
 
@@ -193,6 +194,7 @@ class Scorer(object):
         if outputs is not None:
             _out = _reshape(outputs)
         _pre = _reshape(predicted)
+        print('scoring', self.score_name)
         score_fct = self.score_fct
         if score_fct is None and outputs is not None:
             raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')

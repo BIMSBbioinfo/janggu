@@ -11,7 +11,8 @@ from janggu.data.data import _data_props
 matplotlib.use('AGG')
 
 
-def test_dna_props_extraction():
+def test_dna_props_extraction(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -30,6 +31,7 @@ def test_dna_props_extraction():
 
 
 def test_tab_props_extraction():
+
     data_path = pkg_resources.resource_filename('janggu',
                                                 'resources/')
     csvfile = os.path.join(data_path, 'sample.csv')
