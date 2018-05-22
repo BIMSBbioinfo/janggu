@@ -58,9 +58,12 @@ class Cover(Dataset):
                         conditions=None,
                         min_mapq=None,
                         binsize=200, stepsize=200,
-                        flank=0, storage='ndarray',
+                        flank=0,
+                        resolution=1,
+                        storage='ndarray',
                         dtype='int',
                         overwrite=False,
+                        aggregate=np.mean,
                         datatags=None, cache=True):
         """Create a Cover class from a bam-file (or files).
 
@@ -91,6 +94,11 @@ class Cover(Dataset):
         flank : int
             Flanking size increases the interval size at both ends by
             flank base pairs. Default: 0
+        resolution : int
+            Resolution in base pairs. This is used to collect the mean signal
+            over the window lengths defined by the resolution.
+            This value must be chosen to be divisible by binsize and stepsize.
+            Default: 1.
         storage : str
             Storage mode for storing the coverage data can be
             'ndarray' or 'hdf5'. Default: 'hdf5'.
@@ -101,6 +109,9 @@ class Cover(Dataset):
             overwrite cachefiles. Default: False.
         datatags : list(str) or None
             List of datatags. Default: None.
+        aggregate : callable
+            Aggregation operation for loading genomic array for a given resolution.
+            Default: numpy.mean
         cache : boolean
             Whether to cache the dataset. Default: True.
         """
@@ -124,14 +135,14 @@ class Cover(Dataset):
         else:
             gsize = genomesize.copy()
 
-        def _bam_loader(cover, files):
+        def _bam_loader(garray, files):
             print("load from bam")
             for i, sample_file in enumerate(files):
                 print('Counting from {}'.format(sample_file))
                 aln_file = pysam.AlignmentFile(sample_file, 'rb')
                 for chrom in gsize:
 
-                    array = np.zeros((gsize[chrom], 2), dtype=dtype)
+                    array = np.zeros((gsize[chrom]//resolution, 2), dtype=dtype)
 
                     try:
                         it_ = aln_file.fetch(chrom)
@@ -143,17 +154,20 @@ class Cover(Dataset):
                             continue
 
                         if aln.is_reverse:
-                            array[aln.reference_end if aln.reference_end
-                                  else aln.reference_start, 1] += 1
+                            val = aln.reference_end if aln.reference_end \
+                                  else aln.reference_start
+                            val //= resolution
+                            array[val, 1] += 1
                         else:
-                            array[aln.reference_start, 0] += 1
+                            val = aln.reference_start // resolution
+                            array[val, 0] += 1
 
-                    cover[GenomicInterval(chrom, 0, gsize[chrom],
+                    garray[GenomicInterval(chrom, 0, gsize[chrom],
                                           '+'), i] = array[:, 0]
-                    cover[GenomicInterval(chrom, 0, gsize[chrom],
+                    garray[GenomicInterval(chrom, 0, gsize[chrom],
                                           '-'), i] = array[:, 1]
 
-            return cover
+            return garray
 
         datatags = [name] + datatags if datatags else [name]
 
@@ -165,6 +179,7 @@ class Cover(Dataset):
                                      conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
+                                     resolution=resolution,
                                      loader=_bam_loader,
                                      loader_args=(bamfiles,))
 

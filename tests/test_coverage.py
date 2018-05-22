@@ -244,6 +244,61 @@ def test_cover_bam(tmpdir):
         np.testing.assert_equal(val[2], np.asarray([1]))  # strand
 
 
+def test_load_bam_resolution10(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bamfile_ = os.path.join(data_path, "sample.bam")
+    gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
+
+    content = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
+                              index_col='chr')
+
+    gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    for store in ['ndarray', 'hdf5']:
+        # base pair binsize
+        # print(store)
+        cover = Cover.create_from_bam(
+            "yeast_I_II_III.bam",
+            bamfiles=bamfile_,
+            regions=bed_file,
+            genomesize=gsize,
+            resolution=10,
+            storage=store)
+
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 20, 2, 1))
+
+        # the region is read relative to the forward strand
+        # read on the reverse strand
+        val = np.where(cover[4] == 1)
+        np.testing.assert_equal(cover[4].sum(), 1.)
+        np.testing.assert_equal(val[1][0], 17)  # pos
+        np.testing.assert_equal(val[2][0], 1)  # strand
+
+        # two reads on the forward strand
+        val = np.where(cover[13] == 1)
+        np.testing.assert_equal(cover[13].sum(), 2.)
+        np.testing.assert_equal(val[1], np.asarray([16, 17]))  # pos
+        np.testing.assert_equal(val[2], np.asarray([0, 0]))  # strand
+
+        # the region is read relative to the reverse strand
+        # for index 50
+        # read on the reverse strand
+        val = np.where(cover[52] == 1)
+        np.testing.assert_equal(cover[52].sum(), 2.)
+        np.testing.assert_equal(val[1], np.asarray([0, 8]))  # pos
+        np.testing.assert_equal(val[2], np.asarray([0, 0]))  # strand
+
+        # two reads on the forward strand
+        val = np.where(cover[96] == 1)
+        np.testing.assert_equal(cover[96].sum(), 1.)
+        np.testing.assert_equal(val[1], np.asarray([2]))  # pos
+        np.testing.assert_equal(val[2], np.asarray([1]))  # strand
+
+
 def test_load_cover_bigwig_default(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
