@@ -63,6 +63,28 @@ namely data acquisition and evaluation (see Figure above).
 
 Installation
 ============
+The simplest way to install janggu is via the conda package management system.
+Assuming you have already installed conda, create a new environment
+and install tensorflow with or without gpu support
+
+::
+
+   conda create -y -n jenv
+   conda activate jenv
+   conda install tensorflow  # or tensorflow-gpu
+
+Subsequently, clone the github repository and install janggu via pip
+
+::
+
+   git clone https://github.com/BIMSBbioinfo/janggu
+   pip install janggu/
+
+To verify if the installation works try to run
+
+::
+
+   python janggu/src/examples/classify_fasta.py single
 
 For CPU-only support:
 ::
@@ -74,6 +96,24 @@ For GPU-support:
 
     pip install janggu[tf_gpu]
 
+
+Documentation
+==============
+
+At the moment, the documentation can be compiled using tox and virtualenv.
+At a later point, I will put it on readthedocs.io.
+To this end, install tox and virtualenv in the base environment (!) of you conda
+installation::
+
+   pip install tox virtualenv
+
+Then compile the docs with::
+
+   cd janggu/
+   tox -e docs
+
+Afterwards, the documentation in html format is available in
+`dist/docs/index.html`.
 
 Development
 ===========
