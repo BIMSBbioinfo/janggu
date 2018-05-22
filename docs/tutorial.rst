@@ -11,8 +11,8 @@ Genomic Datasets
 ----------------------------------
 .. sidebar:: Datasets are named
 
-   In :class:`Janggu`, a Dataset is linked to
-   its Input and Output layers via corresponding Dataset and Layer names.
+   Dataset names must match with the Input and Output layers of the neural
+   network.
 
 
 :mod:`janggu.data` provides Dataset classes that can be used for
@@ -20,6 +20,8 @@ training and evaluating neural networks.
 Of particular importance are the Genomics-specific dataset,
 :class:`Dna` and :class:`Cover` which
 to easily access and fetch genomics data.
+Furthermore, the datasets :class:`Dna` and :class:`Cover` facilitate
+caching so that you can reload the data later much faster.
 Other Dataset classes, e.g. :class:`Array` are described in the Reference section.
 
 
@@ -48,7 +50,7 @@ the :code:`create_from_fasta` constructor method:
 
    fasta_file = resource_filename('janggu', 'resources/sample.fa')
 
-   dna = Dna.create_from_fasta('dna', fastafile=fasta_file)
+   dna = Dna.create_from_fasta(name='dna', fastafile=fasta_file)
 
    len(dna)  # there are 3997 sequences in the in sample.fa
 
@@ -66,9 +68,9 @@ genomic coordinates of interest that are provided by a BED or GFF file.
    bed_file = resource_filename('janggu', 'resources/sample.bed')
    refgenome = resource_filename('janggu', 'resources/sample_genome.fa')
 
-   dna = Dna.create_from_refgenome('dna',
+   dna = Dna.create_from_refgenome(name='dna',
                                    refgenome=refgenome,
-                                   regions=bed_file)
+                                   regions=bed_file, datatags=['refgenome'])
 
    dna.shape  # is (100, 200, 4, 1)
    dna[0]  # One-hot encoding of region 0
@@ -143,7 +145,7 @@ by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolutio
 **Coverage from a BED files** can be extracted in various ways:
 
 1. **Binary** or Presence/Absence mode.
-2. **score** mode reads out the score field value from the associated regions.
+2. **Score** mode reads out the score field value from the associated regions.
 3. **Categorical** mode transforms the scores into one-hot representation.
 
 Examples of loading data from a BED file are shown below
@@ -154,7 +156,7 @@ Examples of loading data from a BED file are shown below
    score_file = resource_filename('janggu', 'resources/scored_sample.bed')
 
    # binary mode (default)
-   cover = Cover.create_from_bed('bed_coverage',
+   cover = Cover.create_from_bed('binary_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file)
 
@@ -162,7 +164,7 @@ Examples of loading data from a BED file are shown below
    cover[4]  # contains [[[[1.]]]]
 
    # score mode
-   cover = Cover.create_from_bed('bed_coverage',
+   cover = Cover.create_from_bed('score_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file,
                                  mode='score')
@@ -171,7 +173,7 @@ Examples of loading data from a BED file are shown below
    cover[4]  # contains the score [[[[5.]]]]
 
    # categorical mode
-   cover = Cover.create_from_bed('bed_coverage',
+   cover = Cover.create_from_bed('cat_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file,
                                  mode='categorical')
@@ -198,10 +200,10 @@ There are two ways of achieving this:
 Example 1: Instantiate Janggu similar to keras.models.Model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. sidebar:: **Output directory**
+.. sidebar:: **Model name**
 
    Model results,
-   e.g. trained parameters, are automatically stored with an associated model name in `outputdir` which is set to '`/home/user/janggu_results`' by default. Additionally, Janggu determines a unique model name, based on a md5-hash of the network configuration.
+   e.g. trained parameters, are automatically stored with the associated model name. To simplify the determination of a unique name for the model, Janggu automatically derives the model name based on a md5-hash of the network configuration. However, you can also specify a name yourself.
 
 
 .. code-block:: python
@@ -243,7 +245,7 @@ a network via a python function as in the following example
                          modelparams=3)
 
 The model template function must adhere to the
-signature :code:`tpl(inputs, inp, oup, params)`.
+signature :code:`template(inputs, inp, oup, params)`.
 Notice, that :code:`modelparams=3` gets passed on to :code:`params`
 upon model creation. This allows to parametrize the network
 and reduces code redundancy.
@@ -295,7 +297,11 @@ Fit a neural network on DNA sequences
 In the previous sections, we learned how to acquire data and
 how to instantiate neural networks. Now let's
 create and fit a simple convolutional neural network that learns
-to discriminate between two classes of sequences:
+to discriminate between two classes of sequences. In the following example
+the sample sequences are of length 200 bp each. `sample.fa` contains Oct4 CHip-seq
+peaks and sample2.fa contains Mafk CHip-seq peaks. We shall use a simple
+convolutional neural network with 30 filters of length 21 bp to learn
+the sequence features that discriminate the two sets of sequences:
 
 .. code:: python
 
@@ -339,12 +345,6 @@ to discriminate between two classes of sequences:
    # 4. fit the model
    model.fit(DNA, LABELS)
 
-
-The sequences in the fasta file are of length 200 bp each.
-The network then uses
-30 convolution kernels of length 21 bp, average pooling and
-to predict the outputs at the final layer.
-
 An illustration of the network architecture is depicted below.
 Upon creation of the model a network depiction is
 automatically produced in :code:`<results_root>/models` which is illustrated
@@ -373,14 +373,14 @@ and investigate the predictions. This can be done by invoking
    model.predict(DNA_TEST)
 
 which resemble the familiar keras methods.
-Janggu additinally offers a simple way to evaluate and export
-the results, for example on independent test data.
+Janggu additinally offers a simple way to evaluate and export model results,
+for example on independent test data.
 To this end, objects of :code:`Scorer` can be created
 and passed to
 :code:`model.evaluate` and :code:`model.predict`.
 This allows you to determine different performance metrics and/or
 export the results in various ways, e.g. as tsv file, as plot or
-as bigwig or bed file.
+as a BIGWIG file.
 
 A :code:`Scorer` maintains a **name**, a **scoring function** and
 an **exporter function**. The latter two dictate which score is evaluated
@@ -441,28 +441,16 @@ Alternatively, you can also plug in custom functions
 
 Browse through the results
 ------------------------------------
-Finally, after you have fitted and evaluated your results,
-the produced outputs can be conveniently browsed through
-using the Dash-based Janggu web application.
+Finally, after you have fitted and evaluated your results
+you can browse through the results using the
+the Dash-based Janggu web application.
 To start the application server just run
 
 ::
 
    janggu -path <results-root>
 
-Then you can inspect the outputs in a browser of your choice.
-
-Screenshot examples of the application are shown below:
-
-The main page summarizes the trained models
-
-.. image:: janggu_main.png
-   :width: 70%
-   :alt: Main page of the application
-   :align: center
-
-Selecting a particular model allows you to study the evaluation
-results
+Then you can inspect the outputs in a browser of your choice:
 
 .. image:: janggu_example.png
    :width: 70%

@@ -8,6 +8,7 @@ Contents
    readme
    installation
    tutorial
+   storage
    reference/index
    contributing
    authors
