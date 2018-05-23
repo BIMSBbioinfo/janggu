@@ -220,7 +220,7 @@ def _get_genomic_reader(filename):
     return regions_
 
 
-def get_genome_size_from_bed(bedfile, flank):
+def get_genome_size_from_bed(bedfile):
     """Get genome size.
 
     This function loads the genome size for a specified reference genome
@@ -231,8 +231,6 @@ def get_genome_size_from_bed(bedfile, flank):
     ----------
     bedfile : str
         Bed or GFF file containing the regions of interest
-    flank : int
-        Flank to increase the window sizes.
 
     Returns
     -------
@@ -246,9 +244,9 @@ def get_genome_size_from_bed(bedfile, flank):
     gsize = {}
     for region in regions_:
         if region.iv.chrom not in gsize:
-            gsize[region.iv.chrom] = region.iv.end + flank
-        elif gsize[region.iv.chrom] < region.iv.end + flank:
-            gsize[region.iv.chrom] = region.iv.end + flank
+            gsize[region.iv.chrom] = region.iv.end
+        elif gsize[region.iv.chrom] < region.iv.end:
+            gsize[region.iv.chrom] = region.iv.end
     return gsize
 
 

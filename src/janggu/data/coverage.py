@@ -54,7 +54,7 @@ class Cover(Dataset):
         Dataset.__init__(self, name)
 
     @classmethod
-    def create_from_bam(cls, name, bamfiles, regions, genomesize=None,
+    def create_from_bam(cls, name, bamfiles, regions=None, genomesize=None,
                         conditions=None,
                         min_mapq=None,
                         binsize=200, stepsize=200,
@@ -73,8 +73,9 @@ class Cover(Dataset):
             Name of the dataset
         bamfiles : str or list
             bam-file or list of bam files.
-        regions : str
+        regions : str or None
             Bed-file defining the regions that comprise the dataset.
+            If set to None, a genomic indexer must be attached later.
         genomesize : dict or None
             Dictionary containing the genome size. If `genomesize=None`,
             the genome size
@@ -116,7 +117,11 @@ class Cover(Dataset):
             Whether to cache the dataset. Default: True.
         """
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize, flank)
+        if regions is not None:
+            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                       stepsize, flank)
+        else:
+            gindexer = None
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -186,7 +191,7 @@ class Cover(Dataset):
         return cls(name, cover, gindexer, padding_value=0, dimmode='all')
 
     @classmethod
-    def create_from_bigwig(cls, name, bigwigfiles, regions, genomesize=None,
+    def create_from_bigwig(cls, name, bigwigfiles, regions=None, genomesize=None,
                            conditions=None,
                            binsize=200, stepsize=200,
                            resolution=200,
@@ -204,8 +209,9 @@ class Cover(Dataset):
             Name of the dataset
         bigwigfiles : str or list
             bigwig-file or list of bigwig files.
-        regions : str
+        regions : str or None
             Bed-file defining the regions that comprise the dataset.
+            If set to None, a genomic indexer must be attached later.
         genomesize : dict or None
             Dictionary containing the genome size. If `genomesize=None`,
             the genome size is fetched from the regions defined by the bed-file.
@@ -249,8 +255,11 @@ class Cover(Dataset):
             Whether to cache the dataset. Default: True.
         """
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                   stepsize, flank)
+        if regions is not None:
+            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                       stepsize, flank)
+        else:
+            gindexer = None
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -302,7 +311,7 @@ class Cover(Dataset):
                    padding_value=0, dimmode=dimmode)
 
     @classmethod
-    def create_from_bed(cls, name, bedfiles, regions, genomesize=None,
+    def create_from_bed(cls, name, bedfiles, regions=None, genomesize=None,
                         conditions=None,
                         binsize=200, stepsize=200,
                         resolution=200,
@@ -320,8 +329,9 @@ class Cover(Dataset):
             Name of the dataset
         bedfiles : str or list
             bed-file or list of bed files.
-        regions : str
+        regions : str or None
             Bed-file defining the regions that comprise the dataset.
+            If set to None, a genomic indexer must be attached later.
         genomesize : dict or None
             Dictionary containing the genome size. If `genomesize=None`,
             the genome size is fetched from the regions defined by the bed-file.
@@ -365,12 +375,18 @@ class Cover(Dataset):
             Whether to cache the dataset. Default: True.
         """
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                   stepsize, flank)
+        if regions is None and gsize is None:
+            raise ValueError('Either regions or gsize must be specified.')
+
+        if regions is not None:
+            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                       stepsize, flank)
+        else:
+            gindexer = None
 
         # automatically determine genomesize from largest region
         if not genomesize:
-            gsize = get_genome_size_from_bed(regions, flank)
+            gsize = get_genome_size_from_bed(regions)
         else:
             gsize = genomesize.copy()
 
@@ -447,10 +463,15 @@ class Cover(Dataset):
 
     @property
     def gindexer(self):
+        if self._gindexer is None:
+            raise ValueError('GenomicIndexer has not been set yet. Please specify an indexer.')
         return self._gindexer
 
     @gindexer.setter
     def gindexer(self, gindexer):
+        if gindexer is None:
+            self._gindexer = None
+
         if (gindexer.stepsize % self.garray.resolution) != 0:
             raise ValueError('gindexer.stepsize must be divisible by resolution')
         self._gindexer = gindexer

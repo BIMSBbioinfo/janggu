@@ -41,6 +41,7 @@ class Dna(Dataset):
 
     _order = None
     _flank = None
+    _gindexer = None
 
     def __init__(self, name, garray, gindexer):
 
@@ -111,7 +112,7 @@ class Dna(Dataset):
         return cover
 
     @classmethod
-    def create_from_refgenome(cls, name, refgenome, regions,
+    def create_from_refgenome(cls, name, refgenome, regions+None,
                               stepsize=200, binsize=200,
                               flank=0, order=1, storage='ndarray',
                               datatags=None,
@@ -127,8 +128,9 @@ class Dna(Dataset):
             Name of the dataset
         refgenome : str
             Fasta file.
-        regions : str
-            BED- or GFF-filename.
+        regions : str or None
+            Bed-file defining the regions that comprise the dataset.
+            If set to None, a genomic indexer must be attached later.
         binsize : int
             Binsize in basepairs to be read out. Default: 200.
         stepsize : int
@@ -151,7 +153,11 @@ class Dna(Dataset):
         # fill up int8 rep of DNA
         # load dna, region index, and within region index
 
-        gindexer = GenomicIndexer.create_from_file(regions, binsize, stepsize, flank)
+        if regions is not None:
+            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+                                                       stepsize, flank)
+        else:
+            gindexer = None
 
         garray = cls._make_genomic_array(name, refgenome, order, storage,
                                          datatags=datatags,
@@ -211,6 +217,8 @@ class Dna(Dataset):
         flank = 0
         stepsize = 1
 
+        # this is a special case. Here a GenomicIndexer will be created
+        # with pseudo genomic coordinates
         gindexer = GenomicIndexer(reglen, stepsize, flank)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
@@ -222,6 +230,21 @@ class Dna(Dataset):
 
     def __repr__(self):  # pragma: no cover
         return 'Dna("{}")'.format(self.name,)
+
+    @property
+    def gindexer(self):
+        if self._gindexer is None:
+            raise ValueError('GenomicIndexer has not been set yet. Please specify an indexer.')
+        return self._gindexer
+
+    @gindexer.setter
+    def gindexer(self, gindexer):
+        if gindexer is None:
+            self._gindexer = None
+
+        if (gindexer.stepsize % self.garray.resolution) != 0:
+            raise ValueError('gindexer.stepsize must be divisible by resolution')
+        self._gindexer = gindexer
 
     def idna4idx(self, idxs):
         """Extracts the DNA sequence for set of indices.
