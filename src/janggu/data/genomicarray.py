@@ -4,6 +4,7 @@ import os
 
 import h5py
 import numpy
+from scipy import sparse
 from HTSeq import GenomicInterval
 from janggu.utils import _get_output_data_location
 
@@ -287,6 +288,163 @@ class NPGenomicArray(GenomicArray):
         self.order = order
 
 
+class SparseGenomicArray(GenomicArray):
+    """GenomicArray stores multi-dimensional genomic information.
+
+    It acts as a dataset for holding genomic data. For instance,
+    coverage along an entire genome composed of arbitrary length chromosomes
+    as well as for multiple cell-types and conditions simultaneously.
+    Inspired by the HTSeq analog, the array can hold the data in different
+    storage modes, including ndarray, memmap or hdf5.
+
+    Parameters
+    ----------
+    chroms : dict
+        Dictionary with chromosome names as keys and chromosome lengths
+        as values.
+    stranded : bool
+        Consider stranded profiles. Default: True.
+    conditions : list(str) or None
+        List of cell-type or condition labels associated with the corresponding
+        array dimensions. Default: None means a one-dimensional array is produced.
+    typecode : str
+        Datatype. Default: 'd'.
+    datatags : list(str) or None
+        Tags describing the dataset. This is used to store the cache file.
+    cache : boolean
+        Whether to cache the dataset. Default: True
+    overwrite : boolean
+        Whether to overwrite the cache. Default: False
+    loader : callable or None
+        Function to be called for loading the genomic array.
+    loader_args : tuple or None
+        Arguments for loader.
+    """
+
+    def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
+                 datatags=None, resolution=1,
+                 order=1, cache=True,
+                 overwrite=False, loader=None, loader_args=None):
+        super(SparseGenomicArray, self).__init__(stranded, conditions,
+                                                 typecode,
+                                                 resolution,
+                                                 order)
+
+        if stranded:
+            datatags = datatags + ['stranded'] if datatags else ['stranded']
+
+        memmap_dir = _get_output_data_location(datatags)
+
+        filename = 'sparse.npz'
+        if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
+            or overwrite or not cache:
+            print('load {}'.format(os.path.join(memmap_dir, filename)))
+            data = {chrom: sparse.dok_matrix((chroms[chrom] + 1,
+                                              (2 if stranded else 1) *
+                                              len(self.condition)),
+                                       dtype=self.typecode) for chrom in chroms}
+            self.handle = data
+            print('before loading', self.handle)
+
+            # invoke the loader
+            if loader:
+                loader(self, *loader_args)
+
+            data = self.handle
+
+            data = {chrom: data[chrom].tocoo() for chrom in data}
+
+            condition = [numpy.string_(x) for x in self.condition]
+
+            names = [x for x in data]
+#            print([k for k in data])
+            for k in data:
+#                print(k)
+#                print(data[k])
+                print(data[k].row)
+                print(data[k].col)
+                print(data[k].data)
+            storage = {chrom: numpy.column_stack([data[chrom].data,
+                                                  data[chrom].row,
+                                                  data[chrom].col]) for chrom in data}
+            storage.update({'shape.'+chrom: numpy.asarray(data[chrom].shape) for chrom in data})
+            storage['conditions'] = condition
+            storage['order'] = order
+            storage['resolution'] = resolution
+
+            if cache:
+                numpy.savez(os.path.join(memmap_dir, filename), **storage)
+
+        if cache:
+            print('reload {}'.format(os.path.join(memmap_dir, filename)))
+            storage = numpy.load(os.path.join(memmap_dir, filename))
+
+            names = [x for x in storage.files if
+                     x not in ['conditions', 'order', 'resolution'] and x[:6] != 'shape.']
+            condition = storage['conditions']
+            order = storage['order']
+            resolution = storage['resolution']
+
+
+        print(names)
+        # here we get either the freshly loaded data or the reloaded
+        # data from numpy.load.
+        print({key:storage[key].dtype for key in names})
+        key='chr1'
+        sparse.coo_matrix(storage[key][:, 0],(storage[key][:, 1].astype('int'),
+         storage[key][:, 2].astype('int')))
+
+        self.handle = {key: sparse.coo_matrix((storage[key][:, 0],
+                                              (storage[key][:, 1].astype('int'),
+                                               storage[key][:, 2].astype('int'))),
+                                               shape=tuple(storage['shape.'+key])).tocsr()
+                       for key in names}
+
+        self.condition = condition
+        self.resolution = resolution
+        self.order = order
+
+    def __setitem__(self, index, value):
+        interval = index[0]
+        condition = index[1]
+        if isinstance(interval, GenomicInterval) and isinstance(condition, int):
+            chrom = interval.chrom
+            start = interval.start // self.resolution
+            end = interval.end // self.resolution
+            strand = interval.strand
+            sind = 1 if self.stranded and strand == '-' else 0
+            print('value', value)
+            print(start)
+            print(end)
+            for idx, iarray in enumerate(range(start, end)):
+                if hasattr(value, '__len__'):
+                    val = value[idx]
+                else:
+                    val = value
+
+                if val > 0:
+                    print('set value in sparse array')
+                    self.handle[chrom][iarray,
+                                       sind * len(self.condition)
+                                       + condition] = val
+        else:
+            raise IndexError("Index must be a GenomicInterval and a condition index")
+
+    def __getitem__(self, index):
+        # for now lets ignore everything except for chrom, start and end.
+        if isinstance(index, GenomicInterval):
+            interval = index
+            chrom = interval.chrom
+            start = interval.start // self.resolution
+            end = interval.end // self.resolution
+
+            return self.handle[chrom][start:end].toarray().reshape(
+                (end-start, 2 if self.stranded else 1, len(self.condition)))
+        else:
+            raise IndexError("Index must be a GenomicInterval")
+
+
+
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                          storage='hdf5', resolution=1,
                          order=1,
@@ -316,5 +474,16 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                               overwrite=overwrite,
                               loader=loader,
                               loader_args=loader_args)
+    elif storage == 'sparse':
+        return SparseGenomicArray(chroms, stranded=stranded,
+                                  conditions=conditions,
+                                  typecode=typecode,
+                                  datatags=datatags,
+                                  resolution=resolution,
+                                  order=order,
+                                  cache=cache,
+                                  overwrite=overwrite,
+                                  loader=loader,
+                                  loader_args=loader_args)
     else:
-        raise Exception("Storage type must be 'hdf5' or 'ndarray'")
+        raise Exception("Storage type must be 'hdf5', 'ndarray' or 'sparse'")

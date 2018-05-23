@@ -102,7 +102,7 @@ class Cover(Dataset):
             Default: 1.
         storage : str
             Storage mode for storing the coverage data can be
-            'ndarray' or 'hdf5'. Default: 'hdf5'.
+            'ndarray', 'hdf5' or 'sparse'. Default: 'ndarray'.
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
@@ -235,7 +235,7 @@ class Cover(Dataset):
             Default: 0.
         storage : str
             Storage mode for storing the coverage data can be
-            'ndarray' or 'hdf5'. Default: 'hdf5'.
+            'ndarray', 'hdf5' or 'sparse'. Default: 'ndarray'.
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'float32'.
@@ -355,7 +355,7 @@ class Cover(Dataset):
             Default: 0.
         storage : str
             Storage mode for storing the coverage data can be
-            'ndarray' or 'hdf5'. Default: 'hdf5'.
+            'ndarray', 'hdf5' or 'sparse'. Default: 'ndarray'.
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
