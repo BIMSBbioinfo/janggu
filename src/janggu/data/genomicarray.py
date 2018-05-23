@@ -357,13 +357,7 @@ class SparseGenomicArray(GenomicArray):
             condition = [numpy.string_(x) for x in self.condition]
 
             names = [x for x in data]
-#            print([k for k in data])
-            for k in data:
-#                print(k)
-#                print(data[k])
-                print(data[k].row)
-                print(data[k].col)
-                print(data[k].data)
+
             storage = {chrom: numpy.column_stack([data[chrom].data,
                                                   data[chrom].row,
                                                   data[chrom].col]) for chrom in data}
@@ -385,15 +379,6 @@ class SparseGenomicArray(GenomicArray):
             order = storage['order']
             resolution = storage['resolution']
 
-
-        print(names)
-        # here we get either the freshly loaded data or the reloaded
-        # data from numpy.load.
-        print({key:storage[key].dtype for key in names})
-        key='chr1'
-        sparse.coo_matrix(storage[key][:, 0],(storage[key][:, 1].astype('int'),
-         storage[key][:, 2].astype('int')))
-
         self.handle = {key: sparse.coo_matrix((storage[key][:, 0],
                                               (storage[key][:, 1].astype('int'),
                                                storage[key][:, 2].astype('int'))),
@@ -413,9 +398,7 @@ class SparseGenomicArray(GenomicArray):
             end = interval.end // self.resolution
             strand = interval.strand
             sind = 1 if self.stranded and strand == '-' else 0
-            print('value', value)
-            print(start)
-            print(end)
+
             for idx, iarray in enumerate(range(start, end)):
                 if hasattr(value, '__len__'):
                     val = value[idx]
@@ -423,12 +406,11 @@ class SparseGenomicArray(GenomicArray):
                     val = value
 
                 if val > 0:
-                    print('set value in sparse array')
                     self.handle[chrom][iarray,
                                        sind * len(self.condition)
                                        + condition] = val
-        else:
-            raise IndexError("Index must be a GenomicInterval and a condition index")
+            return
+        raise IndexError("Index must be a GenomicInterval and a condition index")
 
     def __getitem__(self, index):
         # for now lets ignore everything except for chrom, start and end.
@@ -440,8 +422,8 @@ class SparseGenomicArray(GenomicArray):
 
             return self.handle[chrom][start:end].toarray().reshape(
                 (end-start, 2 if self.stranded else 1, len(self.condition)))
-        else:
-            raise IndexError("Index must be a GenomicInterval")
+
+        raise IndexError("Index must be a GenomicInterval")
 
 
 
@@ -485,5 +467,5 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                                   overwrite=overwrite,
                                   loader=loader,
                                   loader_args=loader_args)
-    else:
-        raise Exception("Storage type must be 'hdf5', 'ndarray' or 'sparse'")
+
+    raise Exception("Storage type must be 'hdf5', 'ndarray' or 'sparse'")
