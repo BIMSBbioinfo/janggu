@@ -63,7 +63,7 @@ class Cover(Dataset):
                         storage='ndarray',
                         dtype='int',
                         overwrite=False,
-                        aggregate=np.mean,
+                        aggregate=None,
                         datatags=None, cache=True):
         """Create a Cover class from a bam-file (or files).
 
@@ -110,9 +110,9 @@ class Cover(Dataset):
             overwrite cachefiles. Default: False.
         datatags : list(str) or None
             List of datatags. Default: None.
-        aggregate : callable
+        aggregate : callable or None
             Aggregation operation for loading genomic array for a given resolution.
-            Default: numpy.mean
+            Default: None
         cache : boolean
             Whether to cache the dataset. Default: True.
         """
@@ -167,6 +167,9 @@ class Cover(Dataset):
                             val = aln.reference_start // resolution
                             array[val, 0] += 1
 
+                    # apply the aggregation
+                    if aggregate is not None:
+                        array = aggregate(array)
                     garray[GenomicInterval(chrom, 0, gsize[chrom],
                                           '+'), i] = array[:, 0]
                     garray[GenomicInterval(chrom, 0, gsize[chrom],
