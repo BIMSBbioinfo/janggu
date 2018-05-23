@@ -174,7 +174,8 @@ class HDF5GenomicArray(GenomicArray):
             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
 
             for chrom in chroms:
-                shape = (chroms[chrom] + 1, 2 if stranded else 1, len(self.condition))
+                shape = (chroms[chrom] // self.resolution + 1,
+                         2 if stranded else 1, len(self.condition))
                 self.handle.create_dataset(chrom, shape,
                                            dtype=self.typecode, compression='gzip',
                                            data=numpy.zeros(shape, dtype=self.typecode))
@@ -251,7 +252,7 @@ class NPGenomicArray(GenomicArray):
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
             or overwrite or not cache:
             print('load {}'.format(os.path.join(memmap_dir, filename)))
-            data = {chrom: numpy.zeros(shape=(chroms[chrom] + 1,
+            data = {chrom: numpy.zeros(shape=(chroms[chrom] // self.resolution + 1,
                                               2 if stranded else 1,
                                               len(self.condition)),
                                        dtype=self.typecode) for chrom in chroms}
@@ -339,12 +340,11 @@ class SparseGenomicArray(GenomicArray):
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
             or overwrite or not cache:
             print('load {}'.format(os.path.join(memmap_dir, filename)))
-            data = {chrom: sparse.dok_matrix((chroms[chrom] + 1,
+            data = {chrom: sparse.dok_matrix((chroms[chrom] // self.resolution + 1,
                                               (2 if stranded else 1) *
                                               len(self.condition)),
                                        dtype=self.typecode) for chrom in chroms}
             self.handle = data
-            print('before loading', self.handle)
 
             # invoke the loader
             if loader:
