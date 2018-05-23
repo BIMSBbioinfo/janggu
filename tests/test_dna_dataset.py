@@ -274,10 +274,7 @@ def test_dna_dataset_sanity(tmpdir):
         Dna.create_from_refgenome('train', refgenome='test',
                                   storage='ndarray',
                                   regions=bed_file, order=1)
-    with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome=refgenome,
-                                  storage='ndarray',
-                                  regions=None, order=1)
+
     with pytest.raises(Exception):
         Dna.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
@@ -303,6 +300,9 @@ def test_dna_dataset_sanity(tmpdir):
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'storage.h5'))
 
+    Dna.create_from_refgenome('train', refgenome=refgenome,
+                              storage='ndarray',
+                              regions=None, order=1)
     Dna.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
                               regions=bed_file, order=1)

@@ -471,6 +471,7 @@ class Cover(Dataset):
     def gindexer(self, gindexer):
         if gindexer is None:
             self._gindexer = None
+            return
 
         if (gindexer.stepsize % self.garray.resolution) != 0:
             raise ValueError('gindexer.stepsize must be divisible by resolution')

@@ -25,7 +25,10 @@ def test_cover_from_bam_sanity(tmpdir):
         binsize=1, stepsize=1,
         flank=0,
         storage='ndarray')
-
+    Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        storage='ndarray')
     with pytest.raises(Exception):
         # name must be a string
         Cover.create_from_bam(
@@ -74,6 +77,11 @@ def test_cover_from_bigwig_sanity(tmpdir):
         binsize=200, stepsize=50,
         resolution=50,
         flank=0,
+        storage='ndarray')
+    Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        resolution=50,
         storage='ndarray')
 
     with pytest.raises(Exception):
@@ -134,6 +142,12 @@ def test_cover_from_bed_sanity(tmpdir):
         binsize=200, stepsize=50,
         resolution=50,
         flank=0,
+        storage='ndarray')
+    Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile_,
+        regions=bed_file,
+        resolution=50,
         storage='ndarray')
 
     with pytest.raises(Exception):

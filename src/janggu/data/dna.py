@@ -112,7 +112,7 @@ class Dna(Dataset):
         return cover
 
     @classmethod
-    def create_from_refgenome(cls, name, refgenome, regions+None,
+    def create_from_refgenome(cls, name, refgenome, regions=None,
                               stepsize=200, binsize=200,
                               flank=0, order=1, storage='ndarray',
                               datatags=None,
@@ -241,6 +241,7 @@ class Dna(Dataset):
     def gindexer(self, gindexer):
         if gindexer is None:
             self._gindexer = None
+            return
 
         if (gindexer.stepsize % self.garray.resolution) != 0:
             raise ValueError('gindexer.stepsize must be divisible by resolution')
