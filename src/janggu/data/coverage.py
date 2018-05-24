@@ -155,17 +155,21 @@ class Cover(Dataset):
                         print("Contig '{}' abscent in bam".format(chrom))
                         continue
                     for aln in it_:
-                        if aln.mapq < min_mapq:
-                            continue
+                        try:
+                            if aln.mapq < min_mapq:
+                                continue
 
-                        if aln.is_reverse:
-                            val = aln.reference_end if aln.reference_end \
-                                  else aln.reference_start
-                            val //= resolution
-                            array[val, 1] += 1
-                        else:
-                            val = aln.reference_start // resolution
-                            array[val, 0] += 1
+                            if aln.is_reverse:
+                                val = aln.reference_end if aln.reference_end \
+                                else aln.reference_start
+                                val //= resolution
+                                array[val, 1] += 1
+                            else:
+                                val = aln.reference_start // resolution
+                                array[val, 0] += 1
+                        except IndexError as ex_:
+                            print('out of chromosome alignment {} found for {}:{}'.format(aln, chrom, gsize[chrom]))
+
 
                     # apply the aggregation
                     if aggregate is not None:
@@ -282,8 +286,6 @@ class Cover(Dataset):
                 bwfile = pyBigWig.open(sample_file)
 
                 for chrom in gsize:
-                    print()
-                    print(chrom, resolution, gsize[chrom])
 
                     vals = np.empty((gsize[chrom]//garray.resolution))
                     for start in range(0, gsize[chrom], garray.resolution):
