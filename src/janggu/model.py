@@ -438,7 +438,7 @@ class Janggu(object):
                 validation_data=valjseq,
                 class_weight=class_weight,
                 initial_epoch=initial_epoch,
-                shuffle=shuffle,  # must be false: gnerator shuffles.
+                shuffle=shuffle,
                 use_multiprocessing=use_multiprocessing,
                 max_queue_size=50,
                 workers=workers,
