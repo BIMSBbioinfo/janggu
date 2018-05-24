@@ -66,7 +66,6 @@ class GenomicArray(object):
             start = interval.start // self.resolution
             end = interval.end // self.resolution
             strand = interval.strand
-            print('item', interval, start, end)
             self.handle[chrom][start:end,
                                1 if self.stranded and strand == '-' else 0,
                                condition] = value
