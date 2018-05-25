@@ -2,7 +2,10 @@ import numpy
 import tensorflow as tf
 from keras import backend as K
 from keras.engine.topology import Layer
+from keras.layers import Conv2D
 from keras.initializers import Constant
+from keras.engine import InputSpec
+from keras import activations
 
 from janggu.utils import complement_permmatrix
 
@@ -132,3 +135,88 @@ class Complement(Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape
+
+
+class DnaConv2D(Conv2D):
+    """DnaConv2D layer.
+
+    This layer is a special convolution layer for scanning DNA
+    sequences. When using it with the default settings, it behaves
+    identically to the normal keras.layers.Conv2D layer.
+    However, when setting the flag :code:`scan_revcomp=True`
+    the weight matrices are reverse complemented which allows
+    you to scan the reverse complementary sequence for motif matches.
+
+    All parameters are the same as for keras.layers.Conv2D except
+
+    Parameters
+    ----------
+    scan_revcomp : boolean
+        If True the reverse complement is scanned for motif matches.
+        Default: False.
+    """
+
+    def __init__(self, filters,
+                 kernel_size,
+                 strides=(1, 1),
+                 padding='valid',
+                 data_format=None,
+                 dilation_rate=(1, 1),
+                 activation=None,
+                 use_bias=True,
+                 kernel_initializer='glorot_uniform',
+                 bias_initializer='zeros',
+                 kernel_regularizer=None,
+                 bias_regularizer=None,
+                 activity_regularizer=None,
+                 kernel_constraint=None,
+                 bias_constraint=None,
+                 scan_revcomp=False, **kwargs):
+        super(DnaConv2D, self).__init__(
+            filters=filters,
+            kernel_size=kernel_size,
+            strides=strides,
+            padding=padding,
+            data_format=data_format,
+            dilation_rate=dilation_rate,
+            activation=activation,
+            use_bias=use_bias,
+            kernel_initializer=kernel_initializer,
+            bias_initializer=bias_initializer,
+            kernel_regularizer=kernel_regularizer,
+            bias_regularizer=bias_regularizer,
+            activity_regularizer=activity_regularizer,
+            kernel_constraint=kernel_constraint,
+            bias_constraint=bias_constraint,
+            **kwargs)
+        self.scan_revcomp = scan_revcomp
+        self.rcmatrix = None
+
+    def build(self, input_shape):
+        super(DnaConv2D, self).build(input_shape)
+
+        self.rcmatrix = K.constant(
+            complement_permmatrix(int(numpy.log(input_shape[2])/numpy.log(4))),
+            dtype=K.floatx())
+        print(self.rcmatrix)
+
+    def get_config(self):
+        config = {'scan_revcomp': self.scan_revcomp}
+        base_config = super(DnaConv2D, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    def call(self, inputs):
+        if self.scan_revcomp:
+            print('using revcomp')
+            # revert and complement the weight matrices
+            tmp = self.kernel
+            self.kernel = self.kernel[::-1, :, :, :]
+            self.kernel = tf.einsum('ij,sjbc->sibc', self.rcmatrix, self.kernel)
+        else:
+            print('using conv2d')
+        # perform the convolution operation
+        res = super(DnaConv2D, self).call(inputs)
+        if self.scan_revcomp:
+            # restore the original kernel matrix
+            self.kernel = tmp
+        return res
