@@ -18,6 +18,7 @@ from janggu import outputconv
 from janggu.data import Cover
 from janggu.data import Dna
 from janggu.layers import Complement
+from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import export_clustermap
@@ -32,7 +33,7 @@ np.random.seed(1234)
 
 # Fetch parser arguments
 PARSER = argparse.ArgumentParser(description='Command description.')
-PARSER.add_argument('model', choices=['single', 'double'],
+PARSER.add_argument('model', choices=['single', 'double', 'dnaconv'],
                     help="Single or double stranded model.")
 PARSER.add_argument('-path', dest='path',
                     default='tf_results',
@@ -129,9 +130,32 @@ def double_stranded_model(inputs, inp, oup, params):
                                    name='motif')(layer)
     return inputs, output
 
+@inputlayer
+@outputconv('sigmoid')
+def double_stranded_model_dnaconv(inputs, inp, oup, params):
+    with inputs.use('dna') as layer:
+        pass
+    dnaconv = DnaConv2D(params[0], (params[1], layer.shape.as_list()[2]),
+                        activation=params[2])
 
-modeltemplate = single_stranded_model if args.model == 'single' \
-                else double_stranded_model
+    forward = dnaconv(layer)
+    dnaconv2 = dnaconv.get_revcomp()
+
+    revcomp = dnaconv2(layer)
+
+    layer = Maximum()([forward, revcomp])
+    output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
+                                   name='motif')(layer)
+    return inputs, output
+
+
+if args.model == 'single':
+    modeltemplate = single_stranded_model
+elif args.model == 'double':
+    modeltemplate = double_stranded_model
+else:
+    modeltemplate = double_stranded_model_dnaconv
+
 K.clear_session()
 
 # create a new model object

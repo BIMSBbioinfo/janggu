@@ -15,6 +15,7 @@ from keras.utils import plot_model
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
 from janggu.layers import Complement
+from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
@@ -145,7 +146,7 @@ class Janggu(object):
         self.kerasmodel.summary(print_fn=self.logger.info)
 
     @classmethod
-    def create_by_name(cls, name):
+    def create_by_name(cls, name, custom_objects=None):
         """Creates a Janggu object by name.
 
         This option is used to load a pre-trained model.
@@ -154,6 +155,10 @@ class Janggu(object):
         ----------
         name : str
             Name of the model.
+        custom_objects : dict or None
+            This allows loading of custom layers using load_model.
+            All janggu specific layers are automatically included as custom_objects.
+            Default: None
 
         Examples
         --------
@@ -179,10 +184,16 @@ class Janggu(object):
 
         path = cls._storage_path(name, _get_output_root_directory())
 
-        model = load_model(path,
-                           custom_objects={'Reverse': Reverse,
-                                           'Complement': Complement,
-                                           'LocalAveragePooling2D': LocalAveragePooling2D})
+        layers = {'Reverse': Reverse,
+                  'Complement': Complement,
+                  'LocalAveragePooling2D': LocalAveragePooling2D,
+                  'DnaConv2D': DnaConv2D}
+        if not custom_objects:
+            custom_objects = {}
+
+        custom_objects.update(layers)
+
+        model = load_model(path, custom_objects=custom_objects)
         return cls(model.inputs, model.outputs, name)
 
     @property
