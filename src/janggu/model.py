@@ -214,7 +214,7 @@ class Janggu(object):
         plotname = os.path.splitext(filename)[0] + '.png'
         try:
             plot_model(self.kerasmodel, to_file=plotname, show_shapes=True)
-        except Exception:  # pragma: no cover
+        except Exception:  # pragma: no cover pylint: disable=broad-except
             # if graphviz is not installed on the system.
             self.logger.exception('plot_model failed, continue nevertheless: ')
 
@@ -351,7 +351,7 @@ class Janggu(object):
                                 sample_weight_mode, weighted_metrics,
                                 target_tensors)
 
-    def fit(self,
+    def fit(self,  # pylint: disable=too-many-locals
             inputs=None,
             outputs=None,
             batch_size=None,
@@ -462,7 +462,7 @@ class Janggu(object):
                          time.time() - self.timer)
         return history
 
-    def predict(self, inputs,
+    def predict(self, inputs,  # pylint: disable=too-many-locals
                 batch_size=None,
                 verbose=0,
                 steps=None,
@@ -536,7 +536,7 @@ class Janggu(object):
                            exporter_kwargs=exporter_kwargs)
         return preds
 
-    def evaluate(self, inputs=None, outputs=None,
+    def evaluate(self, inputs=None, outputs=None,  # pylint: disable=too-many-locals
                  batch_size=None,
                  sample_weight=None,
                  steps=None,

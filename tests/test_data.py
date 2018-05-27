@@ -12,7 +12,7 @@ matplotlib.use('AGG')
 
 
 def test_dna_props_extraction(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 

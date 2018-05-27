@@ -4,12 +4,13 @@ import os
 
 import h5py
 import numpy
-from scipy import sparse
 from HTSeq import GenomicInterval
+from scipy import sparse
+
 from janggu.utils import _get_output_data_location
 
 
-class GenomicArray(object):
+class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     """GenomicArray stores multi-dimensional genomic information.
 
     It acts as a dataset for holding genomic data. For instance,
@@ -149,8 +150,12 @@ class HDF5GenomicArray(GenomicArray):
         Arguments for loader.
     """
 
-    def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 datatags=None, resolution=1,
+    def __init__(self, chroms,  # pylint: disable=too-many-locals
+                 stranded=True,
+                 conditions=None,
+                 typecode='d',
+                 datatags=None,
+                 resolution=1,
                  order=1, cache=True,
                  overwrite=False, loader=None, loader_args=None):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
@@ -183,7 +188,6 @@ class HDF5GenomicArray(GenomicArray):
             self.handle.attrs['conditions'] = [numpy.string_(x) for x in self.condition]
             self.handle.attrs['order'] = self.order
             self.handle.attrs['resolution'] = self.resolution
-
 
             # invoke the loader
             if loader:
@@ -231,8 +235,12 @@ class NPGenomicArray(GenomicArray):
         Arguments for loader.
     """
 
-    def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 datatags=None, resolution=1,
+    def __init__(self, chroms,  # pylint: disable=too-many-locals
+                 stranded=True,
+                 conditions=None,
+                 typecode='d',
+                 datatags=None,
+                 resolution=1,
                  order=1, cache=True,
                  overwrite=False, loader=None, loader_args=None):
 
@@ -250,7 +258,7 @@ class NPGenomicArray(GenomicArray):
             os.makedirs(memmap_dir)
 
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
-            or overwrite or not cache:
+                or overwrite or not cache:
             print('load {}'.format(os.path.join(memmap_dir, filename)))
             data = {chrom: numpy.zeros(shape=(chroms[chrom] // self.resolution + 1,
                                               2 if stranded else 1,
@@ -267,7 +275,6 @@ class NPGenomicArray(GenomicArray):
             data['conditions'] = condition
             data['order'] = order
             data['resolution'] = resolution
-
 
             if cache:
                 numpy.savez(os.path.join(memmap_dir, filename), **data)
@@ -322,8 +329,12 @@ class SparseGenomicArray(GenomicArray):
         Arguments for loader.
     """
 
-    def __init__(self, chroms, stranded=True, conditions=None, typecode='d',
-                 datatags=None, resolution=1,
+    def __init__(self, chroms,  # pylint: disable=too-many-locals
+                 stranded=True,
+                 conditions=None,
+                 typecode='d',
+                 datatags=None,
+                 resolution=1,
                  order=1, cache=True,
                  overwrite=False, loader=None, loader_args=None):
         super(SparseGenomicArray, self).__init__(stranded, conditions,
@@ -343,7 +354,8 @@ class SparseGenomicArray(GenomicArray):
             data = {chrom: sparse.dok_matrix((chroms[chrom] // self.resolution + 1,
                                               (2 if stranded else 1) *
                                               len(self.condition)),
-                                       dtype=self.typecode) for chrom in chroms}
+                                             dtype=self.typecode)
+                    for chrom in chroms}
             self.handle = data
 
             # invoke the loader
@@ -380,9 +392,10 @@ class SparseGenomicArray(GenomicArray):
             resolution = storage['resolution']
 
         self.handle = {key: sparse.coo_matrix((storage[key][:, 0],
-                                              (storage[key][:, 1].astype('int'),
-                                               storage[key][:, 2].astype('int'))),
-                                               shape=tuple(storage['shape.'+key])).tocsr()
+                                               (storage[key][:, 1].astype('int'),
+                                                storage[key][:, 2].astype('int'))),
+                                              shape=tuple(storage['shape.' +
+                                                                  key])).tocsr()
                        for key in names}
 
         self.condition = condition
@@ -424,7 +437,6 @@ class SparseGenomicArray(GenomicArray):
                 (end-start, 2 if self.stranded else 1, len(self.condition)))
 
         raise IndexError("Index must be a GenomicInterval")
-
 
 
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',

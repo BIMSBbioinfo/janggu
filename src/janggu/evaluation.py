@@ -158,7 +158,7 @@ class Scorer(object):
             self._exporter(output_path, self.score_name,
                            self.results, **kwargs)
 
-    def score(self, model, predicted, outputs=None, datatags=None,
+    def score(self, model, predicted, outputs=None, datatags=None,  # pylint: disable=too-many-locals
               score_kwargs=None, exporter_kwargs=None):
         """Scoring of the predictions relative to true outputs.
 
@@ -200,7 +200,9 @@ class Scorer(object):
             raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')
 
         if score_fct is None:
-            def score_fct(x): return x
+            def _dummy(value):
+                return value
+            score_fct = _dummy
 
         score_kwargs = score_kwargs if score_kwargs is not None else {}
         exporter_kwargs = exporter_kwargs if exporter_kwargs is not None else {}

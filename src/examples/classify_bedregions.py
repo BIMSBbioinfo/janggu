@@ -2,25 +2,24 @@ import argparse
 import os
 
 import numpy as np
-import pandas as pd
-from pkg_resources import resource_filename
 from keras import backend as K
 from keras.layers import Conv2D
 from keras.layers import Maximum
+from pkg_resources import resource_filename
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from janggu import Scorer
 from janggu import Janggu
+from janggu import Scorer
 from janggu import inputlayer
 from janggu import outputconv
 from janggu.data import Cover
 from janggu.data import Dna
 from janggu.layers import Complement
-from janggu.layers import Reverse
 from janggu.layers import LocalAveragePooling2D
+from janggu.layers import Reverse
 from janggu.utils import export_clustermap
 from janggu.utils import export_json
 from janggu.utils import export_plotly
@@ -98,6 +97,7 @@ pred_json = Scorer('pred', exporter=export_json)
 # plotly will export a special table that is used for interactive browsing
 # of the results
 pred_plotly = Scorer('pred', exporter=export_plotly)
+
 
 # Define the model templates
 @inputlayer

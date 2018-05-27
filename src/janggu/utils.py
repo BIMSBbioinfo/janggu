@@ -2,26 +2,28 @@
 
 import json
 import os
-import sys
 from collections import defaultdict
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # pylint: disable=import-error
 import numpy as np
 import pandas as pd
 import pyBigWig
-import seaborn as sns
+import seaborn as sns  # pylint: disable=import-error
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
-from sklearn.manifold import TSNE
+from sklearn.manifold import TSNE  # pylint: disable=import-error
 
-if sys.version_info[0] < 3:  # pragma: no cover
+try:
     from urllib import urlcleanup, urlretrieve
-else:
-    from urllib.request import urlcleanup, urlretrieve
+except ImportError:
+    try:
+        from urllib.request import urlcleanup, urlretrieve
+    except ImportError as ex_:
+        raise ex_
 
 
 def _get_output_root_directory():
@@ -322,13 +324,29 @@ def export_tsv(output_dir, name, results, filesuffix='tsv', annot=None, row_name
 
 
 def export_plotly(output_dir, name, results, annot=None, row_names=None):
+    """This method exports data for interactive visualization.
+
+    Essentially, it exports a table with the filename suffix
+    being '.ply'. In contrast table files generally, which have
+    the file ending '.tsv', .ply file is ment to have a more specific
+    structure so that the Dash app can interpret it.
+
+    Parameters
+    ----------
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    """
     # this produces a normal json file, but for the dedicated
     # purpose of visualization in the dash app.
     export_tsv(output_dir, name, results, 'ply', annot, row_names)
 
 
-def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
-                      ylabel=None, fform=None):
+def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disable=too-many-locals
+                      xlabel=None, ylabel=None, fform=None):
     """Method that dumps the results in a json file.
 
     Parameters
@@ -349,10 +367,10 @@ def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
     ax_ = fig.add_axes([0.1, 0.1, .55, .5])
 
     ax_.set_title(name)
-    for mname, lname, cname in results:
+    for keys in results:
         # avg might be returned using a custom function
-        x_score, y_score, auxstr = results[mname, lname, cname]['value']
-        label = "{}".format('-'.join([mname[:8], lname, cname]))
+        x_score, y_score, auxstr = results[keys]['value']
+        label = "{}".format('-'.join([keys[0][:8], keys[1], keys[2]]))
         if isinstance(auxstr, str):
             label += ' ' + auxstr
         ax_.plot(x_score, y_score, label=label)
@@ -373,7 +391,8 @@ def export_score_plot(output_dir, name, results, figsize=None, xlabel=None,
                 bbox_extra_artists=(lgd,), bbox_inches="tight")
 
 
-def export_bigwig(output_dir, name, results, gindexer=None, resolution=None):
+def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=too-many-locals
+                  resolution=None):
     """Export predictions to bigwig.
 
     This function can be used as exporter with :class:`Scorer`.
@@ -430,7 +449,8 @@ def export_bigwig(output_dir, name, results, gindexer=None, resolution=None):
         bw_file.close()
 
 
-def export_bed(output_dir, name, results, gindexer=None, resolution=None):
+def export_bed(output_dir, name, results,  # pylint: disable=too-many-locals
+               gindexer=None, resolution=None):
     """Export predictions to bed.
 
     This function can be used as exporter with :class:`Scorer`.
@@ -449,7 +469,6 @@ def export_bed(output_dir, name, results, gindexer=None, resolution=None):
         for ridx, region in enumerate(gindexer):
             pred = results[modelname, layername, condition]['value']
 
-            #nsplit = len(pred)//len(gindexer)
             nsplit = (region.end-region.start)//resolution
 
             starts = list(range(region.start,
@@ -466,7 +485,7 @@ def export_bed(output_dir, name, results, gindexer=None, resolution=None):
             print(cont)
 
             bed_entry = pd.DataFrame(cont)
-            bed_content = bed_content.append(bed_entry, ignore_index=True)
+            bed_content = bed_content.append(bed_entry, ignore_index=True, sort=False)
 
         bed_content.to_csv(os.path.join(
             output_dir,
@@ -477,7 +496,7 @@ def export_bed(output_dir, name, results, gindexer=None, resolution=None):
                            columns=['chr', 'start', 'end', 'name', 'score'])
 
 
-def export_clustermap(output_dir, name, results, fform=None, figsize=None,
+def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # pylint: disable=too-many-locals
                       annot=None,
                       method='ward', metric='euclidean', z_score=None,
                       standard_scale=None, row_cluster=True, col_cluster=True,
@@ -522,7 +541,7 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,
                                      format=fform, dpi=700)
 
 
-def export_tsne(output_dir, name, results, figsize=None,
+def export_tsne(output_dir, name, results, figsize=None,  # pylint: disable=too-many-locals
                 cmap=None, colors=None, norm=None, alpha=None, fform=None,
                 annot=None):
     """Create a plot of the 2D t-SNE embedding of the feature activities."""

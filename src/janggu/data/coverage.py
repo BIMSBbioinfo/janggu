@@ -30,10 +30,6 @@ class Cover(Dataset):
     gindexer : :class:`GenomicIndexer`
         A genomic index mapper that translates an integer index to a
         genomic coordinate.
-    flank : int
-        Number of flanking regions to take into account. Default: 4.
-    stranded : boolean
-        Consider strandedness of coverage. Default: True.
     padding_value : int or float
         Padding value used to pad variable size fragments. Default: 0.
     """
@@ -54,7 +50,10 @@ class Cover(Dataset):
         Dataset.__init__(self, name)
 
     @classmethod
-    def create_from_bam(cls, name, bamfiles, regions=None, genomesize=None,
+    def create_from_bam(cls, name,  # pylint: disable=too-many-locals
+                        bamfiles,
+                        regions=None,
+                        genomesize=None,
                         conditions=None,
                         min_mapq=None,
                         binsize=200, stepsize=200,
@@ -133,7 +132,7 @@ class Cover(Dataset):
             min_mapq = 0
 
         if genomesize is None:
-            header = pysam.AlignmentFile(bamfiles[0], 'r')
+            header = pysam.AlignmentFile(bamfiles[0], 'r')  # pylint: disable=no-member
             gsize = {}
             for chrom, length in zip(header.references, header.lengths):
                 gsize[chrom] = length
@@ -144,7 +143,7 @@ class Cover(Dataset):
             print("load from bam")
             for i, sample_file in enumerate(files):
                 print('Counting from {}'.format(sample_file))
-                aln_file = pysam.AlignmentFile(sample_file, 'rb')
+                aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
                 for chrom in gsize:
 
                     array = np.zeros((gsize[chrom]//resolution, 2), dtype=dtype)
@@ -161,23 +160,25 @@ class Cover(Dataset):
 
                             if aln.is_reverse:
                                 val = aln.reference_end if aln.reference_end \
-                                else aln.reference_start
+                                    else aln.reference_start
                                 val //= resolution
                                 array[val, 1] += 1
                             else:
                                 val = aln.reference_start // resolution
                                 array[val, 0] += 1
-                        except IndexError as ex_:
-                            print('out of chromosome alignment {} found for {}:{}'.format(aln, chrom, gsize[chrom]))
-
+                        except IndexError:
+                            print('out of chromosome alignment '
+                                  '{} found for {}:{}'.format(aln,
+                                                              chrom,
+                                                              gsize[chrom]))
 
                     # apply the aggregation
                     if aggregate is not None:
                         array = aggregate(array)
                     garray[GenomicInterval(chrom, 0, gsize[chrom],
-                                          '+'), i] = array[:, 0]
+                                           '+'), i] = array[:, 0]
                     garray[GenomicInterval(chrom, 0, gsize[chrom],
-                                          '-'), i] = array[:, 1]
+                                           '-'), i] = array[:, 1]
 
             return garray
 
@@ -198,7 +199,10 @@ class Cover(Dataset):
         return cls(name, cover, gindexer, padding_value=0, dimmode='all')
 
     @classmethod
-    def create_from_bigwig(cls, name, bigwigfiles, regions=None, genomesize=None,
+    def create_from_bigwig(cls, name,  # pylint: disable=too-many-locals
+                           bigwigfiles,
+                           regions=None,
+                           genomesize=None,
                            conditions=None,
                            binsize=200, stepsize=200,
                            resolution=200,
@@ -316,7 +320,10 @@ class Cover(Dataset):
                    padding_value=0, dimmode=dimmode)
 
     @classmethod
-    def create_from_bed(cls, name, bedfiles, regions=None, genomesize=None,
+    def create_from_bed(cls, name,  # pylint: disable=too-many-locals
+                        bedfiles,
+                        regions=None,
+                        genomesize=None,
                         conditions=None,
                         binsize=200, stepsize=200,
                         resolution=200,
@@ -380,7 +387,7 @@ class Cover(Dataset):
             Whether to cache the dataset. Default: True.
         """
 
-        if regions is None and gsize is None:
+        if regions is None and genomesize is None:
             raise ValueError('Either regions or gsize must be specified.')
 
         if regions is not None:
@@ -468,6 +475,7 @@ class Cover(Dataset):
 
     @property
     def gindexer(self):
+        """GenomicIndexer property"""
         if self._gindexer is None:
             raise ValueError('GenomicIndexer has not been set yet. Please specify an indexer.')
         return self._gindexer

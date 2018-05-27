@@ -1,11 +1,13 @@
+import os
+
 import numpy as np
 from HTSeq import GenomicInterval
 
 from janggu.data import create_genomic_array
 
 
-def test_bwga_instance_unstranded(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+def test_bwga_instance_unstranded_taged(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     iv = GenomicInterval('chr10', 100, 120, '.')
     ga = create_genomic_array({'chr10': 300}, stranded=False, typecode='int8',
                               storage='ndarray', datatags='test_bwga_instance_unstranded')
@@ -34,7 +36,7 @@ def test_bwga_instance_unstranded(tmpdir):
 
 
 def test_bwga_instance_stranded(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     iv = GenomicInterval('chr10', 100, 120, '+')
     ga = create_genomic_array({'chr10': 300}, stranded=True, typecode='int8',
                               storage='ndarray')
@@ -50,7 +52,7 @@ def test_bwga_instance_stranded(tmpdir):
     np.testing.assert_equal(ga[iv].sum(), 20)
 
 
-def test_bwga_instance_stranded(tmpdir):
+def test_bwga_instance_stranded_notcached(tmpdir):
 
     iv = GenomicInterval('chr10', 100, 120, '+')
     ga = create_genomic_array({'chr10': 300}, stranded=True, typecode='int8',

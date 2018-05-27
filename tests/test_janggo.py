@@ -24,7 +24,7 @@ matplotlib.use('AGG')
 
 
 def test_localaveragepooling2D(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # some test data
     testin = np.ones((1, 10, 1, 3))
     testin[:, :, :, 1] += 1
@@ -56,7 +56,7 @@ def test_localaveragepooling2D(tmpdir):
 
 
 def test_janggu_generate_name(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def _cnn_model(inputs, inp, oup, params):
         inputs = Input((10, 1))
@@ -78,7 +78,7 @@ def test_janggu_generate_name(tmpdir):
 
 
 def test_janggu_instance_dense(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
@@ -200,7 +200,7 @@ def test_janggu_instance_dense(tmpdir):
 
 
 def test_janggu_instance_conv(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
@@ -249,7 +249,7 @@ def test_janggu_instance_conv(tmpdir):
 
 
 def test_janggu_train_predict_option1(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Train, predict and evaluate on dummy data.
 
     create: by_shape
@@ -286,7 +286,7 @@ def test_janggu_train_predict_option1(tmpdir):
 
 
 def test_janggu_train_predict_option2(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Train, predict and evaluate on dummy data.
 
     create: NO
@@ -329,7 +329,7 @@ def test_janggu_train_predict_option3(tmpdir):
     Input args: list(np.array)
     """
 
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     inputs = np.random.random((100, 10))
     outputs = np.random.randint(2, size=(100, 1))
@@ -370,7 +370,7 @@ def test_janggu_train_predict_option4(tmpdir):
     create: NO
     Input args: np.array
     """
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     inputs = np.random.random((100, 10))
     outputs = np.random.randint(2, size=(100, 1))
@@ -414,7 +414,7 @@ def test_janggu_train_predict_option5(tmpdir):
     Input args: list(Dataset)
     """
 
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     inputs = Array("x", np.random.random((100, 10)))
     outputs = Array('y', np.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -451,7 +451,7 @@ def test_janggu_train_predict_option6(tmpdir):
     create: YES
     Input args: Dataset
     """
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     inputs = Array("x", np.random.random((100, 10)))
     outputs = Array('y', np.random.randint(2, size=(100, 1)),
@@ -493,7 +493,7 @@ def test_janggu_train_predict_option7(tmpdir):
     validation_set: YES
     batch_size: None
     """
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     inputs = Array("x", np.random.random((100, 10)))
     outputs = Array('y', np.random.randint(2, size=(100, 1)),

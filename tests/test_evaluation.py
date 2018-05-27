@@ -120,7 +120,7 @@ def get_janggu_conv(inputs, outputs):
 
 
 def test_output_json_score(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
@@ -141,7 +141,7 @@ def test_output_json_score(tmpdir):
 
 
 def test_output_tsv_score(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -158,7 +158,7 @@ def test_output_tsv_score(tmpdir):
 
 
 def test_output_export_score_plot(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -186,7 +186,7 @@ def test_output_export_score_plot(tmpdir):
 
 
 def test_output_export_clustermap(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -224,7 +224,7 @@ def test_output_export_clustermap(tmpdir):
 
 
 def test_output_export_tsne(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))
     outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
                     conditions=['random'])
@@ -261,7 +261,7 @@ def test_output_export_tsne(tmpdir):
 
 
 def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -281,7 +281,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
                         exporter=export_bed)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi, 'resolution':200})
+                 exporter_kwargs={'gindexer': gi, 'resolution': 200})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -301,7 +301,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
 
 
 def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -342,7 +342,7 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
 
 
 def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -382,7 +382,7 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
 
 
 def test_output_bed_predict_denseout(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -421,7 +421,7 @@ def test_output_bed_predict_denseout(tmpdir):
 
 
 def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -461,7 +461,7 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
 
 
 def test_output_bigwig_predict_denseout(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -498,7 +498,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
 
 
 def test_output_bigwig_predict_convout(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize
@@ -535,7 +535,7 @@ def test_output_bigwig_predict_convout(tmpdir):
 
 
 def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # generate loss
     #
     # resolution < stepsize

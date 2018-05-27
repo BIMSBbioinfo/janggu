@@ -1,7 +1,5 @@
 """Dna dataset"""
 
-import os
-
 import numpy as np
 from HTSeq import GenomicInterval
 
@@ -167,8 +165,13 @@ class Dna(Dataset):
         return cls(name, garray, gindexer)
 
     @classmethod
-    def create_from_fasta(cls, name, fastafile, storage='ndarray',
-                          order=1, datatags=None, cache=True, overwrite=False):
+    def create_from_fasta(cls, name,  # pylint: disable=too-many-locals
+                          fastafile,
+                          storage='ndarray',
+                          order=1,
+                          datatags=None,
+                          cache=True,
+                          overwrite=False):
         """Create a Dna class from a fastafile.
 
         This allows to load sequence of equal lengths to be loaded from
@@ -233,6 +236,7 @@ class Dna(Dataset):
 
     @property
     def gindexer(self):
+        """GenomicIndexer property."""
         if self._gindexer is None:
             raise ValueError('GenomicIndexer has not been set yet. Please specify an indexer.')
         return self._gindexer

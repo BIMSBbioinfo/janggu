@@ -1,7 +1,7 @@
 import os
 
 import matplotlib
-matplotlib.use('AGG')
+matplotlib.use('AGG')  # pylint: disable=
 
 import numpy as np
 import pandas
@@ -12,7 +12,7 @@ from janggu.data import Cover
 
 
 def test_cover_from_bam_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     print(os.environ['JANGGU_OUTPUT'])
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
@@ -65,7 +65,7 @@ def test_cover_from_bam_sanity(tmpdir):
 
 
 def test_cover_from_bigwig_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -130,7 +130,7 @@ def test_cover_from_bigwig_sanity(tmpdir):
 
 
 def test_cover_from_bed_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -205,7 +205,7 @@ def test_cover_from_bed_sanity(tmpdir):
 
 
 def test_cover_bam(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample.bam")
     gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
@@ -259,7 +259,7 @@ def test_cover_bam(tmpdir):
 
 
 def test_load_bam_resolution10(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample.bam")
     gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
@@ -344,7 +344,7 @@ def test_load_cover_bigwig_default(tmpdir):
 
 
 def test_load_cover_bigwig_resolution1(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
     bwfile_ = os.path.join(data_path, "sample.bw")
@@ -399,7 +399,7 @@ def test_load_cover_bigwig_resolution1(tmpdir):
 
 
 def test_load_cover_bed_binary(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
@@ -446,7 +446,7 @@ def test_load_cover_bed_binary(tmpdir):
 
 
 def test_load_cover_bed_scored(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
@@ -493,7 +493,7 @@ def test_load_cover_bed_scored(tmpdir):
 
 
 def test_load_cover_bed_categorical(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')

@@ -29,7 +29,7 @@ def datalen(bed_file):
 
 
 def test_dna_dims_order_1(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     order = 1
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.gtf')
@@ -81,7 +81,7 @@ def test_dna_dims_order_1(tmpdir):
 
 
 def test_dna_dims_order_2(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     order = 2
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.bed')
@@ -187,27 +187,27 @@ def complement_layer(order):
 
 
 def test_reverse_order_1(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     reverse_layer(1)
 
 
 def test_reverse_order_2(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     reverse_layer(2)
 
 
 def test_complement_order_1(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     complement_layer(1)
 
 
 def test_complement_order_2(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     complement_layer(2)
 
 
 def test_revcomp_rcmatrix(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     rcmatrix = complement_permmatrix(1)
 
@@ -255,7 +255,7 @@ def test_rcmatrix_identity():
 
 
 def test_dna_dataset_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 

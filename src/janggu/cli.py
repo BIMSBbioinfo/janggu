@@ -20,16 +20,14 @@ import base64
 import glob
 import os
 
-import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import numpy as np
+import dash  # pylint: disable=import-error
+import dash_core_components as dcc  # pylint: disable=import-error
+import dash_html_components as html  # pylint: disable=import-error
 import pandas as pd
-import plotly.graph_objs as go
-from scipy.linalg import svd
+import plotly.graph_objs as go  # pylint: disable=import-error
 from scipy.stats import zscore
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA  # pylint: disable=import-error
+from sklearn.manifold import TSNE  # pylint: disable=import-error
 
 PARSER = argparse.ArgumentParser(description='Command description.')
 PARSER.add_argument('-path', dest='janggu_results',
@@ -37,14 +35,14 @@ PARSER.add_argument('-path', dest='janggu_results',
                                          'janggu_results'),
                     help="Janggu results path.")
 
-args = PARSER.parse_args()
+ARGS = PARSER.parse_args()
 
-app = dash.Dash('Janggu')
-app.title = 'Janggu'
-app.config['suppress_callback_exceptions'] = True
+APP = dash.Dash('Janggu')
+APP.title = 'Janggu'
+APP.config['suppress_callback_exceptions'] = True
 
 
-def serve_layer():
+def _serve_layer():
     return html.Div([
         dcc.Location(id='url', refresh=False),
         html.Nav(
@@ -52,34 +50,33 @@ def serve_layer():
                 [html.Div([
                     dcc.Link(html.H2('Janggu'),
                              href='/', className='navbar-brand')],
-                    className='navbar-header'),
-                html.Div(
-                    html.Ul([html.Li(dcc.Link('Logs', href='/logs')),
-                             html.Li(dcc.Link('Model Comparison',
-                                      href='/model_comparison'))],
-                    className='nav navbar-nav'),
-                 className='container-fluid')],
-                 className='navbar navbar-default navbar-expand-lg navbar-dark')),
+                          className='navbar-header'),
+                 html.Div(
+                     html.Ul([html.Li(dcc.Link('Logs', href='/logs')),
+                              html.Li(dcc.Link('Model Comparison',
+                                               href='/model_comparison'))],
+                             className='nav navbar-nav'),
+                     className='container-fluid')],
+                className='navbar navbar-default navbar-expand-lg navbar-dark')),
         html.Br(),
         html.Div(id='page-content')
     ], className='container')
 
 
-app.layout = serve_layer()
+APP.layout = _serve_layer()
 
 
-@app.callback(dash.dependencies.Output('page-content', 'children'),
+@APP.callback(dash.dependencies.Output('page-content', 'children'),
               [dash.dependencies.Input('url', 'pathname')])
-def display_page(pathname):
+def _display_page(pathname):  # pylint: disable=too-many-return-statements
     if pathname is None:
         return html.Div([])
     elif pathname == '/':
-        print(args.janggu_results)
-        files = glob.glob(os.path.join(args.janggu_results, 'models', '*.png'))
+        files = glob.glob(os.path.join(ARGS.janggu_results, 'models', '*.png'))
         if not files:
             return html.Div([
                 html.P('The directory "{}" appears to be empty.'
-                       .format(args.janggu_results))])
+                       .format(ARGS.janggu_results))])
         encoding = {os.path.basename(os.path.splitext(name)[0]):
                     base64.b64encode(open(name, 'rb').read())
                     for name in files}
@@ -96,23 +93,22 @@ def display_page(pathname):
                 className='table table-bordered')])
     elif pathname == '/logs':
         return html.Div(
-            html.Pre(open(os.path.join(args.janggu_results, 'logs', 'janggu.log')).read())
+            html.Pre(open(os.path.join(ARGS.janggu_results, 'logs', 'janggu.log')).read())
         )
     elif pathname == '/model_comparison':
-        return model_comparison_page()
+        return _model_comparison_page()
     else:
         files = []
-        root = os.path.join(args.janggu_results, 'evaluation', pathname[1:])
+        root = os.path.join(ARGS.janggu_results, 'evaluation', pathname[1:])
         pathlen = len(root) + 1
         for root, dirnames, filenames in os.walk(root):
             for filename in filenames:
                 if filename.endswith('.png') or \
-                    filename.endswith('.tsv') or filename.endswith('.ply'):
-                    print(dirnames,filename)
+                        filename.endswith('.tsv') or filename.endswith('.ply'):
+
                     path = tuple(dirnames) + (filename,)
 
                     files += [os.path.join(root, *path)]
-                    print(files)
 
         if not files:
             return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
@@ -125,15 +121,13 @@ def display_page(pathname):
                          html.Div(id='output-plot')])
 
 
-
-
-def model_comparison_page():
-    print('model_comparison_page')
+def _model_comparison_page():
+    print('_model_comparison_page')
     combined_tables = {}
     #
-    root = os.path.join(args.janggu_results, 'evaluation')
+    root = os.path.join(ARGS.janggu_results, 'evaluation')
 
-    for root, dirnames, filenames in os.walk(root):
+    for root, _, filenames in os.walk(root):
 
         for filename in filenames:
             if filename.endswith('.tsv'):
@@ -145,23 +139,24 @@ def model_comparison_page():
                 if scorename not in combined_tables:
                     combined_tables[scorename] = []
                 combined_tables[scorename].append(os.path.join(root, filename))
+    first_score = list(combined_tables.keys())[0]
     return html.Div([html.H3('Model Comparison'),
-                 dcc.Dropdown(id='score-selection',
-                              options=[{'label': f,
-                                        'value': (f,combined_tables[f])} for f in combined_tables],
-                              value='Select a score'),
+                     dcc.Dropdown(id='score-selection',
+                                  options=[{'label': f,
+                                            'value': (f, combined_tables[f])}
+                                           for f in combined_tables],
+                                  value=(first_score,
+                                         combined_tables[first_score])),
+                     html.Div(id='output-modelcomparison')])
 
-                 html.Div(id='output-modelcomparison')])
 
-
-@app.callback(
+@APP.callback(
     dash.dependencies.Output('output-modelcomparison', 'children'),
     [dash.dependencies.Input('score-selection', 'value')])
-def update_modelcomparison(results):
-    print('update_modelcomparison',  results)
+def _update_modelcomparison(results):
 
     if results is None:
-        return html.P('update_modelcomparison no results.')
+        return html.P('No results for model comparison selected or detected.')
 
     label = results[0]
     results = results[1]
@@ -169,9 +164,9 @@ def update_modelcomparison(results):
     thead = [html.Tr([html.Th(h) for h in header])]
     tbody = []
     allresults = pd.DataFrame([], columns=header)
+    print(results)
     for tab in results:
         df_ = pd.read_csv(tab, sep='\t', header=[0])
-        print(df_.columns[0].split('-'))
         names = df_.columns[0].split('-')
         mname, lname, cname = names[0], names[1], '-'.join(names[2:])
         allresults = allresults.append({'Model': mname,
@@ -188,10 +183,10 @@ def update_modelcomparison(results):
     return html.Table(thead + tbody)
 
 
-@app.callback(
+@APP.callback(
     dash.dependencies.Output('output-plot', 'children'),
     [dash.dependencies.Input('tag-selection', 'value')])
-def update_output(value):
+def _update_output(value):
 
     if value.endswith('png'):
         # display the png images directly
@@ -245,8 +240,8 @@ def update_output(value):
                 dcc.Dropdown(id='operation',
                              options=[{'label': x,
                                        'value': x}
-                                      for x in ['tsne', 'svd', 'pca']],
-                             value='svd'),
+                                      for x in ['pca', 'tsne']],
+                             value='pca'),
                 dcc.Dropdown(id='annotation',
                              options=[{'label': x,
                                        'value': x} for x in ['None'] + annot],
@@ -261,49 +256,47 @@ def update_output(value):
     return html.P('Cannot find action for {}'.format(value))
 
 
-@app.callback(
+@APP.callback(
     dash.dependencies.Output('scatter', 'figure'),
     [dash.dependencies.Input('tag-selection', 'value'),
      dash.dependencies.Input('operation', 'value'),
      dash.dependencies.Input('xaxis', 'value'),
      dash.dependencies.Input('yaxis', 'value'),
      dash.dependencies.Input('annotation', 'value')])
-def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
-    df = pd.read_csv(filename, sep='\t', header=[0])
+def _update_scatter(filename, operation,  # pylint: disable=too-many-locals
+                    xaxis_label,
+                    yaxis_label,
+                    annotation):
+    data = pd.read_csv(filename, sep='\t', header=[0])
 
-    # if 'annot' in df use coloring
-    colors = pd.Series(['blue'] * df.shape[0])
-    for col in df:
+    # if 'annot' in data use coloring
+    colors = pd.Series(['blue'] * data.shape[0])
+    for col in data:
         if col[:len('annot.')] == 'annot.':
             if annotation == col[len('annot.'):]:
-                colors = df[col]
-            df.pop(col)
+                colors = data[col]
+            data.pop(col)
         if col == 'row_names':
-            text = df.pop(col)
+            text = data.pop(col)
 
-    marker = dict(size=3, opacity=.5)
-    if operation == 'svd':
-        u, d, v = svd(df, full_matrices=False)
-        trdf = np.dot(u[:, :3], np.diag(d[:3]))
-    elif operation == 'pca':
+    if operation == 'pca':
         pca = PCA(n_components=3)
-        trdf = pca.fit_transform(df)
+        trdata = pca.fit_transform(data)
     else:
         tsne = TSNE(n_components=3)
-        trdf = tsne.fit_transform(df)
-    trdf = pd.DataFrame(trdf, columns=['Component {}'.format(i)
-                                       for i in [1, 2, 3]])
+        trdata = tsne.fit_transform(data)
+    trdata = pd.DataFrame(trdata, columns=['Component {}'.format(i)
+                                           for i in [1, 2, 3]])
 
-    print(colors.unique())
     data = []
-    for c in colors.unique():
+    for color in colors.unique():
         data.append(
             go.Scatter(
-                x=trdf[xaxis_label][colors == c],
-                y=trdf[yaxis_label][colors == c],
+                x=trdata[xaxis_label][colors == color],
+                y=trdata[yaxis_label][colors == color],
                 text=text,
-                name=c,
-                customdata=colors[colors == c].index,
+                name=color,
+                customdata=colors[colors == color].index,
                 mode='markers',
                 marker=dict(size=3, opacity=.5)))
 
@@ -319,39 +312,36 @@ def update_scatter(filename, operation, xaxis_label, yaxis_label, annotation):
            }
 
 
-@app.callback(
+@APP.callback(
     dash.dependencies.Output('features', 'figure'),
     [dash.dependencies.Input('tag-selection', 'value'),
      dash.dependencies.Input('operation', 'value'),
      dash.dependencies.Input('scatter', 'selectedData')])
-def update_features(value, feature, selectedData):
-    df = pd.read_csv(value, sep='\t', header=[0])
-    df.reindex_axis(sorted(df.columns), axis=1)
+def _update_features(value, feature, selected):
+    data = pd.read_csv(value, sep='\t', header=[0])
+    data.reindex(sorted(data.columns), axis=1)
 
-    print('update_features')
+    print('_update_features')
 
-    for col in df:
+    for col in data:
         if col[:len('annot')] == 'annot':
-            df.pop(col)
+            data.pop(col)
         if col == 'row_names':
-            df.pop(col)
+            data.pop(col)
 
-    print(selectedData)
-    df = df.apply(zscore)
-    if selectedData is not None:
-        selected_idx = [datum['customdata'] for datum in selectedData['points']]
-        df = df.iloc[selected_idx, :]
-        print(selected_idx)
-        print(df.shape)
+    data = data.apply(zscore)
+    if selected is not None:
+        selected_idx = [datum['customdata'] for datum in selected['points']]
+        data = data.iloc[selected_idx, :]
 
-    mean = df.mean().values
-    std = df.std().values
+    mean = data.mean().values
+    std = data.std().values
 
     return {'data': [go.Scatter(
         x=list(range(len(mean))),
         y=mean,
         mode='line',
-        text=df.columns,
+        text=data.columns,
         error_y=dict(
             type='percent',
             value=std,
@@ -364,27 +354,28 @@ def update_features(value, feature, selectedData):
                 xaxis={'title': 'Features'},
                 plot_bgcolor='#E5E5E5',
                 paper_bgcolor='#E5E5E5',
-                yaxis={'showgrid': False, 'title': 'Activities (z-score)'}
+                yaxis={'showgrid': False,
+                       'title': 'Activities (z-score)'}
             )
            }
 
 
-external_css = ["https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
-                "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
-                "https://codepen.io/chriddyp/pen/bWLwgP.css"]
+CSSES = ["https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
+         "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+         "https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
-for css in external_css:
-    app.css.append_css({"external_url": css})
+for css in CSSES:
+    APP.css.append_css({"external_url": css})
 
-external_js = ["http://code.jquery.com/jquery-3.3.1.min.js",
-               "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"]
+JSES = ["http://code.jquery.com/jquery-3.3.1.min.js",
+        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"]
 
-for js in external_js:
-    app.scripts.append_script({"external_url": js})
+for js in JSES:
+    APP.scripts.append_script({"external_url": js})
 
 
 def main():
     """cli entry"""
     print('Welcome to janggu (GPL-v2). Copyright (C) 2017 '
           + 'Wolfgang Kopp.')
-    app.run_server()
+    APP.run_server()

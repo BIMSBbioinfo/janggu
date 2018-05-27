@@ -6,7 +6,7 @@ from HTSeq import GenomicInterval
 from janggu.utils import _get_genomic_reader
 
 
-class GenomicIndexer(object):
+class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     """GenomicIndexer maps genomic positions to the respective indices
 
     Indexing a GenomicIndexer object returns a GenomicInterval
@@ -32,7 +32,8 @@ class GenomicIndexer(object):
     rel_end = None
 
     @classmethod
-    def create_from_file(cls, regions, binsize, stepsize, flank=0,
+    def create_from_file(cls, regions,  # pylint: disable=too-many-locals
+                         binsize, stepsize, flank=0,
                          fixed_size_batches=True):
         """Creates a GenomicIndexer object.
 
@@ -147,7 +148,6 @@ class GenomicIndexer(object):
         if not isinstance(value, int) or value < 0:
             raise ValueError('_flank must be a non-negative integer')
         self._flank = value
-
 
     def tostr(self):
         """Returns representing the region."""

@@ -1,5 +1,10 @@
+"""Janggu specific network layers.
+
+This module contains custom keras layers defined for
+janggu.
+"""
 import numpy
-import tensorflow as tf
+import tensorflow as tf  # pylint: disable=import-error
 from keras import backend as K
 from keras.engine.topology import Layer
 from keras.initializers import Constant
@@ -21,6 +26,9 @@ class LocalAveragePooling2D(Layer):
         Averaging window size. Default: 1.
     """
 
+    kernel = None
+    bias = None
+
     def __init__(self, window_size=1, **kwargs):
         self.window_size = window_size
         super(LocalAveragePooling2D, self).__init__(**kwargs)
@@ -37,7 +45,7 @@ class LocalAveragePooling2D(Layer):
         self.bias = None
         self.built = True
 
-    def call(self, inputs):
+    def call(self, inputs):  # pylint: disable=arguments-differ
 
         pin = K.permute_dimensions(inputs, (0, 1, 3, 2))
         avg_conv = K.conv2d(pin,
@@ -76,7 +84,7 @@ class Reverse(Layer):
         self.axis = axis
         super(Reverse, self).__init__(**kwargs)
 
-    def call(self, inputs):
+    def call(self, inputs):  # pylint: disable=arguments-differ
         return K.reverse(inputs, self.axis)
 
     def get_config(self):
@@ -111,9 +119,6 @@ class Complement(Layer):
     """
     rcmatrix = None
 
-    def __init__(self, **kwargs):
-        super(Complement, self).__init__(**kwargs)
-
     def build(self, input_shape):
 
         # from the shape of the one-hot encoding (input_shape),
@@ -123,7 +128,7 @@ class Complement(Layer):
             dtype=K.floatx())
         super(Complement, self).build(input_shape)
 
-    def call(self, inputs):
+    def call(self, inputs):  # pylint: disable=arguments-differ
         return tf.einsum('ij,bsjc->bsic', self.rcmatrix, inputs)
 
     def get_config(self):

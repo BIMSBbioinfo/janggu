@@ -13,8 +13,8 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from janggu import Scorer
 from janggu import Janggu
+from janggu import Scorer
 from janggu import inputlayer
 from janggu import outputdense
 from janggu.data import Array
@@ -44,7 +44,9 @@ PARSER.add_argument('-order', dest='order', type=int,
 
 args = PARSER.parse_args()
 
-os.environ['JANGGU_OUTPUT']=args.path
+os.environ['JANGGU_OUTPUT'] = args.path
+
+
 # helper function
 def nseqs(filename):
     """Extract the number of rows in the file.
@@ -104,6 +106,7 @@ pred_json = Scorer('pred', exporter=export_json)
 # plotly will export a special table that is used for interactive browsing
 # of the results
 pred_plotly = Scorer('pred', exporter=export_plotly)
+
 
 # Define the model templates
 @inputlayer
@@ -195,12 +198,12 @@ model.predict(DNA_TEST, datatags=['test'],
               callbacks=[pred_tsv, pred_json, pred_plotly],
               layername='motif',
               exporter_kwargs={'annot': annot_test,
-                             'row_names': DNA_TEST.gindexer.chrs})
+                               'row_names': DNA_TEST.gindexer.chrs})
 model.predict(DNA_TEST, datatags=['test'],
               callbacks=[heatmap_eval],
               layername='motif',
               exporter_kwargs={'annot': annot_test,
-                             'z_score': 1})
+                               'z_score': 1})
 # model.predict(DNA_TEST, datatags=['test'],
 #               callbacks=[tsne_eval],
 #               layername='motif',
