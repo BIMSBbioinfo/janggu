@@ -1,3 +1,4 @@
+from copy import copy
 import numpy
 import tensorflow as tf
 from keras import backend as K
@@ -147,13 +148,27 @@ class DnaConv2D(Conv2D):
     the weight matrices are reverse complemented which allows
     you to scan the reverse complementary sequence for motif matches.
 
-    All parameters are the same as for keras.layers.Conv2D except
+    All parameters are the same as for keras.layers.Conv2D except for scan_revcomp.
 
     Parameters
     ----------
     scan_revcomp : boolean
         If True the reverse complement is scanned for motif matches.
         Default: False.
+
+    Examples
+    --------
+    To scan both DNA strands for motif matches use
+
+    .. code-block:: python
+
+      conv = DnaConv2D(nfilters, filter_shape)
+      # apply the normal convolution operation
+      forward = conv(input)
+
+      # obtain a copy of conv and scan the reverse compl. strand
+      rcconv = conv.get_revcomp()
+      reverse = rcconv(input)
     """
 
     def __init__(self, filters,
@@ -220,3 +235,12 @@ class DnaConv2D(Conv2D):
             # restore the original kernel matrix
             self.kernel = tmp
         return res
+
+    def get_revcomp(self):
+        """Optain a copy of the layer that uses the reverse complement operation."""
+        if not self.built:
+            raise ValueError("Layer must be built before a copy can be obtained.")
+        layer = copy(self)
+        layer.name += '_rc'
+        layer.scan_revcomp = True
+        return layer

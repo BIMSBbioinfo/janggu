@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import pkg_resources
 import pytest
+from keras.layers import Average
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Input
@@ -17,6 +18,7 @@ from janggu.data import Cover
 from janggu.data import Dna
 from janggu.data import Table
 from janggu.layers import Complement
+from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 
@@ -247,6 +249,59 @@ def test_janggu_instance_conv(tmpdir):
 
     Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
+
+
+
+def test_janggu_use_dnaconv(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    posfile = os.path.join(data_path, 'positive.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    regions=bed_file, order=1)
+
+    ctcf = Cover.create_from_bed(
+        "positives",
+        bedfiles=posfile,
+        regions=bed_file,
+        binsize=200, stepsize=200,
+        resolution=200,
+        flank=0,
+        dimmode='all',
+        storage='ndarray')
+
+    @inputlayer
+    @outputconv('sigmoid')
+    def _cnn_model(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+        conv = DnaConv2D(2, (2, 4))
+        layer1 = conv(layer)
+        rcconv = conv.get_revcomp()
+        layer2 = rcconv(layer)
+        layer = Average()([layer1, layer2])
+        return inputs, layer
+
+    bwm = Janggu.create(_cnn_model, modelparams=(2,),
+                        inputs=dna,
+                        outputs=ctcf,
+                        name='dna_ctcf_HepG2-cnn')
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+
+    bwm.save()
+    bwm.summary()
+
+    assert os.path.exists(storage)
+
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
 def test_janggu_train_predict_option1(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath

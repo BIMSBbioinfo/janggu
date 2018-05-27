@@ -147,12 +147,8 @@ def double_stranded_model_dnaconv(inputs, inp, oup, params):
     forward = dnaconv(layer)
 
     # copy the conv layer with the same weights
-    dnaconv2 = copy(dnaconv)
-    dnaconv2.name += '_rc'  # keras require a new name
-    dnaconv2.scan_revcomp = True  # use the recomp operation
+    dnaconv2 = dnaconv.get_revcomp()
 
-    print(dnaconv.scan_revcomp)
-    print(dnaconv2.scan_revcomp)
     revcomp = dnaconv2(layer)
 
     layer = Maximum()([forward, revcomp])

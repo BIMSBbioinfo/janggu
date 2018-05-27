@@ -1,5 +1,4 @@
 import argparse
-from copy import copy
 import os
 
 import numpy as np
@@ -137,17 +136,10 @@ def double_stranded_model_dnaconv(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         pass
     dnaconv = DnaConv2D(params[0], (params[1], layer.shape.as_list()[2]),
-                       activation=params[2])
+                        activation=params[2])
 
     forward = dnaconv(layer)
-    dnaconv2 = copy(dnaconv)
-    print(dnaconv.kernel)
-    print(dnaconv2.kernel)
-
-    dnaconv2.name += '_rc'
-    dnaconv2.scan_revcomp = True
-    print(dnaconv.scan_revcomp)
-    print(dnaconv2.scan_revcomp)
+    dnaconv2 = dnaconv.get_revcomp()
 
     revcomp = dnaconv2(layer)
 
