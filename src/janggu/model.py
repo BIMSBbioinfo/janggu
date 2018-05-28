@@ -11,6 +11,7 @@ from keras.callbacks import LambdaCallback
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import plot_model
+from keras.utils import Sequence
 
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
@@ -392,8 +393,9 @@ class Janggu(object):
 
         """
 
-        inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
-        outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
+        if not isinstance(inputs, Sequence):
+            inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
+            outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
 
         hyper_params = {
             'epochs': epochs,
@@ -407,10 +409,13 @@ class Janggu(object):
         }
 
         self.logger.info('Fit: %s', self.name)
-        self.logger.info("Input:")
-        self.__dim_logging(inputs)
-        self.logger.info("Output:")
-        self.__dim_logging(outputs)
+        if isinstance(inputs, Sequence):
+            self.logger.info('using custom Sequence')
+        else:
+            self.logger.info("Input:")
+            self.__dim_logging(inputs)
+            self.logger.info("Output:")
+            self.__dim_logging(outputs)
         self.timer = time.time()
         history = None
         self.logger.info("Hyper-parameters:")
@@ -430,17 +435,23 @@ class Janggu(object):
 
         if not batch_size:
             batch_size = 32
-        jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
+        if isinstance(inputs, Sequence):
+            # input could be a sequence
+            jseq = inputs
+        else:
+            jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
 
-        if validation_data is not None:
+        if validation_data is None:
+            valjseq = None
+        elif isinstance(validation_data, Sequence):
+            valjseq = validation_data
+        else:
             valinputs = _convert_data(self.kerasmodel, validation_data[0],
                                       'input_layers')
             valoutputs = _convert_data(self.kerasmodel, validation_data[1],
                                        'output_layers')
             sweights = validation_data[2] if len(validation_data) == 3 else None
             valjseq = JangguSequence(batch_size, valinputs, valoutputs, sweights)
-        else:
-            valjseq = None
 
         try:
             history = self.kerasmodel.fit_generator(
@@ -501,11 +512,15 @@ class Janggu(object):
 
         """
 
-        inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
+        if not isinstance(inputs, Sequence):
+            inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
 
         self.logger.info('Predict: %s', self.name)
-        self.logger.info("Input:")
-        self.__dim_logging(inputs)
+        if isinstance(inputs, Sequence):
+            self.logger.info('using custom Sequence')
+        else:
+            self.logger.info("Input:")
+            self.__dim_logging(inputs)
         self.timer = time.time()
 
         # if a desired layername is specified, the features
@@ -520,7 +535,10 @@ class Janggu(object):
         if not batch_size:
             batch_size = 32
 
-        jseq = JangguSequence(batch_size, inputs, None, None)
+        if isinstance(inputs, Sequence):
+            jseq = inputs
+        else:
+            jseq = JangguSequence(batch_size, inputs, None, None)
 
         try:
             preds = model.kerasmodel.predict_generator(
@@ -573,20 +591,27 @@ class Janggu(object):
 
         """
 
-        inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
-        outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
+        if not isinstance(inputs, Sequence):
+            inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
+            outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
 
         self.logger.info('Evaluate: %s', self.name)
-        self.logger.info("Input:")
-        self.__dim_logging(inputs)
-        self.logger.info("Output:")
-        self.__dim_logging(outputs)
+        if isinstance(inputs, Sequence):
+            self.logger.info('Using custom Sequence.')
+        else:
+            self.logger.info("Input:")
+            self.__dim_logging(inputs)
+            self.logger.info("Output:")
+            self.__dim_logging(outputs)
         self.timer = time.time()
 
         if not batch_size:
             batch_size = 32
 
-        jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
+        if isinstance(inputs, Sequence):
+            jseq = inputs
+        else:
+            jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
 
         try:
             values = self.kerasmodel.evaluate_generator(
@@ -608,7 +633,9 @@ class Janggu(object):
         self.logger.info("Evaluation finished in %1.3f s",
                          time.time() - self.timer)
 
-        preds = self.kerasmodel.predict(inputs, batch_size)
+        preds = self.kerasmodel.predict_generator(jseq, steps=steps,
+                                                  use_multiprocessing=use_multiprocessing,
+                                                  workers=workers)
         preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
