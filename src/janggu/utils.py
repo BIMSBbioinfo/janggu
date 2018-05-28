@@ -40,6 +40,7 @@ except ImportError:
 
 
 def _get_output_root_directory():
+    """Function returns the output root directory."""
     if "JANGGU_OUTPUT" not in os.environ:
         os.environ['JANGGU_OUTPUT'] = os.path.join(os.path.expanduser("~"),
                                                    'janggu_results')
@@ -280,12 +281,12 @@ def export_json(output_dir, name, results, filesuffix='json',
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     filesuffix : str
-        Target file ending.
+        Target file ending. Default: 'json'.
     annot: None, dict
         Annotation data. If encoded as dict the key indicates the name,
-        while the values holds a list of annotation labels.
+        while the values holds a list of annotation labels. Default: None.
     row_names : None or list
-        Row names.
+        List of row names. Default: None.
     """
 
     filename = os.path.join(output_dir, name + '.' + filesuffix)
@@ -315,11 +316,15 @@ def export_tsv(output_dir, name, results, filesuffix='tsv', annot=None, row_name
         Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
+    filesuffix : str
+        File ending. Default: 'tsv'.
     annot: None, dict
         Annotation data. If encoded as dict the key indicates the name,
-        while the values holds a list of annotation labels.
+        while the values holds a list of annotation labels. For example,
+        this can be used to store the true output labels.
+        Default: None.
     row_names : None, list
-        List of row names
+        List of row names. For example, chromosomal loci. Default: None.
     """
 
     filename = os.path.join(output_dir, name + '.' + filesuffix)
@@ -354,6 +359,13 @@ def export_plotly(output_dir, name, results, annot=None, row_names=None):
         Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
+    annot: None, dict
+        Annotation data. If encoded as dict the key indicates the name,
+        while the values holds a list of annotation labels.
+        For example, this can be used to store color information to overlay
+        with the interactive scatter plot. Default: None.
+    row_names : None, list
+        List of row names. For instance, chromosomal loci. Default: None.
     """
     # this produces a normal json file, but for the dedicated
     # purpose of visualization in the dash app.
@@ -372,6 +384,14 @@ def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disabl
         Output name.
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
+    figsize : tuple(int, int)
+        Used to specify the figure size for matplotlib.
+    xlabel : str or None
+        xlabel used for the plot.
+    ylabel : str or None
+        ylabel used for the plot.
+    fform : str or None
+        Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
     """
     if plt is None:
         raise Exception('matplotlib not available. Please install matplotlib.')
@@ -412,7 +432,23 @@ def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=t
                   resolution=None):
     """Export predictions to bigwig.
 
-    This function can be used as exporter with :class:`Scorer`.
+    This function exports the predictions to bigwig format which allows you to
+    inspect the predictions in a genome browser.
+    Importantly, gindexer must contain non-overlapping windows!
+
+    Parameters
+    ----------
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    gindexer : GenomicIndexer
+        GenomicIndexer that links the prediction for a certain region to
+        its associated genomic coordinates.
+    resolution : int
+        Used to output the results.
     """
 
     if pyBigWig is None:
@@ -474,7 +510,22 @@ def export_bed(output_dir, name, results,  # pylint: disable=too-many-locals
                gindexer=None, resolution=None):
     """Export predictions to bed.
 
-    This function can be used as exporter with :class:`Scorer`.
+    This function exports the predictions to bed format which allows you to
+    inspect the predictions in a genome browser.
+
+    Parameters
+    ----------
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    gindexer : GenomicIndexer
+        GenomicIndexer that links the prediction for a certain region to
+        its associated genomic coordinates.
+    resolution : int
+        Used to output the results.
     """
 
     if gindexer is None:
@@ -528,6 +579,41 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # py
     This method utilizes
     `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_
     to illustrate feature activities of the neural net.
+
+    Parameters
+    ----------
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    fform : str or None
+        Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
+    figsize : tuple(int, int) or None
+        Used to specify the figure size for matplotlib.
+    annot : None
+        Row annotation is used to create a row color annotation track
+        for the figure.
+    method : str
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+        Default: 'ward'
+    metric : str
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+        Default: 'euclidean'
+    z_score : int or None
+        Whether to transform rows or columns to z-scores.
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+    standard_scale :
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+    [row/col]_cluster : boolean
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+    [row/col]_linkage :
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+    [row/col]_colors :
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
+    mask :
+        See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
     """
 
     if sns is None:
@@ -568,7 +654,35 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # py
 def export_tsne(output_dir, name, results, figsize=None,  # pylint: disable=too-many-locals
                 cmap=None, colors=None, norm=None, alpha=None, fform=None,
                 annot=None):
-    """Create a plot of the 2D t-SNE embedding of the feature activities."""
+    """Create a plot of the 2D t-SNE embedding of the feature activities.
+
+    Parameters
+    ----------
+    output_dir : str
+        Output directory.
+    name : str
+        Output name.
+    results : dict
+        Dictionary containing the evaluation results which needs to be stored.
+    fform : str or None
+        Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
+    figsize : tuple(int, int) or None
+        Used to specify the figure size for matplotlib.
+    cmap : None or colormap
+        Optional argument for matplotlib.pyplot.scatter. Only used if annot
+        is abscent. Otherwise, marker colors are derived from the annotation.
+    colors : None
+        Optional argument for matplotlib.pyplot.scatter.
+        Only used if annot
+        is abscent. Otherwise, marker colors are derived from the annotation.
+    norm :
+        Optional argument for matplotlib.pyplot.scatter.
+    alpha : None or float
+        Opacity used for scatter plot markers.
+    annot : None or dict.
+        If annotation data is available, the color of the markers is automatically
+        derived for the annotation.
+    """
 
     if TSNE is None:
         raise Exception('scikit-learn not available. '

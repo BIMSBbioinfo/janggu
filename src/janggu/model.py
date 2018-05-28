@@ -218,7 +218,7 @@ class Janggu(object):
         filename : str
             Filename of the stored model. Default: None.
         overwrite: bool
-            Overwrite a stored model. Default: False.
+            Overwrite a stored model. Default: True.
         """
         if not filename:  # pragma: no cover
             filename = self._storage_path(self.name, self.outputdir)
@@ -347,8 +347,8 @@ class Janggu(object):
         """Model compilation.
 
         This method delegates the compilation to
-        keras.models.Model.compile. See https://keras.io/models/model/
-        for more information on the arguments.
+        keras.models.Model.compile. See also https://keras.io/models/model/
+
 
         Examples
         --------
@@ -381,8 +381,45 @@ class Janggu(object):
         """Model fitting.
 
         This method is used to fit a given model.
-        All of the parameters are directly delegated the
+        Most of parameters are directly delegated the
         fit_generator of the keras model.
+
+        Parameters
+        ----------
+        inputs : :code:`Dataset`, list(Dataset) or Sequence (keras.utils.Sequence)
+            Input Dataset or Sequence to use for fitting the model.
+        outputs : :code:`Dataset`, list(Dataset) or None
+            Output Dataset containing the training targets. If a Sequence
+            is used for inputs, outputs will have no effect.
+        batch_size : int or None
+            Batch size. If set to None a batch size of 32 is used.
+        epochs : int
+            Number of epochs. Default: 1.
+        verbose : int
+            Verbosity level. See https://keras.io.
+        callbacks : List(keras.callbacks.Callback)
+            Callbacks to be applied during training. See https://keras.io/callbacks
+        validation_data : tuple, Sequence or None
+            Validation data can be a tuple (input_dataset, output_dataset),
+            or (input_dataset, output_dataset, sample_weights) or
+            a keras.utils.Sequence instance. If None, validation is not applied.
+        shuffle : boolean
+            shuffle batches. Default: True.
+        class_weight : dict
+            Class weights. See https://keras.io.
+        sample_weight : np.array or None
+            Sample weights. See https://keras.io.
+        initial_epoch : int
+            Initial epoch at which to start training.
+        steps_per_epoch : int, None.
+            Number of steps per epoch. If None, this value is determined from
+            the dataset size and the batch_size.
+        use_multiprocessing : boolean
+            Whether to use multiprocessing. See https://keras.io. Default: False.
+        workers : int
+            Number of workers to use in multiprocessing mode. Default: 1.
+
+
 
         Examples
         --------
@@ -488,12 +525,12 @@ class Janggu(object):
                 batch_size=None,
                 verbose=0,
                 steps=None,
-                use_multiprocessing=False,
                 layername=None,
                 datatags=None,
                 callbacks=None,
                 score_kwargs=None,
                 exporter_kwargs=None,
+                use_multiprocessing=False,
                 workers=1):
 
         """Performs a prediction.
@@ -502,6 +539,35 @@ class Janggu(object):
         All of the parameters are directly delegated the
         predict_generator of the keras model.
         See https://keras.io/models/model/#methods.
+
+        Parameters
+        ----------
+        inputs : :code:`Dataset`, list(Dataset) or Sequence (keras.utils.Sequence)
+            Input Dataset or Sequence to use for fitting the model.
+        batch_size : int or None
+            Batch size. If set to None a batch size of 32 is used.
+        verbose : int
+            Verbosity level. See https://keras.io.
+        steps : int, None.
+            Number of predict steps. If None, this value is determined from
+            the dataset size and the batch_size.
+        layername : str or None
+            Layername for which the prediction should be performed. If None,
+            the output layer will be used automatically.
+        datatags : list(str) or None
+            Tags to annotate the evaluation results. Default: None.
+        callbacks : List(:code:`Scorer`)
+            Scorer instances to be applied on the predictions.
+        score_kwargs : dict or None
+            keyword arguments to be passed on to the scoring function.
+            Default: None.
+        exporter_kwargs : dict or None
+            keyword arguments to be passed on to the exporter function. Default: None.
+        use_multiprocessing : boolean
+            Whether to use multiprocessing for the prediction. Default: False.
+        workers : int
+            Number of workers to use. Default: 1.
+
 
         Examples
         --------
@@ -569,11 +635,11 @@ class Janggu(object):
                  batch_size=None,
                  sample_weight=None,
                  steps=None,
-                 use_multiprocessing=False,
                  datatags=None,
                  callbacks=None,
                  score_kwargs=None,
                  exporter_kwargs=None,
+                 use_multiprocessing=False,
                  workers=1):
         """Evaluates the performance.
 
@@ -581,6 +647,36 @@ class Janggu(object):
         All of the parameters are directly delegated the
         evalute_generator of the keras model.
         See https://keras.io/models/model/#methods.
+
+
+        Parameters
+        ----------
+        inputs : :code:`Dataset`, list(Dataset) or Sequence (keras.utils.Sequence)
+            Input Dataset or Sequence to use for fitting the model.
+        outputs :  :code:`Dataset`, list(Dataset) or None
+            Output Dataset containing the training targets. If a Sequence
+            is used for inputs, outputs will have no effect.
+        batch_size : int or None
+            Batch size. If set to None a batch size of 32 is used.
+        sample_weight : np.array or None
+            Sample weights. See https://keras.io.
+        steps : int, None.
+            Number of predict steps. If None, this value is determined from
+            the dataset size and the batch_size.
+        datatags : list(str) or None
+            Tags to annotate the evaluation results. Default: None.
+        callbacks : List(:code:`Scorer`)
+            Scorer instances to be applied on the predictions.
+        score_kwargs : dict or None
+            keyword arguments to be passed on to the scoring function.
+            Default: None.
+        exporter_kwargs : dict or None
+            keyword arguments to be passed on to the exporter function. Default: None.
+        use_multiprocessing : boolean
+            Whether to use multiprocessing for the prediction. Default: False.
+        workers : int
+            Number of workers to use. Default: 1.
+        
 
         Examples
         --------

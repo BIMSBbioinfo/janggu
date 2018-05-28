@@ -40,10 +40,8 @@ def outputdense(activation):
 def outputconv(activation):
     """Output layer decorator
 
-    This decorator appends an output layer to the
+    This decorator appends an output convolution layer to the
     network with the correct shape, activation and layer name.
-    It maintains the same height and width of the input. Only
-    the condition (channel) dimension is changed.
     """
     def _outputconv(func):
         @wraps(func)

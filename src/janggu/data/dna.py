@@ -19,7 +19,7 @@ class Dna(Dataset):
     application.
     The sequence can conventiently fetched from a raw fasta-file.
     Upon indexing or slicing of the dataset, the one-hot representation
-    for the respective locus will be returned.
+    of a respective region will be returned.
 
     Parameters
     -----------
@@ -27,14 +27,9 @@ class Dna(Dataset):
         Name of the dataset
     garray : :class:`GenomicArray`
         A genomic array that holds the sequence data.
-    gindxer : :class:`GenomicIndexer`
+    gindxer : :class:`GenomicIndexer` or None
         A genomic index mapper that translates an integer index to a
-        genomic coordinate.
-    flank : int
-        Flanking regions in basepairs to be extended up and downstream.
-        Default: 150.
-    order : int
-        Order for the one-hot representation. Default: 1.
+        genomic coordinate. Can be None, if the Dataset is only loaded.
     """
 
     _order = None
@@ -117,8 +112,9 @@ class Dna(Dataset):
                               cache=True, overwrite=False):
         """Create a Dna class from a reference genome.
 
-        This requires a reference genome in fasta format as well as a bed-file
-        that holds the regions of interest.
+        This requires a reference genome in fasta format to load the data from.
+        If regions points to a bed file, the dataset will also be indexed
+        accordingly. Otherwise, a GenomicIndexer must be attached later.
 
         Parameters
         -----------

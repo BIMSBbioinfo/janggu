@@ -17,7 +17,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     coverage along an entire genome composed of arbitrary length chromosomes
     as well as for multiple cell-types and conditions simultaneously.
     Inspired by the HTSeq analog, the array can hold the data in different
-    storage modes, including ndarray, memmap or hdf5.
+    storage modes, including ndarray, hdf5 or as sparse dataset.
 
     Parameters
     ----------
@@ -31,13 +31,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         array dimensions. Default: None means a one-dimensional array is produced.
     typecode : str
         Datatype. Default: 'd'.
-    storage : str
-        Storage type can be 'ndarray' or 'hdf5'.
-        The first loads the data into a numpy array directly, while
-        the latter two can be used to fetch the data from disk.
-    memmap_dir : str
-        Directory in which to store the cachefiles. Used only with
-        'memmap' and 'hdf5'. Default: "".
+    resolution : int
+        Resolution for storing the genomic array. Only relevant for the use
+        with Cover Datasets. Default: 1.
+    order : int
+        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
     """
     handle = dict()
     _condition = None
@@ -118,13 +116,9 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
 
 class HDF5GenomicArray(GenomicArray):
-    """GenomicArray stores multi-dimensional genomic information.
+    """HDF5GenomicArray stores multi-dimensional genomic information.
 
-    It acts as a dataset for holding genomic data. For instance,
-    coverage along an entire genome composed of arbitrary length chromosomes
-    as well as for multiple cell-types and conditions simultaneously.
-    Inspired by the HTSeq analog, the array can hold the data in different
-    storage modes, including ndarray, memmap or hdf5.
+    Implements GenomicArray.
 
     Parameters
     ----------
@@ -140,6 +134,11 @@ class HDF5GenomicArray(GenomicArray):
         Datatype. Default: 'd'.
     datatags : list(str) or None
         Tags describing the dataset. This is used to store the cache file.
+    resolution : int
+        Resolution for storing the genomic array. Only relevant for the use
+        with Cover Datasets. Default: 1.
+    order : int
+        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
     cache : boolean
         Whether to cache the dataset. Default: True
     overwrite : boolean
@@ -203,14 +202,9 @@ class HDF5GenomicArray(GenomicArray):
 
 
 class NPGenomicArray(GenomicArray):
-    """GenomicArray stores multi-dimensional genomic information.
+    """NPGenomicArray stores multi-dimensional genomic information.
 
-    It acts as a dataset for holding genomic data. For instance,
-    coverage along an entire genome composed of arbitrary length chromosomes
-    as well as for multiple cell-types and conditions simultaneously.
-    Inspired by the HTSeq analog, the array can hold the data in different
-    storage modes, including ndarray, memmap or hdf5.
-
+    Implements GenomicArray.
     Parameters
     ----------
     chroms : dict
@@ -225,6 +219,11 @@ class NPGenomicArray(GenomicArray):
         Datatype. Default: 'd'.
     datatags : list(str) or None
         Tags describing the dataset. This is used to store the cache file.
+    resolution : int
+        Resolution for storing the genomic array. Only relevant for the use
+        with Cover Datasets. Default: 1.
+    order : int
+        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
     cache : boolean
         Specifies whether to cache the dataset. Default: True
     overwrite : boolean
@@ -297,13 +296,9 @@ class NPGenomicArray(GenomicArray):
 
 
 class SparseGenomicArray(GenomicArray):
-    """GenomicArray stores multi-dimensional genomic information.
+    """SparseGenomicArray stores multi-dimensional genomic information.
 
-    It acts as a dataset for holding genomic data. For instance,
-    coverage along an entire genome composed of arbitrary length chromosomes
-    as well as for multiple cell-types and conditions simultaneously.
-    Inspired by the HTSeq analog, the array can hold the data in different
-    storage modes, including ndarray, memmap or hdf5.
+    Implements GenomicArray.
 
     Parameters
     ----------
@@ -319,6 +314,11 @@ class SparseGenomicArray(GenomicArray):
         Datatype. Default: 'd'.
     datatags : list(str) or None
         Tags describing the dataset. This is used to store the cache file.
+    resolution : int
+        Resolution for storing the genomic array. Only relevant for the use
+        with Cover Datasets. Default: 1.
+    order : int
+        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
     cache : boolean
         Whether to cache the dataset. Default: True
     overwrite : boolean
@@ -444,7 +444,49 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                          order=1,
                          datatags=None, cache=True, overwrite=False,
                          loader=None, loader_args=None):
-    """Factory function for creating a GenomicArray."""
+    """Factory function for creating a GenomicArray.
+
+    This function creates a genomic array for a given storage mode.
+
+    Parameters
+    ----------
+    chroms : dict
+        Dictionary with chromosome names as keys and chromosome lengths
+        as values.
+    stranded : bool
+        Consider stranded profiles. Default: True.
+    conditions : list(str) or None
+        List of cell-type or condition labels associated with the corresponding
+        array dimensions. Default: None means a one-dimensional array is produced.
+    typecode : str
+        Datatype. Default: 'd'.
+    storage : str
+        Storage type can be 'ndarray', 'hdf5' or 'sparse'.
+        Numpy loads the entire dataset into the memory. HDF5 keeps
+        the data on disk and loads the mini-batches from disk.
+        Sparse maintains sparse matrix representation of the dataset
+        in the memory.
+        Usage of numpy will require high memory consumption, but allows fast
+        slicing operations on the dataset. HDF5 requires low memory consumption,
+        but fetching the data from disk might be time consuming.
+        sparse will be a good compromise if the data is indeed sparse. In this
+        case, memory consumption will be low while slicing will still be fast.
+    datatags : list(str) or None
+        Tags describing the dataset. This is used to store the cache file.
+    resolution : int
+        Resolution for storing the genomic array. Only relevant for the use
+        with Cover Datasets. Default: 1.
+    order : int
+        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
+    cache : boolean
+        Whether to cache the dataset. Default: True
+    overwrite : boolean
+        Whether to overwrite the cache. Default: False
+    loader : callable or None
+        Function to be called for loading the genomic array.
+    loader_args : tuple or None
+        Arguments for loader.
+    """
 
     if storage == 'hdf5':
         return HDF5GenomicArray(chroms, stranded=stranded,

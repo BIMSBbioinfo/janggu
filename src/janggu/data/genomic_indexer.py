@@ -7,10 +7,11 @@ from janggu.utils import _get_genomic_reader
 
 
 class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
-    """GenomicIndexer maps genomic positions to the respective indices
+    """GenomicIndexer maps a set of integer indices to respective
+    genomic intervals.
 
-    Indexing a GenomicIndexer object returns a GenomicInterval
-    for the associated index.
+    The genomic intervals can be directly used to obtain data from a genomic
+    array.
 
     Parameters
     ----------
@@ -48,9 +49,11 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             Binsize in base pairs.
         stepsize : int
             Stepsize in base pairs.
-        fixed_size_batches : bool
-            Indicates that all regions must be equally long, as given by
-            the binsize. If False, variable region lengths are allowed.
+        flank : int
+            flank size in bp to be attached to both ends of a region. Default: 0.
+        fixed_size_batches : boolean
+            fixed_size_batches indicate if variable sequence lengths should be used.
+            Default: True.
         """
 
         regions_ = _get_genomic_reader(regions)

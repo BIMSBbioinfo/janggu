@@ -33,9 +33,9 @@ class Cover(Dataset):
         Name of the dataset
     garray : :class:`GenomicArray`
         A genomic array that holds the coverage data
-    gindexer : :class:`GenomicIndexer`
+    gindexer : :class:`GenomicIndexer` or None
         A genomic index mapper that translates an integer index to a
-        genomic coordinate.
+        genomic coordinate. Can be None, if the Dataset is only loaded.
     padding_value : int or float
         Padding value used to pad variable size fragments. Default: 0.
     """
