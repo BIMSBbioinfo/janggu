@@ -4,18 +4,30 @@ import json
 import os
 from collections import defaultdict
 
-import matplotlib.pyplot as plt  # pylint: disable=import-error
+try:
+    import matplotlib.pyplot as plt  # pylint: disable=import-error
+except ImportError:
+    plt = None
 import numpy as np
 import pandas as pd
-import pyBigWig
-import seaborn as sns  # pylint: disable=import-error
+try:
+    import pyBigWig
+except ImportError:
+    pyBigWig = None
+try:
+    import seaborn as sns  # pylint: disable=import-error
+except ImportError:
+    sns = None
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
-from sklearn.manifold import TSNE  # pylint: disable=import-error
+try:
+    from sklearn.manifold import TSNE  # pylint: disable=import-error
+except ImportError:
+    TSNE = None
 
 try:
     from urllib import urlcleanup, urlretrieve
@@ -23,7 +35,8 @@ except ImportError:
     try:
         from urllib.request import urlcleanup, urlretrieve
     except ImportError as ex_:
-        raise ex_
+        urlretrieve = None
+        urlcleanup = None
 
 
 def _get_output_root_directory():
@@ -188,6 +201,8 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
         Dictionary with chromosome names as keys and their respective lengths
         as values.
     """
+    if urlcleanup is None:
+        raise Exception('urllib not available. Please install urllib3.')
 
     outputfile = os.path.join(outputdir, '{}.chrom.sizes'.format(refgenome))
     if not os.path.exists(outputfile):  # pragma: no cover
@@ -358,6 +373,8 @@ def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disabl
     results : dict
         Dictionary containing the evaluation results which needs to be stored.
     """
+    if plt is None:
+        raise Exception('matplotlib not available. Please install matplotlib.')
 
     if figsize is not None:
         fig = plt.figure(figsize=figsize)
@@ -397,6 +414,10 @@ def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=t
 
     This function can be used as exporter with :class:`Scorer`.
     """
+
+    if pyBigWig is None:
+        raise Exception('pyBigWig not available. '
+                        '`export_bigwig` requires pyBigWig to be installed.')
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bigiwig')
@@ -509,6 +530,9 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # py
     to illustrate feature activities of the neural net.
     """
 
+    if sns is None:
+        raise Exception('seaborn not available. Please install seaborn.')
+
     if annot is not None:
 
         firstkey = list(annot.keys())[0]
@@ -545,6 +569,13 @@ def export_tsne(output_dir, name, results, figsize=None,  # pylint: disable=too-
                 cmap=None, colors=None, norm=None, alpha=None, fform=None,
                 annot=None):
     """Create a plot of the 2D t-SNE embedding of the feature activities."""
+
+    if TSNE is None:
+        raise Exception('scikit-learn not available. '
+                        'Please install scikit-learn to be able to use export_tsne.')
+    if plt is None:
+        raise Exception('matplotlib not available. '
+                        'Please install matplotlib to be able to use export_tsne.')
 
     _rs = {k: results[k]['value'] for k in results}
     data = pd.DataFrame.from_dict(_rs)

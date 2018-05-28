@@ -3,8 +3,14 @@
 import os
 
 import numpy as np
-import pyBigWig
-import pysam
+try:
+    import pyBigWig
+except ImportError:
+    pyBigWig = None
+try:
+    import pysam
+except ImportError:
+    pysam = None
 from HTSeq import GenomicInterval
 
 from janggu.data.data import Dataset
@@ -115,6 +121,10 @@ class Cover(Dataset):
         cache : boolean
             Whether to cache the dataset. Default: True.
         """
+
+        if pysam is None:
+            raise Exception('pysam not available. '
+                            '`create_from_bam` requires pysam to be installed.')
 
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
@@ -265,7 +275,9 @@ class Cover(Dataset):
         cache : boolean
             Whether to cache the dataset. Default: True.
         """
-
+        if pyBigWig is None:
+            raise Exception('pyBigWig not available. '
+                            '`create_from_bigwig` requires pyBigWig to be installed.')
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
                                                        stepsize, flank)
