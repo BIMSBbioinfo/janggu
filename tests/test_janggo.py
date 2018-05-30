@@ -281,7 +281,7 @@ def test_janggu_use_dnaconv(tmpdir):
     def _cnn_model(inputs, inp, oup, params):
         with inputs.use('dna') as inlayer:
             layer = inlayer
-        conv = DnaConv2D(2, (2, 4))
+        conv = DnaConv2D(5, (3, 1))
         layer1 = conv(layer)
         rcconv = conv.get_revcomp()
         layer2 = rcconv(layer)

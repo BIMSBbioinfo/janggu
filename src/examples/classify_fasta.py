@@ -1,5 +1,4 @@
 import argparse
-from copy import copy
 import os
 
 import numpy as np
@@ -115,8 +114,7 @@ pred_plotly = Scorer('pred', exporter=export_plotly)
 @outputdense('sigmoid')
 def single_stranded_model(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
-        layer = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
-                       activation=params[2])(layer)
+        layer = Conv2D(params[0], (params[1], 1), activation=params[2])(layer)
     output = GlobalAveragePooling2D(name='motif')(layer)
     return inputs, output
 
@@ -126,8 +124,7 @@ def single_stranded_model(inputs, inp, oup, params):
 def double_stranded_model(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         forward = layer
-    convlayer = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
-                       activation=params[2])
+    convlayer = Conv2D(params[0], (params[1], 1), activation=params[2])
     revcomp = Reverse()(forward)
     revcomp = Complement()(revcomp)
 
@@ -144,8 +141,7 @@ def double_stranded_model(inputs, inp, oup, params):
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         pass
-    dnaconv = DnaConv2D(params[0], (params[1], layer.shape.as_list()[2]),
-                       activation=params[2])
+    dnaconv = DnaConv2D(params[0], (params[1], 1), activation=params[2])
 
     forward = dnaconv(layer)
 

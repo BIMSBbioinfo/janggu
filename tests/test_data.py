@@ -24,7 +24,7 @@ def test_dna_props_extraction(tmpdir):
 
     props = _data_props(dna)
     assert 'dna' in props
-    assert props['dna']['shape'] == (200, 4, 1)
+    assert props['dna']['shape'] == (200, 1, 4)
 
     with pytest.raises(Exception):
         _data_props((0,))

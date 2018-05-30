@@ -312,5 +312,5 @@ class Dna(Dataset):
     def shape(self):
         """Shape of the dataset"""
         return (len(self), self.gindexer.binsize +
-                2*self.gindexer.flank - self.garray.order + 1,
-                pow(4, self.garray.order), 1)
+                2*self.gindexer.flank - self.garray.order + 1, 1,
+                pow(4, self.garray.order))

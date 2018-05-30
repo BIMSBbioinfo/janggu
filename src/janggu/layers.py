@@ -128,12 +128,12 @@ class Complement(Layer):
         # from the shape of the one-hot encoding (input_shape),
         # we determine the order of the encoding.
         self.rcmatrix = K.constant(
-            complement_permmatrix(int(numpy.log(input_shape[2])/numpy.log(4))),
+            complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
             dtype=K.floatx())
         super(Complement, self).build(input_shape)
 
     def call(self, inputs):  # pylint: disable=arguments-differ
-        return tf.einsum('ij,bsjc->bsic', self.rcmatrix, inputs)
+        return tf.einsum('ij,bsdj->bsdi', self.rcmatrix, inputs)
 
     def get_config(self):
         base_config = super(Complement, self).get_config()
@@ -216,8 +216,9 @@ class DnaConv2D(Conv2D):
     def build(self, input_shape):
         super(DnaConv2D, self).build(input_shape)
 
+        print(input_shape, input_shape[-1])
         self.rcmatrix = K.constant(
-            complement_permmatrix(int(numpy.log(input_shape[2])/numpy.log(4))),
+            complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
             dtype=K.floatx())
         print(self.rcmatrix)
 
@@ -232,7 +233,7 @@ class DnaConv2D(Conv2D):
             # revert and complement the weight matrices
             tmp = self.kernel
             self.kernel = self.kernel[::-1, :, :, :]
-            self.kernel = tf.einsum('ij,sjbc->sibc', self.rcmatrix, self.kernel)
+            self.kernel = tf.einsum('ij,sdjc->sdic', self.rcmatrix, self.kernel)
         else:
             print('using conv2d')
         # perform the convolution operation

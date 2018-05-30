@@ -33,7 +33,7 @@ genomic coordinates
 and translates the sequences into a *one-hot encoding*. Specifically,
 the *one-hot encoding* is represented as a
 4D array with dimensions corresponding
-to :code:`(region, region_length, alphabet_size, 1)`.
+to :code:`(region, region_length, 1, alphabet_size)`.
 The Dna offers a number of features:
 
 1. Strand-specific sequence extraction
@@ -55,7 +55,7 @@ the :code:`create_from_fasta` constructor method:
    len(dna)  # there are 3997 sequences in the in sample.fa
 
    # Each sequence is 200 bp of length
-   dna.shape  # is (4, 200, 4, 1)
+   dna.shape  # is (4, 200, 1, 4)
 
    # One-hot encoding for the first 10 bases of the first region
    dna[0][0, :10, :, 0]
@@ -119,7 +119,7 @@ in a strand specific manner.
 
 By default, the region of interest in :code:`bed_file` is split
 into non-overlapping 200 bp windows. Different windowing options are available
-by setting :code:`binsize`, :code:`stepsize` and :code:`flank`.
+by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
 
 **Coverage from a BIGWIG files** is extracted as the average signal intensity
 of a specified resolution (in base pairs):
@@ -331,8 +331,7 @@ the sequence features that discriminate the two sets of sequences:
    @outputconv('sigmoid')
    def _conv_net(inputs, inp, oup, params):
       with inputs.use('dna') as layer:
-         layer_ = Conv2D(params[0], (params[1], layer.shape.as_list()[2]),
-                         activation=params[2])(layer)
+         layer_ = Conv2D(params[0], (params[1], 1), activation=params[2])(layer)
          output = AveragePooling2D(pool_size=(layer_.shape.as_list()[1], 1))(layer_)
       return inputs, output
 

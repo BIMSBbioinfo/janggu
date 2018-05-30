@@ -41,14 +41,14 @@ def test_dna_dims_order_1(tmpdir):
                                      order=order)
     # for order 1
     assert len(data) == 100
-    assert data.shape == (100, 200, 4, 1)
+    assert data.shape == (100, 200, 1, 4)
     # the correctness of the sequence extraction was also
     # validated using:
     # bedtools getfasta -fi sample_genome.fa -bed sample.bed
     # >chr1:15000-25000
     # ATTGTGGTGA...
     # this sequence is read from the forward strand
-    np.testing.assert_equal(data[0][0, :10, :, 0],
+    np.testing.assert_equal(data[0][0, :10, 0, :],
                             np.asarray([[1, 0, 0, 0],  # A
                                         [0, 0, 0, 1],  # T
                                         [0, 0, 0, 1],  # T
@@ -66,7 +66,7 @@ def test_dna_dims_order_1(tmpdir):
     # ggggaagcaa...
     # this sequence is read from the reverse strand
     # so we have ...ttgcttcccc
-    np.testing.assert_equal(data[50][0, -10:, :, 0],
+    np.testing.assert_equal(data[50][0, -10:, 0, :],
                             np.asarray([[0, 0, 0, 1],  # T
                                         [0, 0, 0, 1],  # T
                                         [0, 0, 1, 0],  # G
@@ -93,14 +93,14 @@ def test_dna_dims_order_2(tmpdir):
                                      order=order)
     # for order 1
     assert len(data) == 100
-    assert data.shape == (100, 199, 16, 1)
+    assert data.shape == (100, 199, 1, 16)
     # the correctness of the sequence extraction was also
     # validated using:
     # >bedtools getfasta -fi sample_genome.fa -bed sample.bed
     # >chr1:15000-25000
     # ATTGTGGTGAC...
     np.testing.assert_equal(
-        data[0][0, :10, :, 0],
+        data[0][0, :10, 0, :],
         np.asarray([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # AT
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # TT
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],  # TG
@@ -119,7 +119,7 @@ def test_dna_dims_order_2(tmpdir):
     # this sequence is read from the reverse strand
     # so we have ...cttgcttcccc
     np.testing.assert_equal(
-        data[50][0, -10:, :, 0],
+        data[50][0, -10:, 0, :],
         np.asarray([[0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],  # CT
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],  # TT
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],  # TG
@@ -321,9 +321,9 @@ def test_read_dna_from_fasta_order_1():
                                  order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)
-    np.testing.assert_equal(data.shape, (3897, 200, 4, 1))
+    np.testing.assert_equal(data.shape, (3897, 200, 1, 4))
     np.testing.assert_equal(
-        data[0][0, :10, :, 0],
+        data[0][0, :10, 0, :],
         np.asarray([[0, 1, 0, 0],
                     [1, 0, 0, 0],
                     [0, 1, 0, 0],
@@ -345,9 +345,9 @@ def test_read_dna_from_fasta_order_2():
                                  order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)
-    np.testing.assert_equal(data.shape, (3897, 199, 16, 1))
+    np.testing.assert_equal(data.shape, (3897, 199, 1, 16))
     np.testing.assert_equal(
-        data[0][0, :10, :, 0],
+        data[0][0, :10, 0, :],
         np.asarray([[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
