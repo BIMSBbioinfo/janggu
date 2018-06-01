@@ -553,7 +553,8 @@ class Cover(Dataset):
         """Shape of the dataset"""
         if self.dimmode == 'all':
             blen = (self.gindexer.binsize) // self.garray.resolution
-            seqlen = 2*self.gindexer.flank + (blen if blen > 0 else 1)
+            seqlen = 2*self.gindexer.flank // self.garray.resolution + \
+                (blen if blen > 0 else 1)
         elif self.dimmode == 'first':
             seqlen = 1
         return (len(self),
