@@ -6,17 +6,17 @@ from collections import defaultdict
 
 try:
     import matplotlib.pyplot as plt  # pylint: disable=import-error
-except ImportError:
+except ImportError:  # pragma: no cover
     plt = None
 import numpy as np
 import pandas as pd
 try:
     import pyBigWig
-except ImportError:
+except ImportError:  # pragma: no cover
     pyBigWig = None
 try:
     import seaborn as sns  # pylint: disable=import-error
-except ImportError:
+except ImportError:  # pragma: no cover
     sns = None
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
@@ -26,7 +26,7 @@ from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
 try:
     from sklearn.manifold import TSNE  # pylint: disable=import-error
-except ImportError:
+except ImportError:  # pragma: no cover
     TSNE = None
 
 try:
@@ -34,14 +34,14 @@ try:
 except ImportError:
     try:
         from urllib.request import urlcleanup, urlretrieve
-    except ImportError as ex_:
+    except ImportError as ex_:  # pragma: no cover
         urlretrieve = None
         urlcleanup = None
 
 
 def _get_output_root_directory():
     """Function returns the output root directory."""
-    if "JANGGU_OUTPUT" not in os.environ:
+    if "JANGGU_OUTPUT" not in os.environ:  # pragma: no cover
         os.environ['JANGGU_OUTPUT'] = os.path.join(os.path.expanduser("~"),
                                                    'janggu_results')
     return os.environ['JANGGU_OUTPUT']
@@ -202,7 +202,7 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
         Dictionary with chromosome names as keys and their respective lengths
         as values.
     """
-    if urlcleanup is None:
+    if urlcleanup is None:  # pragma: no cover
         raise Exception('urllib not available. Please install urllib3.')
 
     outputfile = os.path.join(outputdir, '{}.chrom.sizes'.format(refgenome))
@@ -393,7 +393,7 @@ def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disabl
     fform : str or None
         Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
     """
-    if plt is None:
+    if plt is None:  # pragma: no cover
         raise Exception('matplotlib not available. Please install matplotlib.')
 
     if figsize is not None:
@@ -451,7 +451,7 @@ def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=t
         Used to output the results.
     """
 
-    if pyBigWig is None:
+    if pyBigWig is None:  # pragma: no cover
         raise Exception('pyBigWig not available. '
                         '`export_bigwig` requires pyBigWig to be installed.')
 
@@ -616,7 +616,7 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # py
         See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
     """
 
-    if sns is None:
+    if sns is None:  # pragma: no cover
         raise Exception('seaborn not available. Please install seaborn.')
 
     if annot is not None:
@@ -684,10 +684,10 @@ def export_tsne(output_dir, name, results, figsize=None,  # pylint: disable=too-
         derived for the annotation.
     """
 
-    if TSNE is None:
+    if TSNE is None:  # pragma: no cover
         raise Exception('scikit-learn not available. '
                         'Please install scikit-learn to be able to use export_tsne.')
-    if plt is None:
+    if plt is None:  # pragma: no cover
         raise Exception('matplotlib not available. '
                         'Please install matplotlib to be able to use export_tsne.')
 

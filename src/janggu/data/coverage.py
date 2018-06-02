@@ -5,11 +5,11 @@ import os
 import numpy as np
 try:
     import pyBigWig
-except ImportError:
+except ImportError:  # pragma: no cover
     pyBigWig = None
 try:
     import pysam
-except ImportError:
+except ImportError:  # pragma: no cover
     pysam = None
 from HTSeq import GenomicInterval
 
@@ -131,7 +131,7 @@ class Cover(Dataset):
             Whether to cache the dataset. Default: True.
         """
 
-        if pysam is None:
+        if pysam is None:  # pragma: no cover
             raise Exception('pysam not available. '
                             '`create_from_bam` requires pysam to be installed.')
 
@@ -167,11 +167,8 @@ class Cover(Dataset):
 
                     array = np.zeros((gsize[chrom]//resolution, 2), dtype=dtype)
 
-                    try:
-                        it_ = aln_file.fetch(chrom)
-                    except ValueError:
-                        print("Contig '{}' abscent in bam".format(chrom))
-                        continue
+
+                    it_ = aln_file.fetch(chrom)
 
                     for aln in it_:
                         if aln.is_unmapped:
@@ -315,7 +312,7 @@ class Cover(Dataset):
         cache : boolean
             Whether to cache the dataset. Default: True.
         """
-        if pyBigWig is None:
+        if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
                             '`create_from_bigwig` requires pyBigWig to be installed.')
         if regions is not None:
