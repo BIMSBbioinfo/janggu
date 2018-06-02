@@ -67,6 +67,7 @@ class Cover(Dataset):
                         resolution=1,
                         storage='ndarray',
                         dtype='int',
+                        stranded=True,
                         overwrite=False,
                         aggregate=None,
                         datatags=None, cache=True):
@@ -111,6 +112,9 @@ class Cover(Dataset):
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
+        stranded : boolean
+            Whether to extract stranded or unstranded coverage. For unstranded
+            coverage, reads aligning to both strands will be aggregated.
         overwrite : boolean
             overwrite cachefiles. Default: False.
         datatags : list(str) or None
@@ -185,10 +189,15 @@ class Cover(Dataset):
                     # apply the aggregation
                     if aggregate is not None:
                         array = aggregate(array)
-                    garray[GenomicInterval(chrom, 0, gsize[chrom],
-                                           '+'), i] = array[:, 0]
-                    garray[GenomicInterval(chrom, 0, gsize[chrom],
-                                           '-'), i] = array[:, 1]
+
+                    if stranded:
+                        garray[GenomicInterval(chrom, 0, gsize[chrom],
+                                               '+'), i] = array[:, 0]
+                        garray[GenomicInterval(chrom, 0, gsize[chrom],
+                                               '-'), i] = array[:, 1]
+                    else:
+                        garray[GenomicInterval(chrom, 0, gsize[chrom],
+                                               '.'), i] = array.sum(axis=1)
 
             return garray
 
@@ -196,7 +205,7 @@ class Cover(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        cover = create_genomic_array(gsize, stranded=True,
+        cover = create_genomic_array(gsize, stranded=stranded,
                                      storage=storage, datatags=datatags,
                                      cache=cache,
                                      conditions=conditions,

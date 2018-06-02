@@ -204,6 +204,54 @@ def test_cover_from_bed_sanity(tmpdir):
             storage='ndarray')
 
 
+def test_cover_bam_unstranded(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bamfile_ = os.path.join(data_path, "sample.bam")
+    gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
+
+    content = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
+                              index_col='chr')
+
+    gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "sample.bed")
+
+
+    cover = Cover.create_from_bam(
+        "yeast_I_II_III.bam",
+        bamfiles=bamfile_,
+        regions=bed_file,
+        genomesize=gsize,
+        stranded=False)
+
+    np.testing.assert_equal(len(cover), 100)
+    np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
+
+    # the region is read relative to the forward strand
+    # read on the reverse strand
+    val = np.where(cover[4] == 1)
+    np.testing.assert_equal(cover[4].sum(), 1.)
+    np.testing.assert_equal(val[1][0], 179)  # pos
+
+    # two reads on the forward strand
+    val = np.where(cover[13] == 1)
+    np.testing.assert_equal(cover[13].sum(), 2.)
+    np.testing.assert_equal(val[1], np.asarray([162, 178]))  # pos
+
+    # the region is read relative to the reverse strand
+    # for index 50
+    # read on the reverse strand
+    val = np.where(cover[52] == 1)
+    np.testing.assert_equal(cover[52].sum(), 2.)
+    np.testing.assert_equal(val[1], np.asarray([9, 89]))  # pos
+
+    # two reads on the forward strand
+    val = np.where(cover[96] == 1)
+    np.testing.assert_equal(cover[96].sum(), 1.)
+    np.testing.assert_equal(val[1], np.asarray([25]))  # pos
+
+
 def test_cover_bam(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
