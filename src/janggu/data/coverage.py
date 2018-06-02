@@ -73,6 +73,11 @@ class Cover(Dataset):
                         datatags=None, cache=True):
         """Create a Cover class from a bam-file (or files).
 
+        This constructor can be used to obtain coverage from BAM files.
+        For single-end reads the read will be counted at the 5 prime end
+        while paired-end read pairs will be counted at the mid-point between the
+        two read pairs.
+
         Parameters
         -----------
         name : str
@@ -167,25 +172,51 @@ class Cover(Dataset):
                     except ValueError:
                         print("Contig '{}' abscent in bam".format(chrom))
                         continue
+
                     for aln in it_:
-                        try:
-                            if aln.mapq < min_mapq:
+                        if aln.is_unmapped:
+                            continue
+
+                        if aln.mapq < min_mapq:
+                            continue
+
+                        if aln.is_read2:
+                            # only consider read1 so as not to double count
+                            # fragments for paired end reads
+                            # read2 will also be false for single end
+                            # reads.
+                            continue
+
+                        if aln.is_paired:
+                            # if paired end read, consider the midpoint
+                            if not (aln.is_proper_pair and
+                                    aln.reference_name == aln.next_reference_name):
+                                # only consider paired end reads if both mates
+                                # are properly mapped and they map to the
+                                # same reference_name
                                 continue
-
+                            # if the next reference start >= 0,
+                            # the read is considered as a paired end read
+                            # in this case we consider the mid point
+                            val = min(aln.reference_start,
+                                      aln.next_reference_start) + \
+                                      abs(aln.template_length) // 2
+                        else:
+                            # here we consider single end reads
+                            # whose 5 prime end is determined strand specifically
                             if aln.is_reverse:
-                                val = aln.reference_end if aln.reference_end \
-                                    else aln.reference_start
-                                val //= resolution
-                                array[val, 1] += 1
+                                val = aln.reference_end
                             else:
-                                val = aln.reference_start // resolution
-                                array[val, 0] += 1
-                        except IndexError:
-                            print('out of chromosome alignment '
-                                  '{} found for {}:{}'.format(aln,
-                                                              chrom,
-                                                              gsize[chrom]))
+                                val = aln.reference_start
 
+                        # compute divide by the resolution
+                        val //= resolution
+
+                        # fill up the read strand specifically
+                        if aln.is_reverse:
+                            array[val, 1] += 1
+                        else:
+                            array[val, 0] += 1
                     # apply the aggregation
                     if aggregate is not None:
                         array = aggregate(array)
