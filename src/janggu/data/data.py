@@ -108,6 +108,14 @@ class JangguSequence(Sequence):
             xlen = len(inputs[k])
             break
 
+        for k in inputs:
+            if not len(inputs[k]) == xlen:
+                raise ValueError('Datasets contain differing number of datapoints.')
+
+        for k in outputs:
+            if not len(outputs[k]) == xlen:
+                raise ValueError('Datasets contain differing number of datapoints.')
+
         self.indices = list(range(xlen))
         self.shuffle = shuffle
 
