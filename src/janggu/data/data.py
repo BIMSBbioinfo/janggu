@@ -112,7 +112,7 @@ class JangguSequence(Sequence):
             if not len(inputs[k]) == xlen:
                 raise ValueError('Datasets contain differing number of datapoints.')
 
-        for k in outputs:
+        for k in outputs or []:
             if not len(outputs[k]) == xlen:
                 raise ValueError('Datasets contain differing number of datapoints.')
 
