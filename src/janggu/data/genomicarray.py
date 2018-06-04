@@ -414,8 +414,10 @@ class SparseGenomicArray(GenomicArray):
 
             for idx, iarray in enumerate(range(start, end)):
                 if hasattr(value, '__len__'):
+                    # value is a numpy array or a list
                     val = value[idx]
                 else:
+                    # value is a scalar value
                     val = value
 
                 if val > 0:

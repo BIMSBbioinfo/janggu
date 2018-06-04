@@ -17,6 +17,8 @@ from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.utils import _get_genomic_reader
+from janggu.utils import _iv_to_str
+from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_bed
 
 
@@ -69,14 +71,17 @@ class Cover(Dataset):
                         dtype='int',
                         stranded=True,
                         overwrite=False,
+                        pairedend='5prime',
+                        template_extension=0,
                         aggregate=None,
                         datatags=None, cache=True):
         """Create a Cover class from a bam-file (or files).
 
         This constructor can be used to obtain coverage from BAM files.
-        For single-end reads the read will be counted at the 5 prime end
-        while paired-end read pairs will be counted at the mid-point between the
-        two read pairs.
+        For single-end reads the read will be counted at the 5 prime end.
+        Paired-end reads can be counted relative to the 5 prime ends of the read
+        (default) or with respect to the midpoint.
+
 
         Parameters
         -----------
@@ -124,6 +129,15 @@ class Cover(Dataset):
             overwrite cachefiles. Default: False.
         datatags : list(str) or None
             List of datatags. Default: None.
+        pairedend : str
+            Indicates whether to count the region at the '5prime' end or at
+            the 'midpoint' between the two reads.
+        template_extension : int
+            Elongates the region of interest by the template_extension in
+            order to fetch paired end reads that do not directly overlap
+            with the region but whose inferred template does.
+            If template_extension is not set with pairedend='midpoint', reads
+            might potentially be missed.
         aggregate : callable or None
             Aggregation operation for loading genomic array for a given resolution.
             Default: None
@@ -150,13 +164,19 @@ class Cover(Dataset):
         if min_mapq is None:
             min_mapq = 0
 
-        if genomesize is None:
+        if genomesize is not None:
+            # if a genome size has specifically been given, use it.
+            gsize = genomesize.copy()
+        elif gindexer is not None:
+            # if a gindexer has been supplied, load the array only for the
+            # region of interest
+            gsize = {_iv_to_str(iv.chrom, iv.start,
+                                iv.end): iv.end-iv.start for iv in gindexer}
+        else:
             header = pysam.AlignmentFile(bamfiles[0], 'r')  # pylint: disable=no-member
             gsize = {}
             for chrom, length in zip(header.references, header.lengths):
                 gsize[chrom] = length
-        else:
-            gsize = genomesize.copy()
 
         def _bam_loader(garray, files):
             print("load from bam")
@@ -166,11 +186,11 @@ class Cover(Dataset):
                 for chrom in gsize:
 
                     array = np.zeros((gsize[chrom]//resolution, 2), dtype=dtype)
+                    locus = _str_to_iv(chrom, template_extension)
 
+                    print('locus', locus)
+                    for aln in aln_file.fetch(*locus):
 
-                    it_ = aln_file.fetch(chrom)
-
-                    for aln in it_:
                         if aln.is_unmapped:
                             continue
 
@@ -195,25 +215,48 @@ class Cover(Dataset):
                             # if the next reference start >= 0,
                             # the read is considered as a paired end read
                             # in this case we consider the mid point
-                            val = min(aln.reference_start,
-                                      aln.next_reference_start) + \
-                                      abs(aln.template_length) // 2
+                            if pairedend == 'midpoint':
+                                pos = min(aln.reference_start,
+                                          aln.next_reference_start) + \
+                                          abs(aln.template_length) // 2
+                            else:
+                                if aln.is_reverse:
+                                    # last position of the downstream read
+                                    pos = max(aln.reference_end,
+                                              aln.next_reference_start +
+                                              aln.query_length)
+                                else:
+                                    # first position of the upstream read
+                                    pos = min(aln.reference_start,
+                                              aln.next_reference_start)
                         else:
                             # here we consider single end reads
                             # whose 5 prime end is determined strand specifically
                             if aln.is_reverse:
-                                val = aln.reference_end
+                                pos = aln.reference_end
                             else:
-                                val = aln.reference_start
+                                pos = aln.reference_start
+
+                        print('pos', pos)
+                        if len(locus) == 3:
+                            # if we get here, a region was given,
+                            # otherwise, the entire chromosome is read.
+                            pos -= locus[1] + template_extension
+
+                            if pos < 0 or pos >= locus[2] - locus[1]:
+                                # if the read 5 p end or mid point is outside
+                                # of the region of interest, the read is discarded
+                                continue
 
                         # compute divide by the resolution
-                        val //= resolution
+                        pos //= resolution
+                        print('pos/resolution', pos)
 
                         # fill up the read strand specifically
                         if aln.is_reverse:
-                            array[val, 1] += 1
+                            array[pos, 1] += 1
                         else:
-                            array[val, 0] += 1
+                            array[pos, 0] += 1
                     # apply the aggregation
                     if aggregate is not None:
                         array = aggregate(array)
@@ -224,6 +267,8 @@ class Cover(Dataset):
                         garray[GenomicInterval(chrom, 0, gsize[chrom],
                                                '-'), i] = array[:, 1]
                     else:
+                        # if unstranded, aggregate the reads from
+                        # both strands
                         garray[GenomicInterval(chrom, 0, gsize[chrom],
                                                '.'), i] = array.sum(axis=1)
 
@@ -324,11 +369,16 @@ class Cover(Dataset):
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
 
-        if genomesize is None:
+        if genomesize is not None:
+            # if a genome size has specifically been given, use it.
+            gsize = genomesize.copy()
+        elif gindexer is not None:
+            # if a gindexer has been supplied, load the array only for the
+            # region of interest
+            gsize = {_iv_to_str(iv.chrom, iv.start, iv.end): iv.end-iv.start for iv in gindexer}
+        else:
             bwfile = pyBigWig.open(bigwigfiles[0], 'r')
             gsize = bwfile.chroms()
-        else:
-            gsize = genomesize.copy()
 
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
@@ -340,13 +390,24 @@ class Cover(Dataset):
 
                 for chrom in gsize:
 
-                    vals = np.empty((gsize[chrom]//garray.resolution))
-                    for start in range(0, gsize[chrom], garray.resolution):
+                    vals = np.empty((gsize[chrom]//resolution),
+                                    dtype=dtype)
+                    print('vals.shape', vals.shape)
 
-                        vals[start//garray.resolution] = aggregate(np.asarray(bwfile.values(
-                            chrom,
-                            int(start),
-                            int(min((start+garray.resolution), gsize[chrom])))))
+                    locus = _str_to_iv(chrom, template_extension=0)
+
+                    if len(locus) == 1:
+                        for start in range(0, gsize[chrom], resolution):
+
+                            vals[start//resolution] = aggregate(np.asarray(bwfile.values(
+                                chrom,
+                                int(start),
+                                int(min((start+resolution), gsize[chrom])))))
+
+                    else:
+                        for start in range(locus[1], locus[2], resolution):
+                            vals[(start - locus[1])//resolution] = aggregate(np.asarray(bwfile.values(
+                                locus[0], int(start), int(start+resolution))))
                         # not sure what to do with nan yet.
 
                     garray[GenomicInterval(chrom, 0, gsize[chrom]), i] = vals
@@ -446,10 +507,14 @@ class Cover(Dataset):
             gindexer = None
 
         # automatically determine genomesize from largest region
-        if not genomesize:
-            gsize = get_genome_size_from_bed(regions)
-        else:
+        if genomesize is not None:
             gsize = genomesize.copy()
+            full_genome_index = True
+        elif gindexer is not None:
+            # if a gindexer has been supplied, load the array only for the
+            # region of interest
+            gsize = {_iv_to_str(iv.chrom, iv.start, iv.end): iv.end-iv.start for iv in gindexer}
+            full_genome_index = False
 
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
@@ -478,29 +543,31 @@ class Cover(Dataset):
                 regions_ = _get_genomic_reader(sample_file)
 
                 for region in regions_:
-                    if region.iv.chrom not in genomesize:
-                        continue
 
-                    if genomesize[region.iv.chrom] <= region.iv.start:
-                        print('Region {} outside of '.format(region.iv) +
-                              'genome size - skipped')
+                    if full_genome_index:
+                        iv_ = region.iv
                     else:
-                        if region.score is None and mode in ['score',
-                                                             'categorical']:
-                            raise ValueError(
-                                'score field must '
-                                'be available with mode="{}"'.format(mode))
-                        # if region score is not defined, take the mere
-                        # presence of a range as positive label.
-                        if mode == 'score':
-                            garray[region.iv,
-                                   i] = np.dtype(dtype).type(region.score)
-                        elif mode == 'categorical':
-                            garray[region.iv,
-                                   int(region.score)] = np.dtype(dtype).type(1)
-                        elif mode == 'binary':
-                            garray[region.iv,
-                                   i] = np.dtype(dtype).type(1)
+                        iv_ = GenomicInterval(_iv_to_str(region.iv.chrom,
+                                                         region.iv.start,
+                                                         region.iv.end),
+                                              0, region.iv.length)
+
+                    if iv_.chrom not in genomesize:
+                        raise ValueError('Region {} not contained in genome.'.format(iv_.chrom))
+
+                    if region.score is None and mode in ['score',
+                                                         'categorical']:
+                        raise ValueError(
+                            'score field must '
+                            'be available with mode="{}"'.format(mode))
+                    # if region score is not defined, take the mere
+                    # presence of a range as positive label.
+                    if mode == 'score':
+                        garray[iv_, i] = np.dtype(dtype).type(region.score)
+                    elif mode == 'categorical':
+                        garray[iv_, int(region.score)] = np.dtype(dtype).type(1)
+                    elif mode == 'binary':
+                        garray[iv_, i] = np.dtype(dtype).type(1)
             return garray
 
         # At the moment, we treat the information contained

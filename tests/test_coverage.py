@@ -22,7 +22,7 @@ def test_cover_from_bam_sanity(tmpdir):
         'test',
         bamfiles=bamfile_,
         regions=bed_file,
-        binsize=1, stepsize=1,
+        binsize=200, stepsize=200,
         flank=0,
         storage='ndarray')
     Cover.create_from_bam(
@@ -252,7 +252,7 @@ def test_cover_bam_unstranded(tmpdir):
     np.testing.assert_equal(val[1], np.asarray([25]))  # pos
 
 
-def test_cover_bam_paired(tmpdir):
+def test_cover_bam_paired_5pend(tmpdir):
     # sample2.bam contains paired end examples,
     # unmapped examples, unmapped mate and low quality example
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
@@ -264,6 +264,30 @@ def test_cover_bam_paired(tmpdir):
         "yeast_I_II_III.bam",
         bamfiles=bamfile_,
         stranded=False,
+        pairedend='5pend',
+        min_mapq=30)
+
+    assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
+    print(cover.garray.handle['ref'])
+    # the read starts at index 6 and tlen is 39
+    assert cover.garray.handle['ref'][6, 0, 0] == 1
+    # another read maps to index 24
+    assert cover.garray.handle['ref'][24, 0, 0] == 1
+
+
+def test_cover_bam_paired_midpoint(tmpdir):
+    # sample2.bam contains paired end examples,
+    # unmapped examples, unmapped mate and low quality example
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bamfile_ = os.path.join(data_path, "sample2.bam")
+
+
+    cover = Cover.create_from_bam(
+        "yeast_I_II_III.bam",
+        bamfiles=bamfile_,
+        stranded=False,
+        pairedend='midpoint',
         min_mapq=30)
 
     assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
@@ -272,6 +296,7 @@ def test_cover_bam_paired(tmpdir):
     assert cover.garray.handle['ref'][6 + 39//2, 0, 0] == 1
     # another read maps to index 34
     assert cover.garray.handle['ref'][34, 0, 0] == 1
+
 
 
 def test_cover_bam(tmpdir):

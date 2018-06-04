@@ -238,6 +238,21 @@ def _get_genomic_reader(filename):
     return regions_
 
 
+def _iv_to_str(chrom, start, end):
+    return '{}:{}-{}'.format(chrom, start, end)
+
+
+def _str_to_iv(givstr, template_extension):
+    sub = givstr.split(':')
+    if len(sub) == 1:
+        return (sub[0], )
+    else:
+        chr = sub[0]
+        start = int(sub[1].split('-')[0])
+        end = int(sub[1].split('-')[1])
+        return (chr, start - template_extension, end + template_extension)
+
+
 def get_genome_size_from_bed(bedfile):
     """Get genome size.
 
