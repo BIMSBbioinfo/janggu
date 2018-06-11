@@ -18,13 +18,14 @@ def test_cover_from_bam_sanity(tmpdir):
     bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bam")
-    Cover.create_from_bam(
+    cover = Cover.create_from_bam(
         'test',
         bamfiles=bamfile_,
         regions=bed_file,
         binsize=200, stepsize=200,
         flank=0,
         storage='ndarray')
+    cover[0]
     Cover.create_from_bam(
         'test',
         bamfiles=bamfile_,
@@ -70,7 +71,7 @@ def test_cover_from_bigwig_sanity(tmpdir):
     bed_file = os.path.join(data_path, "sample.bed")
 
     bwfile_ = os.path.join(data_path, "sample.bw")
-    Cover.create_from_bigwig(
+    cover = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
         regions=bed_file,
@@ -78,6 +79,7 @@ def test_cover_from_bigwig_sanity(tmpdir):
         resolution=50,
         flank=0,
         storage='ndarray')
+    cover[0]
     Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
@@ -135,7 +137,7 @@ def test_cover_from_bed_sanity(tmpdir):
     bed_file = os.path.join(data_path, 'sample.bed')
 
     bwfile_ = os.path.join(data_path, "scored_sample.bed")
-    Cover.create_from_bed(
+    cover = Cover.create_from_bed(
         'test',
         bedfiles=bwfile_,
         regions=bed_file,
@@ -143,6 +145,7 @@ def test_cover_from_bed_sanity(tmpdir):
         resolution=50,
         flank=0,
         storage='ndarray')
+    cover[0]
     Cover.create_from_bed(
         'test',
         bedfiles=bwfile_,
@@ -500,6 +503,7 @@ def test_load_cover_bed_binary(tmpdir):
                                                  'resources/scored_sample.bed')
 
     for store in ['ndarray', 'sparse']:
+        print('store', store)
         cover = Cover.create_from_bed(
             "cov",
             bedfiles=score_file,

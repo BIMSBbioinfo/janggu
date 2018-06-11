@@ -8,6 +8,7 @@ from HTSeq import GenomicInterval
 from scipy import sparse
 
 from janggu.utils import _get_output_data_location
+from janggu.utils import _iv_to_str
 
 
 class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
@@ -41,6 +42,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     _condition = None
     _resolution = None
     _order = None
+    _full_genome_stored = True
 
     def __init__(self, stranded=True, conditions=None, typecode='d',
                  resolution=1, order=1):
@@ -65,9 +67,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             start = interval.start // self.resolution
             end = interval.end // self.resolution
             strand = interval.strand
+
             self.handle[chrom][start:end,
                                1 if self.stranded and strand == '-' else 0,
                                condition] = value
+
         else:
             raise IndexError("Index must be a GenomicInterval and a condition index")
 
@@ -79,7 +83,10 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             start = interval.start // self.resolution
             end = interval.end // self.resolution
 
-            return self.handle[chrom][start:end]
+            if self._full_genome_stored:
+                return self.handle[chrom][start:end]
+            else:
+                return self.handle[_iv_to_str(chrom, interval.start, interval.end)][:(end - start)]
         else:
             raise IndexError("Index must be a GenomicInterval")
 
@@ -424,6 +431,7 @@ class SparseGenomicArray(GenomicArray):
                     self.handle[chrom][iarray,
                                        sind * len(self.condition)
                                        + condition] = val
+
             return
         raise IndexError("Index must be a GenomicInterval and a condition index")
 
@@ -434,10 +442,13 @@ class SparseGenomicArray(GenomicArray):
             chrom = interval.chrom
             start = interval.start // self.resolution
             end = interval.end // self.resolution
-
-            return self.handle[chrom][start:end].toarray().reshape(
-                (end-start, 2 if self.stranded else 1, len(self.condition)))
-
+            print('get interval', interval, ' with full_genome ', self._full_genome_stored)
+            if self._full_genome_stored:
+                return self.handle[chrom][start:end].toarray().reshape(
+                    (end-start, 2 if self.stranded else 1, len(self.condition)))
+            else:
+                return self.handle[_iv_to_str(chrom, interval.start, interval.end)][:(end - start)].toarray().reshape(
+                    (end-start, 2 if self.stranded else 1, len(self.condition)))
         raise IndexError("Index must be a GenomicInterval")
 
 

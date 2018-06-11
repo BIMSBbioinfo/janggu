@@ -167,16 +167,19 @@ class Cover(Dataset):
         if genomesize is not None:
             # if a genome size has specifically been given, use it.
             gsize = genomesize.copy()
+            full_genome_index = True
         elif gindexer is not None:
             # if a gindexer has been supplied, load the array only for the
             # region of interest
             gsize = {_iv_to_str(iv.chrom, iv.start,
                                 iv.end): iv.end-iv.start for iv in gindexer}
+            full_genome_index = False
         else:
             header = pysam.AlignmentFile(bamfiles[0], 'r')  # pylint: disable=no-member
             gsize = {}
             for chrom, length in zip(header.references, header.lengths):
                 gsize[chrom] = length
+            full_genome_index = True
 
         def _bam_loader(garray, files):
             print("load from bam")
@@ -186,7 +189,8 @@ class Cover(Dataset):
                 for chrom in gsize:
 
                     array = np.zeros((gsize[chrom]//resolution, 2), dtype=dtype)
-                    locus = _str_to_iv(chrom, template_extension)
+
+                    locus = _str_to_iv(chrom, template_extension=template_extension)
 
                     print('locus', locus)
                     for aln in aln_file.fetch(*locus):
@@ -287,6 +291,7 @@ class Cover(Dataset):
                                      resolution=resolution,
                                      loader=_bam_loader,
                                      loader_args=(bamfiles,))
+        cover._full_genome_stored = full_genome_index
 
         return cls(name, cover, gindexer, padding_value=0, dimmode='all')
 
@@ -372,13 +377,16 @@ class Cover(Dataset):
         if genomesize is not None:
             # if a genome size has specifically been given, use it.
             gsize = genomesize.copy()
+            full_genome_index = True
         elif gindexer is not None:
             # if a gindexer has been supplied, load the array only for the
             # region of interest
             gsize = {_iv_to_str(iv.chrom, iv.start, iv.end): iv.end-iv.start for iv in gindexer}
+            full_genome_index = False
         else:
             bwfile = pyBigWig.open(bigwigfiles[0], 'r')
             gsize = bwfile.chroms()
+            full_genome_index = True
 
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
@@ -425,6 +433,7 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      loader=_bigwig_loader,
                                      loader_args=(aggregate,))
+        cover._full_genome_stored = full_genome_index
 
         return cls(name, cover, gindexer,
                    padding_value=0, dimmode=dimmode)
@@ -553,7 +562,8 @@ class Cover(Dataset):
                                               0, region.iv.length)
 
                     if iv_.chrom not in genomesize:
-                        raise ValueError('Region {} not contained in genome.'.format(iv_.chrom))
+                        print('Region {} not contained in genome will be ignored'.format(iv_.chrom))
+    #                    raise ValueError('Region {} not contained in genome.'.format(iv_.chrom))
 
                     if region.score is None and mode in ['score',
                                                          'categorical']:
@@ -585,6 +595,7 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      loader=_bed_loader,
                                      loader_args=(bedfiles, gsize, mode))
+        cover._full_genome_stored = full_genome_index
 
         return cls(name, cover, gindexer,
                    padding_value=-1, dimmode=dimmode)
@@ -621,7 +632,7 @@ class Cover(Dataset):
         except TypeError:
             raise IndexError('Cover.__getitem__: '
                              + 'index must be iterable')
-
+        print('get interval')
         data = np.empty((len(idxs),) + self.shape[1:])
         data.fill(self.padding_value)
 
@@ -631,14 +642,18 @@ class Cover(Dataset):
             pinterval = interval.copy()
 
             pinterval.start = interval.start
+            pinterval.end = interval.end
+            print(pinterval)
 
             if self.dimmode == 'all':
-                pinterval.end = interval.end
-            elif self.dimmode == 'first':
-                pinterval.end = pinterval.start + self.garray.resolution
-
-            data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
+                print(self.dimmode)
+                data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
                 np.asarray(self.garray[pinterval])
+            elif self.dimmode == 'first':
+                print(self.dimmode)
+                print(self.garray._full_genome_stored)
+                data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
+                np.asarray(self.garray[pinterval])[:1, :, :]
 
             if interval.strand == '-':
                 # if the region is on the negative strand,
