@@ -270,7 +270,7 @@ def test_janggu_use_dnaconv(tmpdir):
         "positives",
         bedfiles=posfile,
         regions=bed_file,
-        binsize=200, stepsize=50,
+        binsize=200, stepsize=200,
         resolution=200,
         flank=0,
         dimmode='all',

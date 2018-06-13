@@ -516,14 +516,10 @@ class Cover(Dataset):
             gindexer = None
 
         # automatically determine genomesize from largest region
-        if genomesize is not None:
+        if not genomesize:
+            gsize = get_genome_size_from_bed(regions)
+        else:
             gsize = genomesize.copy()
-            full_genome_index = True
-        elif gindexer is not None:
-            # if a gindexer has been supplied, load the array only for the
-            # region of interest
-            gsize = {_iv_to_str(iv.chrom, iv.start, iv.end): iv.end-iv.start for iv in gindexer}
-            full_genome_index = False
 
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
@@ -552,32 +548,29 @@ class Cover(Dataset):
                 regions_ = _get_genomic_reader(sample_file)
 
                 for region in regions_:
+                    if region.iv.chrom not in genomesize:
+                        continue
 
-                    if full_genome_index:
-                        iv_ = region.iv
+                    if genomesize[region.iv.chrom] <= region.iv.start:
+                        print('Region {} outside of '.format(region.iv) +
+                              'genome size - skipped')
                     else:
-                        iv_ = GenomicInterval(_iv_to_str(region.iv.chrom,
-                                                         region.iv.start,
-                                                         region.iv.end),
-                                              0, region.iv.length)
-
-                    if iv_.chrom not in genomesize:
-                        print('Region {} not contained in genome will be ignored'.format(iv_.chrom))
-    #                    raise ValueError('Region {} not contained in genome.'.format(iv_.chrom))
-
-                    if region.score is None and mode in ['score',
-                                                         'categorical']:
-                        raise ValueError(
-                            'score field must '
-                            'be available with mode="{}"'.format(mode))
-                    # if region score is not defined, take the mere
-                    # presence of a range as positive label.
-                    if mode == 'score':
-                        garray[iv_, i] = np.dtype(dtype).type(region.score)
-                    elif mode == 'categorical':
-                        garray[iv_, int(region.score)] = np.dtype(dtype).type(1)
-                    elif mode == 'binary':
-                        garray[iv_, i] = np.dtype(dtype).type(1)
+                        if region.score is None and mode in ['score',
+                                                             'categorical']:
+                            raise ValueError(
+                                'score field must '
+                                'be available with mode="{}"'.format(mode))
+                        # if region score is not defined, take the mere
+                        # presence of a range as positive label.
+                        if mode == 'score':
+                            garray[region.iv,
+                                   i] = np.dtype(dtype).type(region.score)
+                        elif mode == 'categorical':
+                            garray[region.iv,
+                                   int(region.score)] = np.dtype(dtype).type(1)
+                        elif mode == 'binary':
+                            garray[region.iv,
+                                   i] = np.dtype(dtype).type(1)
             return garray
 
         # At the moment, we treat the information contained
@@ -595,7 +588,6 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      loader=_bed_loader,
                                      loader_args=(bedfiles, gsize, mode))
-        cover._full_genome_stored = full_genome_index
 
         return cls(name, cover, gindexer,
                    padding_value=-1, dimmode=dimmode)
@@ -632,7 +624,7 @@ class Cover(Dataset):
         except TypeError:
             raise IndexError('Cover.__getitem__: '
                              + 'index must be iterable')
-        print('get interval')
+
         data = np.empty((len(idxs),) + self.shape[1:])
         data.fill(self.padding_value)
 
