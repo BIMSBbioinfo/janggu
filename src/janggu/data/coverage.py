@@ -634,18 +634,14 @@ class Cover(Dataset):
             pinterval = interval.copy()
 
             pinterval.start = interval.start
-            pinterval.end = interval.end
-            print(pinterval)
 
             if self.dimmode == 'all':
-                print(self.dimmode)
-                data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
-                np.asarray(self.garray[pinterval])
+                pinterval.end = interval.end
             elif self.dimmode == 'first':
-                print(self.dimmode)
-                print(self.garray._full_genome_stored)
-                data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
-                np.asarray(self.garray[pinterval])[:1, :, :]
+                pinterval.end = pinterval.start + self.garray.resolution
+
+            data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
+                np.asarray(self.garray[pinterval])
 
             if interval.strand == '-':
                 # if the region is on the negative strand,
