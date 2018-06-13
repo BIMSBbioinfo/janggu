@@ -181,7 +181,6 @@ class HDF5GenomicArray(GenomicArray):
         if not os.path.exists(memmap_dir):
             os.makedirs(memmap_dir)
         if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
-            print('create {}'.format(os.path.join(memmap_dir, filename)))
             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
 
             for chrom in chroms:
@@ -265,7 +264,6 @@ class NPGenomicArray(GenomicArray):
 
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
                 or overwrite or not cache:
-            print('load {}'.format(os.path.join(memmap_dir, filename)))
             data = {chrom: numpy.zeros(shape=(chroms[chrom] // self.resolution + 1,
                                               2 if stranded else 1,
                                               len(self.condition)),
@@ -357,7 +355,6 @@ class SparseGenomicArray(GenomicArray):
         filename = 'sparse.npz'
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
             or overwrite or not cache:
-            print('load {}'.format(os.path.join(memmap_dir, filename)))
             data = {chrom: sparse.dok_matrix((chroms[chrom] // self.resolution + 1,
                                               (2 if stranded else 1) *
                                               len(self.condition)),
@@ -442,7 +439,6 @@ class SparseGenomicArray(GenomicArray):
             chrom = interval.chrom
             start = interval.start // self.resolution
             end = interval.end // self.resolution
-            print('get interval', interval, ' with full_genome ', self._full_genome_stored)
             if self._full_genome_stored:
                 return self.handle[chrom][start:end].toarray().reshape(
                     (end-start, 2 if self.stranded else 1, len(self.condition)))

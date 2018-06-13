@@ -192,7 +192,6 @@ class Cover(Dataset):
 
                     locus = _str_to_iv(chrom, template_extension=template_extension)
 
-                    print('locus', locus)
                     for aln in aln_file.fetch(*locus):
 
                         if aln.is_unmapped:
@@ -241,7 +240,6 @@ class Cover(Dataset):
                             else:
                                 pos = aln.reference_start
 
-                        print('pos', pos)
                         if len(locus) == 3:
                             # if we get here, a region was given,
                             # otherwise, the entire chromosome is read.
@@ -254,7 +252,6 @@ class Cover(Dataset):
 
                         # compute divide by the resolution
                         pos //= resolution
-                        print('pos/resolution', pos)
 
                         # fill up the read strand specifically
                         if aln.is_reverse:
@@ -400,7 +397,6 @@ class Cover(Dataset):
 
                     vals = np.empty((gsize[chrom]//resolution),
                                     dtype=dtype)
-                    print('vals.shape', vals.shape)
 
                     locus = _str_to_iv(chrom, template_extension=0)
 
