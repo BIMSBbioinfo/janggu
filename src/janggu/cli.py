@@ -121,12 +121,23 @@ def _display_page(pathname):  # pylint: disable=too-many-return-statements
         if not files:
             return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
+        image = os.path.join(ARGS.janggu_results, 'models',
+                             pathname[1:] + '.png')
+        encoding = base64.b64encode(open(image, 'rb').read())
+
         return html.Div([html.H3('Model: {}'.format(pathname[1:])),
+                         html.Div([html.Div([
                          dcc.Dropdown(id='tag-selection',
                                       options=[{'label': f[pathlen:],
                                                 'value': f} for f in files],
                                       value=files[0]),
-                         html.Div(id='output-plot')])
+                          html.Img(
+                              width='100%',
+                              src='data:image/png;base64,{}'.format(
+                                  encoding.decode()))
+                         ], className="three columns"),
+                         html.Div([html.Div(id='output-plot')],
+                         className="nine columns")], className='row')])
 
 
 def _model_comparison_page():
@@ -147,6 +158,7 @@ def _model_comparison_page():
                 if scorename not in combined_tables:
                     combined_tables[scorename] = []
                 combined_tables[scorename].append(os.path.join(root, filename))
+    print(combined_tables)
     first_score = list(combined_tables.keys())[0]
     return html.Div([html.H3('Model Comparison'),
                      dcc.Dropdown(id='score-selection',
