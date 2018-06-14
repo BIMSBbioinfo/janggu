@@ -185,7 +185,10 @@ def _update_modelcomparison(results):
     allresults.sort_values(label, ascending=False, inplace=True)
 
     tbody = [html.Tr([
-        html.Td(allresults.iloc[i][col]) for col in header
+        dcc.Link(html.Td(allresults.iloc[i]['Model']),
+                 href='/{}'.format(allresults.iloc[i]['Model']))
+    ] + [
+        html.Td(allresults.iloc[i][col]) for col in header[1:]
     ]) for i in range(len(allresults))]
 
     return html.Table(thead + tbody)
