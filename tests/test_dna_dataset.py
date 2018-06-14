@@ -12,6 +12,7 @@ from janggu.data import Dna
 from janggu.layers import Complement
 from janggu.layers import Reverse
 from janggu.utils import complement_permmatrix
+from janggu.utils import sequences_from_fasta
 
 matplotlib.use('AGG')
 
@@ -309,6 +310,32 @@ def test_dna_dataset_sanity(tmpdir):
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'datasets', 'train',
                                        'order1', 'storage.h5'))
+
+
+def test_read_dna_from_biostring_order_1():
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+    filename = os.path.join(data_path, 'sample.fa')
+    seqs = sequences_from_fasta(filename)
+    data = Dna.create_from_fasta('train', fastafile=seqs,
+                                 order=order, cache=False)
+
+    np.testing.assert_equal(len(data), 3897)
+    np.testing.assert_equal(data.shape, (3897, 200, 1, 4))
+    np.testing.assert_equal(
+        data[0][0, :10, 0, :],
+        np.asarray([[0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 1, 0, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0],
+                    [1, 0, 0, 0],
+                    [0, 0, 1, 0]], dtype='int8'))
 
 
 def test_read_dna_from_fasta_order_1():

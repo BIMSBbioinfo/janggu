@@ -10,6 +10,7 @@ from janggu.utils import _complement_index
 from janggu.utils import as_onehot
 from janggu.utils import dna2ind
 from janggu.utils import sequences_from_fasta
+import Bio
 
 
 class Dna(Dataset):
@@ -60,10 +61,14 @@ class Dna(Dataset):
         if isinstance(fastafile, str):
             fastafile = [fastafile]
 
-        for fasta in fastafile:
-            # += is necessary since sequences_from_fasta
-            # returns a list
-            seqs += sequences_from_fasta(fasta)
+        if not isinstance(fastafile[0], Bio.SeqRecord.SeqRecord):
+            for fasta in fastafile:
+                # += is necessary since sequences_from_fasta
+                # returns a list
+                seqs += sequences_from_fasta(fasta)
+        else:
+            # This is already a list of SeqRecords
+            seqs = fastafile
 
         # Extract chromosome lengths
         chromlens = {}
@@ -191,16 +196,18 @@ class Dna(Dataset):
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
-        garray = cls._make_genomic_array(name, fastafile, order, storage,
-                                         cache=cache, datatags=datatags,
-                                         overwrite=overwrite)
-
         seqs = []
         if isinstance(fastafile, str):
             fastafile = [fastafile]
 
-        for fasta in fastafile:
-            seqs += sequences_from_fasta(fasta)
+        if not isinstance(fastafile[0], Bio.SeqRecord.SeqRecord):
+            for fasta in fastafile:
+                # += is necessary since sequences_from_fasta
+                # returns a list
+                seqs += sequences_from_fasta(fasta)
+        else:
+            # This is already a list of SeqRecords
+            seqs = fastafile
 
         # Check if sequences are equally long
         lens = [len(seq) for seq in seqs]
@@ -211,6 +218,10 @@ class Dna(Dataset):
         chroms = [seq.id for seq in seqs]
         assert len(set(chroms)) == len(seqs), "Sequence IDs must be unique."
         # now mimic a dataframe representing a bed file
+
+        garray = cls._make_genomic_array(name, seqs, order, storage,
+                                         cache=cache, datatags=datatags,
+                                         overwrite=overwrite)
 
         reglen = lens[0]
         flank = 0
