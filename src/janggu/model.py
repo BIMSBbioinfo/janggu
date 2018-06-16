@@ -476,7 +476,7 @@ class Janggu(object):
             # input could be a sequence
             jseq = inputs
         else:
-            jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
+            jseq = JangguSequence(batch_size, inputs, outputs, sample_weight, shuffle=shuffle)
 
         if validation_data is None:
             valjseq = None
@@ -676,7 +676,7 @@ class Janggu(object):
             Whether to use multiprocessing for the prediction. Default: False.
         workers : int
             Number of workers to use. Default: 1.
-        
+
 
         Examples
         --------
