@@ -56,7 +56,7 @@ def _serve_layer():
         html.Nav(
             html.Div(
                 [html.Div([
-                    dcc.Link(html.H2('Janggu'),
+                    dcc.Link('Janggu',
                              href='/', className='navbar-brand')],
                           className='navbar-header'),
                  html.Div(
@@ -384,14 +384,14 @@ def _update_features(value, feature, selected):
 
 
 CSSES = ["https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
-         "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+         "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
          "https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
 for css in CSSES:
     APP.css.append_css({"external_url": css})
 
 JSES = ["http://code.jquery.com/jquery-3.3.1.min.js",
-        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"]
+        "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"]
 
 for js in JSES:
     APP.scripts.append_script({"external_url": js})
