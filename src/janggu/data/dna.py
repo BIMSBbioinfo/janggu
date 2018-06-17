@@ -1,5 +1,6 @@
 """Dna dataset"""
 
+import Bio
 import numpy as np
 from HTSeq import GenomicInterval
 
@@ -7,10 +8,10 @@ from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.utils import _complement_index
+from janggu.utils import _iv_to_str
 from janggu.utils import as_onehot
 from janggu.utils import dna2ind
 from janggu.utils import sequences_from_fasta
-import Bio
 
 
 class Dna(Dataset):
@@ -158,10 +159,37 @@ class Dna(Dataset):
         else:
             gindexer = None
 
-        garray = cls._make_genomic_array(name, refgenome, order, storage,
+        if not isinstance(refgenome, Bio.SeqRecord.SeqRecord):
+            seqs = sequences_from_fasta(refgenome)
+        else:
+            # This is already a list of SeqRecords
+            seqs = refgenome
+
+        if gindexer is not None:
+            # the genome is loaded with a bed file,
+            # only the specific subset is loaded
+            # to keep the memory overhead low.
+            # Otherwise the entire reference genome is loaded.
+            rgen = {seq.id: seq for seq in seqs}
+            subseqs = []
+            for giv in gindexer:
+                #if giv.strand == '-':
+                #    subseq = rgen[giv.chrom][giv.start:(giv.end-order)].reverse_complement()
+                #else:
+                subseq = rgen[giv.chrom][giv.start:(giv.end)]
+                subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end - order + 1)
+                subseq.name = subseq.id
+                subseq.description = subseq.id
+
+                subseqs.append(subseq)
+            seqs = subseqs
+
+        garray = cls._make_genomic_array(name, seqs, order, storage,
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite)
+
+        garray._full_genome_stored = True if gindexer is None else False
 
         return cls(name, garray, gindexer)
 

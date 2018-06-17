@@ -9,6 +9,7 @@ from keras.layers import Input
 from keras.models import Model
 
 from janggu.data import Dna
+from janggu.data import GenomicIndexer
 from janggu.layers import Complement
 from janggu.layers import Reverse
 from janggu.utils import complement_permmatrix
@@ -29,7 +30,7 @@ def datalen(bed_file):
     return binsizes
 
 
-def test_dna_dims_order_1(tmpdir):
+def test_dna_dims_order_1_from_subset(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     order = 1
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -40,6 +41,67 @@ def test_dna_dims_order_1(tmpdir):
                                      regions=bed_merged,
                                      storage='ndarray',
                                      order=order)
+
+    assert len(data.garray.handle) == 100
+
+    # for order 1
+    assert len(data) == 100
+    assert data.shape == (100, 200, 1, 4)
+    # the correctness of the sequence extraction was also
+    # validated using:
+    # bedtools getfasta -fi sample_genome.fa -bed sample.bed
+    # >chr1:15000-25000
+    # ATTGTGGTGA...
+    # this sequence is read from the forward strand
+    np.testing.assert_equal(data[0][0, :10, 0, :],
+                            np.asarray([[1, 0, 0, 0],  # A
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # C
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # G
+                                        [0, 0, 1, 0],  # G
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # G
+                                        [1, 0, 0, 0]],  # A
+                            dtype='int8'))
+
+    # bedtools getfasta -fi sample_genome.fa -bed sample.bed
+    # >chr2:15000-25000
+    # ggggaagcaa...
+    # this sequence is read from the reverse strand
+    # so we have ...ttgcttcccc
+    np.testing.assert_equal(data[50][0, -10:, 0, :],
+                            np.asarray([[0, 0, 0, 1],  # T
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 1, 0],  # G
+                                        [0, 1, 0, 0],  # C
+                                        [0, 0, 0, 1],  # T
+                                        [0, 0, 0, 1],  # T
+                                        [0, 1, 0, 0],  # C
+                                        [0, 1, 0, 0],  # C
+                                        [0, 1, 0, 0],  # C
+                                        [0, 1, 0, 0]],  # C
+                            dtype='int8'))
+
+
+def test_dna_dims_order_1_from_reference(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    order = 1
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.gtf')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    gindexer = GenomicIndexer.create_from_file(bed_merged, 200, 200)
+
+    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+                                     storage='ndarray',
+                                     order=order)
+    data.gindexer = gindexer
+    assert len(data.garray.handle) == 2
+    assert 'chr1' in data.garray.handle
+    assert 'chr2' in data.garray.handle
+
     # for order 1
     assert len(data) == 100
     assert data.shape == (100, 200, 1, 4)
@@ -92,6 +154,7 @@ def test_dna_dims_order_2(tmpdir):
                                      regions=bed_merged,
                                      storage='ndarray',
                                      order=order)
+
     # for order 1
     assert len(data) == 100
     assert data.shape == (100, 199, 1, 16)
