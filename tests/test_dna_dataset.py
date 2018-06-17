@@ -369,7 +369,7 @@ def test_dna_dataset_sanity(tmpdir):
                               regions=None, order=1)
     Dna.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
-                              regions=bed_file, order=1)
+                              regions=bed_file, order=1, cache=True)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'datasets', 'train',
                                        'order1', 'storage.h5'))

@@ -11,9 +11,7 @@ import pytest
 from janggu.data import Cover
 
 
-def test_cover_from_bam_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
-    print(os.environ['JANGGU_OUTPUT'])
+def test_cover_from_bam_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -65,8 +63,7 @@ def test_cover_from_bam_sanity(tmpdir):
             storage='ndarray')
 
 
-def test_cover_from_bigwig_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+def test_cover_from_bigwig_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
@@ -131,8 +128,7 @@ def test_cover_from_bigwig_sanity(tmpdir):
             storage='ndarray')
 
 
-def test_cover_from_bed_sanity(tmpdir):
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+def test_cover_from_bed_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
@@ -207,8 +203,7 @@ def test_cover_from_bed_sanity(tmpdir):
             storage='ndarray')
 
 
-def test_cover_bam_unstranded(tmpdir):
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+def test_cover_bam_unstranded():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample.bam")
     gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
@@ -255,10 +250,9 @@ def test_cover_bam_unstranded(tmpdir):
     np.testing.assert_equal(val[1], np.asarray([25]))  # pos
 
 
-def test_cover_bam_paired_5pend(tmpdir):
+def test_cover_bam_paired_5pend():
     # sample2.bam contains paired end examples,
     # unmapped examples, unmapped mate and low quality example
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample2.bam")
 
@@ -278,10 +272,9 @@ def test_cover_bam_paired_5pend(tmpdir):
     assert cover.garray.handle['ref'][24, 0, 0] == 1
 
 
-def test_cover_bam_paired_midpoint(tmpdir):
+def test_cover_bam_paired_midpoint():
     # sample2.bam contains paired end examples,
     # unmapped examples, unmapped mate and low quality example
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample2.bam")
 
@@ -323,7 +316,7 @@ def test_cover_bam(tmpdir):
             bamfiles=bamfile_,
             regions=bed_file,
             genomesize=gsize,
-            storage=store)
+            storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 200, 2, 1))
@@ -378,7 +371,7 @@ def test_load_bam_resolution10(tmpdir):
             regions=bed_file,
             genomesize=gsize,
             resolution=10,
-            storage=store)
+            storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 20, 2, 1))
@@ -431,7 +424,7 @@ def test_load_cover_bigwig_default(tmpdir):
             bigwigfiles=bwfile_,
             regions=bed_file,
             genomesize=gsize,
-            storage=store)
+            storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
@@ -457,7 +450,7 @@ def test_load_cover_bigwig_resolution1(tmpdir):
             bigwigfiles=bwfile_,
             regions=bed_file,
             resolution=1,
-            storage=store)
+            storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
@@ -502,14 +495,14 @@ def test_load_cover_bed_binary(tmpdir):
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
 
-    for store in ['ndarray', 'sparse']:
+    for store in ['ndarray', 'hdf5', 'sparse']:
         print('store', store)
         cover = Cover.create_from_bed(
             "cov",
             bedfiles=score_file,
             regions=bed_file,
             storage=store,
-            mode='binary')
+            mode='binary', cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
@@ -522,7 +515,7 @@ def test_load_cover_bed_binary(tmpdir):
             regions=bed_file,
             storage=store,
             resolution=50,
-            mode='binary')
+            mode='binary', cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 4, 1, 1))
@@ -536,7 +529,7 @@ def test_load_cover_bed_binary(tmpdir):
             storage=store,
             resolution=50,
             dimmode='first',
-            mode='binary')
+            mode='binary', cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
@@ -544,8 +537,7 @@ def test_load_cover_bed_binary(tmpdir):
         np.testing.assert_equal(cover[4].sum(), 1)
 
 
-def test_load_cover_bed_scored(tmpdir):
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+def test_load_cover_bed_scored():
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
@@ -591,8 +583,7 @@ def test_load_cover_bed_scored(tmpdir):
         np.testing.assert_equal(cover[4].sum(), 5)
 
 
-def test_load_cover_bed_categorical(tmpdir):
-    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+def test_load_cover_bed_categorical():
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')

@@ -115,7 +115,7 @@ class Dna(Dataset):
                               stepsize=200, binsize=200,
                               flank=0, order=1, storage='ndarray',
                               datatags=None,
-                              cache=True, overwrite=False):
+                              cache=False, overwrite=False):
         """Create a Dna class from a reference genome.
 
         This requires a reference genome in fasta format to load the data from.
@@ -146,7 +146,7 @@ class Dna(Dataset):
         datatags : list(str) or None
             List of datatags. Default: None.
         cache : boolean
-            Whether to cache the dataset. Default: True.
+            Whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
@@ -199,7 +199,7 @@ class Dna(Dataset):
                           storage='ndarray',
                           order=1,
                           datatags=None,
-                          cache=True,
+                          cache=False,
                           overwrite=False):
         """Create a Dna class from a fastafile.
 
@@ -220,7 +220,7 @@ class Dna(Dataset):
         datatags : list(str) or None
             List of datatags. Default: None.
         cache : boolean
-            Whether to cache the dataset. Default: True.
+            Whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """

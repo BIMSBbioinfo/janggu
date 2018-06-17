@@ -74,7 +74,7 @@ class Cover(Dataset):
                         pairedend='5prime',
                         template_extension=0,
                         aggregate=None,
-                        datatags=None, cache=True):
+                        datatags=None, cache=False):
         """Create a Cover class from a bam-file (or files).
 
         This constructor can be used to obtain coverage from BAM files.
@@ -142,7 +142,7 @@ class Cover(Dataset):
             Aggregation operation for loading genomic array for a given resolution.
             Default: None
         cache : boolean
-            Whether to cache the dataset. Default: True.
+            Whether to cache the dataset. Default: False.
         """
 
         if pysam is None:  # pragma: no cover
@@ -305,7 +305,7 @@ class Cover(Dataset):
                            overwrite=False,
                            dimmode='all',
                            aggregate=np.mean,
-                           datatags=None, cache=True):
+                           datatags=None, cache=False):
         """Create a Cover class from a bigwig-file (or files).
 
         Parameters
@@ -357,7 +357,7 @@ class Cover(Dataset):
             Aggregation operation for loading genomic array for a given resolution.
             Default: numpy.mean
         cache : boolean
-            Whether to cache the dataset. Default: True.
+            Whether to cache the dataset. Default: False.
         """
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
@@ -447,7 +447,7 @@ class Cover(Dataset):
                         dimmode='all',
                         mode='binary',
                         overwrite=False,
-                        datatags=None, cache=True):
+                        datatags=None, cache=False):
         """Create a Cover class from a bed-file (or files).
 
         Parameters
@@ -499,7 +499,7 @@ class Cover(Dataset):
         datatags : list(str) or None
             List of datatags. Default: None.
         cache : boolean
-            Whether to cache the dataset. Default: True.
+            Whether to cache the dataset. Default: False.
         """
 
         if regions is None and genomesize is None:
