@@ -206,8 +206,6 @@ class Janggu(object):
     def name(self, name):
         if not isinstance(name, str):
             raise Exception("Name must be a string.")
-        if '.' in name:
-            raise Exception("'.' in the name is not allowed.")
         self._name = name
 
     def save(self, filename=None, overwrite=True):

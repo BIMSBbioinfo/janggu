@@ -140,12 +140,12 @@ def test_janggu_instance_dense(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
 
-    with pytest.raises(Exception):
-        # name with dot not allowed. could be mistaken for a file-ending
-        bwm = Janggu.create(_cnn_model, modelparams=(2,),
-                            inputs=dna,
-                            outputs=ctcf,
-                            name='dna_ctcf_HepG2.cnn')
+    #with pytest.raises(Exception):
+    #    # name with dot not allowed. could be mistaken for a file-ending
+    #    bwm = Janggu.create(_cnn_model, modelparams=(2,),
+    #                        inputs=dna,
+    #                        outputs=ctcf,
+    #                        name='dna_ctcf_HepG2.cnn')
     with pytest.raises(Exception):
         # name with must be string
         bwm = Janggu.create(_cnn_model, modelparams=(2,),
