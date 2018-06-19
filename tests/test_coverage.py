@@ -24,10 +24,14 @@ def test_cover_from_bam_sanity():
         flank=0,
         storage='ndarray')
     cover[0]
-    Cover.create_from_bam(
-        'test',
-        bamfiles=bamfile_,
-        storage='ndarray')
+
+    cov2 = Cover.create_from_bam(
+           'test',
+           bamfiles=bamfile_,
+           storage='ndarray')
+    assert len(cover.gindexer) == len(cover.garray.handle)
+    assert len(cov2.garray.handle) != len(cover.garray.handle)
+
     with pytest.raises(Exception):
         # name must be a string
         Cover.create_from_bam(
@@ -77,11 +81,13 @@ def test_cover_from_bigwig_sanity():
         flank=0,
         storage='ndarray')
     cover[0]
-    Cover.create_from_bigwig(
+    cov2 = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
         resolution=50,
         storage='ndarray')
+    assert len(cover.gindexer) == len(cover.garray.handle)
+    assert len(cov2.garray.handle) != len(cover.garray.handle)
 
     with pytest.raises(Exception):
         # name must be a string
