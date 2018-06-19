@@ -8,7 +8,7 @@ from HTSeq import BED_Reader
 from keras.layers import Input
 from keras.models import Model
 
-from janggu.data import Dna
+from janggu.data import Bioseq
 from janggu.data import GenomicIndexer
 from janggu.layers import Complement
 from janggu.layers import Reverse
@@ -37,7 +37,7 @@ def test_dna_dims_order_1_from_subset(tmpdir):
     bed_merged = os.path.join(data_path, 'sample.gtf')
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_merged,
                                      storage='ndarray',
                                      order=order)
@@ -94,7 +94,7 @@ def test_dna_dims_order_1_from_reference(tmpdir):
 
     gindexer = GenomicIndexer.create_from_file(bed_merged, 200, 200)
 
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      storage='ndarray',
                                      order=order)
     data.gindexer = gindexer
@@ -150,7 +150,7 @@ def test_dna_dims_order_2(tmpdir):
     bed_merged = os.path.join(data_path, 'sample.bed')
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_merged,
                                      storage='ndarray',
                                      order=order)
@@ -204,7 +204,7 @@ def reverse_layer(order):
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_file,
                                      storage='ndarray',
                                      binsize=binsize,
@@ -228,7 +228,7 @@ def complement_layer(order):
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
-    data = Dna.create_from_refgenome('train', refgenome=refgenome,
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_file,
                                      storage='ndarray',
                                      binsize=binsize,
@@ -327,47 +327,47 @@ def test_dna_dataset_sanity(tmpdir):
 
     with pytest.raises(Exception):
         # name must be a string
-        Dna.create_from_refgenome(1.23, refgenome='',
+        Bioseq.create_from_refgenome(1.23, refgenome='',
                                   storage='ndarray',
                                   regions=bed_file, order=1)
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome='',
+        Bioseq.create_from_refgenome('train', refgenome='',
                                   storage='ndarray',
                                   regions=bed_file, order=1)
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome='test',
+        Bioseq.create_from_refgenome('train', refgenome='test',
                                   storage='ndarray',
                                   regions=bed_file, order=1)
 
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome=refgenome,
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
                                   regions=bed_file, order=0)
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome=refgenome,
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
                                   regions=bed_file, flank=-1)
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome=refgenome,
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
                                   regions=bed_file, binsize=0)
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome=refgenome,
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
                                   regions=bed_file, stepsize=0)
 
     with pytest.raises(Exception):
-        Dna.create_from_refgenome('train', refgenome=refgenome,
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='step',
                                   regions=bed_file, order=1)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'storage.h5'))
 
-    Dna.create_from_refgenome('train', refgenome=refgenome,
+    Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='ndarray',
                               regions=None, order=1)
-    Dna.create_from_refgenome('train', refgenome=refgenome,
+    Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
                               regions=bed_file, order=1, cache=True)
 
@@ -382,7 +382,7 @@ def test_read_dna_from_biostring_order_1():
     order = 1
     filename = os.path.join(data_path, 'sample.fa')
     seqs = sequences_from_fasta(filename)
-    data = Dna.create_from_fasta('train', fastafile=seqs,
+    data = Bioseq.create_from_seq('train', fastafile=seqs,
                                  order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)
@@ -407,7 +407,7 @@ def test_read_dna_from_fasta_order_1():
 
     order = 1
     filename = os.path.join(data_path, 'sample.fa')
-    data = Dna.create_from_fasta('train', fastafile=filename,
+    data = Bioseq.create_from_seq('train', fastafile=filename,
                                  order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)
@@ -431,7 +431,7 @@ def test_read_dna_from_fasta_order_2():
 
     order = 2
     filename = os.path.join(data_path, 'sample.fa')
-    data = Dna.create_from_fasta('train', fastafile=filename,
+    data = Bioseq.create_from_seq('train', fastafile=filename,
                                  order=order, cache=False)
 
     np.testing.assert_equal(len(data), 3897)

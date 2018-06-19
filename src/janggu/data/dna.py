@@ -1,4 +1,4 @@
-"""Dna dataset"""
+"""Bioseq dataset"""
 
 import Bio
 import numpy as np
@@ -10,18 +10,19 @@ from janggu.data.genomicarray import create_genomic_array
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
 from janggu.utils import as_onehot
-from janggu.utils import dna2ind
+from janggu.utils import seq2ind
 from janggu.utils import sequences_from_fasta
 
 
-class Dna(Dataset):
-    """Dna class.
+class Bioseq(Dataset):
+    """Bioseq class.
 
-    This datastructure holds a DNA sequence for the purpose of a deep learning
-    application.
-    The sequence can conventiently fetched from a raw fasta-file.
-    Upon indexing or slicing of the dataset, the one-hot representation
-    of a respective region will be returned.
+    This datastructure holds a biological sequence
+    and determines the one-hot encodeing
+    for the purpose of a deep learning application.
+
+    The sequence can represent nucleotide or peptide sequences,
+    which can be conventiently fetched from a raw fasta-file.
 
     Parameters
     -----------
@@ -35,6 +36,7 @@ class Dna(Dataset):
     """
 
     _order = None
+    _alphabetsize = None
     _flank = None
     _gindexer = None
 
@@ -48,11 +50,11 @@ class Dna(Dataset):
         Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _make_genomic_array(name, fastafile, order, storage, cache=True, datatags=None,
+    def _make_genomic_array(name, fastafile, order, storage, seqtype, cache=True, datatags=None,
                             overwrite=False):
         """Create a genomic array or reload an existing one."""
 
-        # always use int 16 to store dna indices
+        # always use int 16 to store bioseq indices
         # do not use int8 at the moment, because 'N' is encoded
         # as -1024, which causes an underflow with int8.
         dtype = 'int16'
@@ -66,7 +68,7 @@ class Dna(Dataset):
             for fasta in fastafile:
                 # += is necessary since sequences_from_fasta
                 # returns a list
-                seqs += sequences_from_fasta(fasta)
+                seqs += sequences_from_fasta(fasta, seqtype)
         else:
             # This is already a list of SeqRecords
             seqs = fastafile
@@ -77,20 +79,21 @@ class Dna(Dataset):
         for seq in seqs:
             chromlens[seq.id] = len(seq) - order + 1
 
-        def _dna_loader(cover, seqs, order):
+        def _seq_loader(cover, seqs, order):
             print('Convert sequences to index array')
             for seq in seqs:
                 interval = GenomicInterval(seq.id, 0,
                                            len(seq) - order + 1, '.')
 
-                dna = np.asarray(dna2ind(seq), dtype=dtype)
+                indarray = np.asarray(seq2ind(seq), dtype=dtype)
 
                 if order > 1:
                     # for higher order motifs, this part is used
-                    filter_ = np.asarray([pow(4, i) for i in range(order)])
-                    dna = np.convolve(dna, filter_, mode='valid')
+                    filter_ = np.asarray([pow(len(seq.seq.alphabet.letters),
+                                              i) for i in range(order)])
+                    indarray = np.convolve(indarray, filter_, mode='valid')
 
-                cover[interval, 0] = dna
+                cover[interval, 0] = indarray
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
@@ -105,7 +108,7 @@ class Dna(Dataset):
                                      conditions=['idx'],
                                      overwrite=overwrite,
                                      typecode=dtype,
-                                     loader=_dna_loader,
+                                     loader=_seq_loader,
                                      loader_args=(seqs, order))
 
         return cover
@@ -116,7 +119,7 @@ class Dna(Dataset):
                               flank=0, order=1, storage='ndarray',
                               datatags=None,
                               cache=False, overwrite=False):
-        """Create a Dna class from a reference genome.
+        """Create a Bioseq class from a reference genome.
 
         This requires a reference genome in fasta format to load the data from.
         If regions points to a bed file, the dataset will also be indexed
@@ -151,7 +154,7 @@ class Dna(Dataset):
             Overwrite the cachefiles. Default: False.
         """
         # fill up int8 rep of DNA
-        # load dna, region index, and within region index
+        # load bioseq, region index, and within region index
 
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
@@ -160,7 +163,7 @@ class Dna(Dataset):
             gindexer = None
 
         if not isinstance(refgenome, Bio.SeqRecord.SeqRecord):
-            seqs = sequences_from_fasta(refgenome)
+            seqs = sequences_from_fasta(refgenome, 'dna')
         else:
             # This is already a list of SeqRecords
             seqs = refgenome
@@ -184,34 +187,40 @@ class Dna(Dataset):
                 subseqs.append(subseq)
             seqs = subseqs
 
-        garray = cls._make_genomic_array(name, seqs, order, storage,
+        garray = cls._make_genomic_array(name, seqs, order, storage, 'dna',
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite)
 
         garray._full_genome_stored = True if gindexer is None else False
 
-        return cls(name, garray, gindexer)
+        ob_ = cls(name, garray, gindexer)
+        ob_._alphabetsize = len(seqs[0].seq.alphabet.letters)
+        return ob_
 
     @classmethod
-    def create_from_fasta(cls, name,  # pylint: disable=too-many-locals
-                          fastafile,
-                          storage='ndarray',
-                          order=1,
-                          datatags=None,
-                          cache=False,
-                          overwrite=False):
-        """Create a Dna class from a fastafile.
+    def create_from_seq(cls, name,  # pylint: disable=too-many-locals
+                        fastafile,
+                        storage='ndarray',
+                        seqtype='dna',
+                        order=1,
+                        datatags=None,
+                        cache=False,
+                        overwrite=False):
+        """Create a Bioseq class from a biological sequences.
 
-        This allows to load sequence of equal lengths to be loaded from
-        a fastafile.
+        This allows to load sequence of equal lengths to be loaded.
 
         Parameters
         -----------
         name : str
             Name of the dataset
-        fastafile : str or list(str)
-            Fasta file or list of fasta files.
+        fastafile : str or list(str) or list(Bio.SeqRecord)
+            Fasta file or list of fasta files from which the sequences
+            are loaded or a list of Bio.SeqRecord.SeqRecord.
+        seqtype : str
+            Indicates whether a nucleotide or peptide sequence is loaded
+            using 'dna' or 'protein' respectively. Default: 'dna'.
         order : int
             Order for the one-hot representation. Default: 1.
         storage : str
@@ -232,7 +241,7 @@ class Dna(Dataset):
             for fasta in fastafile:
                 # += is necessary since sequences_from_fasta
                 # returns a list
-                seqs += sequences_from_fasta(fasta)
+                seqs += sequences_from_fasta(fasta, seqtype)
         else:
             # This is already a list of SeqRecords
             seqs = fastafile
@@ -247,7 +256,7 @@ class Dna(Dataset):
         assert len(set(chroms)) == len(seqs), "Sequence IDs must be unique."
         # now mimic a dataframe representing a bed file
 
-        garray = cls._make_genomic_array(name, seqs, order, storage,
+        garray = cls._make_genomic_array(name, seqs, order, storage, seqtype,
                                          cache=cache, datatags=datatags,
                                          overwrite=overwrite)
 
@@ -264,10 +273,12 @@ class Dna(Dataset):
         gindexer.strand = ['.']*len(lens)
         gindexer.rel_end = [reglen + 2*flank]*len(lens)
 
-        return cls(name, garray, gindexer)
+        ob_ = cls(name, garray, gindexer)
+        ob_._alphabetsize = len(seqs[0].seq.alphabet.letters)
+        return ob_
 
     def __repr__(self):  # pragma: no cover
-        return 'Dna("{}")'.format(self.name,)
+        return 'Bioseq("{}")'.format(self.name,)
 
     @property
     def gindexer(self):
@@ -286,8 +297,8 @@ class Dna(Dataset):
             raise ValueError('gindexer.stepsize must be divisible by resolution')
         self._gindexer = gindexer
 
-    def idna4idx(self, idxs):
-        """Extracts the DNA sequence for set of indices.
+    def iseq4idx(self, idxs):
+        """Extracts the Bioseq sequence for set of indices.
 
         This method gets as input a list of indices (e.g.
         corresponding to genomic ranges for a given batch) and returns
@@ -301,12 +312,12 @@ class Dna(Dataset):
         Returns
         -------
         numpy.array
-            Nucleotide sequences associated with the regions
+            Nucleotide sequences associated with the region indices
             with shape `(len(idxs), sequence_length + 2*flank - order + 1)`
         """
 
         # for each index read use the adaptor indices to retrieve the seq.
-        idna = np.zeros((len(idxs), self.gindexer.binsize +
+        iseq = np.zeros((len(idxs), self.gindexer.binsize +
                          2*self.gindexer.flank - self.garray.order + 1), dtype="int16")
 
         for i, idx in enumerate(idxs):
@@ -317,12 +328,12 @@ class Dna(Dataset):
             # Computing the forward or reverse complement of the
             # sequence, depending on the strand flag.
             if interval.strand in ['.', '+']:
-                idna[i] = np.asarray(self.garray[interval][:, 0, 0])
+                iseq[i] = np.asarray(self.garray[interval][:, 0, 0])
             else:
-                idna[i] = np.asarray(
+                iseq[i] = np.asarray(
                     [self._rcindex[val] for val in self.garray[interval][:, 0, 0]])[::-1]
 
-        return idna
+        return iseq
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -334,10 +345,11 @@ class Dna(Dataset):
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('Dna.__getitem__: '
+            raise IndexError('Bioseq.__getitem__: '
                              + 'index must be iterable')
 
-        data = as_onehot(self.idna4idx(idxs), self.garray.order)
+        data = as_onehot(self.iseq4idx(idxs), self.garray.order,
+                         self._alphabetsize)
 
         for transform in self.transformations:
             data = transform(data)
@@ -352,4 +364,4 @@ class Dna(Dataset):
         """Shape of the dataset"""
         return (len(self), self.gindexer.binsize +
                 2*self.gindexer.flank - self.garray.order + 1, 1,
-                pow(4, self.garray.order))
+                pow(self._alphabetsize, self.garray.order))

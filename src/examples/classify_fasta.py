@@ -18,10 +18,10 @@ from janggu import Scorer
 from janggu import inputlayer
 from janggu import outputdense
 from janggu.data import Array
-from janggu.data import Dna
+from janggu.data import Bioseq
 from janggu.layers import Complement
 from janggu.layers import Reverse
-from janggu.layers import DnaConv2D
+from janggu.layers import BioseqConv2D
 from janggu.utils import export_clustermap
 from janggu.utils import export_json
 from janggu.utils import export_plotly
@@ -64,7 +64,7 @@ DATA_PATH = pkg_resources.resource_filename('janggu', 'resources/')
 SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 
-DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
+DNA = Bioseq.create_from_seq('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                             order=args.order, datatags=['train'], cache=True)
 
 Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
@@ -141,7 +141,7 @@ def double_stranded_model(inputs, inp, oup, params):
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         pass
-    dnaconv = DnaConv2D(params[0], (params[1], 1), activation=params[2])
+    dnaconv = BioseqConv2D(params[0], (params[1], 1), activation=params[2])
 
     forward = dnaconv(layer)
 
@@ -183,7 +183,7 @@ print('#' * 40)
 SAMPLE_1 = os.path.join(DATA_PATH, 'sample_test.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2_test.fa')
 
-DNA_TEST = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
+DNA_TEST = Bioseq.create_from_seq('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                                  order=args.order, datatags=['test'], cache=True)
 
 

@@ -59,7 +59,7 @@ For example,
 
 .. code:: python
 
-   Dna.create_from_fasta('hg19', refgenome, regions, datatags=['chr1'],
+   Bioseq.create_from_seq('hg19', refgenome, regions, datatags=['chr1'],
                          order=1)
 
 might be a dataset that contains the sequence of chromosome 1 of hg19.

@@ -36,7 +36,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         Resolution for storing the genomic array. Only relevant for the use
         with Cover Datasets. Default: 1.
     order : int
-        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
+        Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
     """
     handle = dict()
     _condition = None
@@ -145,7 +145,7 @@ class HDF5GenomicArray(GenomicArray):
         Resolution for storing the genomic array. Only relevant for the use
         with Cover Datasets. Default: 1.
     order : int
-        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
+        Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
     cache : boolean
         Whether to cache the dataset. Default: True
     overwrite : boolean
@@ -229,7 +229,7 @@ class NPGenomicArray(GenomicArray):
         Resolution for storing the genomic array. Only relevant for the use
         with Cover Datasets. Default: 1.
     order : int
-        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
+        Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
     cache : boolean
         Specifies whether to cache the dataset. Default: True
     overwrite : boolean
@@ -323,7 +323,7 @@ class SparseGenomicArray(GenomicArray):
         Resolution for storing the genomic array. Only relevant for the use
         with Cover Datasets. Default: 1.
     order : int
-        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
+        Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
     cache : boolean
         Whether to cache the dataset. Default: True
     overwrite : boolean
@@ -486,7 +486,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
         Resolution for storing the genomic array. Only relevant for the use
         with Cover Datasets. Default: 1.
     order : int
-        Order of the alphabet size. Only relevant for Dna Datasets. Default: 1.
+        Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
     cache : boolean
         Whether to cache the dataset. Default: True
     overwrite : boolean

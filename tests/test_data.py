@@ -4,7 +4,7 @@ import matplotlib
 import pkg_resources
 import pytest
 
-from janggu.data import Dna
+from janggu.data import Bioseq
 from janggu.data import Table
 from janggu.data.data import _data_props
 
@@ -18,7 +18,7 @@ def test_dna_props_extraction(tmpdir):
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
-    dna = Dna.create_from_refgenome('dna', refgenome=refgenome,
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
                                     regions=bed_file, order=1)
 

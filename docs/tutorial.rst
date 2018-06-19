@@ -18,39 +18,39 @@ Genomic Datasets
 :mod:`janggu.data` provides Dataset classes that can be used for
 training and evaluating neural networks.
 Of particular importance are the Genomics-specific dataset,
-:class:`Dna` and :class:`Cover` which
+:class:`Bioseq` and :class:`Cover` which
 to easily access and fetch genomics data.
-Furthermore, the datasets :class:`Dna` and :class:`Cover` facilitate
+Furthermore, the datasets :class:`Bioseq` and :class:`Cover` facilitate
 caching so that you can reload the data later much faster.
 Other Dataset classes, e.g. :class:`Array` are described in the Reference section.
 
 
-Dna
+Bioseq
 ^^^^^^^^^^
-The :class:`Dna` fetches raw sequence data from
+The :class:`Bioseq` fetches raw sequence data from
 fasta files or from a reference genome along with a set of
 genomic coordinates
 and translates the sequences into a *one-hot encoding*. Specifically,
 the *one-hot encoding* is represented as a
 4D array with dimensions corresponding
 to :code:`(region, region_length, 1, alphabet_size)`.
-The Dna offers a number of features:
+The Bioseq offers a number of features:
 
 1. Strand-specific sequence extraction
 2. Higher-order one-hot encoding, e.g. di-nucleotide based
 3. Dataset access from disk via the hdf5 option for large datasets.
 
 A sequence can be loaded from a fasta file using
-the :code:`create_from_fasta` constructor method:
+the :code:`create_from_seq` constructor method:
 
 .. code-block:: python
 
    from pkg_resources import resource_filename
-   from janggu.data import Dna
+   from janggu.data import Bioseq
 
    fasta_file = resource_filename('janggu', 'resources/sample.fa')
 
-   dna = Dna.create_from_fasta(name='dna', fastafile=fasta_file)
+   dna = Bioseq.create_from_seq(name='dna', fastafile=fasta_file)
 
    len(dna)  # there are 3997 sequences in the in sample.fa
 
@@ -68,7 +68,7 @@ genomic coordinates of interest that are provided by a BED or GFF file.
    bed_file = resource_filename('janggu', 'resources/sample.bed')
    refgenome = resource_filename('janggu', 'resources/sample_genome.fa')
 
-   dna = Dna.create_from_refgenome(name='dna',
+   dna = Bioseq.create_from_refgenome(name='dna',
                                    refgenome=refgenome,
                                    regions=bed_file, datatags=['refgenome'])
 
@@ -314,7 +314,7 @@ the sequence features that discriminate the two sets of sequences:
    SAMPLE_1 = resource_filename('janggu', 'resources/', 'sample.fa')
    SAMPLE_2 = resource_filename('janggu', 'resources/', 'sample2.fa')
 
-   DNA = Dna.create_from_fasta('dna', fastafile=[SAMPLE_1, SAMPLE_2],
+   DNA = Bioseq.create_from_seq('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                                order=args.order)
 
    # helper function returns the number of sequences

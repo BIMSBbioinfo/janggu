@@ -21,12 +21,12 @@ Classes
 -------
 .. autosummary::
    Cover
-   Dna
+   Bioseq
    Table
    Array
 
 .. autoclass:: Cover
    :members: create_from_bam, create_from_bigwig, create_from_bed
 
-.. autoclass:: Dna
-   :members: create_from_refgenome, create_from_fasta
+.. autoclass:: Bioseq
+   :members: create_from_refgenome, create_from_seq

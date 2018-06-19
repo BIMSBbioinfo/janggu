@@ -143,8 +143,8 @@ class Complement(Layer):
         return input_shape
 
 
-class DnaConv2D(Conv2D):
-    """DnaConv2D layer.
+class BioseqConv2D(Conv2D):
+    """BioseqConv2D layer.
 
     This layer is a special convolution layer for scanning DNA
     sequences. When using it with the default settings, it behaves
@@ -167,7 +167,7 @@ class DnaConv2D(Conv2D):
 
     .. code-block:: python
 
-      conv = DnaConv2D(nfilters, filter_shape)
+      conv = BioseqConv2D(nfilters, filter_shape)
       # apply the normal convolution operation
       forward = conv(input)
 
@@ -193,7 +193,7 @@ class DnaConv2D(Conv2D):
                  kernel_constraint=None,
                  bias_constraint=None,
                  scan_revcomp=False, **kwargs):
-        super(DnaConv2D, self).__init__(
+        super(BioseqConv2D, self).__init__(
             filters=filters,
             kernel_size=kernel_size,
             strides=strides,
@@ -214,7 +214,7 @@ class DnaConv2D(Conv2D):
         self.rcmatrix = None
 
     def build(self, input_shape):
-        super(DnaConv2D, self).build(input_shape)
+        super(BioseqConv2D, self).build(input_shape)
 
         print(input_shape, input_shape[-1])
         self.rcmatrix = K.constant(
@@ -224,7 +224,7 @@ class DnaConv2D(Conv2D):
 
     def get_config(self):
         config = {'scan_revcomp': self.scan_revcomp}
-        base_config = super(DnaConv2D, self).get_config()
+        base_config = super(BioseqConv2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def call(self, inputs):
@@ -237,7 +237,7 @@ class DnaConv2D(Conv2D):
         else:
             print('using conv2d')
         # perform the convolution operation
-        res = super(DnaConv2D, self).call(inputs)
+        res = super(BioseqConv2D, self).call(inputs)
         if self.scan_revcomp:
             # restore the original kernel matrix
             self.kernel = tmp

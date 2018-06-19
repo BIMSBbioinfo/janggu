@@ -64,68 +64,83 @@ def _get_output_data_location(datatags):
     return os.path.join(*args)
 
 
-def sequences_from_fasta(fasta):
-    """Obtains nucleotide sequences from a fasta file.
+def sequences_from_fasta(fasta, string='dna'):
+    """Obtains nucleotide or peptide sequences from a fasta file.
 
     Parameters
     -----------
     fasta : str
         Fasta-filename
+    string : str
+        Either dna or protein.
 
     Returns
         List of Biostring sequences
     """
 
     file_ = open(fasta)
-    gen = SeqIO.parse(file_, "fasta", IUPAC.unambiguous_dna)
+    if string == 'dna':
+        alpha = IUPAC.unambiguous_dna
+    else:
+        alpha = IUPAC.protein
+    gen = SeqIO.parse(file_, "fasta", alpha)
     seqs = [item for item in gen]
 
     return seqs
 
 
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.unambiguous_dna.letters))}
+NNUC = len(IUPAC.unambiguous_dna.letters)
 
+# mapping of nucleotides to integers
 NMAP = defaultdict(lambda: -1024)
 NMAP.update(LETTERMAP)
 
+# mapping of amino acids to integers
+LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.protein.letters))}
+PMAP = defaultdict(lambda: -1024)
+PMAP.update(LETTERMAP)
 
-def dna2ind(seq):
-    """Transforms a nucleotide sequence into an int array.
+def seq2ind(seq):
+    """Transforms a biological sequence into an int array.
 
-    In this array, we use the mapping
-    {'A':0, 'C':1, 'G':2, 'T':3}
-    Any other characters (e.g. 'N') are represented by a large negative value
+    Each nucleotide or amino acid maps to an integer between
+    zero and len(alphabet) - 1.
+
+    Any other characters (e.g. 'N') are represented by a negative value
     to avoid confusion with valid nucleotides.
 
     Parameters
     ----------
     seq : str, Bio.SeqRecord or Bio.Seq.Seq
-        Nucleotide sequence represented as string, SeqRecord or Seq.
+        Sequence represented as string, SeqRecord or Seq.
 
     Returns
     -------
     list(int)
-        Integer array representation of the nucleotide sequence.
+        Integer array representation of the biological sequence.
     """
 
     if isinstance(seq, SeqRecord):
         seq = seq.seq
     if isinstance(seq, (str, Seq)):
-        return [NMAP[x.upper()] for x in seq]
-    else:
-        raise TypeError('dna2ind: Format is not supported')
+        if type(seq.alphabet) is  type(IUPAC.unambiguous_dna):
+            return [NMAP[x.upper()] for x in seq]
+        elif type(seq.alphabet) is type(IUPAC.protein):
+            return [PMAP[x.upper()] for x in seq]
+    raise TypeError('seq2ind: Format is not supported')
 
 
-def as_onehot(idna, order):
+def as_onehot(iseq, order, alphabetsize):
     """Converts a index sequence into one-hot representation.
 
-    This method is used to transform a nucleotide sequence
+    This method is used to transform a biological sequence
     for a given batch, represented by integer indices,
     into a one-hot representation.
 
     Parameters
     ----------
-    idna: numpy.array
+    iseq: numpy.array
         Array that holds the indices for a given batch.
         The dimensions of the array correspond to
         `(batch_size, sequence_length + 2*flank - order + 1)`.
@@ -138,24 +153,25 @@ def as_onehot(idna, order):
     numpy.array
         One-hot representation of the batch. The dimension
         of the array is given by
-        `(batch_size, sequence length, 1, pow(nletters, order))`
+        `(batch_size, sequence length, 1, pow(alphabetsize, order))`
     """
 
-    onehot = np.zeros((len(idna),
-                       idna.shape[1], 1, pow(4, order)), dtype='int8')
-    for nuc in np.arange(pow(4, order)):
-        onehot[:, :, 0, nuc][idna == nuc] = 1
+    onehot = np.zeros((len(iseq),
+                       iseq.shape[1], 1,
+                       pow(alphabetsize, order)), dtype='int8')
+    for nuc in np.arange(pow(alphabetsize, order)):
+        onehot[:, :, 0, nuc][iseq == nuc] = 1
 
     return onehot
 
 
 def _complement_index(idx, order):
-    rev_idx = np.arange(len(LETTERMAP))[::-1]
+    rev_idx = np.arange(NNUC)[::-1]
     irc = 0
     for iord in range(order):
-        nuc = idx % len(LETTERMAP)
-        idx = idx // len(LETTERMAP)
-        irc += rev_idx[nuc] * pow(len(LETTERMAP), order - iord - 1)
+        nuc = idx % NNUC
+        idx = idx // NNUC
+        irc += rev_idx[nuc] * pow(NNUC, order - iord - 1)
 
     return irc
 
@@ -174,8 +190,8 @@ def complement_permmatrix(order):
     np.array
         Permutation matrix
     """
-    perm = np.zeros((pow(len(LETTERMAP), order), pow(len(LETTERMAP), order)))
-    for idx in range(pow(len(LETTERMAP), order)):
+    perm = np.zeros((pow(NNUC, order), pow(NNUC, order)))
+    for idx in range(pow(NNUC, order)):
         jdx = _complement_index(idx, order)
         perm[jdx, idx] = 1
     return perm
@@ -246,11 +262,11 @@ def _str_to_iv(givstr, template_extension):
     sub = givstr.split(':')
     if len(sub) == 1:
         return (sub[0], )
-    else:
-        chr = sub[0]
-        start = int(sub[1].split('-')[0])
-        end = int(sub[1].split('-')[1])
-        return (chr, start - template_extension, end + template_extension)
+
+    chr_ = sub[0]
+    start = int(sub[1].split('-')[0])
+    end = int(sub[1].split('-')[1])
+    return (chr_, start - template_extension, end + template_extension)
 
 
 def get_genome_size_from_bed(bedfile):

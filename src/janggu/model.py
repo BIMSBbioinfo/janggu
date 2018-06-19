@@ -16,7 +16,7 @@ from keras.utils import Sequence
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
 from janggu.layers import Complement
-from janggu.layers import DnaConv2D
+from janggu.layers import BioseqConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
@@ -188,7 +188,7 @@ class Janggu(object):
         layers = {'Reverse': Reverse,
                   'Complement': Complement,
                   'LocalAveragePooling2D': LocalAveragePooling2D,
-                  'DnaConv2D': DnaConv2D}
+                  'BioseqConv2D': BioseqConv2D}
         if not custom_objects:
             custom_objects = {}
 
