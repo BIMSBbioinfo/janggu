@@ -652,7 +652,7 @@ class Janggu(object):
         Parameters
         ----------
         inputs : :code:`Dataset`, list(Dataset) or Sequence (keras.utils.Sequence)
-            Input Dataset or Sequence to use for fitting the model.
+            Input Dataset or Sequence to use for evaluating the model.
         outputs :  :code:`Dataset`, list(Dataset) or None
             Output Dataset containing the training targets. If a Sequence
             is used for inputs, outputs will have no effect.
@@ -676,7 +676,7 @@ class Janggu(object):
             Whether to use multiprocessing for the prediction. Default: False.
         workers : int
             Number of workers to use. Default: 1.
-        
+
 
         Examples
         --------
@@ -687,18 +687,22 @@ class Janggu(object):
 
         """
 
-        if not isinstance(inputs, Sequence):
-            inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
-            outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
-
         self.logger.info('Evaluate: %s', self.name)
         if isinstance(inputs, Sequence):
+            inputs_ = _convert_data(self.kerasmodel, inputs.inputs, 'input_layers')
+            outputs_ = _convert_data(self.kerasmodel, inputs.outputs, 'output_layers')
             self.logger.info('Using custom Sequence.')
-        else:
             self.logger.info("Input:")
-            self.__dim_logging(inputs)
+            self.__dim_logging(inputs_)
             self.logger.info("Output:")
-            self.__dim_logging(outputs)
+            self.__dim_logging(outputs_)
+        else:
+            inputs_ = _convert_data(self.kerasmodel, inputs, 'input_layers')
+            outputs_ = _convert_data(self.kerasmodel, outputs, 'output_layers')
+            self.logger.info("Input:")
+            self.__dim_logging(inputs_)
+            self.logger.info("Output:")
+            self.__dim_logging(outputs_)
         self.timer = time.time()
 
         if not batch_size:
@@ -707,7 +711,7 @@ class Janggu(object):
         if isinstance(inputs, Sequence):
             jseq = inputs
         else:
-            jseq = JangguSequence(batch_size, inputs, outputs, sample_weight)
+            jseq = JangguSequence(batch_size, inputs_, outputs_, sample_weight)
 
         try:
             values = self.kerasmodel.evaluate_generator(
@@ -735,7 +739,7 @@ class Janggu(object):
         preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
-            callback.score(self, preds, outputs=outputs, datatags=datatags,
+            callback.score(self, preds, outputs=outputs_, datatags=datatags,
                            score_kwargs=score_kwargs,
                            exporter_kwargs=exporter_kwargs)
         return values

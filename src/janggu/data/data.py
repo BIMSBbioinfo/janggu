@@ -87,6 +87,8 @@ def _data_props(data):
         for datum in data:
             dataprops[datum.name] = {'shape': datum.shape[1:]}
         return dataprops
+    elif isinstance(data, dict):
+        return data
     else:
         raise Exception('inputSpace wrong argument: {}'.format(data))
 
@@ -100,6 +102,7 @@ class JangguSequence(Sequence):
     """
     def __init__(self, batch_size, inputs, outputs=None, sample_weights=None,
                  shuffle=False):
+
         self.inputs = inputs
         self.outputs = outputs
         self.sample_weights = sample_weights

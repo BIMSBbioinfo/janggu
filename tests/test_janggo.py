@@ -21,6 +21,7 @@ from janggu.layers import Complement
 from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
+from janggu.data.data import JangguSequence
 
 matplotlib.use('AGG')
 
@@ -585,3 +586,50 @@ def test_janggu_train_predict_option7(tmpdir):
     np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate(inputs, outputs,
                  use_multiprocessing=False)
+
+
+def test_janggu_train_predict_sequence(tmpdir):
+    """Train, predict and evaluate on dummy data.
+
+    create: YES
+    Input args: Dataset
+    validation_set: YES
+    batch_size: None
+    """
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    inputs = {'x': Array("x", np.random.random((100, 10)))}
+    outputs = {'y': Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])}
+
+    jseq = JangguSequence(10, inputs, outputs)
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def _model(inputs, inp, oup, params):
+        return inputs, inputs[0]
+
+    bwm = Janggu.create(_model,
+                        inputs=jseq.inputs['x'],
+                        outputs=jseq.outputs['y'],
+                        name='nptest')
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    print('storage', storage)
+    print('env', os.environ['JANGGU_OUTPUT'])
+    print('name', bwm.name)
+    print('outputdir', bwm.outputdir)
+    assert not os.path.exists(storage)
+
+    bwm.fit(jseq, epochs=2,
+            validation_data=jseq,
+            use_multiprocessing=False)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(jseq, use_multiprocessing=False)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs['x']))
+    np.testing.assert_equal(pred.shape, outputs['y'].shape)
+    bwm.evaluate(jseq, use_multiprocessing=False)
