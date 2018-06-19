@@ -56,7 +56,7 @@ def _serve_layer():
         html.Nav(
             html.Div(
                 [html.Div([
-                    dcc.Link(html.H2('Janggu'),
+                    dcc.Link('Janggu',
                              href='/', className='navbar-brand')],
                           className='navbar-header'),
                  html.Div(
@@ -121,16 +121,25 @@ def _display_page(pathname):  # pylint: disable=too-many-return-statements
         if not files:
             return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
+        image = os.path.join(ARGS.janggu_results, 'models',
+                             pathname[1:] + '.png')
+        encoding = base64.b64encode(open(image, 'rb').read())
+
         return html.Div([html.H3('Model: {}'.format(pathname[1:])),
+                         html.Div([html.Div([
                          dcc.Dropdown(id='tag-selection',
                                       options=[{'label': f[pathlen:],
                                                 'value': f} for f in files],
                                       value=files[0]),
-                         html.Div(id='output-plot')])
+                          html.Img(
+                              width='100%',
+                              src='data:image/png;base64,{}'.format(
+                                  encoding.decode()))
+                         ], className="three columns"),
+                         html.Div([html.Div(id='output-plot')],
+                         className="nine columns")], className='row')])
 
-
-def _model_comparison_page():
-    print('_model_comparison_page')
+def get_resulttables_by_name():
     combined_tables = {}
     #
     root = os.path.join(ARGS.janggu_results, 'evaluation')
@@ -147,27 +156,33 @@ def _model_comparison_page():
                 if scorename not in combined_tables:
                     combined_tables[scorename] = []
                 combined_tables[scorename].append(os.path.join(root, filename))
+    return combined_tables
+
+
+def _model_comparison_page():
+    combined_tables = get_resulttables_by_name()
+
     first_score = list(combined_tables.keys())[0]
     return html.Div([html.H3('Model Comparison'),
-                     dcc.Dropdown(id='score-selection',
+                     html.Div([html.Div([dcc.Dropdown(id='score-selection',
                                   options=[{'label': f,
-                                            'value': (f, combined_tables[f])}
+                                            'value': f}
                                            for f in combined_tables],
-                                  value=(first_score,
-                                         combined_tables[first_score])),
-                     html.Div(id='output-modelcomparison')])
+                                  value=first_score)], className='three columns'),
+                     html.Div(id='output-modelcomparison',
+                              className='nine columns')], className='row')])
 
 
 @APP.callback(
     dash.dependencies.Output('output-modelcomparison', 'children'),
     [dash.dependencies.Input('score-selection', 'value')])
-def _update_modelcomparison(results):
+def _update_modelcomparison(label):
 
-    if results is None:
+    if label is None:
         return html.P('No results for model comparison selected or detected.')
 
-    label = results[0]
-    results = results[1]
+    combined_tables = get_resulttables_by_name()
+    results = combined_tables[label]
     header = ['Model', 'Layer', 'Condition', label]
     thead = [html.Tr([html.Th(h) for h in header])]
     tbody = []
@@ -185,7 +200,10 @@ def _update_modelcomparison(results):
     allresults.sort_values(label, ascending=False, inplace=True)
 
     tbody = [html.Tr([
-        html.Td(allresults.iloc[i][col]) for col in header
+        dcc.Link(html.Td(allresults.iloc[i]['Model']),
+                 href='/{}'.format(allresults.iloc[i]['Model']))
+    ] + [
+        html.Td(allresults.iloc[i][col]) for col in header[1:]
     ]) for i in range(len(allresults))]
 
     return html.Table(thead + tbody)
@@ -369,14 +387,14 @@ def _update_features(value, feature, selected):
 
 
 CSSES = ["https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css",
-         "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+         "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css",
          "https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
 for css in CSSES:
     APP.css.append_css({"external_url": css})
 
 JSES = ["http://code.jquery.com/jquery-3.3.1.min.js",
-        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"]
+        "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"]
 
 for js in JSES:
     APP.scripts.append_script({"external_url": js})
