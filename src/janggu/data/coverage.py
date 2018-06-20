@@ -3,14 +3,6 @@
 import os
 
 import numpy as np
-try:
-    import pyBigWig
-except ImportError:  # pragma: no cover
-    pyBigWig = None
-try:
-    import pysam
-except ImportError:  # pragma: no cover
-    pysam = None
 from HTSeq import GenomicInterval
 
 from janggu.data.data import Dataset
@@ -20,6 +12,15 @@ from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_bed
+
+try:
+    import pyBigWig
+except ImportError:  # pragma: no cover
+    pyBigWig = None
+try:
+    import pysam
+except ImportError:  # pragma: no cover
+    pysam = None
 
 
 class Cover(Dataset):

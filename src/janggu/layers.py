@@ -6,12 +6,13 @@ janggu.
 """
 
 from copy import copy
+
 import numpy
 import tensorflow as tf  # pylint: disable=import-error
 from keras import backend as K
 from keras.engine.topology import Layer
-from keras.layers import Conv2D
 from keras.initializers import Constant
+from keras.layers import Conv2D
 
 from janggu.utils import complement_permmatrix
 
@@ -143,8 +144,8 @@ class Complement(Layer):
         return input_shape
 
 
-class BioseqConv2D(Conv2D):
-    """BioseqConv2D layer.
+class DnaConv2D(Conv2D):
+    """DnaConv2D layer.
 
     This layer is a special convolution layer for scanning DNA
     sequences. When using it with the default settings, it behaves
@@ -167,7 +168,7 @@ class BioseqConv2D(Conv2D):
 
     .. code-block:: python
 
-      conv = BioseqConv2D(nfilters, filter_shape)
+      conv = DnaConv2D(nfilters, filter_shape)
       # apply the normal convolution operation
       forward = conv(input)
 
@@ -193,7 +194,7 @@ class BioseqConv2D(Conv2D):
                  kernel_constraint=None,
                  bias_constraint=None,
                  scan_revcomp=False, **kwargs):
-        super(BioseqConv2D, self).__init__(
+        super(DnaConv2D, self).__init__(
             filters=filters,
             kernel_size=kernel_size,
             strides=strides,
@@ -214,7 +215,7 @@ class BioseqConv2D(Conv2D):
         self.rcmatrix = None
 
     def build(self, input_shape):
-        super(BioseqConv2D, self).build(input_shape)
+        super(DnaConv2D, self).build(input_shape)
 
         print(input_shape, input_shape[-1])
         self.rcmatrix = K.constant(
@@ -224,7 +225,7 @@ class BioseqConv2D(Conv2D):
 
     def get_config(self):
         config = {'scan_revcomp': self.scan_revcomp}
-        base_config = super(BioseqConv2D, self).get_config()
+        base_config = super(DnaConv2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     def call(self, inputs):
@@ -237,7 +238,7 @@ class BioseqConv2D(Conv2D):
         else:
             print('using conv2d')
         # perform the convolution operation
-        res = super(BioseqConv2D, self).call(inputs)
+        res = super(DnaConv2D, self).call(inputs)
         if self.scan_revcomp:
             # restore the original kernel matrix
             self.kernel = tmp

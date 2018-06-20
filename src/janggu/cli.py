@@ -20,23 +20,26 @@ import base64
 import glob
 import os
 
+import pandas as pd
+from scipy.stats import zscore
+
 try:
     import dash  # pylint: disable=import-error
     import dash_core_components as dcc  # pylint: disable=import-error
     import dash_html_components as html  # pylint: disable=import-error
     import plotly.graph_objs as go  # pylint: disable=import-error
-except ImportError as ex_:
+except ImportError as exception:
     print('dash not available. Please install dash, dash_renderer, '
           'dash_core_components'
           ' and dash_html_components to be able to use the janggu app.')
-import pandas as pd
-from scipy.stats import zscore
+    raise(exception)
+
 try:
     from sklearn.decomposition import PCA  # pylint: disable=import-error
     from sklearn.manifold import TSNE  # pylint: disable=import-error
-except ImportError as ex_:
+except ImportError as exception:
     print('scikit-learn not available. Please install scikit-learn.')
-    raise(ex_)
+    raise(exception)
 
 PARSER = argparse.ArgumentParser(description='Command description.')
 PARSER.add_argument('-path', dest='janggu_results',
@@ -49,6 +52,7 @@ ARGS = PARSER.parse_args()
 APP = dash.Dash('Janggu')
 APP.title = 'Janggu'
 APP.config['suppress_callback_exceptions'] = True
+
 
 def _serve_layer():
     return html.Div([
@@ -127,19 +131,21 @@ def _display_page(pathname):  # pylint: disable=too-many-return-statements
 
         return html.Div([html.H3('Model: {}'.format(pathname[1:])),
                          html.Div([html.Div([
-                         dcc.Dropdown(id='tag-selection',
-                                      options=[{'label': f[pathlen:],
-                                                'value': f} for f in files],
-                                      value=files[0]),
-                          html.Img(
-                              width='100%',
-                              src='data:image/png;base64,{}'.format(
-                                  encoding.decode()))
+                             dcc.Dropdown(id='tag-selection',
+                                          options=[{'label': f[pathlen:],
+                                                    'value': f} for f in files],
+                                          value=files[0]),
+                             html.Img(
+                                 width='100%',
+                                 src='data:image/png;base64,{}'.format(
+                                     encoding.decode()))
                          ], className="three columns"),
-                         html.Div([html.Div(id='output-plot')],
-                         className="nine columns")], className='row')])
+                                   html.Div([html.Div(id='output-plot')],
+                                            className="nine columns")],
+                                  className='row')])
 
-def get_resulttables_by_name():
+
+def _get_resulttables_by_name():
     combined_tables = {}
     #
     root = os.path.join(ARGS.janggu_results, 'evaluation')
@@ -160,17 +166,18 @@ def get_resulttables_by_name():
 
 
 def _model_comparison_page():
-    combined_tables = get_resulttables_by_name()
+    combined_tables = _get_resulttables_by_name()
 
     first_score = list(combined_tables.keys())[0]
     return html.Div([html.H3('Model Comparison'),
                      html.Div([html.Div([dcc.Dropdown(id='score-selection',
-                                  options=[{'label': f,
-                                            'value': f}
-                                           for f in combined_tables],
-                                  value=first_score)], className='three columns'),
-                     html.Div(id='output-modelcomparison',
-                              className='nine columns')], className='row')])
+                                                      options=[{'label': f,
+                                                                'value': f}
+                                                               for f in combined_tables],
+                                                      value=first_score)],
+                                        className='three columns'),
+                               html.Div(id='output-modelcomparison',
+                                        className='nine columns')], className='row')])
 
 
 @APP.callback(
@@ -181,7 +188,7 @@ def _update_modelcomparison(label):
     if label is None:
         return html.P('No results for model comparison selected or detected.')
 
-    combined_tables = get_resulttables_by_name()
+    combined_tables = _get_resulttables_by_name()
     results = combined_tables[label]
     header = ['Model', 'Layer', 'Condition', label]
     thead = [html.Tr([html.Th(h) for h in header])]

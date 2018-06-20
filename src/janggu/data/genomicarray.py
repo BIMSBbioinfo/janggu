@@ -85,10 +85,9 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
             if self._full_genome_stored:
                 return self.handle[chrom][start:end]
-            else:
-                return self.handle[_iv_to_str(chrom, interval.start, interval.end)][:(end - start)]
-        else:
-            raise IndexError("Index must be a GenomicInterval")
+            return self.handle[_iv_to_str(chrom, interval.start,
+                                          interval.end)][:(end - start)]
+        raise IndexError("Index must be a GenomicInterval")
 
     @property
     def condition(self):
@@ -442,9 +441,12 @@ class SparseGenomicArray(GenomicArray):
             if self._full_genome_stored:
                 return self.handle[chrom][start:end].toarray().reshape(
                     (end-start, 2 if self.stranded else 1, len(self.condition)))
-            else:
-                return self.handle[_iv_to_str(chrom, interval.start, interval.end)][:(end - start)].toarray().reshape(
-                    (end-start, 2 if self.stranded else 1, len(self.condition)))
+
+            return self.handle[
+                _iv_to_str(chrom, interval.start, interval.end)][
+                    :(end - start)].toarray().reshape(
+                        (end-start, 2 if self.stranded else 1,
+                         len(self.condition)))
         raise IndexError("Index must be a GenomicInterval")
 
 

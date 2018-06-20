@@ -11,8 +11,8 @@ from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
 from janggu.utils import as_onehot
 from janggu.utils import seq2ind
-from janggu.utils import sequences_from_fasta
 from janggu.utils import sequence_padding
+from janggu.utils import sequences_from_fasta
 
 
 class Bioseq(Dataset):
@@ -177,9 +177,6 @@ class Bioseq(Dataset):
             rgen = {seq.id: seq for seq in seqs}
             subseqs = []
             for giv in gindexer:
-                #if giv.strand == '-':
-                #    subseq = rgen[giv.chrom][giv.start:(giv.end-order)].reverse_complement()
-                #else:
                 subseq = rgen[giv.chrom][giv.start:(giv.end)]
                 subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end - order + 1)
                 subseq.name = subseq.id

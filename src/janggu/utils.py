@@ -4,12 +4,20 @@ import json
 import os
 from collections import defaultdict
 
+import numpy as np
+import pandas as pd
+from Bio import SeqIO
+from Bio.Alphabet import IUPAC
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from HTSeq import BED_Reader
+from HTSeq import GFF_Reader
+
 try:
     import matplotlib.pyplot as plt  # pylint: disable=import-error
 except ImportError:  # pragma: no cover
     plt = None
-import numpy as np
-import pandas as pd
+
 try:
     import pyBigWig
 except ImportError:  # pragma: no cover
@@ -18,12 +26,7 @@ try:
     import seaborn as sns  # pylint: disable=import-error
 except ImportError:  # pragma: no cover
     sns = None
-from Bio import SeqIO
-from Bio.Alphabet import IUPAC
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-from HTSeq import BED_Reader
-from HTSeq import GFF_Reader
+
 try:
     from sklearn.manifold import TSNE  # pylint: disable=import-error
 except ImportError:  # pragma: no cover
@@ -34,7 +37,7 @@ try:
 except ImportError:
     try:
         from urllib.request import urlcleanup, urlretrieve
-    except ImportError as ex_:  # pragma: no cover
+    except ImportError as exception:  # pragma: no cover
         urlretrieve = None
         urlcleanup = None
 
@@ -42,8 +45,11 @@ except ImportError:
 def _get_output_root_directory():
     """Function returns the output root directory."""
     if "JANGGU_OUTPUT" not in os.environ:  # pragma: no cover
+
         os.environ['JANGGU_OUTPUT'] = os.path.join(os.path.expanduser("~"),
                                                    'janggu_results')
+        print('environment variable JANGGU_OUTPUT not set.'
+              ' Will use JANGGU_OUTPUT={}'.format(os.environ['JANGGU_OUTPUT']))
     return os.environ['JANGGU_OUTPUT']
 
 
@@ -101,6 +107,7 @@ LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.protein.letters))}
 PMAP = defaultdict(lambda: -1024)
 PMAP.update(LETTERMAP)
 
+
 def seq2ind(seq):
     """Transforms a biological sequence into an int array.
 
@@ -124,7 +131,7 @@ def seq2ind(seq):
     if isinstance(seq, SeqRecord):
         seq = seq.seq
     if isinstance(seq, (str, Seq)):
-        if type(seq.alphabet) is  type(IUPAC.unambiguous_dna):
+        if type(seq.alphabet) is type(IUPAC.unambiguous_dna):
             return [NMAP[x.upper()] for x in seq]
         elif type(seq.alphabet) is type(IUPAC.protein):
             return [PMAP[x.upper()] for x in seq]

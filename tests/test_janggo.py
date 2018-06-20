@@ -14,14 +14,14 @@ from janggu import inputlayer
 from janggu import outputconv
 from janggu import outputdense
 from janggu.data import Array
-from janggu.data import Cover
 from janggu.data import Bioseq
+from janggu.data import Cover
 from janggu.data import Table
+from janggu.data.data import JangguSequence
 from janggu.layers import Complement
-from janggu.layers import BioseqConv2D
+from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
-from janggu.data.data import JangguSequence
 
 matplotlib.use('AGG')
 
@@ -282,7 +282,7 @@ def test_janggu_use_dnaconv(tmpdir):
     def _cnn_model(inputs, inp, oup, params):
         with inputs.use('dna') as inlayer:
             layer = inlayer
-        conv = BioseqConv2D(5, (3, 1))
+        conv = DnaConv2D(5, (3, 1))
         layer1 = conv(layer)
         rcconv = conv.get_revcomp()
         layer2 = rcconv(layer)
