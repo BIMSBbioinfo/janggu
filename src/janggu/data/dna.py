@@ -12,6 +12,7 @@ from janggu.utils import _iv_to_str
 from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequences_from_fasta
+from janggu.utils import sequence_padding
 
 
 class Bioseq(Dataset):
@@ -204,6 +205,7 @@ class Bioseq(Dataset):
                         storage='ndarray',
                         seqtype='dna',
                         order=1,
+                        fixedlen=None,
                         datatags=None,
                         cache=False,
                         overwrite=False):
@@ -223,6 +225,11 @@ class Bioseq(Dataset):
             using 'dna' or 'protein' respectively. Default: 'dna'.
         order : int
             Order for the one-hot representation. Default: 1.
+        fixedlen : int or None
+            Forces the sequences to be of equal length by truncation or
+            padding. If set to None, it will be assumed that the sequences
+            are already of equal length. An exception is raised if this is
+            not the case.
         storage : str
             Storage mode for storing the sequence may be 'ndarray', 'memmap' or
             'hdf5'. Default: 'ndarray'.
@@ -245,6 +252,9 @@ class Bioseq(Dataset):
         else:
             # This is already a list of SeqRecords
             seqs = fastafile
+
+        if fixedlen is not None:
+            seqs = sequence_padding(seqs, fixedlen)
 
         # Check if sequences are equally long
         lens = [len(seq) for seq in seqs]

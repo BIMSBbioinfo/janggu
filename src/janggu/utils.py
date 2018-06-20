@@ -131,6 +131,30 @@ def seq2ind(seq):
     raise TypeError('seq2ind: Format is not supported')
 
 
+def sequence_padding(seqs, length):
+    """This function truncates or pads the sequences
+    to achieve fixed length sequences.
+
+    Padding of the sequence is achieved by appending '.'
+
+    Parameters
+    ----------
+    seqs : str, Bio.SeqRecord or Bio.Seq.Seq
+        Sequence represented as string, SeqRecord or Seq.
+
+    Returns
+    -------
+    list(Bio.SeqRecord)
+        Padded sequence represented as string, SeqRecord or Seq.
+    """
+    for idx, seq in enumerate(seqs):
+        if len(seq) < length:
+            seqs[idx] += '.' * (length - len(seq))
+        else:
+            seqs[idx] = seq[:length]
+    return seqs
+
+
 def as_onehot(iseq, order, alphabetsize):
     """Converts a index sequence into one-hot representation.
 
