@@ -448,3 +448,20 @@ def test_read_dna_from_fasta_order_2():
                     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], dtype='int8'))
+
+def test_read_protein_sequences():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    order = 1
+    filename = os.path.join(data_path, 'sample_protein.fa')
+    data = Bioseq.create_from_seq('train', fastafile=filename,
+                                 order=order, seqtype='protein', fixedlen=1000)
+    np.testing.assert_equal(len(data), 3)
+    np.testing.assert_equal(data.shape, (3, 1000, 1, 20))
+    np.testing.assert_equal(
+        data[0][0, :4, 0, :],
+        np.asarray([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]], dtype='int8'))
+    np.testing.assert_equal(
+        data[0][0, -2:, 0, :], np.zeros((2, 20), dtype='int8'))
