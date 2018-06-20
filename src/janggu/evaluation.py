@@ -57,14 +57,27 @@ def _dimension_match(kerasmodel, data, layertype):
     return True
 
 
-def _reshape(data):
+def _reshape(data, percondition):
     """Reshape the dataset to make it compatible with the
     evaluation method.
+
+    Parameters
+    ----------
+    data : dict(Dataset)
+        A dictionary of datasets
+    percondition : boolean
+        Indicates whether to keep the condition (last) dimension or flatten
+        over the condition.
     """
 
     if isinstance(data, dict):
-        data = {k: data[k][:].reshape(
-            (numpy.prod(data[k].shape[:-1]), data[k].shape[-1])) for k in data}
+        if percondition:
+            data = {k: data[k][:].reshape(
+                (numpy.prod(data[k].shape[:-1]),
+                 data[k].shape[-1])) for k in data}
+        else:
+            data = {k: data[k][:].reshape(
+                (numpy.prod(data[k].shape[:]), 1)) for k in data}
     else:
         raise ValueError('Data must be a dict not {}'.format(type(data)))
 
@@ -104,6 +117,11 @@ class Scorer(object):
         after the evaluation of the dataset. If set to False, the results
         are maintained in memory which allows to export the results as a
         collection rather than individually.
+    percondition : boolean
+        Indicates whether the evaluation should be performed per condition
+        or across all conditions. The former determines a score for each
+        output condition, while the latter first flattens the array and then
+        scores across conditions. Default: percondition=True.
     subdir : str
         Name of the subdir to store the output in. Default: None
         means the results are stored in the 'evaluation' subdir.
@@ -113,10 +131,12 @@ class Scorer(object):
                  conditions=None,
                  exporter=export_json,
                  immediate_export=True,
+                 percondition=True,
                  subdir=None):
         # append the path by a folder 'AUC'
         self.score_name = name
         self.score_fct = score_fct
+        self.percondition = percondition
 
         self.results = dict()
         self._exporter = exporter
@@ -192,8 +212,8 @@ class Scorer(object):
             datatags = []
 
         if outputs is not None:
-            _out = _reshape(outputs)
-        _pre = _reshape(predicted)
+            _out = _reshape(outputs, self.percondition)
+        _pre = _reshape(predicted, self.percondition)
         print('scoring', self.score_name)
         score_fct = self.score_fct
         if score_fct is None and outputs is not None:
@@ -218,7 +238,9 @@ class Scorer(object):
                                       _pre[layername[0]][:, idx],
                                       **score_kwargs)
 
-                if self.conditions is not None and \
+                if not self.percondition:
+                    condition = 'across'
+                elif self.conditions is not None and \
                    len(self.conditions) == _pre[layername[0]].shape[-1]:
                     # conditions were supplied manually
                     condition = self.conditions[idx]

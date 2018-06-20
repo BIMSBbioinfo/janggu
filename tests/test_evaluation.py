@@ -568,3 +568,31 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
     co = bw.values('chr1', 600, 2000)
 
     numpy.testing.assert_allclose(numpy.mean(co), 0.2, rtol=1e-5)
+
+
+def test_output_tsv_score_across_conditions(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 2)),
+                    conditions=['c1', 'c2'])
+
+    bwm = get_janggu(inputs, outputs)
+
+    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15,
+                        exporter=export_tsv)
+    dummy_evalacross = Scorer('scoreacross',
+                              lambda y_true, y_pred: 0.15, exporter=export_tsv,
+                              percondition=False)
+
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval, dummy_evalacross])
+
+    # percondition=True
+    assert pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
+                                        "score.tsv"),
+                           sep='\t', header=[0]).shape == (1, 2)
+    # percondition=False
+    val = pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
+                                       "scoreacross.tsv"),
+                          sep='\t', header=[0])
+    assert val['nptest-y-across'][0] == .15
+    assert val.shape == (1, 1)
