@@ -150,18 +150,29 @@ def _get_resulttables_by_name():
     #
     root = os.path.join(ARGS.janggu_results, 'evaluation')
 
-    for root, _, filenames in os.walk(root):
+    for folder, _, filenames in os.walk(root):
+
+        mname = folder[(len(root)+1):].split('/')[0]
 
         for filename in filenames:
+
             if filename.endswith('.tsv'):
-                df_ = pd.read_csv(os.path.join(root, filename),
+                df_ = pd.read_csv(os.path.join(folder, filename),
                                   sep='\t', header=[0], nrows=2)
                 if df_.shape[0] > 1:
                     continue
-                scorename = os.path.splitext(filename)[0]
+
+                # tag + filename
+                scorename = os.path.splitext(os.path.join(folder,
+                                                          filename)[(len(root)
+                                                                     + 2 +
+                                                                     len(mname)):])[0]
+
                 if scorename not in combined_tables:
                     combined_tables[scorename] = []
-                combined_tables[scorename].append(os.path.join(root, filename))
+
+                combined_tables[scorename].append(os.path.join(folder, filename))
+
     return combined_tables
 
 
@@ -194,7 +205,7 @@ def _update_modelcomparison(label):
     thead = [html.Tr([html.Th(h) for h in header])]
     tbody = []
     allresults = pd.DataFrame([], columns=header)
-    print(results)
+
     for tab in results:
         df_ = pd.read_csv(tab, sep='\t', header=[0])
         names = df_.columns[0].split('-')
