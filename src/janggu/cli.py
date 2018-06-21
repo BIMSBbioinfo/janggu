@@ -47,6 +47,10 @@ PARSER.add_argument('-path', dest='janggu_results',
                                          'janggu_results'),
                     help="Janggu results path.")
 
+PARSER.add_argument('-port', dest='port', type=int,
+                    default=8050,
+                    help="Webserver port.")
+
 ARGS = PARSER.parse_args()
 
 APP = dash.Dash('Janggu')
@@ -420,6 +424,6 @@ for js in JSES:
 
 def main():
     """cli entry"""
-    print('Welcome to janggu (GPL-v2). Copyright (C) 2017 '
+    print('Welcome to janggu (GPL-v2). Copyright (C) 2017-2018 '
           + 'Wolfgang Kopp.')
-    APP.run_server()
+    APP.run_server(port=ARGS.port)
