@@ -179,17 +179,29 @@ def _get_resulttables_by_name():
 
     return combined_tables
 
+MODEL_COMPARISON_TABLES = _get_resulttables_by_name()
 
 def _model_comparison_page():
-    combined_tables = _get_resulttables_by_name()
+    combined_tables = MODEL_COMPARISON_TABLES
 
     first_score = list(combined_tables.keys())[0]
     return html.Div([html.H3('Model Comparison'),
-                     html.Div([html.Div([dcc.Dropdown(id='score-selection',
+                     html.Div([html.Div([html.Label('Score'),
+                                         dcc.Dropdown(id='score-selection',
                                                       options=[{'label': f,
                                                                 'value': f}
                                                                for f in combined_tables],
-                                                      value=first_score)],
+                                                      value=first_score),
+                                         html.Label('Sort'),
+                                         dcc.RadioItems(id='sort-selection',
+                                                      options=[
+                                                               {'label': 'Ascending', 'value': True},
+                                                               {'label': 'Descending', 'value': False}
+                                                              ],
+                                                      value='Ascending'),
+                                         html.Label('Filter'),
+                                         dcc.Input(id='filter-selection', type='text')
+                                        ],
                                         className='three columns'),
                                html.Div(id='output-modelcomparison',
                                         className='nine columns')], className='row')])
@@ -197,13 +209,16 @@ def _model_comparison_page():
 
 @APP.callback(
     dash.dependencies.Output('output-modelcomparison', 'children'),
-    [dash.dependencies.Input('score-selection', 'value')])
-def _update_modelcomparison(label):
+    [dash.dependencies.Input('score-selection', 'value'),
+     dash.dependencies.Input('sort-selection', 'value'),
+     dash.dependencies.Input('filter-selection', 'value')
+    ])
+def _update_modelcomparison(label, sorting, filterstring):
 
     if label is None:
         return html.P('No results for model comparison selected or detected.')
 
-    combined_tables = _get_resulttables_by_name()
+    combined_tables = MODEL_COMPARISON_TABLES
     results = combined_tables[label]
     header = ['Model', 'Layer', 'Condition', label]
     thead = [html.Tr([html.Th(h) for h in header])]
@@ -214,12 +229,16 @@ def _update_modelcomparison(label):
         df_ = pd.read_csv(tab, sep='\t', header=[0])
         names = df_.columns[0].split('-')
         mname, lname, cname = '-'.join(names[:-2]), names[-2], names[-1]
+        if filterstring is not None and filterstring not in mname \
+           and filterstring not in lname \
+           and filterstring not in cname:
+            continue
         allresults = allresults.append({'Model': mname,
                                         'Layer': lname,
                                         'Condition': cname,
                                         label: df_[df_.columns[0]][0]},
                                        ignore_index=True)
-    allresults.sort_values(label, ascending=False, inplace=True)
+    allresults.sort_values(label, ascending=sorting, inplace=True)
 
     tbody = [html.Tr([
         dcc.Link(html.Td(allresults.iloc[i]['Model']),
