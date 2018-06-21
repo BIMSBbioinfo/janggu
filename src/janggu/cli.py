@@ -198,7 +198,7 @@ def _update_modelcomparison(label):
     for tab in results:
         df_ = pd.read_csv(tab, sep='\t', header=[0])
         names = df_.columns[0].split('-')
-        mname, lname, cname = names[0], names[1], '-'.join(names[2:])
+        mname, lname, cname = '-'.join(names[:-2]), names[-2], names[-1]
         allresults = allresults.append({'Model': mname,
                                         'Layer': lname,
                                         'Condition': cname,
