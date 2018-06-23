@@ -70,7 +70,10 @@ genomic coordinates of interest that are provided by a BED or GFF file.
 
    dna = Bioseq.create_from_refgenome(name='dna',
                                    refgenome=refgenome,
-                                   regions=bed_file, datatags=['refgenome'])
+                                   regions=bed_file,
+                                   binsize=200,
+                                   stepsize=200,
+                                   datatags=['refgenome'])
 
    dna.shape  # is (100, 200, 4, 1)
    dna[0]  # One-hot encoding of region 0
@@ -112,6 +115,8 @@ in a strand specific manner.
 
    cover = Cover.create_from_bam('read_coverage',
                                  bamfiles=bam_file,
+                                 binsize=200,
+                                 stepsize=200,
                                  regions=bed_file)
 
    cover.shape  # is (100, 200, 2, 1)
@@ -131,7 +136,9 @@ of a specified resolution (in base pairs):
 
    cover = Cover.create_from_bigwig('bigwig_coverage',
                                     bigwigfiles=bw_file,
-                                    regions=bed_file)
+                                    regions=bed_file,
+                                    binsize=200,
+                                    stepsize=200)
 
    cover.shape  # is (100, 1, 1, 1)
    cover[0]  # coverage of the first region
@@ -158,7 +165,9 @@ Examples of loading data from a BED file are shown below
    # binary mode (default)
    cover = Cover.create_from_bed('binary_coverage',
                                  bedfiles=score_file,
-                                 regions=bed_file)
+                                 regions=bed_file,
+                                 binsize=200,
+                                 stepsize=200)
 
    cover.shape  # is (100, 1, 1, 1)
    cover[4]  # contains [[[[1.]]]]
@@ -167,6 +176,8 @@ Examples of loading data from a BED file are shown below
    cover = Cover.create_from_bed('score_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file,
+                                 binsize=200,
+                                 stepsize=200,
                                  mode='score')
 
    cover.shape  # is (100, 1, 1, 1)
@@ -176,6 +187,8 @@ Examples of loading data from a BED file are shown below
    cover = Cover.create_from_bed('cat_coverage',
                                  bedfiles=score_file,
                                  regions=bed_file,
+                                 binsize=200,
+                                 stepsize=200,
                                  mode='categorical')
 
    cover.shape  # is (100, 1, 1, 6)
@@ -315,7 +328,7 @@ the sequence features that discriminate the two sets of sequences:
    SAMPLE_2 = resource_filename('janggu', 'resources/', 'sample2.fa')
 
    DNA = Bioseq.create_from_seq('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                               order=args.order)
+                                order=args.order)
 
    # helper function returns the number of sequences
    def nseqs(filename):

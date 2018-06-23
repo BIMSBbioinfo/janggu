@@ -116,7 +116,8 @@ class Bioseq(Dataset):
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions=None,
-                              stepsize=200, binsize=200,
+                              binsize=None,
+                              stepsize=None,
                               flank=0, order=1, storage='ndarray',
                               datatags=None,
                               cache=False, overwrite=False):
@@ -135,10 +136,17 @@ class Bioseq(Dataset):
         regions : str or None
             Bed-file defining the regions that comprise the dataset.
             If set to None, a genomic indexer must be attached later.
-        binsize : int
-            Binsize in basepairs to be read out. Default: 200.
-        stepsize : int
-            stepsize in basepairs for traversing the genome. Default: 200.
+        binsize : int or None
+            Binsize in basepairs. For binsize=None,
+            the binsize will be determined from the bed-file directly
+            which requires that all intervals in the bed-file are of equal
+            length. Otherwise, the intervals in the bed-file will be
+            split to subintervals of length binsize in conjunction with
+            stepsize. Default: None.
+        stepsize : int or None
+            stepsize in basepairs for traversing the genome.
+            If stepsize is None, it will be set equal to binsize.
+            Default: None.
         flank : int
             Flanking regions in basepairs to be extended up and downstream.
             Default: 0.

@@ -65,7 +65,7 @@ class Cover(Dataset):
                         genomesize=None,
                         conditions=None,
                         min_mapq=None,
-                        binsize=200, stepsize=200,
+                        binsize=None, stepsize=None,
                         flank=0,
                         resolution=1,
                         storage='ndarray',
@@ -104,11 +104,17 @@ class Cover(Dataset):
         min_mapq : int
             Minimal mapping quality. Reads with lower mapping quality are
             discarded. If None, all reads are used.
-        binsize : int
-            Binsize in basepairs. Default: 200.
-        stepsize : int
-            Stepsize in basepairs. This defines the step size for traversing
-            the genome. Default: 200.
+        binsize : int or None
+            Binsize in basepairs. For binsize=None,
+            the binsize will be determined from the bed-file directly
+            which requires that all intervals in the bed-file are of equal
+            length. Otherwise, the intervals in the bed-file will be
+            split to subintervals of length binsize in conjunction with
+            stepsize. Default: None.
+        stepsize : int or None
+            stepsize in basepairs for traversing the genome.
+            If stepsize is None, it will be set equal to binsize.
+            Default: None.
         flank : int
             Flanking size increases the interval size at both ends by
             flank base pairs. Default: 0
@@ -299,7 +305,7 @@ class Cover(Dataset):
                            regions=None,
                            genomesize=None,
                            conditions=None,
-                           binsize=200, stepsize=200,
+                           binsize=None, stepsize=None,
                            resolution=200,
                            flank=0, storage='ndarray',
                            dtype='float32',
@@ -325,11 +331,17 @@ class Cover(Dataset):
         conditions : list(str) or None
             List of conditions. If `conditions=None`, the filenames
             are used as conditions directly.
-        binsize : int
-            Binsize in basepairs. Default: 200.
-        stepsize : int
-            Stepsize in basepairs. This defines the step size for traversing
-            the genome. Default: 200.
+        binsize : int or None
+            Binsize in basepairs. For binsize=None,
+            the binsize will be determined from the bed-file directly
+            which requires that all intervals in the bed-file are of equal
+            length. Otherwise, the intervals in the bed-file will be
+            split to subintervals of length binsize in conjunction with
+            stepsize. Default: None.
+        stepsize : int or None
+            stepsize in basepairs for traversing the genome.
+            If stepsize is None, it will be set equal to binsize.
+            Default: None.
         resolution : int
             Resolution in base pairs. This is used to collect the mean signal
             over the window lengths defined by the resolution.
@@ -441,7 +453,7 @@ class Cover(Dataset):
                         regions=None,
                         genomesize=None,
                         conditions=None,
-                        binsize=200, stepsize=200,
+                        binsize=None, stepsize=None,
                         resolution=200,
                         flank=0, storage='ndarray',
                         dtype='int',
@@ -467,11 +479,17 @@ class Cover(Dataset):
         conditions : list(str) or None
             List of conditions. If `conditions=None`, the filenames
             are used as conditions directly.
-        binsize : int
-            Binsize in basepairs. Default: 200.
-        stepsize : int
-            Stepsize in basepairs. This defines the step size for traversing
-            the genome. Default: 200.
+        binsize : int or None
+            Binsize in basepairs. For binsize=None,
+            the binsize will be determined from the bed-file directly
+            which requires that all intervals in the bed-file are of equal
+            length. Otherwise, the intervals in the bed-file will be
+            split to subintervals of length binsize in conjunction with
+            stepsize. Default: None.
+        stepsize : int or None
+            stepsize in basepairs for traversing the genome.
+            If stepsize is None, it will be set equal to binsize.
+            Default: None.
         resolution : int
             Resolution in base pairs. This is used to collect the mean signal
             over the window lengths defined by the resolution.

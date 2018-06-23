@@ -11,6 +11,52 @@ import pytest
 from janggu.data import Cover
 
 
+
+def test_bam_inferred_binsize():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+
+    bamfile_ = os.path.join(data_path, "sample.bam")
+
+    cover = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 2, 1)
+
+def test_bigwig_inferred_binsize():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    cover = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        resolution=1,
+        regions=bed_file,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 1, 1)
+
+def test_bed_inferred_binsize():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+
+    #file_ = os.path.join(data_path, "sample.bw")
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        regions=bed_file,
+        resolution=1,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 1, 1)
+
 def test_cover_from_bam_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
@@ -152,6 +198,7 @@ def test_cover_from_bed_sanity():
         'test',
         bedfiles=bwfile_,
         regions=bed_file,
+        binsize=200, stepsize=50,
         resolution=50,
         storage='ndarray')
 
@@ -226,6 +273,7 @@ def test_cover_bam_unstranded():
         "yeast_I_II_III.bam",
         bamfiles=bamfile_,
         regions=bed_file,
+        binsize=200, stepsize=200,
         genomesize=gsize,
         stranded=False)
 
@@ -261,7 +309,6 @@ def test_cover_bam_paired_5pend():
     # unmapped examples, unmapped mate and low quality example
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bamfile_ = os.path.join(data_path, "sample2.bam")
-
 
     cover = Cover.create_from_bam(
         "yeast_I_II_III.bam",
@@ -300,7 +347,6 @@ def test_cover_bam_paired_midpoint():
     assert cover.garray.handle['ref'][34, 0, 0] == 1
 
 
-
 def test_cover_bam(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -321,6 +367,7 @@ def test_cover_bam(tmpdir):
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
+            binsize=200, stepsize=200,
             genomesize=gsize,
             storage=store, cache=True)
 
@@ -375,6 +422,7 @@ def test_load_bam_resolution10(tmpdir):
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
             regions=bed_file,
+            binsize=200, stepsize=200,
             genomesize=gsize,
             resolution=10,
             storage=store, cache=True)
@@ -429,6 +477,7 @@ def test_load_cover_bigwig_default(tmpdir):
             "cov",
             bigwigfiles=bwfile_,
             regions=bed_file,
+            binsize=200, stepsize=200,
             genomesize=gsize,
             storage=store, cache=True)
 
@@ -455,6 +504,7 @@ def test_load_cover_bigwig_resolution1(tmpdir):
             "cov",
             bigwigfiles=bwfile_,
             regions=bed_file,
+            binsize=200, stepsize=200,
             resolution=1,
             storage=store, cache=True)
 
@@ -507,6 +557,7 @@ def test_load_cover_bed_binary(tmpdir):
             "cov",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             storage=store,
             mode='binary', cache=True)
 
@@ -519,6 +570,7 @@ def test_load_cover_bed_binary(tmpdir):
             "cov50",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             storage=store,
             resolution=50,
             mode='binary', cache=True)
@@ -532,6 +584,7 @@ def test_load_cover_bed_binary(tmpdir):
             "cov50",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             storage=store,
             resolution=50,
             dimmode='first',
@@ -553,6 +606,7 @@ def test_load_cover_bed_scored():
             "cov",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             storage=store,
             mode='score')
 
@@ -565,6 +619,7 @@ def test_load_cover_bed_scored():
             "cov50",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             storage=store,
             resolution=50,
             mode='score')
@@ -579,6 +634,7 @@ def test_load_cover_bed_scored():
             bedfiles=score_file,
             regions=bed_file,
             storage=store,
+            binsize=200, stepsize=200,
             resolution=50,
             dimmode='first',
             mode='score')
@@ -599,6 +655,7 @@ def test_load_cover_bed_categorical():
             "cov",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             storage=store,
             mode='categorical')
 
@@ -611,6 +668,7 @@ def test_load_cover_bed_categorical():
             "cov50",
             bedfiles=score_file,
             regions=bed_file,
+            binsize=200, stepsize=200,
             resolution=50,
             storage=store,
             mode='categorical')
@@ -625,6 +683,7 @@ def test_load_cover_bed_categorical():
             bedfiles=score_file,
             regions=bed_file,
             resolution=50,
+            binsize=200, stepsize=200,
             storage=store,
             dimmode='first',
             mode='categorical')

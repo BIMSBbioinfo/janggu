@@ -57,11 +57,15 @@ ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
 PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
-DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME, regions=ROI_FILE,
-                                order=args.order, datatags=['ref'])
+DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
+                                   regions=ROI_FILE,
+                                   binsize=200,
+                                   order=args.order,
+                                   datatags=['ref'])
 
 LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
                                bedfiles=PEAK_FILE,
+                               binsize=200,
                                datatags=['train'])
 
 
@@ -181,12 +185,15 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
 DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                     regions=ROI_FILE,
-                                     order=args.order, datatags=['ref'])
+                                        regions=ROI_FILE,
+                                        binsize=200,
+                                        order=args.order,
+                                        datatags=['ref'])
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
                                     regions=ROI_FILE,
+                                    binsize=200,
                                     datatags=['test'])
 
 # do the evaluation on the training data
