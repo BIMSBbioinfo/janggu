@@ -198,7 +198,7 @@ def _model_comparison_page():
                                                                {'label': 'Ascending', 'value': True},
                                                                {'label': 'Descending', 'value': False}
                                                               ],
-                                                      value='Ascending'),
+                                                      value=True),
                                          html.Label('Filter'),
                                          dcc.Input(id='filter-selection', type='text')
                                         ],
