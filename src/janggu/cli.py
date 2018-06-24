@@ -194,11 +194,12 @@ def _model_comparison_page():
                                                       value=first_score),
                                          html.Label('Sort'),
                                          dcc.RadioItems(id='sort-selection',
-                                                      options=[
-                                                               {'label': 'Ascending', 'value': True},
-                                                               {'label': 'Descending', 'value': False}
-                                                              ],
-                                                      value=True),
+                                                        options=[
+                                                            {'label': 'Ascending',
+                                                             'value': True},
+                                                            {'label': 'Descending',
+                                                             'value': False}],
+                                                        value=True),
                                          html.Label('Filter'),
                                          dcc.Input(id='filter-selection', type='text')
                                         ],
