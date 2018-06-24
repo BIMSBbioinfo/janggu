@@ -18,12 +18,9 @@ from janggu.utils import sequences_from_fasta
 class Bioseq(Dataset):
     """Bioseq class.
 
-    This datastructure holds a biological sequence
-    and determines the one-hot encodeing
-    for the purpose of a deep learning application.
-
-    The sequence can represent nucleotide or peptide sequences,
-    which can be conventiently fetched from a raw fasta-file.
+    This class maintains a set of biological sequences,
+    e.g. nucleotide or amino acid sequences,
+    and determines its one-hot encoding.
 
     Parameters
     -----------
@@ -31,7 +28,7 @@ class Bioseq(Dataset):
         Name of the dataset
     garray : :class:`GenomicArray`
         A genomic array that holds the sequence data.
-    gindxer : :class:`GenomicIndexer` or None
+    gindexer : :class:`GenomicIndexer` or None
         A genomic index mapper that translates an integer index to a
         genomic coordinate. Can be None, if the Dataset is only loaded.
     """
@@ -51,7 +48,8 @@ class Bioseq(Dataset):
         Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _make_genomic_array(name, fastafile, order, storage, seqtype, cache=True, datatags=None,
+    def _make_genomic_array(name, fastafile, order, storage,
+                            seqtype, cache=True, datatags=None,
                             overwrite=False):
         """Create a genomic array or reload an existing one."""
 
@@ -116,15 +114,18 @@ class Bioseq(Dataset):
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, regions=None,
-                              stepsize=200, binsize=200,
-                              flank=0, order=1, storage='ndarray',
+                              binsize=None,
+                              stepsize=None,
+                              flank=0, order=1,
+                              storage='ndarray',
                               datatags=None,
-                              cache=False, overwrite=False):
+                              cache=False,
+                              overwrite=False):
         """Create a Bioseq class from a reference genome.
 
-        This requires a reference genome in fasta format to load the data from.
-        If regions points to a bed file, the dataset will also be indexed
-        accordingly. Otherwise, a GenomicIndexer must be attached later.
+        This constructor loads nucleotide sequences from a reference genome.
+        If regions (of interest) is supplied, only the respective sequences
+        are loaded, otherwise the entire genome is fetched.
 
         Parameters
         -----------
@@ -133,24 +134,38 @@ class Bioseq(Dataset):
         refgenome : str
             Fasta file.
         regions : str or None
-            Bed-file defining the regions that comprise the dataset.
-            If set to None, a genomic indexer must be attached later.
-        binsize : int
-            Binsize in basepairs to be read out. Default: 200.
-        stepsize : int
-            stepsize in basepairs for traversing the genome. Default: 200.
+            Bed-file defining the region of interest.
+            If set to None, the sequence will be
+            fetched from the entire genome and a
+            genomic indexer must be attached later.
+            Otherwise, the coverage is only determined
+            for the region of interest.
+        binsize : int or None
+            Binsize in basepairs. For binsize=None,
+            the binsize will be determined from the bed-file directly
+            which requires that all intervals in the bed-file are of equal
+            length. Otherwise, the intervals in the bed-file will be
+            split to subintervals of length binsize in conjunction with
+            stepsize. Default: None.
+        stepsize : int or None
+            stepsize in basepairs for traversing the genome.
+            If stepsize is None, it will be set equal to binsize.
+            Default: None.
         flank : int
             Flanking regions in basepairs to be extended up and downstream.
             Default: 0.
         order : int
             Order for the one-hot representation. Default: 1.
         storage : str
-            Storage mode for storing the sequence may be 'ndarray', 'memmap' or
-            'hdf5'. Default: 'hdf5'.
+            Storage mode for storing the sequence may be 'ndarray', 'hdf5' or
+            'sparse'. Default: 'hdf5'.
         datatags : list(str) or None
-            List of datatags. Default: None.
+            List of datatags. Together with the dataset name,
+            the datatags are used to construct a cache file.
+            If :code:`cache=False`, this option does not have an effect.
+            Default: None.
         cache : boolean
-            Whether to cache the dataset. Default: False.
+            Indicates whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
@@ -208,7 +223,10 @@ class Bioseq(Dataset):
                         overwrite=False):
         """Create a Bioseq class from a biological sequences.
 
-        This allows to load sequence of equal lengths to be loaded.
+        This constructor loads a set of nucleotide or amino acid sequences.
+        By default, the sequence are assumed to be of equal length.
+        Alternatively, sequences can be truncated and padded to a fixed length.
+
 
         Parameters
         -----------
@@ -224,16 +242,19 @@ class Bioseq(Dataset):
             Order for the one-hot representation. Default: 1.
         fixedlen : int or None
             Forces the sequences to be of equal length by truncation or
-            padding. If set to None, it will be assumed that the sequences
+            zero-padding. If set to None, it will be assumed that the sequences
             are already of equal length. An exception is raised if this is
-            not the case.
+            not the case. Default: None.
         storage : str
-            Storage mode for storing the sequence may be 'ndarray', 'memmap' or
-            'hdf5'. Default: 'ndarray'.
+            Storage mode for storing the sequence may be 'ndarray', 'hdf5' or
+            'sparse'. Default: 'ndarray'.
         datatags : list(str) or None
-            List of datatags. Default: None.
+            List of datatags. Together with the dataset name,
+            the datatags are used to construct a cache file.
+            If :code:`cache=False`, this option does not have an effect.
+            Default: None.
         cache : boolean
-            Whether to cache the dataset. Default: False.
+            Indicates whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
@@ -291,7 +312,8 @@ class Bioseq(Dataset):
     def gindexer(self):
         """GenomicIndexer property."""
         if self._gindexer is None:
-            raise ValueError('GenomicIndexer has not been set yet. Please specify an indexer.')
+            raise ValueError('GenomicIndexer has not been set yet. '
+                             'Please specify an indexer.')
         return self._gindexer
 
     @gindexer.setter
@@ -300,8 +322,6 @@ class Bioseq(Dataset):
             self._gindexer = None
             return
 
-        if (gindexer.stepsize % self.garray.resolution) != 0:
-            raise ValueError('gindexer.stepsize must be divisible by resolution')
         self._gindexer = gindexer
 
     def iseq4idx(self, idxs):

@@ -45,18 +45,39 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         ----------
         regions : str
             Path to a BED or GFF file.
-        binsize : int
-            Binsize in base pairs.
-        stepsize : int
-            Stepsize in base pairs.
+        binsize : int or None
+            Binsize in base pairs. If None, the binsize is obtained from
+            the interval lengths in the bed file, which requires intervals
+            to be of equal length.
+        stepsize : int or None
+            Stepsize in base pairs. If stepsize is None,
+            stepsize is set to equal to binsize.
         flank : int
-            flank size in bp to be attached to both ends of a region. Default: 0.
+            flank size in bp to be attached to
+            both ends of a region. Default: 0.
         fixed_size_batches : boolean
-            fixed_size_batches indicate if variable sequence lengths should be used.
+            fixed_size_batches indicate if variable sequence
+            lengths should be used.
             Default: True.
         """
 
         regions_ = _get_genomic_reader(regions)
+
+        if binsize is None:
+            binsize_ = None
+            # binsize will be inferred from bed file
+            for reg in regions_:
+                print('infer', reg, reg.iv.length)
+                if binsize_ is None:
+                    binsize_ = reg.iv.length
+                if reg.iv.length != binsize_:
+                    raise ValueError('Intervals must be of equal length '
+                                     'if binsize=None. Otherwise, please '
+                                     'specify a binsize.')
+            binsize = binsize_
+
+        if stepsize is None:
+            stepsize = binsize
 
         gind = cls(binsize, stepsize, flank)
 

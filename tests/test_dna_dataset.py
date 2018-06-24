@@ -42,6 +42,26 @@ def test_dna_dims_order_1_from_subset(tmpdir):
                                      storage='ndarray',
                                      order=order)
 
+    assert len(data.garray.handle) == 2
+
+    # for order 1
+    assert len(data) == 2
+    assert data.shape == (2, 10000, 1, 4)
+
+
+def test_dna_dims_order_1_from_subset(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    order = 1
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.gtf')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_merged,
+                                     binsize=200, stepsize=200,
+                                     storage='ndarray',
+                                     order=order)
+
     assert len(data.garray.handle) == 100
 
     # for order 1
@@ -95,8 +115,8 @@ def test_dna_dims_order_1_from_reference(tmpdir):
     gindexer = GenomicIndexer.create_from_file(bed_merged, 200, 200)
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     storage='ndarray',
-                                     order=order)
+                                        storage='ndarray',
+                                        order=order)
     data.gindexer = gindexer
     assert len(data.garray.handle) == 2
     assert 'chr1' in data.garray.handle
@@ -152,6 +172,7 @@ def test_dna_dims_order_2(tmpdir):
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_merged,
+                                     binsize=200,
                                      storage='ndarray',
                                      order=order)
 

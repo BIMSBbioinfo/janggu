@@ -20,7 +20,9 @@ def test_dna_props_extraction(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file, order=1)
+                                    regions=bed_file,
+                                    binsize=200, stepsize=200,
+                                    order=1)
 
     props = _data_props(dna)
     assert 'dna' in props
