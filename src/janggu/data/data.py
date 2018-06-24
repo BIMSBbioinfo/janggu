@@ -11,8 +11,9 @@ from keras.utils import Sequence
 class Dataset:
     """Dataset interface.
 
-    The Dataset class mimics a numpy array which allows
-    it to be directly supplied to keras.
+    All dataset classes in janggu inherit from
+    the Dataset class which mimics a numpy array
+    and can be used directly with keras.
 
     Parameters
     -----------

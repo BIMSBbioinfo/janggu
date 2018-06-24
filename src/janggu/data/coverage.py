@@ -37,10 +37,16 @@ class Cover(Dataset):
     garray : :class:`GenomicArray`
         A genomic array that holds the coverage data
     gindexer : :class:`GenomicIndexer` or None
-        A genomic index mapper that translates an integer index to a
-        genomic coordinate. Can be None, if the Dataset is only loaded.
+        A genomic indexer translates an integer index to a
+        corresponding genomic coordinate.
+        It can be None the genomic indexer is supplied later.
     padding_value : int or float
         Padding value used to pad variable size fragments. Default: 0.
+    dimmode : str
+        Dimension mode can be 'first' or 'all'.
+        'first' returns only the first element of the array
+        representing the interval. By default, 'all' returns
+        all elements.
     """
 
     _flank = None
@@ -91,19 +97,27 @@ class Cover(Dataset):
         bamfiles : str or list
             bam-file or list of bam files.
         regions : str or None
-            Bed-file defining the regions that comprise the dataset.
-            If set to None, a genomic indexer must be attached later.
+            Bed-file defining the region of interest.
+            If set to None, the coverage will be
+            fetched from the entire genome and a
+            genomic indexer must be attached later.
+            Otherwise, the coverage is only determined
+            for the region of interest.
         genomesize : dict or None
-            Dictionary containing the genome size. If `genomesize=None`,
-            the genome size
-            is fetched from the bam header. Otherwise, the supplied genome
-            size is used.
+            Dictionary containing the genome size to fetch the coverage from.
+            If `genomesize=None`, the genome size
+            is fetched from the region of interest or the bam header.
+            Otherwise, the supplied genome size is used.
         conditions : list(str) or None
-            List of conditions. If `conditions=None`, the filenames
-            are used as conditions directly.
+            List of conditions.
+            If `conditions=None`,
+            the conditions are obtained from
+            the filenames (without the directories
+            and file-ending).
         min_mapq : int
-            Minimal mapping quality. Reads with lower mapping quality are
-            discarded. If None, all reads are used.
+            Minimal mapping quality.
+            Reads with lower mapping quality are
+            filtered out. If None, all reads are used.
         binsize : int or None
             Binsize in basepairs. For binsize=None,
             the binsize will be determined from the bed-file directly
@@ -119,37 +133,44 @@ class Cover(Dataset):
             Flanking size increases the interval size at both ends by
             flank base pairs. Default: 0
         resolution : int
-            Resolution in base pairs. This is used to collect the mean signal
-            over the window lengths defined by the resolution.
-            This value must be chosen to be divisible by binsize and stepsize.
+            Resolution in base pairs divides the region of interest
+            in windows of length resolution.
+            This effectively reduces the storage for coverage data.
+            The resolution must be selected such that min(stepsize, binsize)
+            is a multiple of resolution.
             Default: 1.
         storage : str
             Storage mode for storing the coverage data can be
             'ndarray', 'hdf5' or 'sparse'. Default: 'ndarray'.
         dtype : str
-            Typecode to define the datatype to be used for storage.
+            Typecode to be used for storage the data.
             Default: 'int'.
         stranded : boolean
-            Whether to extract stranded or unstranded coverage. For unstranded
+            Indicates whether to extract stranded or
+            unstranded coverage. For unstranded
             coverage, reads aligning to both strands will be aggregated.
         overwrite : boolean
-            overwrite cachefiles. Default: False.
+            Overwrite cachefiles. Default: False.
         datatags : list(str) or None
-            List of datatags. Default: None.
+            List of datatags. Together with the dataset name,
+            the datatags are used to construct a cache file.
+            If :code:`cache=False`, this option does not have an effect.
+            Default: None.
         pairedend : str
-            Indicates whether to count the region at the '5prime' end or at
-            the 'midpoint' between the two reads.
+            Indicates whether to count reads at the '5prime' end or at
+            the 'midpoint' for paired-end reads. Default: '5prime'.
         template_extension : int
-            Elongates the region of interest by the template_extension in
-            order to fetch paired end reads that do not directly overlap
-            with the region but whose inferred template does.
-            If template_extension is not set with pairedend='midpoint', reads
-            might potentially be missed.
+            Elongates intervals by template_extension which allows to properly count
+            template mid-points whose reads lie outside of the interval.
+            This option is only relevant for paired-end reads counted at the
+            'midpoint' and if the coverage is not obtained from the
+            whole genome, e.g. regions is not None.
         aggregate : callable or None
-            Aggregation operation for loading genomic array for a given resolution.
+            Aggregation operation for loading genomic array. If None,
+            the coverage amounts to the raw counts.
             Default: None
         cache : boolean
-            Whether to cache the dataset. Default: False.
+            Indicates whether to cache the dataset. Default: False.
         """
 
         if pysam is None:  # pragma: no cover
@@ -322,15 +343,22 @@ class Cover(Dataset):
         bigwigfiles : str or list
             bigwig-file or list of bigwig files.
         regions : str or None
-            Bed-file defining the regions that comprise the dataset.
-            If set to None, a genomic indexer must be attached later.
+            Bed-file defining the region of interest.
+            If set to None, the coverage will be
+            fetched from the entire genome and a
+            genomic indexer must be attached later.
+            Otherwise, the coverage is only determined
+            for the region of interest.
         genomesize : dict or None
-            Dictionary containing the genome size. If `genomesize=None`,
-            the genome size is fetched from the regions defined by the bed-file.
-            Otherwise, the supplied genome size is used.
+            Dictionary containing the genome size to fetch the coverage from.
+            If `genomesize=None`, the genome size
+            is fetched from the region of interest or the bigwig files.
         conditions : list(str) or None
-            List of conditions. If `conditions=None`, the filenames
-            are used as conditions directly.
+            List of conditions.
+            If `conditions=None`,
+            the conditions are obtained from
+            the filenames (without the directories
+            and file-ending).
         binsize : int or None
             Binsize in basepairs. For binsize=None,
             the binsize will be determined from the bed-file directly
@@ -343,10 +371,12 @@ class Cover(Dataset):
             If stepsize is None, it will be set equal to binsize.
             Default: None.
         resolution : int
-            Resolution in base pairs. This is used to collect the mean signal
-            over the window lengths defined by the resolution.
-            This value must be chosen to be divisible by binsize and stepsize.
-            Default: 200.
+            Resolution in base pairs divides the region of interest
+            in windows of length resolution.
+            This effectively reduces the storage for coverage data.
+            The resolution must be selected such that min(stepsize, binsize)
+            is a multiple of resolution.
+            Default: 1.
         flank : int
             Flanking size increases the interval size at both ends by
             flank bins. Note that the binsize is defined by the resolution parameter.
@@ -359,18 +389,21 @@ class Cover(Dataset):
             Default: 'float32'.
         dimmode : str
             Dimension mode can be 'first' or 'all'. If 'first', only
-            the first element of size resolution is used. Otherwise,
-            all elements of size resolution spanning the binsize are returned.
+            the first element of size resolution is returned. Otherwise,
+            all elements of size resolution spanning the interval are returned.
             Default: 'all'.
         overwrite : boolean
-            overwrite cachefiles. Default: False.
+            Overwrite cachefiles. Default: False.
         datatags : list(str) or None
-            List of datatags. Default: None.
+            List of datatags. Together with the dataset name,
+            the datatags are used to construct a cache file.
+            If :code:`cache=False`, this option does not have an effect.
+            Default: None.
         aggregate : callable
-            Aggregation operation for loading genomic array for a given resolution.
+            Aggregation operation for loading genomic array.
             Default: numpy.mean
         cache : boolean
-            Whether to cache the dataset. Default: False.
+            Indicates whether to cache the dataset. Default: False.
         """
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
@@ -454,7 +487,7 @@ class Cover(Dataset):
                         genomesize=None,
                         conditions=None,
                         binsize=None, stepsize=None,
-                        resolution=200,
+                        resolution=1,
                         flank=0, storage='ndarray',
                         dtype='int',
                         dimmode='all',
@@ -470,15 +503,19 @@ class Cover(Dataset):
         bedfiles : str or list
             bed-file or list of bed files.
         regions : str or None
-            Bed-file defining the regions that comprise the dataset.
-            If set to None, a genomic indexer must be attached later.
+            Bed-file defining the region of interest.
+            If set to None a genomesize must be supplied and
+            a genomic indexer must be attached later.
         genomesize : dict or None
-            Dictionary containing the genome size. If `genomesize=None`,
-            the genome size is fetched from the regions defined by the bed-file.
-            Otherwise, the supplied genome size is used.
+            Dictionary containing the genome size to fetch the coverage from.
+            If `genomesize=None`, the genome size
+            is fetched from the region of interest.
         conditions : list(str) or None
-            List of conditions. If `conditions=None`, the filenames
-            are used as conditions directly.
+            List of conditions.
+            If `conditions=None`,
+            the conditions are obtained from
+            the filenames (without the directories
+            and file-ending).
         binsize : int or None
             Binsize in basepairs. For binsize=None,
             the binsize will be determined from the bed-file directly
@@ -491,10 +528,12 @@ class Cover(Dataset):
             If stepsize is None, it will be set equal to binsize.
             Default: None.
         resolution : int
-            Resolution in base pairs. This is used to collect the mean signal
-            over the window lengths defined by the resolution.
-            This value should be chosen to be divisible by binsize and stepsize.
-            Default: 200.
+            Resolution in base pairs divides the region of interest
+            in windows of length resolution.
+            This effectively reduces the storage for coverage data.
+            The resolution must be selected such that min(stepsize, binsize)
+            is a multiple of resolution.
+            Default: 1.
         flank : int
             Flanking size increases the interval size at both ends by
             flank bins. Note that the binsize is defined by the resolution parameter.
@@ -507,22 +546,25 @@ class Cover(Dataset):
             Default: 'int'.
         dimmode : str
             Dimension mode can be 'first' or 'all'. If 'first', only
-            the first element of size resolution is used. Otherwise,
-            all elements of size resolution spanning the binsize are returned.
+            the first element of size resolution is returned. Otherwise,
+            all elements of size resolution spanning the interval are returned.
             Default: 'all'.
         mode : str
             Mode of the dataset may be 'binary', 'score' or 'categorical'.
-            Default: binary.
+            Default: 'binary'.
         overwrite : boolean
-            overwrite cachefiles. Default: False.
+            Overwrite cachefiles. Default: False.
         datatags : list(str) or None
-            List of datatags. Default: None.
+            List of datatags. Together with the dataset name,
+            the datatags are used to construct a cache file.
+            If :code:`cache=False`, this option does not have an effect.
+            Default: None.
         cache : boolean
-            Whether to cache the dataset. Default: False.
+            Indicates whether to cache the dataset. Default: False.
         """
 
         if regions is None and genomesize is None:
-            raise ValueError('Either regions or gsize must be specified.')
+            raise ValueError('Either regions or genomesize must be specified.')
 
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
@@ -573,8 +615,8 @@ class Cover(Dataset):
                         if region.score is None and mode in ['score',
                                                              'categorical']:
                             raise ValueError(
-                                'score field must '
-                                'be available with mode="{}"'.format(mode))
+                                'No score field must present in {}'.format(sample_file) + \
+                                'for mode="{}"'.format(mode))
                         # if region score is not defined, take the mere
                         # presence of a range as positive label.
                         if mode == 'score':
@@ -620,8 +662,9 @@ class Cover(Dataset):
             self._gindexer = None
             return
 
-        if (gindexer.stepsize % self.garray.resolution) != 0:
-            raise ValueError('gindexer.stepsize must be divisible by resolution')
+        if (min(gindexer.stepsize,
+                gindexer.binsize) % self.garray.resolution) != 0:
+            raise ValueError('min(binsize, stepsize) must be divisible by resolution')
         self._gindexer = gindexer
 
     def __repr__(self):  # pragma: no cover

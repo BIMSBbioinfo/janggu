@@ -2,7 +2,7 @@
 Tutorial
 =========
 
-In this section we shall illustrate the genomics datasets,
+In this section we shall illustrate the Genomic datasets,
 how to construct and fit a neural network and finally
 how to evaluate the results.
 
@@ -15,143 +15,263 @@ Genomic Datasets
    network.
 
 
-:mod:`janggu.data` provides Dataset classes that can be used for
+:mod:`janggu.data` provides Dataset classes
+that can be used for
 training and evaluating neural networks.
 Of particular importance are the Genomics-specific dataset,
 :class:`Bioseq` and :class:`Cover` which
-to easily access and fetch genomics data.
-Furthermore, the datasets :class:`Bioseq` and :class:`Cover` facilitate
-caching so that you can reload the data later much faster.
-Other Dataset classes, e.g. :class:`Array` are described in the Reference section.
+allow easy access to genomics data,
+including DNA sequences or coverage information.
+The datasets can be cached and stored in different formats,
+including as numpy array, as sparse matrix or on disk
+as hdf5 file (see :ref:`storage`).
+Other Dataset classes, e.g. :class:`Array` are described
+in :ref:`reference-label`.
+In the following sections, we shall illustrate the
+usage of :class:`Bioseq` and :class:`Cover`.
+
+.. sidebar:: Genomic Datasets
+
+   Most of the parameters are consistent across
+   :class:`Bioseq` and :class:`Cover`.
 
 
 Bioseq
 ^^^^^^^^^^
-The :class:`Bioseq` fetches raw sequence data from
-fasta files or from a reference genome along with a set of
-genomic coordinates
-and translates the sequences into a *one-hot encoding*. Specifically,
+The :class:`Bioseq` can be used to load nucleotide
+or protein sequence data from
+fasta files or from a reference genome
+along with a set of genomic coordinates.
+The class facilitates access the
+*one-hot encoding* representation of the sequences.
+Specifically,
 the *one-hot encoding* is represented as a
 4D array with dimensions corresponding
 to :code:`(region, region_length, 1, alphabet_size)`.
 The Bioseq offers a number of features:
 
-1. Strand-specific sequence extraction
+1. Strand-specific sequence extraction (if DNA sequences are extracted from the reference genome)
 2. Higher-order one-hot encoding, e.g. di-nucleotide based
-3. Dataset access from disk via the hdf5 option for large datasets.
 
-A sequence can be loaded from a fasta file using
-the :code:`create_from_seq` constructor method:
+Sequences can be loaded in two ways: using
+:code:`Bioseq.create_from_seq` or
+:code:`Bioseq.create_from_refgenome`.
+The former constructor method can be used to load
+DNA or protein sequences from fasta files directly
+or from as list of `Bio.SeqRecord.SeqRecord` entries.
+An example is shown below:
 
 .. code-block:: python
 
    from pkg_resources import resource_filename
    from janggu.data import Bioseq
 
-   fasta_file = resource_filename('janggu', 'resources/sample.fa')
+   fasta_file = resource_filename('janggu',
+                                  'resources/sample.fa')
 
-   dna = Bioseq.create_from_seq(name='dna', fastafile=fasta_file)
+   dna = Bioseq.create_from_seq(name='dna',
+                                fastafile=fasta_file)
 
-   len(dna)  # there are 3997 sequences in the in sample.fa
+   # there are 3897 sequences in the in sample.fa
+   len(dna)
 
    # Each sequence is 200 bp of length
-   dna.shape  # is (4, 200, 1, 4)
+   dna.shape  # is (3897, 200, 1, 4)
 
    # One-hot encoding for the first 10 bases of the first region
    dna[0][0, :10, :, 0]
 
-Alternatively, sequences can be obtained from a reference genome along with
-genomic coordinates of interest that are provided by a BED or GFF file.
+Alternatively, nucleotide sequences can be
+obtained from a reference genome directly along with
+a BED or GFF file that indicates the region of interest (ROI).
+In the example below, the sequence lengths and stepsizes
+are determined from the BED-file directly, which requires
+all intervals to be of equal lengths:
 
 .. code-block:: python
 
-   bed_file = resource_filename('janggu', 'resources/sample.bed')
-   refgenome = resource_filename('janggu', 'resources/sample_genome.fa')
+   roi = resource_filename('janggu',
+                           'resources/sample_equalsize.bed')
+   refgenome = resource_filename('janggu',
+                                 'resources/sample_genome.fa')
 
    dna = Bioseq.create_from_refgenome(name='dna',
-                                   refgenome=refgenome,
-                                   regions=bed_file,
-                                   binsize=200,
-                                   stepsize=200,
-                                   datatags=['refgenome'])
+                                      refgenome=refgenome,
+                                      regions=roi)
+
+   dna.shape  # is (4, 200, 1, 4)
+   # One-hot encoding of the first 10 nucleotides in region 0
+   dna[0][0, :10, 0, :]
+
+
+Sometimes it is more convenient to provide the ROI
+as a set of variable-sized broad intervals
+(e.g. chr1:10000-50000 and chr3:4000-8000)
+which should be divided into sub-intervals
+of equal length (e.g. of length 200 bp).
+This can be achieved
+by explicitly specifying a desired :code:`binsize`
+and :code:`stepsize` as shown below:
+
+.. code-block:: python
+
+   roi = resource_filename('janggu',
+                           'resources/sample.bed')
+   refgenome = resource_filename('janggu',
+                                 'resources/sample_genome.fa')
+
+   dna = Bioseq.create_from_refgenome(name='dna',
+                                      refgenome=refgenome,
+                                      regions=roi,
+                                      binsize=200,
+                                      stepsize=200)
 
    dna.shape  # is (100, 200, 4, 1)
-   dna[0]  # One-hot encoding of region 0
+   # One-hot encoding of the first 10 nucleotides in region 0
+   dna[0][0, :10, 0, :]
 
 
-By default, when using :code:`create_from_genome`, the regions
-in *bed_file* are split into non-overlapping bins of length 200 bp.
-Different tiling procedures can be chosen by specifying
-the arguments: :code:`binsize`, :code:`stepsize` and
-:code:`flank`.
+The argument :code:`flank` can be used to extend
+the intervals up and downstream by a given length
+
+.. code-block:: python
+
+   dna = Bioseq.create_from_refgenome(name='dna',
+                                      refgenome=refgenome,
+                                      regions=bed_file,
+                                      binsize=200,
+                                      stepsize=200,
+                                      flank=100)
+
+   dna.shape  # is (100, 400, 1, 4)
+
+
+Finally, sequences can be represented using **higher-order**
+one-hot representation using the :code:`order` argument. An example
+of a di-nucleotide-based one-hot representation is shown below
+
+
+.. code-block:: python
+
+   dna = Bioseq.create_from_refgenome(name='dna',
+                                      refgenome=refgenome,
+                                      regions=bed_file,
+                                      binsize=200,
+                                      stepsize=200,
+                                      order=2)
+
+   # is (100, 200, 1, 16)
+   # that is the last dimension represents di-nucleotides
+   dna.shape
 
 
 Cover
 ^^^^^^^^^^^^^^^
 :class:`Cover` can be utilized to fetch different kinds of
-coverage data from commonly used data formats, including BAM, BIGWIG, BED and GFF.
+coverage data from commonly used data formats,
+including BAM, BIGWIG, BED and GFF.
 Coverage data is stored as a 4D array with dimensions corresponding
 to :code:`(region, region_length, strand, condition)`.
 
-:class:`Cover` offers the following feature:
+The following examples illustrate how
+to instantiate :class:`Cover`.
+Additional features are described in the :ref:`reference-label`.
 
-1. Strand-specific sequence extraction.
-2. :class:`Cover` can be loaded from one or more input files in which case file is associated with a condition.
-3. Coverage data can be accessed from disk.
+**Coverage from BAM files** can be obtained from
+single- or paired-end alignments, which is automatically
+determined from the respective SAM flag.
+Single-end reads are always counted at the 5' end of
+the read. Paired-end reads can optionally be counted
+at the 5' end of the first mate
+or at the template mid-point.
 
-Additional features are available depending on the input file format.
-
-The following examples illustrate how to instantiate :class:`Cover`.
-
-**Coverage from BAM files** is extracted by counting the 5' ends of the tags
-in a strand specific manner.
+The following examples illustrate how the alignment coverage can be loaded
+from single-end reads:
 
 .. code:: python
 
    from janggu.data import Cover
 
-   bam_file = resource_filename('janggu', 'resources/sample.bam')
-   bed_file = resource_filename('janggu', 'resources/sample.bed')
+   bam_file = resource_filename('janggu',
+                                'resources/sample.bam')
+   roi = resource_filename('janggu',
+                           'resources/sample_equalsize.bed')
 
-   cover = Cover.create_from_bam('read_coverage',
+   # example with automatic binsize determination from ROI
+   cover = Cover.create_from_bam('whole_genome',
+                                 bamfiles=bam_file,
+                                 regions=roi)
+   cover.shape  # is (4, 200, 2, 1)
+
+   # example with specified binsize and stepsize
+   roi = resource_filename('janggu',
+                           'resources/sample.bed')
+
+   cover = Cover.create_from_bam('whole_genome',
                                  bamfiles=bam_file,
                                  binsize=200,
                                  stepsize=200,
-                                 regions=bed_file)
+                                 regions=roi)
 
    cover.shape  # is (100, 200, 2, 1)
    cover[0]  # coverage of the first region
 
-By default, the region of interest in :code:`bed_file` is split
-into non-overlapping 200 bp windows. Different windowing options are available
-by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
+   # example with stranded=False
+   cover = Cover.create_from_bam('read_coverage',
+                                 bamfiles=bam_file,
+                                 binsize=200,
+                                 stepsize=200,
+                                 stranded=False,
+                                 regions=roi)
 
-**Coverage from a BIGWIG files** is extracted as the average signal intensity
-of a specified resolution (in base pairs):
+   cover.shape  # is (100, 200, 1, 1)
+
+
+By default, the coverage is obtained at nucleotide resolution.
+However, often it is more adequate to determine the read
+counts in small windows of e.g. 200 bp.
+In this case, the :code:`resolution`
+argument can be used to count reads in windows of length
+resolution.
+For example, consider
+
+.. code:: python
+
+   # example with resolution=200 bp
+   cover = Cover.create_from_bam('read_coverage',
+                                 bamfiles=bam_file,
+                                 binsize=200,
+                                 stepsize=200,
+                                 resolution=200,
+                                 regions=roi)
+
+   cover.shape  # is (100, 1, 2, 1)
+
+
+**Coverage from a BIGWIG files** can be extracted
+analogously:
 
 .. code-block:: python
 
-   bed_file = resource_filename('janggu', 'resources/sample.bed')
-   bw_file = resource_filename('janggu', 'resources/sample.bw')
+   roi = resource_filename('janggu',
+                           'resources/sample.bed')
+   bw_file = resource_filename('janggu',
+                               'resources/sample.bw')
 
    cover = Cover.create_from_bigwig('bigwig_coverage',
                                     bigwigfiles=bw_file,
-                                    regions=bed_file,
+                                    regions=roi,
                                     binsize=200,
                                     stepsize=200)
 
    cover.shape  # is (100, 1, 1, 1)
    cover[0]  # coverage of the first region
 
-By default, the region of interest in :code:`bed_file` is split
-into non-overlapping 200 bp windows with a resolution of 200 bp.
-Different windowing and signal resolution options are available
-by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
 
+**Coverage from a BED files** can be
+extracted in various ways:
 
-**Coverage from a BED files** can be extracted in various ways:
-
-1. **Binary** or Presence/Absence mode.
+1. **Binary** or Presence/Absence mode
 2. **Score** mode reads out the score field value from the associated regions.
 3. **Categorical** mode transforms the scores into one-hot representation.
 
@@ -159,15 +279,18 @@ Examples of loading data from a BED file are shown below
 
 .. code-block:: python
 
-   bed_file = resource_filename('janggu', 'resources/sample.bed')
-   score_file = resource_filename('janggu', 'resources/scored_sample.bed')
+   roi = resource_filename('janggu',
+                           'resources/sample.bed')
+   score_file = resource_filename('janggu',
+                                  'resources/scored_sample.bed')
 
    # binary mode (default)
    cover = Cover.create_from_bed('binary_coverage',
                                  bedfiles=score_file,
-                                 regions=bed_file,
+                                 regions=roi,
                                  binsize=200,
-                                 stepsize=200)
+                                 stepsize=200,
+                                 resolution=200)
 
    cover.shape  # is (100, 1, 1, 1)
    cover[4]  # contains [[[[1.]]]]
@@ -175,9 +298,10 @@ Examples of loading data from a BED file are shown below
    # score mode
    cover = Cover.create_from_bed('score_coverage',
                                  bedfiles=score_file,
-                                 regions=bed_file,
+                                 regions=roi,
                                  binsize=200,
                                  stepsize=200,
+                                 resolution=200,
                                  mode='score')
 
    cover.shape  # is (100, 1, 1, 1)
@@ -186,24 +310,20 @@ Examples of loading data from a BED file are shown below
    # categorical mode
    cover = Cover.create_from_bed('cat_coverage',
                                  bedfiles=score_file,
-                                 regions=bed_file,
+                                 regions=roi,
                                  binsize=200,
                                  stepsize=200,
+                                 resolution=200,
                                  mode='categorical')
 
    cover.shape  # is (100, 1, 1, 6)
    cover[4]  # contains [[[[0., 0., 0., 0., 0., 1.]]]]
 
-By default, the region of interest in :code:`bed_file` is split
-into non-overlapping 200 bp windows with a resolution of 200 bp.
-Different windowing and signal resolution options are available
-by setting :code:`binsize`, :code:`stepsize`, :code:`flank` and :code:`resolution`.
-
-
 
 Building a neural network
 -------------------------
-A neural network can be created by instantiating a :class:`Janggu` object.
+A neural network can be created by
+instantiating a :class:`Janggu` object.
 There are two ways of achieving this:
 
 1. Similar as with `keras.models.Model`, a :class:`Janggu` object can be created from a set of native keras Input and Output layers, respectively.
@@ -385,7 +505,7 @@ and investigate the predictions. This can be done by invoking
    model.predict(DNA_TEST)
 
 which resemble the familiar keras methods.
-Janggu additinally offers a simple way to evaluate and export model results,
+Janggu additionally offers a simple way to evaluate and export model results,
 for example on independent test data.
 To this end, objects of :code:`Scorer` can be created
 and passed to
@@ -440,7 +560,7 @@ of the model. Below, the output predictions are exported in json format.
 Using the Scorer callback objects, a number of evaluations can
 be run out of the box. For example, with different `sklearn.metrics`
 and different exporter options. A list of available exporters
-can be found in the Reference section.
+can be found in :ref:`reference-label`.
 
 Alternatively, you can also plug in custom functions
 

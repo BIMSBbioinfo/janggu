@@ -558,6 +558,7 @@ def test_load_cover_bed_binary(tmpdir):
             bedfiles=score_file,
             regions=bed_file,
             binsize=200, stepsize=200,
+            resolution=200,
             storage=store,
             mode='binary', cache=True)
 
@@ -586,7 +587,7 @@ def test_load_cover_bed_binary(tmpdir):
             regions=bed_file,
             binsize=200, stepsize=200,
             storage=store,
-            resolution=50,
+            #resolution=50,
             dimmode='first',
             mode='binary', cache=True)
 
@@ -607,6 +608,7 @@ def test_load_cover_bed_scored():
             bedfiles=score_file,
             regions=bed_file,
             binsize=200, stepsize=200,
+            resolution=200,
             storage=store,
             mode='score')
 
@@ -635,7 +637,7 @@ def test_load_cover_bed_scored():
             regions=bed_file,
             storage=store,
             binsize=200, stepsize=200,
-            resolution=50,
+
             dimmode='first',
             mode='score')
 
@@ -656,6 +658,7 @@ def test_load_cover_bed_categorical():
             bedfiles=score_file,
             regions=bed_file,
             binsize=200, stepsize=200,
+            resolution=200,
             storage=store,
             mode='categorical')
 
@@ -682,7 +685,7 @@ def test_load_cover_bed_categorical():
             "cov50",
             bedfiles=score_file,
             regions=bed_file,
-            resolution=50,
+#            resolution=50,
             binsize=200, stepsize=200,
             storage=store,
             dimmode='first',

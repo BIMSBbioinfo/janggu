@@ -2,10 +2,15 @@ janggu.data - Genomics datasets for deep learning
 =========================================================
 
 
-This section describes several datasets that act as a bridge between
-raw genomics datasets (e.g. DNA sequence from a fasta file, or genome-wide coverage
-information from a bam-file) and the dataformat applications directly for a deep learning
-application.
+.. currentmodule:: janggu.data
+
+.. autosummary::
+   Bioseq.create_from_seq
+   Bioseq.create_from_refgenome
+   Cover.create_from_bam
+   Cover.create_from_bigwig
+   Cover.create_from_bed
+
 
 .. currentmodule:: janggu.data
 
