@@ -443,6 +443,6 @@ for js in JSES:
 
 def main():
     """cli entry"""
-    print('Welcome to janggu (GPL-v2). Copyright (C) 2017-2018 '
+    print('Welcome to janggu (GPL-v3). Copyright (C) 2017-2018 '
           + 'Wolfgang Kopp.')
     APP.run_server(port=ARGS.port)
