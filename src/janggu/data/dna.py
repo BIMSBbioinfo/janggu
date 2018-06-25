@@ -31,6 +31,8 @@ class Bioseq(Dataset):
     gindexer : :class:`GenomicIndexer` or None
         A genomic index mapper that translates an integer index to a
         genomic coordinate. Can be None, if the Dataset is only loaded.
+    alphabetsize : int
+        Alphabetsize of the sequence.
     """
 
     _order = None
@@ -38,12 +40,13 @@ class Bioseq(Dataset):
     _flank = None
     _gindexer = None
 
-    def __init__(self, name, garray, gindexer):
+    def __init__(self, name, garray, gindexer, alphabetsize):
 
         self.garray = garray
         self.gindexer = gindexer
+        self._alphabetsize = alphabetsize
         self._rcindex = [_complement_index(idx, garray.order)
-                         for idx in range(pow(4, garray.order))]
+                         for idx in range(pow(alphabetsize, garray.order))]
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -207,9 +210,8 @@ class Bioseq(Dataset):
 
         garray._full_genome_stored = True if gindexer is None else False
 
-        ob_ = cls(name, garray, gindexer)
-        ob_._alphabetsize = len(seqs[0].seq.alphabet.letters)
-        return ob_
+        return cls(name, garray, gindexer,
+                   alphabetsize=len(seqs[0].seq.alphabet.letters))
 
     @classmethod
     def create_from_seq(cls, name,  # pylint: disable=too-many-locals
@@ -301,9 +303,8 @@ class Bioseq(Dataset):
         gindexer.strand = ['.']*len(lens)
         gindexer.rel_end = [reglen + 2*flank]*len(lens)
 
-        ob_ = cls(name, garray, gindexer)
-        ob_._alphabetsize = len(seqs[0].seq.alphabet.letters)
-        return ob_
+        return cls(name, garray, gindexer,
+                   alphabetsize=len(seqs[0].seq.alphabet.letters))
 
     def __repr__(self):  # pragma: no cover
         return 'Bioseq("{}")'.format(self.name,)
