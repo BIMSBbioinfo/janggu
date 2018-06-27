@@ -490,8 +490,7 @@ def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disabl
                 bbox_extra_artists=(lgd,), bbox_inches="tight")
 
 
-def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=too-many-locals
-                  resolution=None):
+def export_bigwig(output_dir, name, results, gindexer=None):
     """Export predictions to bigwig.
 
     This function exports the predictions to bigwig format which allows you to
@@ -509,8 +508,6 @@ def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=t
     gindexer : GenomicIndexer
         GenomicIndexer that links the prediction for a certain region to
         its associated genomic coordinates.
-    resolution : int
-        Used to output the results.
     """
 
     if pyBigWig is None:  # pragma: no cover
@@ -519,30 +516,20 @@ def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=t
 
     if gindexer is None:
         raise ValueError('Please specify a GenomicIndexer for export_to_bigiwig')
-    if resolution is None:
-        raise ValueError('Resolution must be specify')
-    if gindexer.stepsize < gindexer.binsize:
-        raise ValueError('GenomicIndexer stepsize must be at least as long as binsize')
 
     genomesize = {}
 
     # extract genome size from gindexer
     # check also if sorted and non-overlapping
-    last_interval = {}
     for region in gindexer:
-        if region.chrom in last_interval:
-            if region.start < last_interval[region.chrom]:
-                raise ValueError('The regions in the bed/gff-file must be sorted'
-                                 ' and mutually disjoint. Please, sort and merge'
-                                 ' the regions before exporting the bigwig format')
         if region.chrom not in genomesize:
             genomesize[region.chrom] = region.end
-            last_interval[region.chrom] = region.end
         if genomesize[region.chrom] < region.end:
             genomesize[region.chrom] = region.end
 
     bw_header = [(chrom, genomesize[chrom])
                  for chrom in genomesize]
+    print('header', bw_header)
 
     # the last dimension holds the conditions. Each condition
     # needs to be stored in a separate file
@@ -554,17 +541,30 @@ def export_bigwig(output_dir, name, results, gindexer=None,  # pylint: disable=t
                 output=layername, condition=condition)), 'w')
         bw_file.addHeader(bw_header)
         pred = results[modelname, layername, condition]['value']
-        nsplit = len(pred)//len(gindexer)
+        npred = len(pred)
+        ninter = len(gindexer)
+        # compute the ratio between binsize and stepsize
+        bsss = float(gindexer.binsize) / float(gindexer.stepsize)
+        if bsss < 1.:
+           bsss = 1.
+        ppi = int(np.rint(len(pred)/(len(gindexer) - 1. + bsss)))
+        
+        # case 1) stepsize >= binsize
+        # then bsss = 1; ppi = len(pred)/len(gindexer)
+        #
+        # case 2) stepsize < binsize
+        # then bsss > 1; ppi = len(pred)/ (len(gindexer) -1 + bsss)
+        #ppi = len(pred)//len(gindexer)
+        resolution = int(region.length / bsss) // ppi
         for idx, region in enumerate(gindexer):
 
-            val = [p for p in pred[idx:(idx+nsplit)]
-                   for _ in range(resolution)]
+            val = [float(p) for p in pred[(idx*ppi):((idx+1)*ppi)]]
 
-            bw_file.addEntries(region.chrom,
+            bw_file.addEntries(str(region.chrom),
                                int(region.start),
                                values=val,
-                               span=1,
-                               step=1)
+                               span=int(resolution),
+                               step=int(resolution))
         bw_file.close()
 
 

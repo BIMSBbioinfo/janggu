@@ -482,7 +482,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi, 'resolution': 200})
+                exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -519,10 +519,46 @@ def test_output_bigwig_predict_convout(tmpdir):
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
     bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi, 'resolution': 50})
+                exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
+
+    for cond in ['c1', 'c2', 'c3', 'c4']:
+        assert os.path.exists(file_.format(cond))
+
+    bw = pyBigWig.open(file_.format('c1'))
+
+    co = bw.values('chr1', 600, 2000)
+
+    numpy.testing.assert_allclose(numpy.mean(co), 0.2, rtol=1e-5)
+
+
+def test_output_bigwig_loss_resolution_equal_stepsize(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    # generate loss
+    #
+    # resolution < stepsize
+    inputs = Array("x", numpy.random.random((7, 4, 1, 10)))
+    outputs = Array('y', numpy.random.random((7, 4, 1, 4)),
+                    conditions=['c1', 'c2', 'c3', 'c4'])
+
+    bwm = get_janggu(inputs, outputs)
+    data_path = pkg_resources.resource_filename('janggu',
+                                                'resources/10regions.bed')
+
+    gi = GenomicIndexer.create_from_file(data_path,
+                                         binsize=200,
+                                         stepsize=200)
+
+    dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
+                        exporter=export_bigwig)
+
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
+                 exporter_kwargs={'gindexer': gi})
+
+    file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
+                         'loss.nptest.y.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -549,13 +585,13 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
 
     gi = GenomicIndexer.create_from_file(data_path,
                                          binsize=200,
-                                         stepsize=200)
+                                         stepsize=50)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
                         exporter=export_bigwig)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi, 'resolution': 50})
+                 exporter_kwargs={'gindexer': gi})
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bigwig')
@@ -565,7 +601,7 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
 
     bw = pyBigWig.open(file_.format('c1'))
 
-    co = bw.values('chr1', 600, 2000)
+    co = bw.values('chr1', 600, 2000-150)
 
     numpy.testing.assert_allclose(numpy.mean(co), 0.2, rtol=1e-5)
 
