@@ -318,7 +318,7 @@ def test_cover_bam_paired_5pend():
         min_mapq=30)
 
     assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
-    print(cover.garray.handle['ref'])
+
     # the read starts at index 6 and tlen is 39
     assert cover.garray.handle['ref'][6, 0, 0] == 1
     # another read maps to index 24

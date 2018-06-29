@@ -67,7 +67,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             binsize_ = None
             # binsize will be inferred from bed file
             for reg in regions_:
-                print('infer', reg, reg.iv.length)
                 if binsize_ is None:
                     binsize_ = reg.iv.length
                 if reg.iv.length != binsize_:

@@ -529,7 +529,6 @@ def export_bigwig(output_dir, name, results, gindexer=None):
 
     bw_header = [(chrom, genomesize[chrom])
                  for chrom in genomesize]
-    print('header', bw_header)
 
     # the last dimension holds the conditions. Each condition
     # needs to be stored in a separate file
@@ -548,7 +547,7 @@ def export_bigwig(output_dir, name, results, gindexer=None):
         if bsss < 1.:
            bsss = 1.
         ppi = int(np.rint(len(pred)/(len(gindexer) - 1. + bsss)))
-        
+
         # case 1) stepsize >= binsize
         # then bsss = 1; ppi = len(pred)/len(gindexer)
         #
@@ -616,7 +615,6 @@ def export_bed(output_dir, name, results,  # pylint: disable=too-many-locals
                     'end': [e for e in ends],
                     'name': ['.'] * nsplit,
                     'score': pred[ridx*nsplit:((ridx+1)*nsplit)]}
-            print(cont)
 
             bed_entry = pd.DataFrame(cont)
             bed_content = bed_content.append(bed_entry, ignore_index=True, sort=False)

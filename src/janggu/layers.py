@@ -217,11 +217,9 @@ class DnaConv2D(Conv2D):
     def build(self, input_shape):
         super(DnaConv2D, self).build(input_shape)
 
-        print(input_shape, input_shape[-1])
         self.rcmatrix = K.constant(
             complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
             dtype=K.floatx())
-        print(self.rcmatrix)
 
     def get_config(self):
         config = {'scan_revcomp': self.scan_revcomp}
@@ -230,13 +228,12 @@ class DnaConv2D(Conv2D):
 
     def call(self, inputs):
         if self.scan_revcomp:
-            print('using revcomp')
+
             # revert and complement the weight matrices
             tmp = self.kernel
             self.kernel = self.kernel[::-1, :, :, :]
             self.kernel = tf.einsum('ij,sdjc->sdic', self.rcmatrix, self.kernel)
-        else:
-            print('using conv2d')
+
         # perform the convolution operation
         res = super(DnaConv2D, self).call(inputs)
         if self.scan_revcomp:
