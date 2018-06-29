@@ -352,6 +352,8 @@ class SparseGenomicArray(GenomicArray):
         memmap_dir = _get_output_data_location(datatags)
 
         filename = 'sparse.npz'
+        if not os.path.exists(memmap_dir):
+            os.makedirs(memmap_dir)
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
             or overwrite or not cache:
             data = {chrom: sparse.dok_matrix((chroms[chrom] // self.resolution + 1,
