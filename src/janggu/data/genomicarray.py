@@ -83,10 +83,46 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             start = interval.start // self.resolution
             end = interval.end // self.resolution
 
-            if self._full_genome_stored:
-                return self.handle[chrom][start:end]
-            return self.handle[_iv_to_str(chrom, interval.start,
-                                          interval.end)][:(end - start)]
+            # original length
+            length = end-start
+
+            if not self._full_genome_stored:
+                # correcting for the overshooting starts and ends is not necessary
+                # for partially loaded data
+                return self._reshape(self.handle[_iv_to_str(chrom, interval.start,
+                                                            interval.end)][:(length)],  
+                                     (length, 2 if self.stranded else 1, len(self.condition)))
+
+            if start >= 0 and end <= self.handle[chrom].shape[0]:
+                # this is a short-cut, which does not require zero-padding
+                return self._reshape(self.handle[chrom][start:end], (end-start,  2 if self.stranded else 1,
+                                 len(self.condition)))
+
+            # below is some functionality for zero-padding, in case the region
+            # reaches out of the chromosome size
+       
+            data = numpy.zeros((length, 2 if self.stranded else 1, len(self.condition)),
+                               dtype=self.handle[chrom].dtype)
+
+            dstart = 0
+            dend = length
+            # if start of interval is negative, due to flank, discard the start
+            if start < 0:
+                dstart = -start
+                start = 0
+
+            # if end of interval reached out of the chromosome, clip it
+            if self.handle[chrom].shape[0] < end:
+                dend -= end - self.handle[chrom].shape[0]
+                end = self.handle[chrom].shape[0]
+
+            # dstart and dend are offset by the number of positions
+            # the region reaches out of the chromosome
+            data[dstart:dend, :, :] = self._reshape(self.handle[chrom][start:end], 
+                                                    (end-start,  2 if self.stranded else 1,
+                                                     len(self.condition)))
+            return data
+
         raise IndexError("Index must be a GenomicInterval")
 
     @property
@@ -108,6 +144,9 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         if resolution <= 0:
             raise ValueError('resolution must be greater than zero')
         self._resolution = resolution
+
+    def _reshape(self, data, shape):
+        return data
 
     @property
     def order(self):
@@ -433,23 +472,8 @@ class SparseGenomicArray(GenomicArray):
             return
         raise IndexError("Index must be a GenomicInterval and a condition index")
 
-    def __getitem__(self, index):
-        # for now lets ignore everything except for chrom, start and end.
-        if isinstance(index, GenomicInterval):
-            interval = index
-            chrom = interval.chrom
-            start = interval.start // self.resolution
-            end = interval.end // self.resolution
-            if self._full_genome_stored:
-                return self.handle[chrom][start:end].toarray().reshape(
-                    (end-start, 2 if self.stranded else 1, len(self.condition)))
-
-            return self.handle[
-                _iv_to_str(chrom, interval.start, interval.end)][
-                    :(end - start)].toarray().reshape(
-                        (end-start, 2 if self.stranded else 1,
-                         len(self.condition)))
-        raise IndexError("Index must be a GenomicInterval")
+    def _reshape(self, data, shape):
+        return data.toarray().reshape(shape)
 
 
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',

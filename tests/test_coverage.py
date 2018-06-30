@@ -57,6 +57,26 @@ def test_bed_inferred_binsize():
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
 
+def test_bed_overreaching_ends():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+
+    #file_ = os.path.join(data_path, "sample.bw")
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        regions=bed_file,
+        flank=2000,
+        resolution=1,
+        storage='ndarray')
+    cover.garray.handle['chr1'][0]=1
+    assert len(cover) == 25
+    assert cover.shape == (25, 200+2*2000, 1, 1)
+    np.testing.assert_equal(cover[0][0, :550, 0, 0].sum(), 0)
+    np.testing.assert_equal(cover[0][0, 550, 0, 0], 1.)
+    np.testing.assert_equal(cover[0][0, 550:(550+len(cover.garray.handle['chr1'])), :, :], cover.garray.handle['chr1'])
+
 def test_cover_from_bam_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")

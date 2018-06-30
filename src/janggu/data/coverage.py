@@ -647,7 +647,7 @@ class Cover(Dataset):
                                      loader_args=(bedfiles, gsize, mode))
 
         return cls(name, cover, gindexer,
-                   padding_value=-1, dimmode=dimmode)
+                   padding_value=0, dimmode=dimmode)
 
     @property
     def gindexer(self):
@@ -683,8 +683,9 @@ class Cover(Dataset):
             raise IndexError('Cover.__getitem__: '
                              + 'index must be iterable')
 
-        data = np.empty((len(idxs),) + self.shape[1:])
-        data.fill(self.padding_value)
+        data = np.zeros((len(idxs),) + self.shape[1:])
+        if self.padding_value != 0:
+            data.fill(self.padding_value)
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
@@ -697,9 +698,9 @@ class Cover(Dataset):
                 pinterval.end = interval.end
             elif self.dimmode == 'first':
                 pinterval.end = pinterval.start + self.garray.resolution
+            end =  (pinterval.end - pinterval.start) // self.garray.resolution
 
-            data[i, :((pinterval.end-pinterval.start)//self.garray.resolution), :, :] = \
-                np.asarray(self.garray[pinterval])
+            data[i, :end, :, :] = np.asarray(self.garray[pinterval])
 
             if interval.strand == '-':
                 # if the region is on the negative strand,
