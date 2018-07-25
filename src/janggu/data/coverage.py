@@ -81,7 +81,9 @@ class Cover(Dataset):
                         pairedend='5prime',
                         template_extension=0,
                         aggregate=None,
-                        datatags=None, cache=False):
+                        datatags=None,
+                        cache=False,
+                        load_whole_genome=False):
         """Create a Cover class from a bam-file (or files).
 
         This constructor can be used to obtain coverage from BAM files.
@@ -171,6 +173,10 @@ class Cover(Dataset):
             Default: None
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
+        load_whole_genome : boolean
+            Indicates whether the whole genome or all selected chromosomes
+            should be loaded. If False, a bed-file with regions of interest
+            must be specified.
         """
 
         if pysam is None:  # pragma: no cover
@@ -192,22 +198,27 @@ class Cover(Dataset):
         if min_mapq is None:
             min_mapq = 0
 
-        if genomesize is not None:
-            # if a genome size has specifically been given, use it.
-            gsize = genomesize.copy()
-            full_genome_index = True
-        elif gindexer is not None:
-            # if a gindexer has been supplied, load the array only for the
-            # region of interest
+        full_genome_index = load_whole_genome
+
+        if not full_genome_index and not gindexer:
+            raise ValueError('Either regions must be supplied or load_whole_genome must be True')
+
+        if not full_genome_index:
+            # if whole genome should not be loaded
             gsize = {_iv_to_str(iv.chrom, iv.start,
                                 iv.end): iv.end-iv.start for iv in gindexer}
-            full_genome_index = False
+
         else:
-            header = pysam.AlignmentFile(bamfiles[0], 'r')  # pylint: disable=no-member
-            gsize = {}
-            for chrom, length in zip(header.references, header.lengths):
-                gsize[chrom] = length
-            full_genome_index = True
+            # otherwise the whole genome will be fetched, or at least
+            # a set of full length chromosomes
+            if genomesize is not None:
+                # if a genome size has specifically been given, use it.
+                gsize = genomesize.copy()
+            else:
+                header = pysam.AlignmentFile(bamfiles[0], 'r')  # pylint: disable=no-member
+                gsize = {}
+                for chrom, length in zip(header.references, header.lengths):
+                    gsize[chrom] = length
 
         def _bam_loader(garray, files):
             print("load from bam")
@@ -333,7 +344,8 @@ class Cover(Dataset):
                            overwrite=False,
                            dimmode='all',
                            aggregate=np.mean,
-                           datatags=None, cache=False):
+                           datatags=None, cache=False,
+                           load_whole_genome=False):
         """Create a Cover class from a bigwig-file (or files).
 
         Parameters
@@ -404,6 +416,10 @@ class Cover(Dataset):
             Default: numpy.mean
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
+        load_whole_genome : boolean
+            Indicates whether the whole genome or all selected chromosomes
+            should be loaded. If False, a bed-file with regions of interest
+            must be specified. Default: False.
         """
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
@@ -417,19 +433,25 @@ class Cover(Dataset):
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
 
-        if genomesize is not None:
-            # if a genome size has specifically been given, use it.
-            gsize = genomesize.copy()
-            full_genome_index = True
-        elif gindexer is not None:
-            # if a gindexer has been supplied, load the array only for the
-            # region of interest
-            gsize = {_iv_to_str(iv.chrom, iv.start, iv.end): iv.end-iv.start for iv in gindexer}
-            full_genome_index = False
+        full_genome_index = load_whole_genome
+
+        if not full_genome_index and not gindexer:
+            raise ValueError('Either regions must be supplied or load_whole_genome must be True')
+
+        if not full_genome_index:
+            # if whole genome should not be loaded
+            gsize = {_iv_to_str(iv.chrom, iv.start,
+                                iv.end): iv.end-iv.start for iv in gindexer}
+
         else:
-            bwfile = pyBigWig.open(bigwigfiles[0], 'r')
-            gsize = bwfile.chroms()
-            full_genome_index = True
+            # otherwise the whole genome will be fetched, or at least
+            # a set of full length chromosomes
+            if genomesize is not None:
+                # if a genome size has specifically been given, use it.
+                gsize = genomesize.copy()
+            else:
+                bwfile = pyBigWig.open(bigwigfiles[0], 'r')
+                gsize = bwfile.chroms()
 
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
@@ -673,15 +695,25 @@ class Cover(Dataset):
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = [idxs]
-        if isinstance(idxs, slice):
+        elif isinstance(idxs, slice):
             idxs = range(idxs.start if idxs.start else 0,
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
+        elif isinstance(idxs, GenomicInterval):
+            if not self.garray._full_genome_stored:
+                raise ValueError('Indexing with GenomicInterval only possible '
+                                 'when the whole genome (or chromosome) was loaded')
+            # accept a genomic interval directly
+            data = np.zeros((1,) + self.shape[1:])
+            data[0] = self._getsingleitem(idxs)
+            for transform in self.transformations:
+                data = transform(data)
+            return data
+
         try:
             iter(idxs)
         except TypeError:
-            raise IndexError('Cover.__getitem__: '
-                             + 'index must be iterable')
+            raise IndexError('Cover.__getitem__: index must be iterable')
 
         data = np.zeros((len(idxs),) + self.shape[1:])
         if self.padding_value != 0:
@@ -692,23 +724,25 @@ class Cover(Dataset):
 
             pinterval = interval.copy()
 
-            pinterval.start = interval.start
-
-            if self.dimmode == 'all':
-                pinterval.end = interval.end
-            elif self.dimmode == 'first':
-                pinterval.end = pinterval.start + self.garray.resolution
             end =  (pinterval.end - pinterval.start) // self.garray.resolution
 
-            data[i, :end, :, :] = np.asarray(self.garray[pinterval])
+            data[i, :end, :, :] = self._getsingleitem(pinterval)
 
-            if interval.strand == '-':
-                # if the region is on the negative strand,
-                # flip the order  of the coverage track
-                data[i, :, :, :] = data[i, ::-1, ::-1, :]
         for transform in self.transformations:
             data = transform(data)
 
+        return data
+
+    def _getsingleitem(self, pinterval):
+        if self.dimmode == 'all':
+            pinterval.end = pinterval.end
+        elif self.dimmode == 'first':
+            pinterval.end = pinterval.start + self.garray.resolution
+
+        if pinterval.strand == '-':
+            data = np.asarray(self.garray[pinterval])[::-1, ::-1, :]
+        else:
+            data = np.asarray(self.garray[pinterval])
         return data
 
     def __len__(self):

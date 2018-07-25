@@ -123,7 +123,8 @@ class Bioseq(Dataset):
                               storage='ndarray',
                               datatags=None,
                               cache=False,
-                              overwrite=False):
+                              overwrite=False,
+                              load_whole_genome=False):
         """Create a Bioseq class from a reference genome.
 
         This constructor loads nucleotide sequences from a reference genome.
@@ -171,9 +172,14 @@ class Bioseq(Dataset):
             Indicates whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
+        load_whole_genome : boolean
+            Indicates whether the whole genome or all selected chromosomes
+            should be loaded. If False, a bed-file with regions of interest
+            must be specified. Default: False.
         """
         # fill up int8 rep of DNA
         # load bioseq, region index, and within region index
+
 
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
@@ -181,13 +187,16 @@ class Bioseq(Dataset):
         else:
             gindexer = None
 
+        if not load_whole_genome and gindexer is None:
+            raise ValueError('Either regions must be supplied or load_whole_genome must be True')
+
         if not isinstance(refgenome, Bio.SeqRecord.SeqRecord):
             seqs = sequences_from_fasta(refgenome, 'dna')
         else:
             # This is already a list of SeqRecords
             seqs = refgenome
 
-        if gindexer is not None:
+        if not load_whole_genome and gindexer is not None:
             # the genome is loaded with a bed file,
             # only the specific subset is loaded
             # to keep the memory overhead low.
@@ -208,7 +217,7 @@ class Bioseq(Dataset):
                                          cache=cache,
                                          overwrite=overwrite)
 
-        garray._full_genome_stored = True if gindexer is None else False
+        garray._full_genome_stored = True if gindexer is None or load_whole_genome else False
 
         return cls(name, garray, gindexer,
                    alphabetsize=len(seqs[0].seq.alphabet.letters))
@@ -346,30 +355,50 @@ class Bioseq(Dataset):
 
         # for each index read use the adaptor indices to retrieve the seq.
         iseq = np.zeros((len(idxs), self.gindexer.binsize +
-                         2*self.gindexer.flank - self.garray.order + 1), dtype="int16")
+                         2*self.gindexer.flank - self.garray.order + 1),
+                        dtype="int16")
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
 
-            interval.end += - self.garray.order + 1
-
-            # Computing the forward or reverse complement of the
-            # sequence, depending on the strand flag.
-            if interval.strand in ['.', '+']:
-                iseq[i] = np.asarray(self.garray[interval][:, 0, 0])
-            else:
-                iseq[i] = np.asarray(
-                    [self._rcindex[val] for val in self.garray[interval][:, 0, 0]])[::-1]
+            iseq[i] = self._getsingleitem(interval)
 
         return iseq
+
+    def _getsingleitem(self, interval):
+        interval.end += - self.garray.order + 1
+
+        # Computing the forward or reverse complement of the
+        # sequence, depending on the strand flag.
+        if interval.strand in ['.', '+']:
+            return np.asarray(self.garray[interval][:, 0, 0])
+        else:
+            return np.asarray([self._rcindex[val] for val
+                               in self.garray[interval][:, 0, 0]])[::-1]
+
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = [idxs]
-        if isinstance(idxs, slice):
+        elif isinstance(idxs, slice):
             idxs = range(idxs.start if idxs.start else 0,
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
+        elif isinstance(idxs, GenomicInterval):
+            if not self.garray._full_genome_stored:
+                raise ValueError('Indexing with GenomicInterval only possible '
+                                 'when the whole genome (or chromosome) was loaded')
+
+            data = np.zeros((1, idxs.length))
+            data[0] = self._getsingleitem(idxs)
+            # accept a genomic interval directly
+            data = as_onehot(data,
+                             self.garray.order,
+                             self._alphabetsize)
+            for transform in self.transformations:
+                data = transform(data)
+            return data
+
         try:
             iter(idxs)
         except TypeError:

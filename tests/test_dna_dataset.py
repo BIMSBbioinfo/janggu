@@ -30,6 +30,31 @@ def datalen(bed_file):
     return binsizes
 
 
+def test_dna_genomic_interval_access(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    order = 1
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.gtf')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_merged,
+                                     storage='ndarray',
+                                     order=order)
+
+    with pytest.raises(Exception):
+        # due to load_whole_genome = False
+        data[data.gindexer[0]]
+
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     regions=bed_merged,
+                                     storage='ndarray',
+                                     order=order,
+                                     load_whole_genome=True)
+
+    np.testing.assert_equal(data[0], data[data.gindexer[0]])
+
+
 def test_dna_dims_order_1_from_subset(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     order = 1
@@ -42,6 +67,7 @@ def test_dna_dims_order_1_from_subset(tmpdir):
                                      storage='ndarray',
                                      order=order)
 
+    np.testing.assert_equal(data[0], data[data.gindexer[0]])
     assert len(data.garray.handle) == 2
 
     # for order 1
@@ -116,7 +142,8 @@ def test_dna_dims_order_1_from_reference(tmpdir):
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                         storage='ndarray',
-                                        order=order)
+                                        order=order,
+                                        load_whole_genome=True)
     data.gindexer = gindexer
     assert len(data.garray.handle) == 2
     assert 'chr1' in data.garray.handle
@@ -387,7 +414,8 @@ def test_dna_dataset_sanity(tmpdir):
 
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='ndarray',
-                              regions=None, order=1)
+                              regions=None, order=1,
+                              load_whole_genome=True)
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
                               regions=bed_file, order=1, cache=True)

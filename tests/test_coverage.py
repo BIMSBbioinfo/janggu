@@ -12,6 +12,33 @@ from janggu.data import Cover
 
 
 
+def test_bam_genomic_interval_access():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+
+    bamfile_ = os.path.join(data_path, "sample.bam")
+
+    cover = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray')
+
+    with pytest.raises(Exception):
+        # due to load_whole_genome = False
+        cover[cover.gindexer[0]]
+
+    cover = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray',
+        load_whole_genome=True)
+
+    np.testing.assert_equal(cover[0], cover[cover.gindexer[0]])
+
 def test_bam_inferred_binsize():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")
@@ -94,7 +121,9 @@ def test_cover_from_bam_sanity():
     cov2 = Cover.create_from_bam(
            'test',
            bamfiles=bamfile_,
-           storage='ndarray')
+           storage='ndarray',
+           load_whole_genome=True)
+
     assert len(cover.gindexer) == len(cover.garray.handle)
     assert len(cov2.garray.handle) != len(cover.garray.handle)
 
@@ -151,7 +180,8 @@ def test_cover_from_bigwig_sanity():
         'test',
         bigwigfiles=bwfile_,
         resolution=50,
-        storage='ndarray')
+        storage='ndarray',
+        load_whole_genome=True)
     assert len(cover.gindexer) == len(cover.garray.handle)
     assert len(cov2.garray.handle) != len(cover.garray.handle)
 
@@ -335,7 +365,8 @@ def test_cover_bam_paired_5pend():
         bamfiles=bamfile_,
         stranded=False,
         pairedend='5pend',
-        min_mapq=30)
+        min_mapq=30,
+        load_whole_genome=True)
 
     assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
 
@@ -357,7 +388,8 @@ def test_cover_bam_paired_midpoint():
         bamfiles=bamfile_,
         stranded=False,
         pairedend='midpoint',
-        min_mapq=30)
+        min_mapq=30,
+        load_whole_genome=True)
 
     assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
     print(cover.garray.handle['ref'])
