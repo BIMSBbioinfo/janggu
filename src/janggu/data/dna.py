@@ -389,7 +389,7 @@ class Bioseq(Dataset):
                 raise ValueError('Indexing with GenomicInterval only possible '
                                  'when the whole genome (or chromosome) was loaded')
 
-            data = np.zeros((1, idxs.length))
+            data = np.zeros((1, idxs.length  - self.garray.order + 1))
             data[0] = self._getsingleitem(idxs)
             # accept a genomic interval directly
             data = as_onehot(data,

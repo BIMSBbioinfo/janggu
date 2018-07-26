@@ -32,7 +32,7 @@ def datalen(bed_file):
 
 def test_dna_genomic_interval_access(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
-    order = 1
+    order = 2
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_merged = os.path.join(data_path, 'sample.gtf')
     refgenome = os.path.join(data_path, 'sample_genome.fa')
