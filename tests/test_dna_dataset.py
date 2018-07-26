@@ -53,7 +53,11 @@ def test_dna_genomic_interval_access(tmpdir):
                                      load_whole_genome=True)
 
     np.testing.assert_equal(data[0], data[data.gindexer[0]])
-
+    chrom = data.gindexer[0].chrom
+    start = data.gindexer[0].start
+    end = data.gindexer[0].end
+    np.testing.assert_equal(data[0], data[(chrom, start, end)])
+    np.testing.assert_equal(data[0], data[chrom, start, end])
 
 def test_dna_dims_order_1_from_subset(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath

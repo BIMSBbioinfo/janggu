@@ -38,6 +38,10 @@ def test_bam_genomic_interval_access():
         load_whole_genome=True)
 
     np.testing.assert_equal(cover[0], cover[cover.gindexer[0]])
+    chrom, start, end = cover.gindexer[0].chrom, cover.gindexer[0].start, cover.gindexer[0].end
+    np.testing.assert_equal(cover[0], cover[(chrom, start, end)])
+    np.testing.assert_equal(cover[0], cover[chrom, start, end])
+
 
 def test_bam_inferred_binsize():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')

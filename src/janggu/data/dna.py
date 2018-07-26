@@ -378,6 +378,14 @@ class Bioseq(Dataset):
 
 
     def __getitem__(self, idxs):
+        if isinstance(idxs, tuple):
+            if len(idxs) == 3 or len(idxs) == 4:
+                # interpret idxs as genomic interval
+                idxs = GenomicInterval(*idxs)
+            else:
+                raise ValueError('idxs cannot be interpreted as genomic interval.'
+                                 ' use (chr, start, end) or (chr, start, end, strand)')
+
         if isinstance(idxs, int):
             idxs = [idxs]
         elif isinstance(idxs, slice):
