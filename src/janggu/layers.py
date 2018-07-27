@@ -13,6 +13,7 @@ from keras import backend as K
 from keras.engine.topology import Layer
 from keras.initializers import Constant
 from keras.layers import Conv2D
+from keras.layers import Wrapper
 
 from janggu.utils import complement_permmatrix
 
@@ -144,7 +145,7 @@ class Complement(Layer):
         return input_shape
 
 
-class DnaConv2D(Conv2D):
+class DnaConv2D(Wrapper):
     """DnaConv2D layer.
 
     This layer is a special convolution layer for scanning DNA
@@ -158,9 +159,10 @@ class DnaConv2D(Conv2D):
 
     Parameters
     ----------
-    scan_revcomp : boolean
-        If True the reverse complement is scanned for motif matches.
-        Default: False.
+    merge_mode : boolean
+        Specifies how to merge information from both strands. Options:
+        {"sum", "max", "ave", "concat"}
+        Default: "max".
 
     Examples
     --------
@@ -168,84 +170,105 @@ class DnaConv2D(Conv2D):
 
     .. code-block:: python
 
-      conv = DnaConv2D(nfilters, filter_shape)
+      conv = DnaConv2D(Conv2D(nfilters, filter_shape))
       # apply the normal convolution operation
-      forward = conv(input)
+      dnalayer = conv(input)
 
-      # obtain a copy of conv and scan the reverse compl. strand
-      rcconv = conv.get_revcomp()
-      reverse = rcconv(input)
     """
     kernel = None
 
-    def __init__(self, filters,  # pylint: disable=too-many-locals
-                 kernel_size,
-                 strides=(1, 1),
-                 padding='valid',
-                 data_format=None,
-                 dilation_rate=(1, 1),
-                 activation=None,
-                 use_bias=True,
-                 kernel_initializer='glorot_uniform',
-                 bias_initializer='zeros',
-                 kernel_regularizer=None,
-                 bias_regularizer=None,
-                 activity_regularizer=None,
-                 kernel_constraint=None,
-                 bias_constraint=None,
-                 scan_revcomp=False, **kwargs):
-        super(DnaConv2D, self).__init__(
-            filters=filters,
-            kernel_size=kernel_size,
-            strides=strides,
-            padding=padding,
-            data_format=data_format,
-            dilation_rate=dilation_rate,
-            activation=activation,
-            use_bias=use_bias,
-            kernel_initializer=kernel_initializer,
-            bias_initializer=bias_initializer,
-            kernel_regularizer=kernel_regularizer,
-            bias_regularizer=bias_regularizer,
-            activity_regularizer=activity_regularizer,
-            kernel_constraint=kernel_constraint,
-            bias_constraint=bias_constraint,
-            **kwargs)
-        self.scan_revcomp = scan_revcomp
+    def __init__(self, layer, merge_mode='max', **kwargs):
+
+        if merge_mode not in ['sum', 'max', 'ave', 'concat']:
+            raise ValueError('Invalid merge mode {}. '.format(merge_mode) + \
+                             'Merge mode should be one of '
+                             '{"sum", "max", "ave", "concat", None}')
+        self.merge_mode = merge_mode
+        self.forward_layer = layer
         self.rcmatrix = None
+        self._trainable = True
+        super(DnaConv2D, self).__init__(layer, **kwargs)
+
+
+    @property
+    def trainable(self):
+        return self._trainable
+
+    @trainable.setter
+    def trainable(self, value):
+        self._trainable = value
+        self.forward_layer.trainable = value
+
+    def get_weights(self):
+        return self.forward_layer.get_weights()
+
+    def set_weights(self, weights):
+        self.forward_layer.set_weights(weights)
+
+    def compute_output_shape(self, input_shape):
+        output_shape = self.forward_layer.compute_output_shape(input_shape)
+        if self.merge_mode == 'concat':
+            output_shape = list(output_shape)
+            output_shape[-1] *= 2
+            output_shape = tuple(output_shape)
+        elif self.merge_mode is None:
+            output_shape = [output_shape, copy(output_shape)]
 
     def build(self, input_shape):
+
         super(DnaConv2D, self).build(input_shape)
 
         self.rcmatrix = K.constant(
             complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
             dtype=K.floatx())
+        with K.name_scope(self.forward_layer.name):
+            self.forward_layer.build(input_shape)
 
     def get_config(self):
-        config = {'scan_revcomp': self.scan_revcomp}
+        config = {'merge_mode': self.merge_mode}
+
         base_config = super(DnaConv2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-    def call(self, inputs):
-        if self.scan_revcomp:
+    @classmethod
+    def from_config(cls, config, custom_objects=None):
+        from . import deserialize as deserialize_layer
+        dna_layer = deserialize_layer(config.pop('layer'),
+                                      custom_objects=custom_objects)
 
-            # revert and complement the weight matrices
-            tmp = self.kernel
-            self.kernel = self.kernel[::-1, :, :, :]
-            self.kernel = tf.einsum('ij,sdjc->sdic', self.rcmatrix, self.kernel)
+        layer = cls(dna_layer, **config)
+        return layer
+
+    def call(self, inputs):
+        kernel = self.forward_layer.kernel
+
+        # revert and complement the weight matrices
 
         # perform the convolution operation
-        res = super(DnaConv2D, self).call(inputs)
-        if self.scan_revcomp:
-            # restore the original kernel matrix
-            self.kernel = tmp
-        return res
+        res1 = self.forward_layer.call(inputs)
 
-    def get_revcomp(self):
-        """Optain a copy of the layer that uses the reverse complement operation."""
-        if not self.built:
-            raise ValueError("Layer must be built before a copy can be obtained.")
-        layer = copy(self)
-        layer.name += '_rc'
-        layer.scan_revcomp = True
-        return layer
+        #tmp = self.kernel
+        self.forward_layer.kernel = self.forward_layer.kernel[::-1, :, :, :]
+        self.forward_layer.kernel = tf.einsum('ij,sdjc->sdic',
+                                              self.rcmatrix,
+                                              self.forward_layer.kernel)
+
+        res2 = self.forward_layer.call(inputs)
+
+        # restore the weights
+        self.forward_layer.kernel = self.forward_layer.kernel[::-1, :, :, :]
+        self.forward_layer.kernel = tf.einsum('ij,sdjc->sdic', self.rcmatrix,
+                                              self.forward_layer.kernel)
+
+        if self.merge_mode == 'concat':
+            res = K.concatenate([res1, res2])
+        elif self.merge_mode == 'max':
+            res = K.maximum(res1, res2)
+        elif self.merge_mode == 'sum':
+            res = res1 + res2
+        elif self.merge_mode == 'ave':
+            res = (res1 + res2) /2
+        elif self.merge_mode is None:
+            res = [res1, res2]
+
+        return res
