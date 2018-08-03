@@ -113,40 +113,40 @@ def _display_page(pathname):  # pylint: disable=too-many-return-statements
         )
     elif pathname == '/model_comparison':
         return _model_comparison_page()
-    else:
-        files = []
-        root = os.path.join(ARGS.janggu_results, 'evaluation', pathname[1:])
-        pathlen = len(root) + 1
-        for root, dirnames, filenames in os.walk(root):
-            for filename in filenames:
-                if filename.endswith('.png') or \
-                        filename.endswith('.tsv') or filename.endswith('.ply'):
 
-                    path = tuple(dirnames) + (filename,)
+    files = []
+    root = os.path.join(ARGS.janggu_results, 'evaluation', pathname[1:])
+    pathlen = len(root) + 1
+    for root, dirnames, filenames in os.walk(root):
+        for filename in filenames:
+            if filename.endswith('.png') or \
+                    filename.endswith('.tsv') or filename.endswith('.ply'):
 
-                    files += [os.path.join(root, *path)]
+                path = tuple(dirnames) + (filename,)
 
-        if not files:
-            return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
+                files += [os.path.join(root, *path)]
 
-        image = os.path.join(ARGS.janggu_results, 'models',
-                             pathname[1:] + '.png')
-        encoding = base64.b64encode(open(image, 'rb').read())
+    if not files:
+        return html.Div([html.H3('No figures available for {}'.format(pathname[1:]))])
 
-        return html.Div([html.H3('Model: {}'.format(pathname[1:])),
-                         html.Div([html.Div([
-                             dcc.Dropdown(id='tag-selection',
-                                          options=[{'label': f[pathlen:],
-                                                    'value': f} for f in files],
-                                          value=files[0]),
-                             html.Img(
-                                 width='100%',
-                                 src='data:image/png;base64,{}'.format(
-                                     encoding.decode()))
-                         ], className="three columns"),
-                                   html.Div([html.Div(id='output-plot')],
-                                            className="nine columns")],
-                                  className='row')])
+    image = os.path.join(ARGS.janggu_results, 'models',
+                         pathname[1:] + '.png')
+    encoding = base64.b64encode(open(image, 'rb').read())
+
+    return html.Div([html.H3('Model: {}'.format(pathname[1:])),
+                     html.Div([html.Div([
+                         dcc.Dropdown(id='tag-selection',
+                                      options=[{'label': f[pathlen:],
+                                                'value': f} for f in files],
+                                      value=files[0]),
+                         html.Img(
+                             width='100%',
+                             src='data:image/png;base64,{}'.format(
+                                 encoding.decode()))
+                     ], className="three columns"),
+                               html.Div([html.Div(id='output-plot')],
+                                        className="nine columns")],
+                              className='row')])
 
 
 def _get_resulttables_by_name():
