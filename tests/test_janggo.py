@@ -5,9 +5,12 @@ import numpy as np
 import pkg_resources
 import pytest
 from keras.layers import Average
+from keras.layers import Concatenate
 from keras.layers import Dense
+from keras.layers import Maximum
 from keras.layers import Flatten
 from keras.layers import Input
+from keras.layers import Conv2D
 
 from janggu import Janggu
 from janggu import inputlayer
@@ -140,12 +143,6 @@ def test_janggu_instance_dense(tmpdir):
         output = Dense(params[0])(layer)
         return inputs, output
 
-    #with pytest.raises(Exception):
-    #    # name with dot not allowed. could be mistaken for a file-ending
-    #    bwm = Janggu.create(_cnn_model, modelparams=(2,),
-    #                        inputs=dna,
-    #                        outputs=ctcf,
-    #                        name='dna_ctcf_HepG2.cnn')
     with pytest.raises(Exception):
         # name with must be string
         bwm = Janggu.create(_cnn_model, modelparams=(2,),
@@ -251,9 +248,7 @@ def test_janggu_instance_conv(tmpdir):
     Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
 
-
-
-def test_janggu_use_dnaconv(tmpdir):
+def test_janggu_use_dnaconv_none(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -267,42 +262,224 @@ def test_janggu_use_dnaconv(tmpdir):
                                     storage='ndarray',
                                     regions=bed_file, order=1)
 
-    ctcf = Cover.create_from_bed(
-        "positives",
-        bedfiles=posfile,
-        regions=bed_file,
-        binsize=200, stepsize=200,
-        resolution=200,
-        flank=0,
-        dimmode='all',
-        storage='ndarray')
-
     @inputlayer
-    @outputconv('sigmoid')
-    def _cnn_model(inputs, inp, oup, params):
+    def _cnn_model1(inputs, inp, oup, params):
         with inputs.use('dna') as inlayer:
             layer = inlayer
-        conv = DnaConv2D(5, (3, 1))
-        layer1 = conv(layer)
-        rcconv = conv.get_revcomp()
-        layer2 = rcconv(layer)
-        layer = Average()([layer1, layer2])
+            layer = DnaConv2D(Conv2D(5, (3, 1), name='fconv1'), 
+                              merge_mode=None, name='bothstrands')(layer)
         return inputs, layer
 
-    bwm = Janggu.create(_cnn_model, modelparams=(2,),
+    bwm1 = Janggu.create(_cnn_model1, modelparams=(2,),
                         inputs=dna,
-                        outputs=ctcf,
-                        name='dna_ctcf_HepG2-cnn')
+                        name='dna_ctcf_HepG2-cnn1')
 
-    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
-    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    p1 = bwm1.predict(dna[1:2])
+    w = bwm1.kerasmodel.get_layer('bothstrands').get_weights()
 
-    bwm.save()
-    bwm.summary()
+    @inputlayer
+    def _cnn_model2(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            conv = Conv2D(5, (3, 1), name='singlestrand')
+            fl = conv(layer)
+            rl = Reverse()(conv(Complement()(Reverse()(inlayer))))
+        return inputs, [fl, rl]
+
+    bwm2 = Janggu.create(_cnn_model2, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn2')
+
+    bwm2.kerasmodel.get_layer('singlestrand').set_weights(w)
+
+    p2 = bwm2.predict(dna[1:2])
+    np.testing.assert_allclose(p1, p2, rtol=1e-5)
+
+    bwm1.compile(optimizer='adadelta', loss='binary_crossentropy')
+    storage = bwm1._storage_path(bwm1.name, outputdir=tmpdir.strpath)
+
+    bwm1.save()
+    bwm1.summary()
 
     assert os.path.exists(storage)
 
-    Janggu.create_by_name('dna_ctcf_HepG2-cnn')
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
+
+def test_janggu_use_dnaconv_concat(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    posfile = os.path.join(data_path, 'positive.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    regions=bed_file, order=1)
+
+    @inputlayer
+    def _cnn_model1(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            layer = DnaConv2D(Conv2D(5, (3, 1), name='fconv1'), 
+                              merge_mode='concat', name='bothstrands')(layer)
+        return inputs, layer
+
+    bwm1 = Janggu.create(_cnn_model1, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn1')
+
+    p1 = bwm1.predict(dna[1:2])
+    w = bwm1.kerasmodel.get_layer('bothstrands').get_weights()
+
+    @inputlayer
+    def _cnn_model2(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            conv = Conv2D(5, (3, 1), name='singlestrand')
+            fl = conv(layer)
+            rl = Reverse()(conv(Complement()(Reverse()(inlayer))))
+            layer = Concatenate()([fl, rl])
+        return inputs, layer
+
+    bwm2 = Janggu.create(_cnn_model2, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn2')
+
+    bwm2.kerasmodel.get_layer('singlestrand').set_weights(w)
+
+    p2 = bwm2.predict(dna[1:2])
+    np.testing.assert_allclose(p1, p2, rtol=1e-5)
+
+    bwm1.compile(optimizer='adadelta', loss='binary_crossentropy')
+    storage = bwm1._storage_path(bwm1.name, outputdir=tmpdir.strpath)
+
+    bwm1.save()
+    bwm1.summary()
+
+    assert os.path.exists(storage)
+
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
+
+
+def test_janggu_use_dnaconv_ave(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    posfile = os.path.join(data_path, 'positive.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    regions=bed_file, order=1)
+
+    @inputlayer
+    def _cnn_model1(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            layer = DnaConv2D(Conv2D(5, (3, 1), name='fconv1'), 
+                              merge_mode='ave', name='bothstrands')(layer)
+        return inputs, layer
+
+    bwm1 = Janggu.create(_cnn_model1, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn1')
+
+    p1 = bwm1.predict(dna[1:2])
+    w = bwm1.kerasmodel.get_layer('bothstrands').get_weights()
+
+    @inputlayer
+    def _cnn_model2(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            conv = Conv2D(5, (3, 1), name='singlestrand')
+            fl = conv(layer)
+            rl = Reverse()(conv(Complement()(Reverse()(inlayer))))
+            layer = Average()([fl, rl])
+        return inputs, layer
+
+    bwm2 = Janggu.create(_cnn_model2, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn2')
+
+    bwm2.kerasmodel.get_layer('singlestrand').set_weights(w)
+
+    p2 = bwm2.predict(dna[1:2])
+    np.testing.assert_allclose(p1, p2, rtol=1e-5)
+
+    bwm1.compile(optimizer='adadelta', loss='binary_crossentropy')
+    storage = bwm1._storage_path(bwm1.name, outputdir=tmpdir.strpath)
+
+    bwm1.save()
+    bwm1.summary()
+
+    assert os.path.exists(storage)
+
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
+
+
+def test_janggu_use_dnaconv_max(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    posfile = os.path.join(data_path, 'positive.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    regions=bed_file, order=1)
+
+    @inputlayer
+    def _cnn_model1(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            layer = DnaConv2D(Conv2D(5, (3, 1), name='fconv1'), 
+                              merge_mode='max', name='bothstrands')(layer)
+        return inputs, layer
+
+    bwm1 = Janggu.create(_cnn_model1, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn1')
+
+    p1 = bwm1.predict(dna[1:2])
+    w = bwm1.kerasmodel.get_layer('bothstrands').get_weights()
+
+    @inputlayer
+    def _cnn_model2(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            conv = Conv2D(5, (3, 1), name='singlestrand')
+            fl = conv(layer)
+            rl = Reverse()(conv(Complement()(Reverse()(inlayer))))
+            layer = Maximum()([fl, rl])
+        return inputs, layer
+
+    bwm2 = Janggu.create(_cnn_model2, modelparams=(2,),
+                        inputs=dna,
+                        name='dna_ctcf_HepG2-cnn2')
+
+    bwm2.kerasmodel.get_layer('singlestrand').set_weights(w)
+
+    p2 = bwm2.predict(dna[1:2])
+    np.testing.assert_allclose(p1, p2, rtol=1e-5)
+
+    bwm1.compile(optimizer='adadelta', loss='binary_crossentropy')
+    storage = bwm1._storage_path(bwm1.name, outputdir=tmpdir.strpath)
+
+    bwm1.save()
+    bwm1.summary()
+
+    assert os.path.exists(storage)
+
+    Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
 
 def test_janggu_train_predict_option1(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath

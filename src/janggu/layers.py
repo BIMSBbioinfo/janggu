@@ -12,7 +12,6 @@ import tensorflow as tf  # pylint: disable=import-error
 from keras import backend as K
 from keras.engine.topology import Layer
 from keras.initializers import Constant
-from keras.layers import Conv2D
 from keras.layers import Wrapper
 
 from janggu.utils import complement_permmatrix
@@ -148,20 +147,14 @@ class Complement(Layer):
 class DnaConv2D(Wrapper):
     """DnaConv2D layer.
 
-    This layer is a special convolution layer for scanning DNA
-    sequences. When using it with the default settings, it behaves
-    identically to the normal keras.layers.Conv2D layer.
-    However, when setting the flag :code:`scan_revcomp=True`
-    the weight matrices are reverse complemented which allows
-    you to scan the reverse complementary sequence for motif matches.
-
-    All parameters are the same as for keras.layers.Conv2D except for scan_revcomp.
+    This layer wraps a normal Conv2D layer for scanning DNA
+    sequences on both strands using the same weight matrices.
 
     Parameters
     ----------
-    merge_mode : boolean
+    merge_mode : str or None
         Specifies how to merge information from both strands. Options:
-        {"sum", "max", "ave", "concat"}
+        {"max", "ave", "concat", None}
         Default: "max".
 
     Examples
@@ -170,24 +163,29 @@ class DnaConv2D(Wrapper):
 
     .. code-block:: python
 
-      conv = DnaConv2D(Conv2D(nfilters, filter_shape))
-      # apply the normal convolution operation
-      dnalayer = conv(input)
+      xin = Input((200, 1, 4))
+      dnalayer = DnaConv2D(Conv2D(nfilters, filter_shape))(xin)
 
     """
-    kernel = None
 
     def __init__(self, layer, merge_mode='max', **kwargs):
 
-        if merge_mode not in ['sum', 'max', 'ave', 'concat']:
+        if merge_mode not in ['max', 'ave', 'concat', None]:
             raise ValueError('Invalid merge mode {}. '.format(merge_mode) + \
                              'Merge mode should be one of '
-                             '{"sum", "max", "ave", "concat", None}')
+                             '{"max", "ave", "concat", None}')
+        # instantiate the forward and reverse layer
+        print("init_wrapper")
+        self.forward_layer = copy(layer)
+        config = layer.get_config()
+        self.revcomp_layer = layer.__class__.from_config(config)
+        self.forward_layer.name = 'forward_' + self.forward_layer.name
+        self.revcomp_layer.name = 'revcomp_' + self.revcomp_layer.name
         self.merge_mode = merge_mode
-        self.forward_layer = layer
-        self.rcmatrix = None
         self._trainable = True
+        print("layers initialized")
         super(DnaConv2D, self).__init__(layer, **kwargs)
+        self.input_spec = layer.input_spec
 
 
     @property
@@ -198,11 +196,18 @@ class DnaConv2D(Wrapper):
     def trainable(self, value):
         self._trainable = value
         self.forward_layer.trainable = value
+        self.revcomp_layer.trainable = value
 
     def get_weights(self):
+        # there is only one set of weights, because the
+        # weights are shared between forward_layer
+        # and revcomp_layer
         return self.forward_layer.get_weights()
 
     def set_weights(self, weights):
+        # there is only one set of weights, because the
+        # weights are shared between forward_layer
+        # and revcomp_layer
         self.forward_layer.set_weights(weights)
 
     def compute_output_shape(self, input_shape):
@@ -213,16 +218,25 @@ class DnaConv2D(Wrapper):
             output_shape = tuple(output_shape)
         elif self.merge_mode is None:
             output_shape = [output_shape, copy(output_shape)]
+        return output_shape
 
     def build(self, input_shape):
-
-        super(DnaConv2D, self).build(input_shape)
-
-        self.rcmatrix = K.constant(
-            complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
-            dtype=K.floatx())
+        print('Build wrapper')
         with K.name_scope(self.forward_layer.name):
             self.forward_layer.build(input_shape)
+
+        with K.name_scope(self.revcomp_layer.name):
+            rcmatrix = K.constant(
+                complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
+                dtype=K.floatx())
+
+            kernel = self.forward_layer.kernel[::-1, :, :, :]
+            kernel = tf.einsum('ij,sdjc->sdic', rcmatrix, kernel)
+            self.revcomp_layer.kernel = kernel
+            self.revcomp_layer.bias = self.forward_layer.bias
+            self.revcomp_layer.use_bias = self.forward_layer.use_bias
+            self.revcomp_layer.input_spec = self.forward_layer.input_spec
+        self.built = True
 
     def get_config(self):
         config = {'merge_mode': self.merge_mode}
@@ -232,7 +246,7 @@ class DnaConv2D(Wrapper):
 
     @classmethod
     def from_config(cls, config, custom_objects=None):
-        from . import deserialize as deserialize_layer
+        from keras.layers import deserialize as deserialize_layer
         dna_layer = deserialize_layer(config.pop('layer'),
                                       custom_objects=custom_objects)
 
@@ -240,32 +254,17 @@ class DnaConv2D(Wrapper):
         return layer
 
     def call(self, inputs):
-        kernel = self.forward_layer.kernel
 
         # revert and complement the weight matrices
 
         # perform the convolution operation
         res1 = self.forward_layer.call(inputs)
-
-        #tmp = self.kernel
-        self.forward_layer.kernel = self.forward_layer.kernel[::-1, :, :, :]
-        self.forward_layer.kernel = tf.einsum('ij,sdjc->sdic',
-                                              self.rcmatrix,
-                                              self.forward_layer.kernel)
-
-        res2 = self.forward_layer.call(inputs)
-
-        # restore the weights
-        self.forward_layer.kernel = self.forward_layer.kernel[::-1, :, :, :]
-        self.forward_layer.kernel = tf.einsum('ij,sdjc->sdic', self.rcmatrix,
-                                              self.forward_layer.kernel)
+        res2 = self.revcomp_layer.call(inputs)
 
         if self.merge_mode == 'concat':
             res = K.concatenate([res1, res2])
         elif self.merge_mode == 'max':
             res = K.maximum(res1, res2)
-        elif self.merge_mode == 'sum':
-            res = res1 + res2
         elif self.merge_mode == 'ave':
             res = (res1 + res2) /2
         elif self.merge_mode is None:

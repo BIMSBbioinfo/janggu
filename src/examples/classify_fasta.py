@@ -1,5 +1,7 @@
 import argparse
 import os
+import matplotlib
+matplotlib.use('Agg')
 
 import numpy as np
 import pandas as pd
@@ -140,18 +142,12 @@ def double_stranded_model(inputs, inp, oup, params):
 @outputdense('sigmoid')
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
-        pass
-    dnaconv = DnaConv2D(params[0], (params[1], 1), activation=params[2])
 
-    forward = dnaconv(layer)
+        conv = DnaConv2D(Conv2D(params[0], 
+                                (params[1], 1), 
+                                activation=params[2]), name='conv1')(layer)
 
-    # copy the conv layer with the same weights
-    dnaconv2 = dnaconv.get_revcomp()
-
-    revcomp = dnaconv2(layer)
-
-    layer = Maximum()([forward, revcomp])
-    output = GlobalAveragePooling2D(name='motif')(layer)
+    output = GlobalAveragePooling2D(name='motif')(conv)
     return inputs, output
 
 
@@ -172,6 +168,7 @@ model = Janggu.create(template=modeltemplate,
 
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
+model.summary()
 
 hist = model.fit(DNA, LABELS, epochs=100)
 

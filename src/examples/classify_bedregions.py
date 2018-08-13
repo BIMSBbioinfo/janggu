@@ -66,6 +66,7 @@ DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
 LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
                                bedfiles=PEAK_FILE,
                                binsize=200,
+                               resolution=200,
                                datatags=['train'])
 
 
@@ -140,15 +141,9 @@ def double_stranded_model(inputs, inp, oup, params):
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
         pass
-    dnaconv = DnaConv2D(params[0], (params[1], 1),
-                        activation=params[2])
+        layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
+                                 activation=params[2]))(layer)
 
-    forward = dnaconv(layer)
-    dnaconv2 = dnaconv.get_revcomp()
-
-    revcomp = dnaconv2(layer)
-
-    layer = Maximum()([forward, revcomp])
     output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
                                    name='motif')(layer)
     return inputs, output
@@ -194,6 +189,7 @@ LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
                                     regions=ROI_FILE,
                                     binsize=200,
+                                    resolution=200,
                                     datatags=['test'])
 
 # do the evaluation on the training data
