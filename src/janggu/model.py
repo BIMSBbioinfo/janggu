@@ -328,7 +328,6 @@ class Janggu(object):
         print('create model')
         modelfct = template
 
-        K.clear_session()
         inputs_ = _data_props(inputs) if inputs else None
         outputs_ = _data_props(outputs) if outputs else None
 
