@@ -540,12 +540,10 @@ def export_bigwig(output_dir, name, results, gindexer=None):
                 output=layername, condition=condition)), 'w')
         bw_file.addHeader(bw_header)
         pred = results[modelname, layername, condition]['value']
-        npred = len(pred)
-        ninter = len(gindexer)
         # compute the ratio between binsize and stepsize
         bsss = float(gindexer.binsize) / float(gindexer.stepsize)
         if bsss < 1.:
-           bsss = 1.
+            bsss = 1.
         ppi = int(np.rint(len(pred)/(len(gindexer) - 1. + bsss)))
 
         # case 1) stepsize >= binsize
@@ -553,7 +551,6 @@ def export_bigwig(output_dir, name, results, gindexer=None):
         #
         # case 2) stepsize < binsize
         # then bsss > 1; ppi = len(pred)/ (len(gindexer) -1 + bsss)
-        #ppi = len(pred)//len(gindexer)
         resolution = int(region.length / bsss) // ppi
         for idx, region in enumerate(gindexer):
 

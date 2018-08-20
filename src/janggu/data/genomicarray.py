@@ -90,17 +90,18 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                 # correcting for the overshooting starts and ends is not necessary
                 # for partially loaded data
                 return self._reshape(self.handle[_iv_to_str(chrom, interval.start,
-                                                            interval.end)][:(length)],  
+                                                            interval.end)][:(length)],
                                      (length, 2 if self.stranded else 1, len(self.condition)))
 
             if start >= 0 and end <= self.handle[chrom].shape[0]:
                 # this is a short-cut, which does not require zero-padding
-                return self._reshape(self.handle[chrom][start:end], (end-start,  2 if self.stranded else 1,
-                                 len(self.condition)))
+                return self._reshape(self.handle[chrom][start:end],
+                                     (end-start, 2 if self.stranded else 1,
+                                      len(self.condition)))
 
             # below is some functionality for zero-padding, in case the region
             # reaches out of the chromosome size
-       
+
             data = numpy.zeros((length, 2 if self.stranded else 1, len(self.condition)),
                                dtype=self.handle[chrom].dtype)
 
@@ -118,7 +119,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
             # dstart and dend are offset by the number of positions
             # the region reaches out of the chromosome
-            data[dstart:dend, :, :] = self._reshape(self.handle[chrom][start:end], 
+            data[dstart:dend, :, :] = self._reshape(self.handle[chrom][start:end],
                                                     (end-start,  2 if self.stranded else 1,
                                                      len(self.condition)))
             return data
@@ -146,6 +147,8 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         self._resolution = resolution
 
     def _reshape(self, data, shape):
+        # shape not necessary here,
+        # data should just fall through
         return data
 
     @property

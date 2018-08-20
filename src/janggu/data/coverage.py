@@ -478,8 +478,11 @@ class Cover(Dataset):
 
                     else:
                         for start in range(locus[1], locus[2], resolution):
-                            vals[(start - locus[1])//resolution] = aggregate(np.asarray(bwfile.values(
-                                locus[0], int(start), int(start+resolution))))
+                            vals[(start - locus[1])//resolution] = \
+                                aggregate(np.asarray(bwfile.values(
+                                          locus[0],
+                                          int(start),
+                                          int(start+resolution))))
                         # not sure what to do with nan yet.
 
                     garray[GenomicInterval(chrom, 0, gsize[chrom]), i] = vals
@@ -732,7 +735,7 @@ class Cover(Dataset):
 
             pinterval = interval.copy()
 
-            end =  (pinterval.end - pinterval.start) // self.garray.resolution
+            end = (pinterval.end - pinterval.start) // self.garray.resolution
 
             data[i, :end, :, :] = self._getsingleitem(pinterval)
 
