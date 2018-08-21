@@ -176,11 +176,12 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         """Returns representing the region."""
         return ['{}:{}-{}'.format(iv.chrom, iv.start, iv.end) for iv in self]
 
-    def idx_by_chrom(self, include=None, exclude=None):
-        """idx_by_chrom filters for chromosome ids.
+    def filter_by_chrom(self, include=None, exclude=None):
+        """filter_by_chrom filters for chromosome ids.
 
         It takes a list of chromosome ids which should be included
-        or excluded and returns the indices associated with the
+        or excluded and returns a new GenomicIndexer
+        associated with the
         compatible intervals after filtering.
 
         Parameters
@@ -193,8 +194,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         Returns
         -------
-        list(int)
-            List of compatible indices.
+        GenomicIndexer
+            Containing the filtered regions.
         """
 
         if isinstance(include, str):
@@ -215,4 +216,14 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                 idxs = idxs.difference(
                     np.where(np.asarray(self.chrs) == exc)[0])
 
-        return list(idxs)
+        idxs = list(idxs)
+
+        #  construct the filtered gindexer
+        new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
+        new_gindexer.chrs = [self.chrs[i] for i in idxs]
+        new_gindexer.offsets = [self.offsets[i] for i in idxs]
+        new_gindexer.inregionidx = [self.inregionidx[i] for i in idxs]
+        new_gindexer.strand = [self.strand[i] for i in idxs]
+        new_gindexer.rel_end = [self.rel_end[i] for i in idxs]
+
+        return new_gindexer

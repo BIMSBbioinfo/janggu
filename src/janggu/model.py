@@ -20,6 +20,7 @@ from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
+from janggu.data import split_train_test
 
 
 def _convert_data(kerasmodel, data, layer):
@@ -399,7 +400,11 @@ class Janggu(object):
         validation_data : tuple, Sequence or None
             Validation data can be a tuple (input_dataset, output_dataset),
             or (input_dataset, output_dataset, sample_weights) or
-            a keras.utils.Sequence instance. If None, validation is not applied.
+            a keras.utils.Sequence instance or a list of validation chromsomoes.
+            The latter choice only works with when using Cover and Bioseq dataset.
+            This allows you to train on a dedicated set of chromosomes
+            and to validate the performance on respective heldout chromosomes.
+            If None, validation is not applied.
         shuffle : boolean
             shuffle batches. Default: True.
         class_weight : dict
@@ -469,23 +474,66 @@ class Janggu(object):
 
         if not batch_size:
             batch_size = 32
+
+
         if isinstance(inputs, Sequence):
             # input could be a sequence
             jseq = inputs
         else:
             jseq = JangguSequence(batch_size, inputs, outputs, sample_weight, shuffle=shuffle)
 
-        if validation_data is None:
-            valjseq = None
+
+        if isinstance(validation_data, tuple):
+            valinputs = _convert_data(self.kerasmodel, validation_data[0],
+            'input_layers')
+            valoutputs = _convert_data(self.kerasmodel, validation_data[1],
+            'output_layers')
+            sweights = validation_data[2] if len(validation_data) == 3 else None
+            valjseq = JangguSequence(batch_size, valinputs, valoutputs, sweights, shuffle=False)
         elif isinstance(validation_data, Sequence):
             valjseq = validation_data
+        elif isinstance(validation_data, list) and isinstance(validation_data[0], str):
+            # if the validation data is a list of chromosomes that should
+            # be used as validation dataset we end up here.
+
+            # This is only possible, however, if all input and output datasets
+            # are Cover or Bioseq dataset.
+            if not all(hasattr(datum, 'gindexer') \
+                for datum in [jseq.inputs[k] for k in jseq.inputs] +
+                             [jseq.outputs[k] for k in jseq.outputs]):
+                raise ValueError("Not all dataset are Cover or Bioseq dataset"
+                                 " which is required for this options.")
+
+            # then split the original dataset into training and validation set.
+            testinp = []
+            traininp = []
+            testoup = []
+            trainoup = []
+            for inp in jseq.inputs:
+                trinp, teinp = split_train_test(jseq.inputs[inp], validation_data)
+                testinp.append(teinp)
+                traininp.append(trinp)
+            for oup in jseq.outputs:
+                troup, teoup = split_train_test(jseq.outputs[oup], validation_data)
+                testoup.append(teoup)
+                trainoup.append(troup)
+
+            jseq = JangguSequence(jseq.batch_size,
+                                  _convert_data(self.kerasmodel, traininp,
+                                                'input_layers'),
+                                  _convert_data(self.kerasmodel, trainoup,
+                                                'output_layers'),
+                                  sample_weights=None, shuffle=jseq.shuffle)
+            valjseq = JangguSequence(jseq.batch_size,
+                                     _convert_data(self.kerasmodel, testinp,
+                                                   'input_layers'),
+                                     _convert_data(self.kerasmodel, testoup,
+                                                   'output_layers'),
+                                     sample_weights=None, shuffle=False)
+
         else:
-            valinputs = _convert_data(self.kerasmodel, validation_data[0],
-                                      'input_layers')
-            valoutputs = _convert_data(self.kerasmodel, validation_data[1],
-                                       'output_layers')
-            sweights = validation_data[2] if len(validation_data) == 3 else None
-            valjseq = JangguSequence(batch_size, valinputs, valoutputs, sweights)
+            valjseq = None
+
 
         try:
             history = self.kerasmodel.fit_generator(

@@ -42,12 +42,17 @@ def test_gindexer_merged():
     gi = GenomicIndexer.create_from_file(
         os.path.join(data_path, 'sample.bed'), binsize=200, stepsize=200)
     np.testing.assert_equal(len(gi), 100)
+    gi2 = gi.filter_by_chrom(include='chr1')
+    gi3 = gi.filter_by_chrom(include='chr10')
+    gi4 = gi.filter_by_chrom(exclude='chr2')
+    gi5 = gi.filter_by_chrom(exclude='chr10')
 
-    np.testing.assert_equal(len(gi.idx_by_chrom(include='chr1')), 50)
 
-    np.testing.assert_equal(len(gi.idx_by_chrom(include='chr10')), 0)
-    np.testing.assert_equal(len(gi.idx_by_chrom(exclude='chr2')), 50)
-    np.testing.assert_equal(len(gi.idx_by_chrom(exclude='chr10')), 100)
+    np.testing.assert_equal(len(gi2), 50)
+
+    np.testing.assert_equal(len(gi3), 0)
+    np.testing.assert_equal(len(gi4), 50)
+    np.testing.assert_equal(len(gi5), 100)
 
 
 def test_gindexer_merged_variable_length_ranges():
