@@ -192,23 +192,6 @@ LABELS_TEST = Cover.create_from_bed('peaks',
                                     resolution=200,
                                     datatags=['test'])
 
-# do the evaluation on the training data
-# model.evaluate(DNA, LABELS, datatags=['train'],
-#                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
-#
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[pred_tsv, pred_json, pred_plotly],
-#               layername='motif',
-#               exporter_kwargs={'row_names': DNA.gindexer.chrs})
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[heatmap_eval],
-#               layername='motif',
-#               exporter_kwargs={'z_score': 1})
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[tsne_eval],
-#               layername='motif',
-#               exporter_kwargs={'alpha': .1})
-
 # do the evaluation on the independent test data
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
@@ -221,7 +204,3 @@ model.predict(DNA_TEST, datatags=['test'],
               callbacks=[heatmap_eval],
               layername='motif',
               exporter_kwargs={'z_score': 1})
-# model.predict(DNA_TEST, datatags=['test'],
-#               callbacks=[tsne_eval],
-#               layername='motif',
-#               exporter_kwargs={'alpha': .1})
