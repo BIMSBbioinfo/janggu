@@ -443,39 +443,57 @@ the sequence features that discriminate the two sets of sequences:
    from janggu import inputlayer
    from janggu import outputconv
 
-   # load the dataset
-   SAMPLE_1 = resource_filename('janggu', 'resources/', 'sample.fa')
-   SAMPLE_2 = resource_filename('janggu', 'resources/', 'sample2.fa')
 
-   DNA = Bioseq.create_from_seq('dna', fastafile=[SAMPLE_1, SAMPLE_2],
-                                order=args.order)
+   # load the dataset which consists of
+   # 1) a reference genome
+   REFGENOME = resource_filename('janggu', 'resources/pseudo_genome.fa')
+   # 2) ROI contains regions spanning positive and negative examples
+   ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
+   # 3) PEAK_FILE only contains positive examples
+   PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
-   # helper function returns the number of sequences
-   def nseqs(filename):
-      return sum((1 for line in open(filename) if line[0] == '>'))
+   # DNA sequences are loaded directly from the reference genome
+   DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
+                                      regions=ROI_FILE,
+                                      binsize=200)
 
-   Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
-                  [0 for line in range(nseqs(SAMPLE_2))])
-   LABELS = Array('y', Y, conditions=['TF-binding'])
+   # Classification labels over the same regions are loaded
+   # into the Coverage dataset.
+   # It is important that both DNA and LABELS load with the same
+   # binsize, stepsize and resolution to ensure
+   # the correct correspondence between both datasets.
+   LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
+                                  bedfiles=PEAK_FILE,
+                                  binsize=200,
+                                  resolution=200)
+
 
    # 2. define a simple conv net with 30 filters of length 15 bp
    # and relu activation
    @inputlayer
    @outputconv('sigmoid')
-   def _conv_net(inputs, inp, oup, params):
-      with inputs.use('dna') as layer:
-         layer_ = Conv2D(params[0], (params[1], 1), activation=params[2])(layer)
-         output = AveragePooling2D(pool_size=(layer_.shape.as_list()[1], 1))(layer_)
-      return inputs, output
+   def double_stranded_model(inputs, inp, oup, params):
+       with inputs.use('dna') as layer:
+           # The DnaConv2D wrapper can be used with Conv2D
+           # to scan both DNA strands with the weight matrices.
+           layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
+                                    activation=params[2]))(layer)
+
+       output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
+                                      name='motif')(layer)
+       return inputs, output
+
 
    # 3. instantiate and compile the model
-   model = Janggu.create(template=_conv_net,
+   model = Janggu.create(template=double_stranded_model,
                          modelparams=(30, 15, 'relu'),
                          inputs=DNA, outputs=LABELS)
-   model.compile(optimizer='adadelta', loss='binary_crossentropy')
+   model.compile(optimizer='adadelta', loss='binary_crossentropy',
+                 metrics=['acc'])
 
    # 4. fit the model
-   model.fit(DNA, LABELS)
+   model.fit(DNA, LABELS, epochs=100)
+
 
 An illustration of the network architecture is depicted below.
 Upon creation of the model a network depiction is
