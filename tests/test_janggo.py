@@ -352,7 +352,7 @@ def test_janggu_use_dnaconv_concat(tmpdir):
     bwm2.kerasmodel.get_layer('singlestrand').set_weights(w)
 
     p2 = bwm2.predict(dna[1:2])
-    np.testing.assert_allclose(p1, p2, rtol=1e-5)
+    np.testing.assert_allclose(p1, p2, rtol=1e-4, atol=1e-3)
 
     bwm1.compile(optimizer='adadelta', loss='binary_crossentropy')
     storage = bwm1._storage_path(bwm1.name, outputdir=tmpdir.strpath)
