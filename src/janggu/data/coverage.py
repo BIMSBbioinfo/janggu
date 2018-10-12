@@ -728,8 +728,9 @@ class Cover(Dataset):
                 raise ValueError('Indexing with GenomicInterval only possible '
                                  'when the whole genome (or chromosome) was loaded')
             # accept a genomic interval directly
-            data = np.zeros((1,) + self.shape[1:])
-            data[0] = self._getsingleitem(idxs)
+            #data = np.zeros((1,) + self.shape[1:])
+            data = self._getsingleitem(idxs)
+            data = data.reshape((1,) + data.shape)
             for transform in self.transformations:
                 data = transform(data)
             return data
