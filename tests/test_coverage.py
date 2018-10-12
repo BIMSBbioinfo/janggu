@@ -180,6 +180,9 @@ def test_cover_from_bigwig_sanity():
         flank=0,
         storage='ndarray')
     cover[0]
+    assert len(cover.gindexer) == 394
+    assert len(cover.garray.handle) == 394
+
     cover = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
@@ -190,14 +193,22 @@ def test_cover_from_bigwig_sanity():
         storage='ndarray',
         load_whole_genome=True)
     cover[0]
+    assert len(cover.gindexer) == 394
+    assert len(cover.garray.handle) == 2
     cov2 = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
         resolution=7,
         storage='ndarray',
         load_whole_genome=True)
-    assert len(cover.gindexer) == len(cover.garray.handle)
-    assert len(cov2.garray.handle) != len(cover.garray.handle)
+
+    assert len(cov2.garray.handle) == 2
+    assert cov2['chr1', 100, 200].shape == (1, 100//7 + 1, 1, 1)
+
+    with pytest.raises(Exception):
+        cov2.shape
+    with pytest.raises(Exception):
+        cov2[0]
 
     with pytest.raises(Exception):
         # name must be a string
