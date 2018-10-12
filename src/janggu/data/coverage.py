@@ -346,7 +346,8 @@ class Cover(Dataset):
                            dimmode='all',
                            aggregate=np.mean,
                            datatags=None, cache=False,
-                           load_whole_genome=False):
+                           load_whole_genome=False,
+                           nan_to_num=True):
         """Create a Cover class from a bigwig-file (or files).
 
         Parameters
@@ -421,6 +422,9 @@ class Cover(Dataset):
             Indicates whether the whole genome or all selected chromosomes
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
+        nan_to_num : boolean
+            Indicates whether NaN values contained in the bigwig files should
+            be interpreted as zeros. Default: True
         """
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
@@ -472,21 +476,27 @@ class Cover(Dataset):
                     if len(locus) == 1:
                         # when load_whole_genome was set
                         for start in range(0, gsize[chrom], resolution):
-
-                            vals[start//resolution] = aggregate(np.asarray(bwfile.values(
+                            x = np.asarray(bwfile.values(
                                 chrom,
                                 int(start),
-                                int(min((start+resolution), gsize[chrom])))))
+                                int(min((start+resolution), gsize[chrom]))))
+                            if nan_to_num:
+                                x = np.nan_to_num(x, copy=False)
+
+                            vals[start//resolution] = aggregate(x)
 
                     else:
                         # when only to load parts of the genome
                         for start in range(locus[1], locus[2], resolution):
+
+                            x = np.asarray(bwfile.values(
+                                      locus[0],
+                                      int(start),
+                                      int((start+resolution))))
+                            if nan_to_num:
+                                x = np.nan_to_num(x, copy=False)
                             vals[(start - locus[1])//resolution] = \
-                                aggregate(np.asarray(bwfile.values(
-                                          locus[0],
-                                          int(start),
-                                          int(start+resolution))))
-                        # not sure what to do with nan yet.
+                                aggregate(x)
 
                     garray[GenomicInterval(chrom, 0, gsize[chrom]), i] = vals
             return garray
