@@ -227,7 +227,8 @@ class Cover(Dataset):
                 aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
                 for chrom in gsize:
 
-                    array = np.zeros((gsize[chrom]//resolution, 2), dtype=dtype)
+                    array = np.zeros((int(np.ceil(gsize[chrom]/resolution)),
+                                     2), dtype=dtype)
 
                     locus = _str_to_iv(chrom, template_extension=template_extension)
 
@@ -463,12 +464,13 @@ class Cover(Dataset):
 
                 for chrom in gsize:
 
-                    vals = np.empty((gsize[chrom]//resolution),
+                    vals = np.zeros(int(np.ceil(gsize[chrom]/resolution)),
                                     dtype=dtype)
 
                     locus = _str_to_iv(chrom, template_extension=0)
 
                     if len(locus) == 1:
+                        # when load_whole_genome was set
                         for start in range(0, gsize[chrom], resolution):
 
                             vals[start//resolution] = aggregate(np.asarray(bwfile.values(
@@ -477,6 +479,7 @@ class Cover(Dataset):
                                 int(min((start+resolution), gsize[chrom])))))
 
                     else:
+                        # when only to load parts of the genome
                         for start in range(locus[1], locus[2], resolution):
                             vals[(start - locus[1])//resolution] = \
                                 aggregate(np.asarray(bwfile.values(

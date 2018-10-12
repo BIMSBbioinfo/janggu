@@ -65,7 +65,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
             chrom = interval.chrom
             start = interval.start // self.resolution
-            end = interval.end // self.resolution
+            end = int(numpy.ceil(interval.end / self.resolution))
             strand = interval.strand
 
             self.handle[chrom][start:end,
@@ -81,7 +81,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             interval = index
             chrom = interval.chrom
             start = interval.start // self.resolution
-            end = interval.end // self.resolution
+            end = int(numpy.ceil(interval.end / self.resolution))
 
             # original length
             length = end-start
@@ -225,7 +225,7 @@ class HDF5GenomicArray(GenomicArray):
             self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
 
             for chrom in chroms:
-                shape = (chroms[chrom] // self.resolution + 1,
+                shape = (int(numpy.ceil(chroms[chrom] / self.resolution)),
                          2 if stranded else 1, len(self.condition))
                 self.handle.create_dataset(chrom, shape,
                                            dtype=self.typecode, compression='gzip',
@@ -305,7 +305,7 @@ class NPGenomicArray(GenomicArray):
 
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
                 or overwrite or not cache:
-            data = {chrom: numpy.zeros(shape=(chroms[chrom] // self.resolution + 1,
+            data = {chrom: numpy.zeros(shape=(int(numpy.ceil(chroms[chrom] / self.resolution)),
                                               2 if stranded else 1,
                                               len(self.condition)),
                                        dtype=self.typecode) for chrom in chroms}
@@ -398,7 +398,7 @@ class SparseGenomicArray(GenomicArray):
             os.makedirs(memmap_dir)
         if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
             or overwrite or not cache:
-            data = {chrom: sparse.dok_matrix((chroms[chrom] // self.resolution + 1,
+            data = {chrom: sparse.dok_matrix((int(numpy.ceil(chroms[chrom] / self.resolution)),
                                               (2 if stranded else 1) *
                                               len(self.condition)),
                                              dtype=self.typecode)
@@ -455,7 +455,7 @@ class SparseGenomicArray(GenomicArray):
         if isinstance(interval, GenomicInterval) and isinstance(condition, int):
             chrom = interval.chrom
             start = interval.start // self.resolution
-            end = interval.end // self.resolution
+            end = int(numpy.ceil(interval.end / self.resolution))
             strand = interval.strand
             sind = 1 if self.stranded and strand == '-' else 0
 
