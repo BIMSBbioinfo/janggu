@@ -180,10 +180,20 @@ def test_cover_from_bigwig_sanity():
         flank=0,
         storage='ndarray')
     cover[0]
+    cover = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        regions=bed_file,
+        binsize=200, stepsize=50,
+        resolution=50,
+        flank=0,
+        storage='ndarray',
+        load_whole_genome=True)
+    cover[0]
     cov2 = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
-        resolution=50,
+        resolution=7,
         storage='ndarray',
         load_whole_genome=True)
     assert len(cover.gindexer) == len(cover.garray.handle)
