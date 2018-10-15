@@ -12,15 +12,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     The genomic intervals can be directly used to obtain data from a genomic
     array.
-
-    Parameters
-    ----------
-    regions : str
-        Bed- or GFF-filename.
-    binsize : int
-        Interval size in bins.
-    stepsize : int
-        stepsize (step size) for traversing the region.
     """
 
     _stepsize = None
