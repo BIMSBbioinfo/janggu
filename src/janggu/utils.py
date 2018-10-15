@@ -12,6 +12,8 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
 from HTSeq import GFF_Reader
+from HTSeq import GenomicFeature
+from HTSeq import GenomicInterval
 
 try:
     import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -300,7 +302,7 @@ def _str_to_iv(givstr, template_extension):
     return (chr_, start - template_extension, end + template_extension)
 
 
-def get_genome_size_from_bed(bedfile):
+def get_genome_size_from_regions(regions):
     """Get genome size.
 
     This function loads the genome size for a specified reference genome
@@ -309,8 +311,9 @@ def get_genome_size_from_bed(bedfile):
 
     Parameters
     ----------
-    bedfile : str
-        Bed or GFF file containing the regions of interest
+    regions : str or GenomicIndexer
+        Either a path pointing to a BED or GFF file containing genomic regions
+        or a GenomicIndexer object.
 
     Returns
     -------
@@ -319,14 +322,20 @@ def get_genome_size_from_bed(bedfile):
         as values.
     """
 
-    regions_ = _get_genomic_reader(bedfile)
+    regions_ = regions
+    if isinstance(regions, str):
+        regions_ = _get_genomic_reader(regions)
 
     gsize = {}
     for region in regions_:
-        if region.iv.chrom not in gsize:
-            gsize[region.iv.chrom] = region.iv.end
-        elif gsize[region.iv.chrom] < region.iv.end:
-            gsize[region.iv.chrom] = region.iv.end
+        if isinstance(region, GenomicFeature):
+            iv = region.iv
+        elif isinstance(region, GenomicInterval):
+            iv = region
+        if iv.chrom not in gsize:
+            gsize[iv.chrom] = iv.end
+        elif gsize[iv.chrom] < iv.end:
+            gsize[iv.chrom] = iv.end
     return gsize
 
 

@@ -11,7 +11,7 @@ from janggu.data.genomicarray import create_genomic_array
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
-from janggu.utils import get_genome_size_from_bed
+from janggu.utils import get_genome_size_from_regions
 
 try:
     import pyBigWig
@@ -612,7 +612,7 @@ class Cover(Dataset):
 
         # automatically determine genomesize from largest region
         if not genomesize:
-            gsize = get_genome_size_from_bed(regions)
+            gsize = get_genome_size_from_regions(regions)
         else:
             gsize = genomesize.copy()
 
