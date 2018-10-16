@@ -11,7 +11,6 @@ import pytest
 from janggu.data import Cover
 
 
-
 def test_bam_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")
@@ -739,7 +738,7 @@ def test_load_cover_bed_binary(tmpdir):
         np.testing.assert_equal(cover[4].sum(), 4*1)
 
         cover = Cover.create_from_bed(
-            "cov50",
+            "cov50_firstdim",
             bedfiles=score_file,
             regions=bed_file,
             binsize=200, stepsize=200,

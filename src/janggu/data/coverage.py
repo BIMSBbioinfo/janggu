@@ -750,11 +750,7 @@ class Cover(Dataset):
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
 
-            pinterval = interval.copy()
-
-            end = (pinterval.end - pinterval.start) // self.garray.resolution
-
-            data[i, :end, :, :] = self._getsingleitem(pinterval)
+            data[i, :, :, :] = self._getsingleitem(interval)
 
         for transform in self.transformations:
             data = transform(data)
@@ -762,15 +758,15 @@ class Cover(Dataset):
         return data
 
     def _getsingleitem(self, pinterval):
-        if self.dimmode == 'all':
-            pinterval.end = pinterval.end
-        elif self.dimmode == 'first':
-            pinterval.end = pinterval.start + self.garray.resolution
 
         if pinterval.strand == '-':
             data = np.asarray(self.garray[pinterval])[::-1, ::-1, :]
         else:
             data = np.asarray(self.garray[pinterval])
+
+        if self.dimmode == 'first':
+            data = data[:1, :, :]
+
         return data
 
     def __len__(self):
