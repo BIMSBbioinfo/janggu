@@ -342,7 +342,7 @@ class Cover(Dataset):
                            genomesize=None,
                            conditions=None,
                            binsize=None, stepsize=None,
-                           resolution=200,
+                           resolution=1,
                            flank=0, storage='ndarray',
                            dtype='float32',
                            overwrite=False,

@@ -641,11 +641,11 @@ def test_load_cover_bigwig_default(tmpdir):
             storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)
-        np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
+        np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
 
         # there is one read in the region
-        np.testing.assert_allclose(cover[4].sum(), 36./200)
-        np.testing.assert_allclose(cover[52].sum(), 2*36./200)
+        np.testing.assert_allclose(cover[4].sum(), 36.)
+        np.testing.assert_allclose(cover[52].sum(), 2*36.)
 
 
 def test_load_cover_bigwig_resolution1(tmpdir):
