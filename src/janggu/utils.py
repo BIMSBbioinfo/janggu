@@ -288,10 +288,12 @@ def _get_genomic_reader(filename):
 
 
 def _iv_to_str(chrom, start, end):
+    """Converts a genomic interval into a string representation 'chr:start-end'."""
     return '{}:{}-{}'.format(chrom, start, end)
 
 
 def _str_to_iv(givstr, template_extension):
+    """Converts a string representation 'chr:start-end' into genomic coordinates."""
     sub = givstr.split(':')
     if len(sub) == 1:
         return (sub[0], )
