@@ -206,13 +206,15 @@ def test_janggu_instance_conv(tmpdir):
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
-    posfile = os.path.join(data_path, 'positive.bed')
+    posfile = os.path.join(data_path, 'scored_sample.bed')
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
-                                    storage='ndarray',
-                                    regions=bed_file, order=1)
+                                       storage='ndarray',
+                                       regions=bed_file, order=1,
+                                       binsize=200,
+                                       stepsize=50)
 
     ctcf = Cover.create_from_bed(
         "positives",
@@ -256,7 +258,7 @@ def test_janggu_use_dnaconv_none(tmpdir):
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
-    posfile = os.path.join(data_path, 'positive.bed')
+    posfile = os.path.join(data_path, 'scored_sample.bed')
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
@@ -491,19 +493,19 @@ def test_janggu_chr2_validation(tmpdir):
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, 'sample.bed')
 
-    posfile = os.path.join(data_path, 'positive.bed')
+    posfile = os.path.join(data_path, 'scored_sample.bed')
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
-                                    binsize=200, stepsize=200,
+                                    binsize=200, stepsize=50,
                                     regions=bed_file, order=1)
 
     ctcf = Cover.create_from_bed(
         "positives",
         bedfiles=posfile,
         regions=bed_file,
-        binsize=200, stepsize=200,
+        binsize=200, stepsize=50,
         resolution=50,
         flank=0,
         dimmode='first',
