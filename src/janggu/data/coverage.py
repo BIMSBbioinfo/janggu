@@ -12,6 +12,8 @@ from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
+from janggu.utils import get_chrom_length
+
 
 try:
     import pyBigWig
@@ -227,7 +229,7 @@ class Cover(Dataset):
                 aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
                 for chrom in gsize:
 
-                    array = np.zeros((int(np.ceil(gsize[chrom]/resolution)),
+                    array = np.zeros((get_chrom_length(gsize[chrom], resolution),
                                      2), dtype=dtype)
 
                     locus = _str_to_iv(chrom, template_extension=template_extension)
@@ -468,7 +470,7 @@ class Cover(Dataset):
 
                 for chrom in gsize:
 
-                    vals = np.zeros(int(np.ceil(gsize[chrom]/resolution)),
+                    vals = np.zeros((get_chrom_length(gsize[chrom], resolution), ),
                                     dtype=dtype)
 
                     locus = _str_to_iv(chrom, template_extension=0)
