@@ -651,23 +651,25 @@ class Cover(Dataset):
                 regions_ = _get_genomic_reader(sample_file)
 
                 for region in regions_:
+                    if region.iv.chrom not in genomesize:
+                        continue
 
-                        if region.score is None and mode in ['score',
-                                                             'categorical']:
-                            raise ValueError(
-                                'No Score available. Score field must '
-                                'present in {}'.format(sample_file) + \
-                                'for mode="{}"'.format(mode))
-                        # if region score is not defined, take the mere
-                        # presence of a range as positive label.
-                        if mode == 'score':
-                            garray[region.iv,
-                                   i] = np.dtype(dtype).type(region.score)
-                        elif mode == 'categorical':
-                            garray[region.iv,
-                                   int(region.score)] = np.dtype(dtype).type(1)
-                        elif mode == 'binary':
-                            garray[region.iv, i] = np.dtype(dtype).type(1)
+                    if region.score is None and mode in ['score',
+                                                         'categorical']:
+                        raise ValueError(
+                            'No Score available. Score field must '
+                            'present in {}'.format(sample_file) + \
+                            'for mode="{}"'.format(mode))
+                    # if region score is not defined, take the mere
+                    # presence of a range as positive label.
+                    if mode == 'score':
+                        garray[region.iv,
+                               i] = np.dtype(dtype).type(region.score)
+                    elif mode == 'categorical':
+                        garray[region.iv,
+                               int(region.score)] = np.dtype(dtype).type(1)
+                    elif mode == 'binary':
+                        garray[region.iv, i] = np.dtype(dtype).type(1)
             return garray
 
         # At the moment, we treat the information contained
@@ -689,6 +691,139 @@ class Cover(Dataset):
 
         return cls(name, cover, gindexer,
                    padding_value=0, dimmode=dimmode)
+
+    @classmethod
+    def create_from_array(cls, name,  # pylint: disable=too-many-locals
+                          array,
+                          gindexer,
+                          genomesize=None,
+                          conditions=None,
+                          resolution=1,
+                          storage='ndarray',
+                          overwrite=False,
+                          datatags=None,
+                          cache=False,
+                          store_whole_genome=False):
+        """Create a Cover class from a numpy.array.
+
+        The purpose of this function is to convert output prediction from
+        keras which are in numpy.array format into a Cover object.
+
+        Parameters
+        -----------
+        name : str
+            Name of the dataset
+        array : numpy.array
+            A 4D numpy array that will be re-interpreted as genomic array.
+        gindexer : GenomicIndexer
+            Genomic indices associated with the values contained in array.
+        genomesize : dict or None
+            Dictionary containing the genome size to fetch the coverage from.
+            If `genomesize=None`, the genome size is automatically determined
+            from the GenomicIndexer. If `store_whole_genome=False` this
+            option does not have an effect.
+        conditions : list(str) or None
+            List of conditions.
+            If `conditions=None`,
+            the conditions are obtained from
+            the filenames (without the directories
+            and file-ending).
+        resolution : int
+            Resolution in base pairs divides the region of interest
+            in windows of length resolution.
+            This effectively reduces the storage for coverage data.
+            The resolution must be selected such that min(stepsize, binsize)
+            is a multiple of resolution.
+            Default: 1.
+        storage : str
+            Storage mode for storing the coverage data can be
+            'ndarray', 'hdf5' or 'sparse'. Default: 'ndarray'.
+        overwrite : boolean
+            Overwrite cachefiles. Default: False.
+        datatags : list(str) or None
+            List of datatags. Together with the dataset name,
+            the datatags are used to construct a cache file.
+            If :code:`cache=False`, this option does not have an effect.
+            Default: None.
+        cache : boolean
+            Indicates whether to cache the dataset. Default: False.
+        store_whole_genome : boolean
+            Indicates whether the whole genome or only selected regions
+            should be loaded. Default: False.
+        """
+
+        if not store_whole_genome:
+            # if whole genome should not be loaded
+            gsize = {_iv_to_str(iv.chrom, iv.start,
+                                iv.end): iv.end-iv.start for iv in gindexer}
+        elif genomesize:
+            gsize = genomesize.copy()
+        else:
+            # if not supplied, determine the genome size automatically
+            # based on the gindexer intervals.
+            gsize = get_genome_size_from_regions(gindexer)
+
+
+        if conditions is None:
+            conditions = ["Cond_{}".format(i) for i in range(array.shape[-1])]
+
+        # check if dimensions of gindexer and array match
+        if len(gindexer) != array.shape[0]:
+            raise ValueError("Data incompatible: "
+                "The number intervals in gindexer"
+                " must match the number of datapoints in the array "
+                "(len(gindexer) != array.shape[0])")
+
+        if store_whole_genome:
+            # in this case the intervals must be non-overlapping
+            # in order to obtain unambiguous data.
+            if gindexer.binsize > gindexer.stepsize:
+                raise ValueError("Overlapping intervals: "
+                    "With overlapping intervals the mapping between "
+                    "the array and genomic-array values is ambiguous. "
+                    "Please ensure that binsize <= stepsize.")
+
+        # determine the resolution
+        resolution = gindexer[0].length // array.shape[1]
+
+        # determine strandedness
+        stranded = True if array.shape[2] == 2 else False
+
+        def _array_loader(garray, array, gindexer):
+            print("load from array")
+
+            for i, region in enumerate(gindexer):
+                iv = region
+                for cond in range(array.shape[-1]):
+                    if stranded:
+                        iv.strand = '+'
+                        garray[iv, cond] = array[i, :, 0, cond].astype(dtype)
+                        iv.strand = '-'
+                        garray[iv, cond] = array[i, :, 1, cond].astype(dtype)
+                    else:
+                        garray[iv, cond] = array[i, :, 0, cond]
+
+            return garray
+
+        # At the moment, we treat the information contained
+        # in each bw-file as unstranded
+
+        datatags = [name] + datatags if datatags else [name]
+        datatags += ['resolution{}'.format(resolution)]
+
+        cover = create_genomic_array(gsize, stranded=stranded,
+                                     storage=storage, datatags=datatags,
+                                     cache=cache,
+                                     conditions=conditions,
+                                     resolution=resolution,
+                                     overwrite=overwrite,
+                                     typecode=array.dtype,
+                                     store_whole_genome=store_whole_genome,
+                                     loader=_array_loader,
+                                     loader_args=(array, gindexer))
+
+        return cls(name, cover, gindexer,
+                   padding_value=0, dimmode='all')
 
     @property
     def gindexer(self):
