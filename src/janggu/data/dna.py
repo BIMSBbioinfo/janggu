@@ -9,6 +9,7 @@ from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
+from janggu.utils import _str_to_iv
 from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
@@ -53,7 +54,7 @@ class Bioseq(Dataset):
     @staticmethod
     def _make_genomic_array(name, fastafile, order, storage,
                             seqtype, cache=True, datatags=None,
-                            overwrite=False):
+                            overwrite=False, store_whole_genome=True):
         """Create a genomic array or reload an existing one."""
 
         # always use int 16 to store bioseq indices
@@ -84,8 +85,12 @@ class Bioseq(Dataset):
         def _seq_loader(cover, seqs, order):
             print('Convert sequences to index array')
             for seq in seqs:
-                interval = GenomicInterval(seq.id, 0,
-                                           len(seq) - order + 1, '.')
+                if cover._full_genome_stored:
+                    interval = GenomicInterval(seq.id, 0,
+                                               len(seq) - order + 1, '.')
+                else:
+                    interval = GenomicInterval(*_str_to_iv(seq.id,
+                                                template_extension=0))
 
                 indarray = np.asarray(seq2ind(seq), dtype=dtype)
 
@@ -106,6 +111,7 @@ class Bioseq(Dataset):
                                      storage=storage,
                                      datatags=datatags,
                                      cache=cache,
+                                     store_whole_genome=store_whole_genome,
                                      order=order,
                                      conditions=['idx'],
                                      overwrite=overwrite,
@@ -124,7 +130,7 @@ class Bioseq(Dataset):
                               datatags=None,
                               cache=False,
                               overwrite=False,
-                              load_whole_genome=False):
+                              store_whole_genome=False):
         """Create a Bioseq class from a reference genome.
 
         This constructor loads nucleotide sequences from a reference genome.
@@ -172,7 +178,7 @@ class Bioseq(Dataset):
             Indicates whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
-        load_whole_genome : boolean
+        store_whole_genome : boolean
             Indicates whether the whole genome or all selected chromosomes
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
@@ -187,8 +193,8 @@ class Bioseq(Dataset):
         else:
             gindexer = None
 
-        if not load_whole_genome and gindexer is None:
-            raise ValueError('Either regions must be supplied or load_whole_genome must be True')
+        if not store_whole_genome and gindexer is None:
+            raise ValueError('Either regions must be supplied or store_whole_genome must be True')
 
         if not isinstance(refgenome, Bio.SeqRecord.SeqRecord):
             seqs = sequences_from_fasta(refgenome, 'dna')
@@ -196,7 +202,7 @@ class Bioseq(Dataset):
             # This is already a list of SeqRecords
             seqs = refgenome
 
-        if not load_whole_genome and gindexer is not None:
+        if not store_whole_genome and gindexer is not None:
             # the genome is loaded with a bed file,
             # only the specific subset is loaded
             # to keep the memory overhead low.
@@ -215,9 +221,8 @@ class Bioseq(Dataset):
         garray = cls._make_genomic_array(name, seqs, order, storage, 'dna',
                                          datatags=datatags,
                                          cache=cache,
-                                         overwrite=overwrite)
-
-        garray._full_genome_stored = True if gindexer is None or load_whole_genome else False
+                                         overwrite=overwrite,
+                                         store_whole_genome=store_whole_genome)
 
         return cls(name, garray, gindexer,
                    alphabetsize=len(seqs[0].seq.alphabet.letters))
@@ -297,7 +302,8 @@ class Bioseq(Dataset):
 
         garray = cls._make_genomic_array(name, seqs, order, storage, seqtype,
                                          cache=cache, datatags=datatags,
-                                         overwrite=overwrite)
+                                         overwrite=overwrite,
+                                         store_whole_genome=True)
 
         reglen = lens[0]
         flank = 0

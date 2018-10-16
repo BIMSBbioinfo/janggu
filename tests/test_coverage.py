@@ -26,7 +26,7 @@ def test_bam_genomic_interval_access():
         storage='ndarray')
 
     with pytest.raises(Exception):
-        # due to load_whole_genome = False
+        # due to store_whole_genome = False
         cover[cover.gindexer[0]]
 
     cover = Cover.create_from_bam(
@@ -35,7 +35,7 @@ def test_bam_genomic_interval_access():
         regions=bed_file,
         flank=0,
         storage='ndarray',
-        load_whole_genome=True)
+        store_whole_genome=True)
 
     np.testing.assert_equal(cover[0], cover[cover.gindexer[0]])
     chrom, start, end = cover.gindexer[0].chrom, cover.gindexer[0].start, cover.gindexer[0].end
@@ -88,11 +88,10 @@ def test_bed_inferred_binsize():
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
 
+
 def test_bed_overreaching_ends():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")
-
-    #file_ = os.path.join(data_path, "sample.bw")
 
     cover = Cover.create_from_bed(
         'test',
@@ -100,6 +99,7 @@ def test_bed_overreaching_ends():
         regions=bed_file,
         flank=2000,
         resolution=1,
+        store_whole_genome=True,
         storage='ndarray')
     cover.garray.handle['chr1'][0]=1
     assert len(cover) == 25
@@ -107,6 +107,88 @@ def test_bed_overreaching_ends():
     np.testing.assert_equal(cover[0][0, :550, 0, 0].sum(), 0)
     np.testing.assert_equal(cover[0][0, 550, 0, 0], 1.)
     np.testing.assert_equal(cover[0][0, 550:(550+len(cover.garray.handle['chr1'])), :, :], cover.garray.handle['chr1'])
+
+
+def test_bed_store_whole_genome_option():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        regions=bed_file,
+        store_whole_genome=True,
+        storage='ndarray')
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bed_file,
+        regions=bed_file,
+        store_whole_genome=False,
+        storage='ndarray')
+
+    assert len(cover1) == 25
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (25, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], np.ones(cover1.shape))
+    np.testing.assert_equal(cover2[:], np.ones(cover1.shape))
+
+
+def test_bigwig_store_whole_genome_option():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        regions=bed_file,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile_,
+        regions=bed_file,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 1044.0
+
+
+def test_bam_store_whole_genome_option():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+    bamfile_ = os.path.join(data_path, "sample.bam")
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        regions=bed_file,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bamfile_,
+        regions=bed_file,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 2, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 29.
+
 
 def test_cover_from_bam_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -126,7 +208,7 @@ def test_cover_from_bam_sanity():
            'test',
            bamfiles=bamfile_,
            storage='ndarray',
-           load_whole_genome=True)
+           store_whole_genome=True)
 
     assert len(cover.gindexer) == len(cover.garray.handle)
     assert len(cov2.garray.handle) != len(cover.garray.handle)
@@ -191,7 +273,7 @@ def test_cover_from_bigwig_sanity():
         resolution=50,
         flank=0,
         storage='ndarray',
-        load_whole_genome=True)
+        store_whole_genome=True)
     cover[0]
     assert len(cover.gindexer) == 394
     assert len(cover.garray.handle) == 2
@@ -200,7 +282,7 @@ def test_cover_from_bigwig_sanity():
         bigwigfiles=bwfile_,
         resolution=7,
         storage='ndarray',
-        load_whole_genome=True)
+        store_whole_genome=True)
 
     assert len(cov2.garray.handle) == 2
     assert cov2['chr1', 100, 200].shape == (1, 100//7 + 1, 1, 1)
@@ -391,7 +473,7 @@ def test_cover_bam_paired_5pend():
         stranded=False,
         pairedend='5pend',
         min_mapq=30,
-        load_whole_genome=True)
+        store_whole_genome=True)
 
     assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
 
@@ -414,7 +496,7 @@ def test_cover_bam_paired_midpoint():
         stranded=False,
         pairedend='midpoint',
         min_mapq=30,
-        load_whole_genome=True)
+        store_whole_genome=True)
 
     assert cover.garray.handle['ref'].sum() == 2, cover.garray.handle['ref']
     print(cover.garray.handle['ref'])
@@ -638,7 +720,6 @@ def test_load_cover_bed_binary(tmpdir):
             resolution=200,
             storage=store,
             mode='binary', cache=True)
-
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
         np.testing.assert_equal(cover[0].sum(), 0)
@@ -652,7 +733,6 @@ def test_load_cover_bed_binary(tmpdir):
             storage=store,
             resolution=50,
             mode='binary', cache=True)
-
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 4, 1, 1))
         np.testing.assert_equal(cover[0].sum(), 0)
@@ -667,7 +747,6 @@ def test_load_cover_bed_binary(tmpdir):
             #resolution=50,
             dimmode='first',
             mode='binary', cache=True)
-
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
         np.testing.assert_equal(cover[0].sum(), 0)

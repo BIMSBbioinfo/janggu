@@ -43,7 +43,7 @@ def test_split_train_test():
                                        storage='ndarray',
                                        regions=bed_file,
                                        binsize=200, stepsize=200,
-                                       order=1)
+                                       order=1, store_whole_genome=True)
 
     traindna, testdna = split_train_test(dna, holdout_chroms='chr2')
 

@@ -43,14 +43,14 @@ def test_dna_genomic_interval_access(tmpdir):
                                      order=order)
 
     with pytest.raises(Exception):
-        # due to load_whole_genome = False
+        # due to store_whole_genome = False
         data[data.gindexer[0]]
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      regions=bed_merged,
                                      storage='ndarray',
                                      order=order,
-                                     load_whole_genome=True)
+                                     store_whole_genome=True)
 
     np.testing.assert_equal(data[0], data[data.gindexer[0]])
     chrom = data.gindexer[0].chrom
@@ -147,7 +147,7 @@ def test_dna_dims_order_1_from_reference(tmpdir):
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                         storage='ndarray',
                                         order=order,
-                                        load_whole_genome=True)
+                                        store_whole_genome=True)
     data.gindexer = gindexer
     assert len(data.garray.handle) == 2
     assert 'chr1' in data.garray.handle
@@ -419,7 +419,7 @@ def test_dna_dataset_sanity(tmpdir):
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='ndarray',
                               regions=None, order=1,
-                              load_whole_genome=True)
+                              store_whole_genome=True)
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
                               regions=bed_file, order=1, cache=True)

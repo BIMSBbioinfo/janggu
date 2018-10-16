@@ -220,6 +220,7 @@ def test_janggu_instance_conv(tmpdir):
         regions=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
+        store_whole_genome=False,
         flank=0,
         dimmode='all',
         storage='ndarray')
