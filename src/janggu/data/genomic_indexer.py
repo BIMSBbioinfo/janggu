@@ -71,35 +71,62 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         gind = cls(binsize, stepsize, flank)
 
-        chrs = []
-        offsets = []
-        inregionidx = []
-        strand = []
-        rel_end = []
+        gind.chrs = []
+        gind.offsets = []
+        gind.inregionidx = []
+        gind.strand = []
+        gind.rel_end = []
+
         for reg in regions_:
-            if stepsize <= binsize:
-                val = (reg.iv.end - reg.iv.start - binsize + stepsize)
-            else:
-                val = (reg.iv.end - reg.iv.start)
-            reglen = val // stepsize
-            chrs += [reg.iv.chrom] * reglen
-            offsets += [reg.iv.start] * reglen
-            rel_end += [binsize] * reglen
-            strand += [reg.iv.strand] * reglen
-            inregionidx += range(reglen)
-            # if there is a variable length fragment at the end,
-            # we record the remaining fragment length
-            if not fixed_size_batches and val % stepsize > 0:
-                chrs += [reg.iv.chrom]
-                offsets += [reg.iv.start]
-                rel_end += [val - (val//stepsize) * stepsize]
-                strand += [reg.iv.strand]
-                inregionidx += [reglen]
+
+            tmp_gidx = cls.create_from_region(
+                reg.iv.chrom,
+                reg.iv.start, reg.iv.end, reg.iv.strand,
+                binsize, stepsize, flank, fixed_size_batches)
+
+            gind.chrs += tmp_gidx.chrs
+            gind.offsets += tmp_gidx.offsets
+            gind.inregionidx += tmp_gidx.inregionidx
+            gind.strand += tmp_gidx.strand
+            gind.rel_end += tmp_gidx.rel_end
+
+        return gind
+
+    @classmethod
+    def create_from_region(cls, chrom, start, end, strand,
+                           binsize, stepsize, flank=0,
+                           fixed_size_batches=True):
+        if binsize is None:
+            binsize = end - start
+
+        if stepsize is None:
+            stepsize = binsize
+
+        gind = cls(binsize, stepsize, flank)
+
+        if stepsize <= binsize:
+            val = (end - start - binsize + stepsize)
+        else:
+            val = (end - start)
+        reglen = val // stepsize
+        chrs = [chrom] * reglen
+        offsets = [start] * reglen
+        rel_end = [binsize] * reglen
+        strands = [strand] * reglen
+        inregionidx = list(range(reglen))
+        # if there is a variable length fragment at the end,
+        # we record the remaining fragment length
+        if not fixed_size_batches and val % stepsize > 0:
+            chrs += [chrom]
+            offsets += [start]
+            rel_end += [val - (val//stepsize) * stepsize]
+            strands += [strand]
+            inregionidx += [reglen]
 
         gind.chrs = chrs
         gind.offsets = offsets
         gind.inregionidx = inregionidx
-        gind.strand = strand
+        gind.strand = strands
         gind.rel_end = rel_end
         return gind
 
