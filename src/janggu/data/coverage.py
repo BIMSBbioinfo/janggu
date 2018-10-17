@@ -651,25 +651,28 @@ class Cover(Dataset):
                 regions_ = _get_genomic_reader(sample_file)
 
                 for region in regions_:
-                    if region.iv.chrom not in genomesize:
-                        continue
-
-                    if region.score is None and mode in ['score',
-                                                         'categorical']:
-                        raise ValueError(
-                            'No Score available. Score field must '
-                            'present in {}'.format(sample_file) + \
-                            'for mode="{}"'.format(mode))
-                    # if region score is not defined, take the mere
-                    # presence of a range as positive label.
-                    if mode == 'score':
-                        garray[region.iv,
-                               i] = np.dtype(dtype).type(region.score)
-                    elif mode == 'categorical':
-                        garray[region.iv,
-                               int(region.score)] = np.dtype(dtype).type(1)
-                    elif mode == 'binary':
-                        garray[region.iv, i] = np.dtype(dtype).type(1)
+                    gidx = GenomicIndexer.create_from_region(
+                        region.iv.chrom,
+                        region.iv.start,
+                        region.iv.end, region.iv.strand,
+                        binsize, stepsize, flank)
+                    for greg in gidx:
+                        
+                        if region.score is None and mode in ['score',
+                                                             'categorical']:
+                            raise ValueError(
+                                'No Score available. Score field must '
+                                'present in {}'.format(sample_file) + \
+                                'for mode="{}"'.format(mode))
+                        # if region score is not defined, take the mere
+                        # presence of a range as positive label.
+                        if mode == 'score':
+                            garray[greg, i] = np.dtype(dtype).type(region.score)
+                        elif mode == 'categorical':
+                            garray[greg,
+                                   int(region.score)] = np.dtype(dtype).type(1)
+                        elif mode == 'binary':
+                            garray[greg, i] = np.dtype(dtype).type(1)
             return garray
 
         # At the moment, we treat the information contained
