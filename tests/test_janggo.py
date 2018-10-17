@@ -227,6 +227,17 @@ def test_janggu_instance_conv(tmpdir):
         dimmode='all',
         storage='ndarray')
 
+    ctcf = Cover.create_from_bed(
+        "positives",
+        bedfiles=posfile,
+        regions=bed_file,
+        binsize=200, stepsize=50,
+        resolution=50,
+        store_whole_genome=True,
+        flank=0,
+        dimmode='all',
+        storage='ndarray')
+
     @inputlayer
     @outputconv('sigmoid')
     def _cnn_model(inputs, inp, oup, params):
