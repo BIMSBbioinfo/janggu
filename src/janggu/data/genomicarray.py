@@ -68,27 +68,31 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             end = int(numpy.ceil(interval.end / self.resolution))
             strand = interval.strand
 
-            if not self._full_genome_stored:
-                length = end-start
-                # correcting for the overshooting starts and ends is not necessary
-                # for partially loaded data
+            try:
+                if not self._full_genome_stored:
+                    length = end-start
+                    # correcting for the overshooting starts and ends is not necessary
+                    # for partially loaded data
 
-                try:
                     self.handle[_iv_to_str(chrom, interval.start,
                                            interval.end)][:(length),
                                            1 if self.stranded and strand == '-' else 0,
                                            condition] = value
-                except KeyError:
-                    raise IndexError('Region {} not '.format(_iv_to_str(
-                            chrom, interval.start, interval.end)) +
-                                     'contained in the genomic array. '
-                                     'Consider adjusting the regions, '
-                                     'binsize, stepsize and flank.')
+#                       raise IndexError('Region {} not '.format(_iv_to_str(
+#                               chrom, interval.start, interval.end)) +
+#                                        'contained in the genomic array. '
+#                                        'Consider adjusting the regions, '
+#                                        'binsize, stepsize and flank.')
 
-            else:
-                self.handle[chrom][start:end,
-                                   1 if self.stranded and strand == '-' else 0,
-                                   condition] = value
+                else:
+                    self.handle[chrom][start:end,
+                                       1 if self.stranded and strand == '-' else 0,
+                                       condition] = value
+            except KeyError:
+                print('Skipping region {} - not in genomic array.'.format(
+                    _iv_to_str(chrom, interval.start, interval.end)) + 
+                'Consider using store_whole_genome=True or '
+                'adjusting adjusting the regions, binsize, stepsize and flank.')
 
         else:
             raise IndexError("Index must be a GenomicInterval and a condition index")
