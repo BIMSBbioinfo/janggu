@@ -140,10 +140,8 @@ def double_stranded_model(inputs, inp, oup, params):
 @outputconv('sigmoid')
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
     with inputs.use('dna') as layer:
-        pass
         layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
                                  activation=params[2]))(layer)
-
     output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
                                    name='motif')(layer)
     return inputs, output
@@ -195,6 +193,9 @@ LABELS_TEST = Cover.create_from_bed('peaks',
 # do the evaluation on the independent test data
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
+
+pred = model.predict(DNA_TEST)
+cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
 
 model.predict(DNA_TEST, datatags=['test'],
               callbacks=[pred_tsv, pred_json, pred_plotly],
