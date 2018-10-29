@@ -11,6 +11,45 @@ import pytest
 from janggu.data import Cover
 
 
+def test_cover_export_bigwig(tmpdir):
+    path = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    for resolution in [1, 50]:
+        for storage in [True, False]:
+            print('resolution=', resolution)
+            print('store_whole_genome', storage)
+            cover = Cover.create_from_bigwig(
+                'test',
+                bigwigfiles=bwfile_,
+                resolution=resolution,
+                binsize=200,
+                regions=bed_file,
+                store_whole_genome=storage,
+                storage='ndarray')
+
+            cover.export_to_bigwig(output_dir=path)
+
+            cov2 = Cover.create_from_bigwig('test',
+                bigwigfiles='{path}/{name}.{sample}.bigwig'.format(
+                path=path, name=cover.name,
+                sample=cover.conditions[0]),
+                resolution=resolution,
+                binsize=200,
+                regions=bed_file,
+                store_whole_genome=storage,
+                storage='ndarray')
+
+            assert cover.shape == (100, 200 // resolution, 1, 1)
+            assert cover.shape == cov2.shape
+            k = list(cover.garray.handle.keys())[0]
+            np.testing.assert_allclose(cover[:].sum(), 1044.0 / resolution)
+            np.testing.assert_allclose(cov2[:].sum(), 1044.0 / resolution)
+
+
 def test_bam_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")

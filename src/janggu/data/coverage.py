@@ -657,7 +657,7 @@ class Cover(Dataset):
                         region.iv.end, region.iv.strand,
                         binsize, stepsize, flank)
                     for greg in gidx:
-                        
+
                         if region.score is None and mode in ['score',
                                                              'categorical']:
                             raise ValueError(
@@ -926,3 +926,64 @@ class Cover(Dataset):
     def conditions(self):
         """Conditions"""
         return [s.decode('utf-8') for s in self.garray.condition]
+
+    def export_to_bigwig(self, output_dir, genomesize=None):
+        """ This method exports the coverage as bigwigs.
+
+        This allows to use a standard genome browser to explore the
+        predictions or features derived from a neural network.
+
+        The bigwig files are named after the container name and the condition
+        names.
+
+        NOTE:
+            This function expects that the regions that need to be
+            exported are non-overlapping. That is the gindexer
+            binsize must be smaller or equal than stepsize.
+
+        Parameters
+        ----------
+        output_dir : str
+            Output directory to which the bigwig files will be exported to.
+        genomesize : dict or None
+            Dictionary containing the genome size.
+            If `genomesize=None`, the genome size
+            is determined from the gindexer if `store_whole_genome=False`,
+            or from the garray-size of `store_whole_genome=True`.
+        """
+
+        if pyBigWig is None:  # pragma: no cover
+            raise Exception('pyBigWig not available. '
+                            '`export_to_bigwig` requires pyBigWig to be installed.')
+
+        resolution = self.garray.resolution
+
+        if genomesize is not None:
+            gsize = genomesize
+        elif self.garray._full_genome_stored:
+            gsize = {k: self.garray.handle[k].shape[0] * resolution \
+                     for k in self.garray.handle}
+        else:
+            gsize = get_genome_size_from_regions(self.gindexer)
+
+        bw_header = [(chrom, gsize[chrom])
+                     for chrom in gsize]
+
+        for idx, condition in enumerate(self.conditions):
+            bw_file = pyBigWig.open(os.path.join(
+                output_dir,
+                '{name}.{condition}.bigwig'.format(
+                    name=self.name, condition=condition)), 'w')
+
+            bw_file.addHeader(bw_header)
+
+            for ridx, region in enumerate(self.gindexer):
+
+                cov = self[ridx][0, :, :, idx].sum(axis=1)
+
+                bw_file.addEntries(str(region.chrom),
+                                   int(region.start),
+                                   values=cov,
+                                   span=int(resolution),
+                                   step=int(resolution))
+            bw_file.close()
