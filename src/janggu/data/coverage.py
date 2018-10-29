@@ -969,7 +969,11 @@ class Cover(Dataset):
         bw_header = [(chrom, gsize[chrom])
                      for chrom in gsize]
 
+        print('check header:')
+        print(bw_header)
+
         for idx, condition in enumerate(self.conditions):
+            print(condition)
             bw_file = pyBigWig.open(os.path.join(
                 output_dir,
                 '{name}.{condition}.bigwig'.format(
@@ -977,9 +981,15 @@ class Cover(Dataset):
 
             bw_file.addHeader(bw_header)
 
-            for ridx, region in enumerate(self.gindexer):
+            # we need the new filter_by_region method here
+            #for chrom, size in bw_header:
+                # ngindexer = self.gindexer.filter_by_region()
+                # then use the new ngindexer to loop over as below
 
+            for ridx, region in enumerate(self.gindexer):
+                print(region)
                 cov = self[ridx][0, :, :, idx].sum(axis=1)
+                #print(region)
 
                 bw_file.addEntries(str(region.chrom),
                                    int(region.start),
