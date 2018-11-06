@@ -10,6 +10,39 @@ import pytest
 
 from janggu.data import Cover
 
+def test_channel_last_first():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    cover = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        resolution=1,
+        binsize=200,
+        regions=bed_file,
+        store_whole_genome=True,
+        channel_last=True,
+        storage='ndarray')
+    assert cover.shape == (100, 200, 1, 1)
+    assert cover[0].shape == (1, 200, 1, 1)
+    cover1 = cover
+
+    cover = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        resolution=1,
+        binsize=200,
+        regions=bed_file,
+        store_whole_genome=True,
+        channel_last=False,
+        storage='ndarray')
+    assert cover.shape == (100, 1, 200, 1)
+    assert cover[0].shape == (1, 1, 200, 1)
+
+    np.testing.assert_equal(cover1[0], np.transpose(cover[0], (0, 2, 3, 1)))
+
 
 def test_cover_export_bigwig(tmpdir):
     path = tmpdir.strpath
