@@ -78,22 +78,22 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                                            interval.end)][:(length),
                                            1 if self.stranded and strand == '-' else 0,
                                            condition] = value
-#                       raise IndexError('Region {} not '.format(_iv_to_str(
-#                               chrom, interval.start, interval.end)) +
-#                                        'contained in the genomic array. '
-#                                        'Consider adjusting the regions, '
-#                                        'binsize, stepsize and flank.')
 
                 else:
                     self.handle[chrom][start:end,
                                        1 if self.stranded and strand == '-' else 0,
                                        condition] = value
             except KeyError:
-                print('Skipping region {} - not in genomic array.'.format(
-                    _iv_to_str(chrom, interval.start, interval.end)) + 
-                'Consider using store_whole_genome=True or '
-                'adjusting adjusting the regions, binsize, stepsize and flank.')
-
+                # we end up here if the peak regions are not a subset of
+                # the regions of interest. that might be the case if
+                # peaks from the holdout proportion of the genome are tried
+                # to be added.
+                # unfortunately, it is also possible that store_whole_genome=False
+                # and the peaks and regions of interest are just not synchronized
+                # in which case nothing (or too few peaks) are added. in the latter
+                # case an error would help actually, but I am not sure how to
+                # check if the first or the second is the case here.
+                pass
         else:
             raise IndexError("Index must be a GenomicInterval and a condition index")
 
@@ -496,25 +496,37 @@ class SparseGenomicArray(GenomicArray):
             strand = interval.strand
             sind = 1 if self.stranded and strand == '-' else 0
 
-            for idx, iarray in enumerate(range(start, end)):
-                if hasattr(value, '__len__'):
-                    # value is a numpy array or a list
-                    val = value[idx]
-                else:
-                    # value is a scalar value
-                    val = value
+            try:
+                for idx, iarray in enumerate(range(start, end)):
+                    if hasattr(value, '__len__'):
+                        # value is a numpy array or a list
+                        val = value[idx]
+                    else:
+                        # value is a scalar value
+                        val = value
 
-                if val > 0:
-                    if not self._full_genome_stored:
-                        self.handle[_iv_to_str(chrom, interval.start,
-                                               interval.end)][idx,
+                    if val > 0:
+                        if not self._full_genome_stored:
+                            self.handle[_iv_to_str(chrom, interval.start,
+                                                   interval.end)][idx,
+                                                   sind * len(self.condition)
+                                                   + condition] = val
+                        else:
+                            self.handle[chrom][iarray,
                                                sind * len(self.condition)
                                                + condition] = val
-                    else:
-                        self.handle[chrom][iarray,
-                                           sind * len(self.condition)
-                                           + condition] = val
+            except KeyError:
+                # we end up here if the peak regions are not a subset of
+                # the regions of interest. that might be the case if
+                # peaks from the holdout proportion of the genome are tried
+                # to be added.
+                # unfortunately, it is also possible that store_whole_genome=False
+                # and the peaks and regions of interest are just not synchronized
+                # in which case nothing (or too few peaks) are added. in the latter
+                # case an error would help actually, but I am not sure how to
+                # check if the first or the second is the case here.
 
+                pass
             return
         raise IndexError("Index must be a GenomicInterval and a condition index")
 
