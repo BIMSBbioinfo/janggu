@@ -85,7 +85,7 @@ def test_cover_export_bigwig(tmpdir):
 
 def test_bam_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "positive.bed")
+    bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bam")
 
@@ -108,10 +108,81 @@ def test_bam_genomic_interval_access():
         storage='ndarray',
         store_whole_genome=True)
 
-    np.testing.assert_equal(cover[0], cover[cover.gindexer[0]])
-    chrom, start, end = cover.gindexer[0].chrom, cover.gindexer[0].start, cover.gindexer[0].end
-    np.testing.assert_equal(cover[0], cover[(chrom, start, end)])
-    np.testing.assert_equal(cover[0], cover[chrom, start, end])
+    for i in range(len(cover)):
+        print(i, cover.gindexer[i])
+        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+        np.testing.assert_equal(cover[i], cover[(chrom, start, end, strand)])
+        #np.testing.assert_equal(cover[i], cover[chrom, start, end, '+'])
+        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+
+
+def test_bigwig_genomic_interval_access():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    bamfile_ = os.path.join(data_path, "sample.bw")
+
+    cover = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray')
+
+    with pytest.raises(Exception):
+        # due to store_whole_genome = False
+        cover[cover.gindexer[0]]
+
+    cover = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray',
+        store_whole_genome=True)
+
+    for i in range(len(cover)):
+        print(i, cover.gindexer[i])
+        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+        np.testing.assert_equal(cover[i], cover[(chrom, start, end, strand)])
+        #np.testing.assert_equal(cover[i], cover[chrom, start, end, '+'])
+        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+
+
+def test_bed_genomic_interval_access():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    bamfile_ = os.path.join(data_path, "sample.bed")
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray')
+
+    with pytest.raises(Exception):
+        # due to store_whole_genome = False
+        cover[cover.gindexer[0]]
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bamfile_,
+        regions=bed_file,
+        flank=0,
+        storage='ndarray',
+        store_whole_genome=True)
+
+    for i in range(len(cover)):
+        print(i, cover.gindexer[i])
+        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+        np.testing.assert_equal(cover[i], cover[(chrom, start, end, strand)])
+        #np.testing.assert_equal(cover[i], cover[chrom, start, end, '+'])
+        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
 
 
 def test_bam_inferred_binsize():
