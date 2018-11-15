@@ -110,7 +110,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             val = (end - start)
         reglen = val // stepsize
         chrs = [chrom] * reglen
-        offsets = [start] * reglen
+        offsets = [x for x in range(start, end, stepsize)]
         rel_end = [binsize] * reglen
         strands = [strand] * reglen
         inregionidx = list(range(reglen))
@@ -118,7 +118,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         # we record the remaining fragment length
         if not fixed_size_batches and val % stepsize > 0:
             chrs += [chrom]
-            offsets += [start]
+            offsets += [offsets[-1] + stepsize]
             rel_end += [val - (val//stepsize) * stepsize]
             strands += [strand]
             inregionidx += [reglen]
@@ -147,8 +147,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     def __getitem__(self, index):
         if isinstance(index, int):
-            start = (self.offsets[index] +
-                     self.inregionidx[index]*self.stepsize)
+            start = self.offsets[index]
             val = self.rel_end[index]
             end = start + (val if val > 0 else 1)
             return GenomicInterval(self.chrs[index], start - self.flank,
@@ -240,7 +239,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
         new_gindexer.chrs = [self.chrs[i] for i in idxs]
         new_gindexer.offsets = [self.offsets[i] for i in idxs]
-        new_gindexer.inregionidx = [self.inregionidx[i] for i in idxs]
         new_gindexer.strand = [self.strand[i] for i in idxs]
         new_gindexer.rel_end = [self.rel_end[i] for i in idxs]
 
