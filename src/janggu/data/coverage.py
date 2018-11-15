@@ -855,12 +855,25 @@ class Cover(Dataset):
 
     def __getitem__(self, idxs):
         if isinstance(idxs, tuple):
-            if len(idxs) == 3 or len(idxs) == 4:
+            if self.garray._full_genome_stored == True:
                 # interpret idxs as genomic interval
                 idxs = GenomicInterval(*idxs)
             else:
-                raise ValueError('idxs cannot be interpreted as genomic interval.'
-                                 ' use (chr, start, end) or (chr, start, end, strand)')
+                chrom = idxs[0]
+                start = idxs[1]
+                end = idxs[2]
+                gindexer_new = self.gindexer.filter_by_region(include=chrom, start=start, end=end)
+                data = np.zeros((1, ((end - start) // self.garray.resolution) + (2 * (gindexer_new.stepsize) // self.garray.resolution)) + self.shape[2:])
+                if self.padding_value != 0:
+                    data.fill(self.padding_value)
+                step_size = gindexer_new.stepsize
+                for interval in gindexer_new:
+                    rel_pos = (interval.start - (start - step_size)) // self.garray.resolution
+                    tmp_data = np.array(self._getsingleitem(interval))
+                    tmp_data = tmp_data.reshape((1,) + tmp_data.shape)
+                    data[:, rel_pos: rel_pos + (step_size // self.garray.resolution), :, :] = tmp_data
+                data = data[:,(1*(step_size) // self.garray.resolution): -1 * (1*(step_size) // self.garray.resolution),:,:]
+                return data
 
         if isinstance(idxs, int):
             idxs = [idxs]
