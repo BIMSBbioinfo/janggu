@@ -8,6 +8,7 @@ from janggu.data.genomicarray import GenomicArray  # noqa
 from janggu.data.genomicarray import create_genomic_array  # noqa
 from janggu.data.nparr import Array  # noqa
 from janggu.data.tab import Table  # noqa
+from janggu.data.coverage import plotGenomeTrack
 
 
 def split_train_test(dataset, holdout_chroms):

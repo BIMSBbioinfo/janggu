@@ -14,6 +14,10 @@ from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
 from janggu.utils import get_chrom_length
 
+import matplotlib.pyplot as plt
+from matplotlib import style
+from matplotlib.gridspec import GridSpec
+from matplotlib.pyplot import cm
 
 try:
     import pyBigWig
@@ -926,3 +930,74 @@ class Cover(Dataset):
     def conditions(self):
         """Conditions"""
         return [s.decode('utf-8') for s in self.garray.condition]
+def plotGenomeTrack(covers, chr, start, end):
+
+    """plotGenomeTrack shows plots of a specific interval from cover objects data.
+
+    It takes a list of cover objects, number of chromosome, the start and the end of
+    a required interval and shows a plot of the same interval for each condition of each cover.
+
+    Parameters
+    ----------
+    covers : list(str)
+        List of cover objects.
+    chr : str
+        chromosome name.
+    start : int
+        The start of the required interval.
+    end : int
+        The end of the required interval.
+
+    Returns
+    -------
+    Figure
+        A matplotlib figure built for the required interval for each condition of each cover objects.
+        It is possible to show that figure with show() function integrated in matplotlib or even save it
+        with the 'savefig()' function of the same library.
+    """
+    if not isinstance(covers, list):
+        covers = [covers]
+
+    n_covers = len(covers)
+    color = iter(cm.rainbow(np.linspace(0, 1, n_covers)))
+    data = covers[0][chr, start, end]
+    len_files = [len(cover.conditions) for cover in covers]
+    nfiles = np.sum(len_files)
+    grid = plt.GridSpec(2 + (nfiles * 3) + (n_covers - 1), 10, wspace=0.4, hspace=0.3)
+    fig = plt.figure(figsize=(1 + nfiles * 3, 2*nfiles))
+
+    title = fig.add_subplot(grid[0, 1:])
+    title.set_title(chr)
+    plt.xlim([0, len(data[0, :, 0, 0])])
+    title.spines['right'].set_visible(False)
+    title.spines['top'].set_visible(False)
+    title.spines['left'].set_visible(False)
+    plt.xticks([0, len(data[0, :, 0, 0])], [start, end])
+    plt.yticks(())
+    cover_start = 2
+    abs_cont = 0
+    lat_titles = [None]*len(covers)
+    plots = []
+    for j, cover in enumerate(covers):
+        color_ = next(color)
+        lat_titles[j] = fig.add_subplot(grid[(cover_start + j):(cover_start + len_files[j]*3) + j, 0])
+        cover_start += (len_files[j]*3)
+        lat_titles[j].set_xticks(())
+        lat_titles[j].spines['right'].set_visible(False)
+        lat_titles[j].spines['top'].set_visible(False)
+        lat_titles[j].spines['bottom'].set_visible(False)
+        lat_titles[j].set_yticks([0.5])
+        lat_titles[j].set_yticklabels([cover.name], color=color_)
+        cont = 0
+        for i in cover.conditions:
+            plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 + 2 +j:(cont + abs_cont) * 3 + 5+j, 1:]))
+            plots[-1].plot(data[0, :, 0, cont], linewidth=2, color = color_)
+            plots[-1].set_yticks(())
+            plots[-1].set_xticks(())
+            plots[-1].set_xlim([0, len(data[0, :, 0, 0])])
+            plots[-1].set_ylabel(i, labelpad=12)
+            plots[-1].spines['right'].set_visible(False)
+            plots[-1].spines['top'].set_visible(False)
+            cont = cont + 1
+        abs_cont += cont
+    return (fig)
