@@ -193,13 +193,15 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         """Returns representing the region."""
         return ['{}:{}-{}'.format(iv.chrom, iv.start, iv.end) for iv in self]
 
-    def filter_by_chrom(self, include=None, exclude=None):
-        """filter_by_chrom filters for chromosome ids.
 
-        It takes a list of chromosome ids which should be included
-        or excluded and returns a new GenomicIndexer
-        associated with the
-        compatible intervals after filtering.
+
+    def idx_by_region(self, include=None, exclude=None, start=None, end=None):
+
+        """idx_by_region filters for chromosome and region ids.
+
+        It takes a list of chromosome ids which should be included or excluded, the start and the end of
+        a required interval as integers and returns a new GenomicIndexer
+        associated with the compatible intervals after filtering.
 
         Parameters
         ----------
@@ -208,11 +210,15 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             all chromosomes are included.
         exclude : list(str)
             List of chromosome names to be excluded. Default: [].
+        start : int
+            The start of the required interval.
+        end : int
+            The end of the required interval.
 
         Returns
         -------
-        GenomicIndexer
-            Containing the filtered regions.
+        idxs
+            Containing a list of filtered regions indexes.
         """
 
         if isinstance(include, str):
@@ -233,8 +239,42 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                 idxs = idxs.difference(
                     np.where(np.asarray(self.chrs) == exc)[0])
 
+        if isinstance(start, int) & isinstance(end, int):
+            regionmatch = ((np.array(self.offsets) > (start - self.stepsize)) & (
+                    np.array(self.offsets) < end))
+            indexmatch = np.where(regionmatch)[0]
+            idxs = idxs.intersection(indexmatch)
         idxs = list(idxs)
+        idxs.sort()
+        return idxs
 
+
+    def filter_by_region(self, include=None, exclude=None, start=None, end=None):
+
+        """filter_by_region filters for chromosome and region ids.
+
+        It takes a list of chromosome ids which should be included or excluded, the start and the end of
+        a required interval as integers and returns a new GenomicIndexer
+        associated with the compatible intervals after filtering.
+
+        Parameters
+        ----------
+        include : list(str)
+            List of chromosome names to be included. Default: [] means
+            all chromosomes are included.
+        exclude : list(str)
+            List of chromosome names to be excluded. Default: [].
+        start : int
+            The start of the required interval.
+        end : int
+            The end of the required interval.
+
+        Returns
+        -------
+        GenomicIndexer
+            Containing the filtered regions.
+        """
+        idxs = self.idx_by_region(include=include, exclude=exclude, start=start, end=end)
         #  construct the filtered gindexer
         new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
         new_gindexer.chrs = [self.chrs[i] for i in idxs]
