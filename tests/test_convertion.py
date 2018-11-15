@@ -1,5 +1,8 @@
 import os
 
+import matplotlib
+matplotlib.use('AGG')
+
 import numpy as np
 from keras import backend as K
 from keras.layers import Conv2D

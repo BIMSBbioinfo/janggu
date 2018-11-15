@@ -61,12 +61,13 @@ class Cover(Dataset):
     def __init__(self, name, garray,
                  gindexer,  # indices of pointing to region start
                  padding_value,
-                 dimmode):  # padding value
+                 dimmode, channel_last):  # padding value
 
         self.garray = garray
         self.gindexer = gindexer
         self.padding_value = padding_value
         self.dimmode = dimmode
+        self._channel_last = channel_last
 
         Dataset.__init__(self, name)
 
@@ -89,6 +90,7 @@ class Cover(Dataset):
                         aggregate=None,
                         datatags=None,
                         cache=False,
+                        channel_last=True,
                         store_whole_genome=False):
         """Create a Cover class from a bam-file (or files).
 
@@ -177,6 +179,10 @@ class Cover(Dataset):
             Default: None
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
+        channel_last : boolean
+            Indicates whether the condition axis should be the last dimension
+            or the first. For example, tensorflow expects the channel at the
+            last position. Default: True.
         store_whole_genome : boolean
             Indicates whether the whole genome or only selected regions
             should be loaded. If False, a bed-file with regions of interest
@@ -337,7 +343,8 @@ class Cover(Dataset):
                                      loader=_bam_loader,
                                      loader_args=(bamfiles,))
 
-        return cls(name, cover, gindexer, padding_value=0, dimmode='all')
+        return cls(name, cover, gindexer, padding_value=0, dimmode='all',
+                   channel_last=channel_last)
 
     @classmethod
     def create_from_bigwig(cls, name,  # pylint: disable=too-many-locals
@@ -354,6 +361,7 @@ class Cover(Dataset):
                            aggregate=np.mean,
                            datatags=None, cache=False,
                            store_whole_genome=False,
+                           channel_last=True,
                            nan_to_num=True):
         """Create a Cover class from a bigwig-file (or files).
 
@@ -430,6 +438,10 @@ class Cover(Dataset):
             Indicates whether the whole genome or only selected regions
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
+        channel_last : boolean
+            Indicates whether the condition axis should be the last dimension
+            or the first. For example, tensorflow expects the channel at the
+            last position. Default: True.
         nan_to_num : boolean
             Indicates whether NaN values contained in the bigwig files should
             be interpreted as zeros. Default: True
@@ -516,7 +528,7 @@ class Cover(Dataset):
                                      loader_args=(aggregate,))
 
         return cls(name, cover, gindexer,
-                   padding_value=0, dimmode=dimmode)
+                   padding_value=0, dimmode=dimmode, channel_last=channel_last)
 
     @classmethod
     def create_from_bed(cls, name,  # pylint: disable=too-many-locals
@@ -532,6 +544,7 @@ class Cover(Dataset):
                         mode='binary',
                         store_whole_genome=False,
                         overwrite=False,
+                        channel_last=True,
                         datatags=None, cache=False):
         """Create a Cover class from a bed-file (or files).
 
@@ -602,6 +615,10 @@ class Cover(Dataset):
             Indicates whether the whole genome or only selected regions
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
+        channel_last : boolean
+            Indicates whether the condition axis should be the last dimension
+            or the first. For example, tensorflow expects the channel at the
+            last position. Default: True.
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         """
@@ -661,7 +678,7 @@ class Cover(Dataset):
                         region.iv.end, region.iv.strand,
                         binsize, stepsize, flank)
                     for greg in gidx:
-                        
+
                         if region.score is None and mode in ['score',
                                                              'categorical']:
                             raise ValueError(
@@ -697,7 +714,7 @@ class Cover(Dataset):
                                      loader_args=(bedfiles, gsize, mode))
 
         return cls(name, cover, gindexer,
-                   padding_value=0, dimmode=dimmode)
+                   padding_value=0, dimmode=dimmode, channel_last=channel_last)
 
     @classmethod
     def create_from_array(cls, name,  # pylint: disable=too-many-locals
@@ -710,6 +727,7 @@ class Cover(Dataset):
                           overwrite=False,
                           datatags=None,
                           cache=False,
+                          channel_last=True,
                           store_whole_genome=False):
         """Create a Cover class from a numpy.array.
 
@@ -757,6 +775,11 @@ class Cover(Dataset):
         store_whole_genome : boolean
             Indicates whether the whole genome or only selected regions
             should be loaded. Default: False.
+        channel_last : boolean
+            This tells the constructor how to interpret the array dimensions.
+            It indicates whether the condition axis is the last dimension
+            or the first. For example, tensorflow expects the channel at the
+            last position. Default: True.
         """
 
         if not store_whole_genome:
@@ -770,6 +793,8 @@ class Cover(Dataset):
             # based on the gindexer intervals.
             gsize = get_genome_size_from_regions(gindexer)
 
+        if not channel_last:
+            array = np.transpose(array, (0, 3, 1, 2))
 
         if conditions is None:
             conditions = ["Cond_{}".format(i) for i in range(array.shape[-1])]
@@ -830,7 +855,7 @@ class Cover(Dataset):
                                      loader_args=(array, gindexer))
 
         return cls(name, cover, gindexer,
-                   padding_value=0, dimmode='all')
+                   padding_value=0, dimmode='all', channel_last=channel_last)
 
     @property
     def gindexer(self):
@@ -891,6 +916,9 @@ class Cover(Dataset):
             data = data.reshape((1,) + data.shape)
             for transform in self.transformations:
                 data = transform(data)
+            if not self._channel_last:
+                data = np.transpose(data, (0, 3, 1, 2))
+
             return data
 
         try:
@@ -898,7 +926,7 @@ class Cover(Dataset):
         except TypeError:
             raise IndexError('Cover.__getitem__: index must be iterable')
 
-        data = np.zeros((len(idxs),) + self.shape[1:])
+        data = np.zeros((len(idxs),) + self.shape_static[1:])
         if self.padding_value != 0:
             data.fill(self.padding_value)
 
@@ -909,6 +937,9 @@ class Cover(Dataset):
 
         for transform in self.transformations:
             data = transform(data)
+
+        if not self._channel_last:
+            data = np.transpose(data, (0, 3, 1, 2))
 
         return data
 
@@ -930,6 +961,15 @@ class Cover(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
+
+        if self._channel_last:
+            return self.shape_static
+        else:
+            return tuple(self.shape_static[x] for x in [0, 3, 1, 2])
+
+    @property
+    def shape_static(self):
+        """Shape of the dataset"""
         if self.dimmode == 'all':
             blen = (self.gindexer.binsize) // self.garray.resolution
             seqlen = 2*self.gindexer.flank // self.garray.resolution + \
@@ -937,12 +977,87 @@ class Cover(Dataset):
         elif self.dimmode == 'first':
             seqlen = 1
         return (len(self),
-                seqlen, 2 if self.garray.stranded else 1, len(self.garray.condition))
+                seqlen,
+                2 if self.garray.stranded else 1,
+                len(self.garray.condition))
 
     @property
     def conditions(self):
         """Conditions"""
         return [s.decode('utf-8') for s in self.garray.condition]
+
+    def export_to_bigwig(self, output_dir, genomesize=None):
+        """ This method exports the coverage as bigwigs.
+
+        This allows to use a standard genome browser to explore the
+        predictions or features derived from a neural network.
+
+        The bigwig files are named after the container name and the condition
+        names.
+
+        NOTE:
+            This function expects that the regions that need to be
+            exported are non-overlapping. That is the gindexer
+            binsize must be smaller or equal than stepsize.
+
+        Parameters
+        ----------
+        output_dir : str
+            Output directory to which the bigwig files will be exported to.
+        genomesize : dict or None
+            Dictionary containing the genome size.
+            If `genomesize=None`, the genome size
+            is determined from the gindexer if `store_whole_genome=False`,
+            or from the garray-size of `store_whole_genome=True`.
+        """
+
+        if pyBigWig is None:  # pragma: no cover
+            raise Exception('pyBigWig not available. '
+                            '`export_to_bigwig` requires pyBigWig to be installed.')
+
+        resolution = self.garray.resolution
+
+        if genomesize is not None:
+            gsize = genomesize
+        elif self.garray._full_genome_stored:
+            gsize = {k: self.garray.handle[k].shape[0] * resolution \
+                     for k in self.garray.handle}
+        else:
+            gsize = get_genome_size_from_regions(self.gindexer)
+
+        bw_header = [(chrom, gsize[chrom])
+                     for chrom in gsize]
+
+        print('check header:')
+        print(bw_header)
+
+        for idx, condition in enumerate(self.conditions):
+            print(condition)
+            bw_file = pyBigWig.open(os.path.join(
+                output_dir,
+                '{name}.{condition}.bigwig'.format(
+                    name=self.name, condition=condition)), 'w')
+
+            bw_file.addHeader(bw_header)
+
+            # we need the new filter_by_region method here
+            #for chrom, size in bw_header:
+                # ngindexer = self.gindexer.filter_by_region()
+                # then use the new ngindexer to loop over as below
+
+            for ridx, region in enumerate(self.gindexer):
+                print(region)
+                cov = self[ridx][0, :, :, idx].sum(axis=1)
+                #print(region)
+
+                bw_file.addEntries(str(region.chrom),
+                                   int(region.start),
+                                   values=cov,
+                                   span=int(resolution),
+                                   step=int(resolution))
+            bw_file.close()
+
+
 def plotGenomeTrack(covers, chr, start, end):
 
     """plotGenomeTrack shows plots of a specific interval from cover objects data.

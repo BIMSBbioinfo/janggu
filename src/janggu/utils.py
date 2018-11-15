@@ -3,6 +3,7 @@
 import json
 import os
 from collections import defaultdict
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -156,12 +157,13 @@ def sequence_padding(seqs, length):
     list(Bio.SeqRecord)
         Padded sequence represented as string, SeqRecord or Seq.
     """
-    for idx, seq in enumerate(seqs):
+    seqs_ = deepcopy(seqs)
+    for idx, seq in enumerate(seqs_):
         if len(seq) < length:
-            seqs[idx] += '.' * (length - len(seq))
+            seqs_[idx] += '.' * (length - len(seq))
         else:
-            seqs[idx] = seq[:length]
-    return seqs
+            seqs_[idx] = seq[:length]
+    return seqs_
 
 
 def as_onehot(iseq, order, alphabetsize):
