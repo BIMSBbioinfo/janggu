@@ -880,25 +880,7 @@ class Cover(Dataset):
 
     def __getitem__(self, idxs):
         if isinstance(idxs, tuple):
-            if self.garray._full_genome_stored == True:
-                # interpret idxs as genomic interval
-                idxs = GenomicInterval(*idxs)
-            else:
-                chrom = idxs[0]
-                start = idxs[1]
-                end = idxs[2]
-                gindexer_new = self.gindexer.filter_by_region(include=chrom, start=start, end=end)
-                data = np.zeros((1, ((end - start) // self.garray.resolution) + (2 * (gindexer_new.stepsize) // self.garray.resolution)) + self.shape[2:])
-                if self.padding_value != 0:
-                    data.fill(self.padding_value)
-                step_size = gindexer_new.stepsize
-                for interval in gindexer_new:
-                    rel_pos = (interval.start - (start - step_size)) // self.garray.resolution
-                    tmp_data = np.array(self._getsingleitem(interval))
-                    tmp_data = tmp_data.reshape((1,) + tmp_data.shape)
-                    data[:, rel_pos: rel_pos + (step_size // self.garray.resolution), :, :] = tmp_data
-                data = data[:,(1*(step_size) // self.garray.resolution): -1 * (1*(step_size) // self.garray.resolution),:,:]
-                return data
+            idxs = GenomicInterval(*idxs)
 
         if isinstance(idxs, int):
             idxs = [idxs]
@@ -907,15 +889,45 @@ class Cover(Dataset):
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
         elif isinstance(idxs, GenomicInterval):
-            if not self.garray._full_genome_stored:
-                raise ValueError('Indexing with GenomicInterval only possible '
-                                 'when the whole genome (or chromosome) was loaded')
-            # accept a genomic interval directly
-            #data = np.zeros((1,) + self.shape[1:])
-            data = self._getsingleitem(idxs)
-            data = data.reshape((1,) + data.shape)
-            for transform in self.transformations:
-                data = transform(data)
+            if self.garray._full_genome_stored:
+                print(idxs)
+                # accept a genomic interval directly
+                #data = np.zeros((1,) + self.shape[1:])
+                data = self._getsingleitem(idxs)
+                data = data.reshape((1,) + data.shape)
+                for transform in self.transformations:
+                    data = transform(data)
+
+            else:
+                chrom = idxs.chrom
+                start = idxs.start
+                end = idxs.end
+                gindexer_new = self.gindexer.filter_by_region(include=chrom, start=start, end=end)
+                data = np.zeros((1, ((end - start) // self.garray.resolution) + (2 * (gindexer_new.stepsize) // self.garray.resolution)) + self.shape[2:])
+                if self.padding_value != 0:
+                    data.fill(self.padding_value)
+                step_size = gindexer_new.stepsize
+                for interval in gindexer_new:
+                    print('new gindexer interval:', interval)
+                    tmp_data = np.array(self._getsingleitem(interval))
+                    tmp_data = tmp_data.reshape((1,) + tmp_data.shape)
+
+                    if interval.strand == '-':
+                        # invert the data so that is again relative
+                        # to the positive strand,
+                        # this avoids having to change the rel_pos computation
+                        tmp_data = tmp_data[:,::-1,::-1,:]
+
+                    rel_pos = (interval.start - (start - step_size)) // self.garray.resolution
+
+                    data[:, rel_pos: rel_pos + (step_size // self.garray.resolution), :, :] = tmp_data
+
+                if interval.strand == '-':
+                    # invert it back relative to minus strand
+                    data = data[:,::-1,::-1,:]
+
+                data = data[:,(1*(step_size) // self.garray.resolution): -1 * (1*(step_size) // self.garray.resolution),:,:]
+
             if not self._channel_last:
                 data = np.transpose(data, (0, 3, 1, 2))
 
