@@ -90,32 +90,34 @@ def test_bam_genomic_interval_access():
 
     bamfile_ = os.path.join(data_path, "sample.bam")
 
-    cover = Cover.create_from_bam(
-        'test',
-        bamfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray')
+    for storage in [True, False]:
+        for reso in [1, 50]:
+            for shift in [0, 1]:
+                    cover = Cover.create_from_bam(
+                        'test',
+                        bamfiles=bamfile_,
+                        regions=bed_file,
+                        flank=0,
+                        storage='ndarray',
+                        store_whole_genome=storage,
+                        resolution=reso)
 
-    with pytest.raises(Exception):
-        # due to store_whole_genome = False
-        cover[cover.gindexer[0]]
+                    for i in range(len(cover)):
+                        print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+                        print(i, cover.gindexer[i])
 
-    cover = Cover.create_from_bam(
-        'test',
-        bamfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray',
-        store_whole_genome=True)
+                        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+                        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+                        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
 
-    for i in range(len(cover)):
-        print(i, cover.gindexer[i])
-        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
-        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
-        np.testing.assert_equal(cover[i], cover[(chrom, start, end, strand)])
-        #np.testing.assert_equal(cover[i], cover[chrom, start, end, '+'])
-        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+                        if shift != 0:
+                            start += shift * reso
+                            end += shift * reso
+
+                            if strand != '-':
+                                np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
+                            else:
+                                np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
 
 
 def test_bigwig_genomic_interval_access():
@@ -124,32 +126,34 @@ def test_bigwig_genomic_interval_access():
 
     bamfile_ = os.path.join(data_path, "sample.bw")
 
-    cover = Cover.create_from_bigwig(
-        'test',
-        bigwigfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray')
+    for storage in [True, False]:
+        for reso in [1, 50]:
+            for shift in [0, 1]:
+                    cover = Cover.create_from_bigwig(
+                        'test',
+                        bigwigfiles=bamfile_,
+                        regions=bed_file,
+                        flank=0,
+                        storage='ndarray',
+                        store_whole_genome=storage,
+                        resolution=reso)
 
-    with pytest.raises(Exception):
-        # due to store_whole_genome = False
-        cover[cover.gindexer[0]]
+                    for i in range(len(cover)):
+                        print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+                        print(i, cover.gindexer[i])
 
-    cover = Cover.create_from_bigwig(
-        'test',
-        bigwigfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray',
-        store_whole_genome=True)
+                        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+                        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+                        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
 
-    for i in range(len(cover)):
-        print(i, cover.gindexer[i])
-        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
-        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
-        np.testing.assert_equal(cover[i], cover[(chrom, start, end, strand)])
-        #np.testing.assert_equal(cover[i], cover[chrom, start, end, '+'])
-        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+                        if shift != 0:
+                            start += shift * reso
+                            end += shift * reso
+
+                            if strand != '-':
+                                np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
+                            else:
+                                np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
 
 
 def test_bed_genomic_interval_access():
@@ -158,32 +162,35 @@ def test_bed_genomic_interval_access():
 
     bamfile_ = os.path.join(data_path, "sample.bed")
 
-    cover = Cover.create_from_bed(
-        'test',
-        bedfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray')
+    for storage in [True, False]:
+        for reso in [1, 50]:
+            for shift in [0, 1]:
+                    cover = Cover.create_from_bed(
+                        'test',
+                        bedfiles=bamfile_,
+                        regions=bed_file,
+                        flank=0,
+                        storage='ndarray',
+                        store_whole_genome=storage,
+                        resolution=reso)
 
-    with pytest.raises(Exception):
-        # due to store_whole_genome = False
-        cover[cover.gindexer[0]]
+                    for i in range(len(cover)):
+                        print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+                        print(i, cover.gindexer[i])
 
-    cover = Cover.create_from_bed(
-        'test',
-        bedfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray',
-        store_whole_genome=True)
+                        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+                        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+                        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
 
-    for i in range(len(cover)):
-        print(i, cover.gindexer[i])
-        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
-        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
-        np.testing.assert_equal(cover[i], cover[(chrom, start, end, strand)])
-        #np.testing.assert_equal(cover[i], cover[chrom, start, end, '+'])
-        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+                        if shift != 0:
+                            start += shift * reso
+                            end += shift * reso
+
+                            if strand != '-':
+                                np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
+                            else:
+                                np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
+
 
 
 def test_bam_inferred_binsize():
