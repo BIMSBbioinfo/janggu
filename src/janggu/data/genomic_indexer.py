@@ -107,7 +107,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             val = (end - start)
         reglen = val // stepsize
         chrs = [chrom] * reglen
-        offsets = [x for x in range(start, end, stepsize)]
+        offsets = [x for x in range(start, start+(stepsize*reglen) , stepsize)]
         rel_end = [binsize] * reglen
         strands = [strand] * reglen
         # if there is a variable length fragment at the end,
