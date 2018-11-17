@@ -19,7 +19,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     _flank = None
     chrs = None
     offsets = None
-    inregionidx = None
     strand = None
     rel_end = None
 
@@ -73,7 +72,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         gind.chrs = []
         gind.offsets = []
-        gind.inregionidx = []
         gind.strand = []
         gind.rel_end = []
 
@@ -86,7 +84,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
             gind.chrs += tmp_gidx.chrs
             gind.offsets += tmp_gidx.offsets
-            gind.inregionidx += tmp_gidx.inregionidx
             gind.strand += tmp_gidx.strand
             gind.rel_end += tmp_gidx.rel_end
 
@@ -113,7 +110,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         offsets = [x for x in range(start, end, stepsize)]
         rel_end = [binsize] * reglen
         strands = [strand] * reglen
-        inregionidx = list(range(reglen))
         # if there is a variable length fragment at the end,
         # we record the remaining fragment length
         if not fixed_size_batches and val % stepsize > 0:
@@ -121,11 +117,9 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             offsets += [offsets[-1] + stepsize]
             rel_end += [val - (val//stepsize) * stepsize]
             strands += [strand]
-            inregionidx += [reglen]
 
         gind.chrs = chrs
         gind.offsets = offsets
-        gind.inregionidx = inregionidx
         gind.strand = strands
         gind.rel_end = rel_end
         return gind

@@ -318,7 +318,6 @@ class Bioseq(Dataset):
         gindexer = GenomicIndexer(reglen, stepsize, flank)
         gindexer.chrs = chroms
         gindexer.offsets = [0]*len(lens)
-        gindexer.inregionidx = [0]*len(lens)
         gindexer.strand = ['.']*len(lens)
         gindexer.rel_end = [reglen + 2*flank]*len(lens)
 
