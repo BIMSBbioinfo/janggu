@@ -9,6 +9,7 @@ import pkg_resources
 import pytest
 
 from janggu.data import Cover
+from janggu.data import GenomicIndexer
 
 def test_channel_last_first():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -85,33 +86,111 @@ def test_cover_export_bigwig(tmpdir):
 
 def test_bam_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "positive.bed")
+    bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bam")
 
-    cover = Cover.create_from_bam(
-        'test',
-        bamfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray')
+    for storage in [True, False]:
+        for reso in [1, 50]:
+            for shift in [0, 1]:
+                    cover = Cover.create_from_bam(
+                        'test',
+                        bamfiles=bamfile_,
+                        regions=bed_file,
+                        flank=0,
+                        storage='ndarray',
+                        store_whole_genome=storage,
+                        resolution=reso)
 
-    with pytest.raises(Exception):
-        # due to store_whole_genome = False
-        cover[cover.gindexer[0]]
+                    for i in range(len(cover)):
+                        print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+                        print(i, cover.gindexer[i])
 
-    cover = Cover.create_from_bam(
-        'test',
-        bamfiles=bamfile_,
-        regions=bed_file,
-        flank=0,
-        storage='ndarray',
-        store_whole_genome=True)
+                        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+                        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+                        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
 
-    np.testing.assert_equal(cover[0], cover[cover.gindexer[0]])
-    chrom, start, end = cover.gindexer[0].chrom, cover.gindexer[0].start, cover.gindexer[0].end
-    np.testing.assert_equal(cover[0], cover[(chrom, start, end)])
-    np.testing.assert_equal(cover[0], cover[chrom, start, end])
+                        if shift != 0:
+                            start += shift * reso
+                            end += shift * reso
+
+                            if strand != '-':
+                                np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
+                            else:
+                                np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
+
+
+def test_bigwig_genomic_interval_access():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    bamfile_ = os.path.join(data_path, "sample.bw")
+
+    for storage in [True, False]:
+        for reso in [1, 50]:
+            for shift in [0, 1]:
+                    cover = Cover.create_from_bigwig(
+                        'test',
+                        bigwigfiles=bamfile_,
+                        regions=bed_file,
+                        flank=0,
+                        storage='ndarray',
+                        store_whole_genome=storage,
+                        resolution=reso)
+
+                    for i in range(len(cover)):
+                        print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+                        print(i, cover.gindexer[i])
+
+                        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+                        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+                        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+
+                        if shift != 0:
+                            start += shift * reso
+                            end += shift * reso
+
+                            if strand != '-':
+                                np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
+                            else:
+                                np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
+
+
+def test_bed_genomic_interval_access():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    bamfile_ = os.path.join(data_path, "sample.bed")
+
+    for storage in [True, False]:
+        for reso in [1, 50]:
+            for shift in [0, 1]:
+                    cover = Cover.create_from_bed(
+                        'test',
+                        bedfiles=bamfile_,
+                        regions=bed_file,
+                        flank=0,
+                        storage='ndarray',
+                        store_whole_genome=storage,
+                        resolution=reso)
+
+                    for i in range(len(cover)):
+                        print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+                        print(i, cover.gindexer[i])
+
+                        np.testing.assert_equal(cover[i], cover[cover.gindexer[i]])
+                        chrom, start, end, strand = cover.gindexer[i].chrom, cover.gindexer[i].start, cover.gindexer[i].end, cover.gindexer[i].strand
+                        np.testing.assert_equal(cover[i], cover[chrom, start, end, strand])
+
+                        if shift != 0:
+                            start += shift * reso
+                            end += shift * reso
+
+                            if strand != '-':
+                                np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
+                            else:
+                                np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
+
 
 
 def test_bam_inferred_binsize():
@@ -922,3 +1001,88 @@ def test_load_cover_bed_categorical():
         np.testing.assert_equal(cover.shape, (100, 1, 1, 6))
         np.testing.assert_equal(cover[0].sum(), 0)
         np.testing.assert_equal(cover[4].sum(), 1)
+
+
+def test_filter_by_region():
+
+    roi_file = pkg_resources.resource_filename('janggu',
+                                 'resources/bed_test.bed')
+
+    f1 = GenomicIndexer.create_from_file(regions=roi_file, binsize=2, stepsize=2)
+    np.testing.assert_equal(len(f1), 9)
+
+
+    j = ""
+    for i in f1:
+        j += str(i) + "\n"
+
+    prv = "chr1:[0,2)/+\n" \
+          "chr1:[2,4)/+\n" \
+          "chr1:[4,6)/+\n" \
+          "chr1:[6,8)/+\n" \
+          "chr1:[8,10)/+\n" \
+          "chr1:[10,12)/+\n" \
+          "chr1:[12,14)/+\n" \
+          "chr1:[14,16)/+\n" \
+          "chr1:[16,18)/+\n"
+    np.testing.assert_equal(j,prv)
+
+
+
+    test1 = f1.filter_by_region(include='chr1', start=0, end=18)
+    k = ""
+    for i in test1:
+        k += str(i) + "\n"
+    np.testing.assert_equal(j,k)
+
+
+
+
+    test2 = f1.filter_by_region(include='chr1', start=5, end=10)
+    z = ""
+    for i in test2:
+        z += str(i) + "\n"
+    prv2 = "chr1:[4,6)/+\n" \
+           "chr1:[6,8)/+\n" \
+           "chr1:[8,10)/+\n"
+    np.testing.assert_equal(z,prv2)
+
+
+
+
+    test3 = f1.filter_by_region(include='chr1', start=5, end=11)
+    q = ""
+    for i in test3:
+        q += str(i) + "\n"
+    prv3 = "chr1:[4,6)/+\n" \
+           "chr1:[6,8)/+\n" \
+           "chr1:[8,10)/+\n" \
+           "chr1:[10,12)/+\n"
+    np.testing.assert_equal(q,prv3)
+
+
+
+    test4 = f1.filter_by_region(include='chr1', start=6, end=10)
+    z1 = ""
+    for i in test4:
+        z1 += str(i) + "\n"
+    prv4 = "chr1:[6,8)/+\n" \
+           "chr1:[8,10)/+\n"
+    np.testing.assert_equal(z1,prv4)
+
+
+
+
+    test5 = f1.filter_by_region(include='chr1', start=6, end=11)
+    q1 = ""
+    for i in test5:
+        q1 += str(i) + "\n"
+    prv5 = "chr1:[6,8)/+\n" \
+           "chr1:[8,10)/+\n" \
+           "chr1:[10,12)/+\n"
+    np.testing.assert_equal(q1,prv5)
+
+
+
+    test6 = f1.filter_by_region(include='chr1', start=20, end=30)
+    np.testing.assert_equal(len(test6), 0)
