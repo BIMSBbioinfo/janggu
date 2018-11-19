@@ -14,6 +14,10 @@ from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
 from janggu.utils import get_chrom_length
 
+import matplotlib.pyplot as plt
+from matplotlib import style
+from matplotlib.gridspec import GridSpec
+from matplotlib.pyplot import cm
 
 try:
     import pyBigWig
@@ -876,12 +880,7 @@ class Cover(Dataset):
 
     def __getitem__(self, idxs):
         if isinstance(idxs, tuple):
-            if len(idxs) == 3 or len(idxs) == 4:
-                # interpret idxs as genomic interval
-                idxs = GenomicInterval(*idxs)
-            else:
-                raise ValueError('idxs cannot be interpreted as genomic interval.'
-                                 ' use (chr, start, end) or (chr, start, end, strand)')
+            idxs = GenomicInterval(*idxs)
 
         if isinstance(idxs, int):
             idxs = [idxs]
@@ -890,15 +889,45 @@ class Cover(Dataset):
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
         elif isinstance(idxs, GenomicInterval):
-            if not self.garray._full_genome_stored:
-                raise ValueError('Indexing with GenomicInterval only possible '
-                                 'when the whole genome (or chromosome) was loaded')
-            # accept a genomic interval directly
-            #data = np.zeros((1,) + self.shape[1:])
-            data = self._getsingleitem(idxs)
-            data = data.reshape((1,) + data.shape)
-            for transform in self.transformations:
-                data = transform(data)
+            if self.garray._full_genome_stored:
+                print(idxs)
+                # accept a genomic interval directly
+                #data = np.zeros((1,) + self.shape[1:])
+                data = self._getsingleitem(idxs)
+                data = data.reshape((1,) + data.shape)
+                for transform in self.transformations:
+                    data = transform(data)
+
+            else:
+                chrom = idxs.chrom
+                start = idxs.start
+                end = idxs.end
+                gindexer_new = self.gindexer.filter_by_region(include=chrom, start=start, end=end)
+                data = np.zeros((1, ((end - start) // self.garray.resolution) + (2 * (gindexer_new.stepsize) // self.garray.resolution)) + self.shape[2:])
+                if self.padding_value != 0:
+                    data.fill(self.padding_value)
+                step_size = gindexer_new.stepsize
+                for interval in gindexer_new:
+                    print('new gindexer interval:', interval)
+                    tmp_data = np.array(self._getsingleitem(interval))
+                    tmp_data = tmp_data.reshape((1,) + tmp_data.shape)
+
+                    if interval.strand == '-':
+                        # invert the data so that is again relative
+                        # to the positive strand,
+                        # this avoids having to change the rel_pos computation
+                        tmp_data = tmp_data[:,::-1,::-1,:]
+
+                    rel_pos = (interval.start - (start - step_size)) // self.garray.resolution
+
+                    data[:, rel_pos: rel_pos + (step_size // self.garray.resolution), :, :] = tmp_data
+
+                if interval.strand == '-':
+                    # invert it back relative to minus strand
+                    data = data[:,::-1,::-1,:]
+
+                data = data[:,(1*(step_size) // self.garray.resolution): -1 * (1*(step_size) // self.garray.resolution),:,:]
+
             if not self._channel_last:
                 data = np.transpose(data, (0, 3, 1, 2))
 
@@ -1039,3 +1068,76 @@ class Cover(Dataset):
                                    span=int(resolution),
                                    step=int(resolution))
             bw_file.close()
+
+
+def plotGenomeTrack(covers, chr, start, end):
+
+    """plotGenomeTrack shows plots of a specific interval from cover objects data.
+
+    It takes a list of cover objects, number of chromosome, the start and the end of
+    a required interval and shows a plot of the same interval for each condition of each cover.
+
+    Parameters
+    ----------
+    covers : list(str)
+        List of cover objects.
+    chr : str
+        chromosome name.
+    start : int
+        The start of the required interval.
+    end : int
+        The end of the required interval.
+
+    Returns
+    -------
+    Figure
+        A matplotlib figure built for the required interval for each condition of each cover objects.
+        It is possible to show that figure with show() function integrated in matplotlib or even save it
+        with the 'savefig()' function of the same library.
+    """
+    if not isinstance(covers, list):
+        covers = [covers]
+
+    n_covers = len(covers)
+    color = iter(cm.rainbow(np.linspace(0, 1, n_covers)))
+    data = covers[0][chr, start, end]
+    len_files = [len(cover.conditions) for cover in covers]
+    nfiles = np.sum(len_files)
+    grid = plt.GridSpec(2 + (nfiles * 3) + (n_covers - 1), 10, wspace=0.4, hspace=0.3)
+    fig = plt.figure(figsize=(1 + nfiles * 3, 2*nfiles))
+
+    title = fig.add_subplot(grid[0, 1:])
+    title.set_title(chr)
+    plt.xlim([0, len(data[0, :, 0, 0])])
+    title.spines['right'].set_visible(False)
+    title.spines['top'].set_visible(False)
+    title.spines['left'].set_visible(False)
+    plt.xticks([0, len(data[0, :, 0, 0])], [start, end])
+    plt.yticks(())
+    cover_start = 2
+    abs_cont = 0
+    lat_titles = [None]*len(covers)
+    plots = []
+    for j, cover in enumerate(covers):
+        color_ = next(color)
+        lat_titles[j] = fig.add_subplot(grid[(cover_start + j):(cover_start + len_files[j]*3) + j, 0])
+        cover_start += (len_files[j]*3)
+        lat_titles[j].set_xticks(())
+        lat_titles[j].spines['right'].set_visible(False)
+        lat_titles[j].spines['top'].set_visible(False)
+        lat_titles[j].spines['bottom'].set_visible(False)
+        lat_titles[j].set_yticks([0.5])
+        lat_titles[j].set_yticklabels([cover.name], color=color_)
+        cont = 0
+        for i in cover.conditions:
+            plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 + 2 +j:(cont + abs_cont) * 3 + 5+j, 1:]))
+            plots[-1].plot(data[0, :, 0, cont], linewidth=2, color = color_)
+            plots[-1].set_yticks(())
+            plots[-1].set_xticks(())
+            plots[-1].set_xlim([0, len(data[0, :, 0, 0])])
+            plots[-1].set_ylabel(i, labelpad=12)
+            plots[-1].spines['right'].set_visible(False)
+            plots[-1].spines['top'].set_visible(False)
+            cont = cont + 1
+        abs_cont += cont
+    return (fig)
