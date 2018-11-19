@@ -173,6 +173,20 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         # data should just fall through
         return data
 
+    def mean(self):
+        return numpy.asarray([self.handle[chrom].mean(axis=tuple(range(self.handle[chrom].ndim - 1))) for chrom in self.handle])
+
+    def sum(self):
+        return numpy.asarray([self.handle[chrom].sum(axis=tuple(range(self.handle[chrom].ndim - 1))) for chrom in self.handle])
+
+    def clens(self):
+        return numpy.asarray([self.handle[chrom].shape[0] for chrom in self.handle], dtype='float32')
+
+    def std(self):
+        return numpy.asarray([numpy.sqrt(numpy.square(self.handle[chrom]).mean(
+            axis=tuple(range(self.handle[chrom].ndim - 1)))) \
+            for chrom in self.handle])
+
     @property
     def order(self):
         """order"""
@@ -231,7 +245,8 @@ class HDF5GenomicArray(GenomicArray):
                  order=1,
                  store_whole_genome=True,
                  cache=True,
-                 overwrite=False, loader=None, loader_args=None):
+                 overwrite=False, loader=None, loader_args=None,
+                 normalizer=None):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
                                                resolution,
                                                order, store_whole_genome)
@@ -265,6 +280,10 @@ class HDF5GenomicArray(GenomicArray):
             # invoke the loader
             if loader:
                 loader(self, *loader_args)
+
+            if normalizer:
+                normalizer(self)
+
             self.handle.close()
         print('reload {}'.format(os.path.join(memmap_dir, filename)))
         self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',
@@ -274,6 +293,19 @@ class HDF5GenomicArray(GenomicArray):
         self.order = self.handle.attrs['order']
         self.resolution = self.handle.attrs['resolution']
 
+    def mean(self):
+        return numpy.asarray([self.handle[chrom][:].mean(axis=tuple(range(self.handle[chrom].ndim - 1))) for chrom in self.handle])
+
+    def sum(self):
+        return numpy.asarray([self.handle[chrom][:].sum(axis=tuple(range(self.handle[chrom].ndim - 1))) for chrom in self.handle])
+
+    def clens(self):
+        return numpy.asarray([self.handle[chrom].shape[0] for chrom in self.handle], dtype='float32')
+
+    def std(self):
+        return numpy.asarray([numpy.sqrt(numpy.square(self.handle[chrom][:]).mean(
+            axis=tuple(range(self.handle[chrom].ndim - 1)))) \
+            for chrom in self.handle])
 
 class NPGenomicArray(GenomicArray):
     """NPGenomicArray stores multi-dimensional genomic information.
@@ -309,6 +341,11 @@ class NPGenomicArray(GenomicArray):
         Function to be called for loading the genomic array.
     loader_args : tuple or None
         Arguments for loader.
+    normalizer : callable or None
+        Normalization to be applied. This argumenet can be None,
+        if no normalization is applied, or a callable that takes
+        a garray and returns a normalized garray.
+        Default: None.
     """
 
     def __init__(self, chroms,  # pylint: disable=too-many-locals
@@ -320,7 +357,8 @@ class NPGenomicArray(GenomicArray):
                  order=1,
                  store_whole_genome=True,
                  cache=True,
-                 overwrite=False, loader=None, loader_args=None):
+                 overwrite=False, loader=None, loader_args=None,
+                 normalizer=None):
 
         super(NPGenomicArray, self).__init__(stranded, conditions, typecode,
                                              resolution,
@@ -346,6 +384,9 @@ class NPGenomicArray(GenomicArray):
             # invoke the loader
             if loader:
                 loader(self, *loader_args)
+
+            if normalizer:
+                normalizer(self)
 
             condition = [numpy.string_(x) for x in self.condition]
             names = [x for x in data]
@@ -408,6 +449,11 @@ class SparseGenomicArray(GenomicArray):
         Function to be called for loading the genomic array.
     loader_args : tuple or None
         Arguments for loader.
+    normalizer : callable or None
+        Normalization to be applied. This argumenet can be None,
+        if no normalization is applied, or a callable that takes
+        a garray and returns a normalized garray.
+        Default: None.
     """
 
     def __init__(self, chroms,  # pylint: disable=too-many-locals
@@ -534,12 +580,92 @@ class SparseGenomicArray(GenomicArray):
         return data.toarray().reshape(shape)
 
 
-def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
+def normalize_garray_zscore(garray):
+    # overall mean
+    means = garray.mean()#numpy.asarray([garray.handle[chrom].mean(axis=tuple(range(garray.handle[chrom].ndim - 1))) for chrom in garray.handle])
+    clens = garray.clens() #numpy.asarray([garray.handle[chrom].shape[0] for chrom in garray.handle], dtype='float32')
+    clens /= numpy.sum(clens)
+    means = numpy.dot(means.transpose(), clens)
+
+    print("means: ", means)
+    print("clens: ", clens)
+    # substract mean
+    for chrom in garray.handle:
+        garray.handle[chrom][:] -= means
+
+    # compute standard deviation
+    stds = garray.std() #numpy.asarray([numpy.sqrt(numpy.square(garray.handle[chrom]).mean(
+        #axis=tuple(range(garray.handle[chrom].ndim - 1)))) \
+        #for chrom in garray.handle])
+    #clens = np.array([garray.handle[chrom].shape[0] for chrom in garray.handle], dtype="float32")
+    #clens /= np.sum(clens)
+    print('dot(', stds.transpose(), ', ', clens)
+    stds = numpy.dot(stds.transpose(), clens)
+    print("stds: ", stds)
+
+    # rescale
+    for chrom in garray.handle:
+        garray.handle[chrom][:] /= stds
+    return garray
+
+
+def normalize_garray_zscorelog(garray):
+    #
+    # overall mean
+    # first log transform
+    print('zscorelog')
+    for chrom in garray.handle:
+        garray.handle[chrom][:] = numpy.log(garray.handle[chrom][:] + 1.)
+
+    return normalize_garray_zscore(garray)
+
+
+def normalize_garray_tpm(garray):
+    # divide counts by region length in kb
+    for chrom in garray.handle:
+        if garray._full_genome_stored:
+            garray.handle[chrom][:] /= (garray.resolution / 1000.)
+        else:
+            iv = _str_to_iv(chrom)
+            garray.handle[chrom][:] /= float(iv.length / 1000.)
+
+    # compute scaling factor
+    scale = garray.sum() # per chromsome sum
+    scale = scale.sum(axis=0) # sum across chroms
+    scale /= 1e6 # rescale by million
+
+    # divide by scaling factor
+    for chrom in garray.handle:
+        garray.handle[chrom][:] /= scale
+
+    return garray
+
+
+def get_normalizer(normalizer):
+    """ maps builtin normalizers by name and returns the respective function """
+    if normalizer is None:
+        return None
+    elif isinstance(normalizer, str):
+        if normalizer == 'zscore':
+            return normalize_garray_zscore
+        elif normalizer == 'zscorelog':
+            return normalize_garray_zscorelog
+        elif normalizer == 'tpm':
+            return normalize_garray_tpm
+        else:
+            raise ValueError('unknown normalizer: {}'.format(normalizer))
+
+    elif callable(normalizer):
+        return normalizer
+
+
+def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float32',
                          storage='hdf5', resolution=1,
                          order=1,
                          store_whole_genome=True,
                          datatags=None, cache=True, overwrite=False,
-                         loader=None, loader_args=None):
+                         loader=None, loader_args=None,
+                         normalizer=None):
     """Factory function for creating a GenomicArray.
 
     This function creates a genomic array for a given storage mode.
@@ -555,7 +681,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
         List of cell-type or condition labels associated with the corresponding
         array dimensions. Default: None means a one-dimensional array is produced.
     typecode : str
-        Datatype. Default: 'd'.
+        Datatype. Default: 'float32'.
     storage : str
         Storage type can be 'ndarray', 'hdf5' or 'sparse'.
         Numpy loads the entire dataset into the memory. HDF5 keeps
@@ -585,6 +711,11 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
         Function to be called for loading the genomic array.
     loader_args : tuple or None
         Arguments for loader.
+    normalizer : callable or None
+        Normalization to be applied. This argumenet can be None,
+        if no normalization is applied, or a callable that takes
+        a garray and returns a normalized garray.
+        Default: None.
     """
 
     if storage == 'hdf5':
@@ -598,7 +729,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                                 cache=cache,
                                 overwrite=overwrite,
                                 loader=loader,
-                                loader_args=loader_args)
+                                loader_args=loader_args,
+                                normalizer=get_normalizer(normalizer))
     elif storage == 'ndarray':
         return NPGenomicArray(chroms, stranded=stranded,
                               conditions=conditions,
@@ -610,8 +742,11 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='int',
                               cache=cache,
                               overwrite=overwrite,
                               loader=loader,
-                              loader_args=loader_args)
+                              loader_args=loader_args,
+                              normalizer=get_normalizer(normalizer))
     elif storage == 'sparse':
+        if normalizer is not None:
+            warning("Dataset normalization is not supported for sparse genomic data.")
         return SparseGenomicArray(chroms, stranded=stranded,
                                   conditions=conditions,
                                   typecode=typecode,

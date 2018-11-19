@@ -78,7 +78,7 @@ class Cover(Dataset):
                         flank=0,
                         resolution=1,
                         storage='ndarray',
-                        dtype='int',
+                        dtype='float32',
                         stranded=True,
                         overwrite=False,
                         pairedend='5prime',
@@ -87,6 +87,7 @@ class Cover(Dataset):
                         datatags=None,
                         cache=False,
                         channel_last=True,
+                        normalizer=None,
                         store_whole_genome=False):
         """Create a Cover class from a bam-file (or files).
 
@@ -179,6 +180,14 @@ class Cover(Dataset):
             Indicates whether the condition axis should be the last dimension
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
+        normalizer : None, str or callable
+            This option specifies the normalization that can be applied.
+            If None, no normalization is applied. If 'zscore', 'zscorelog', 'rpkm'
+            then zscore transformation, zscore transformation on log transformed data
+            and rpkm normalization are performed, respectively.
+            If callable, a function with signature `norm(garray)` should be
+            provided that performs the normalization on the genomic array.
+            Default: None.
         store_whole_genome : boolean
             Indicates whether the whole genome or only selected regions
             should be loaded. If False, a bed-file with regions of interest
@@ -337,7 +346,8 @@ class Cover(Dataset):
                                      store_whole_genome=store_whole_genome,
                                      resolution=resolution,
                                      loader=_bam_loader,
-                                     loader_args=(bamfiles,))
+                                     loader_args=(bamfiles,),
+                                     normalizer=normalizer)
 
         return cls(name, cover, gindexer, padding_value=0, dimmode='all',
                    channel_last=channel_last)
@@ -358,6 +368,7 @@ class Cover(Dataset):
                            datatags=None, cache=False,
                            store_whole_genome=False,
                            channel_last=True,
+                           normalizer=None,
                            nan_to_num=True):
         """Create a Cover class from a bigwig-file (or files).
 
@@ -438,6 +449,14 @@ class Cover(Dataset):
             Indicates whether the condition axis should be the last dimension
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
+        normalizer : None, str or callable
+            This option specifies the normalization that can be applied.
+            If None, no normalization is applied. If 'zscore', 'zscorelog', 'rpkm'
+            then zscore transformation, zscore transformation on log transformed data
+            and rpkm normalization are performed, respectively.
+            If callable, a function with signature `norm(garray)` should be
+            provided that performs the normalization on the genomic array.
+            Default: None.
         nan_to_num : boolean
             Indicates whether NaN values contained in the bigwig files should
             be interpreted as zeros. Default: True
@@ -535,12 +554,13 @@ class Cover(Dataset):
                         binsize=None, stepsize=None,
                         resolution=1,
                         flank=0, storage='ndarray',
-                        dtype='int',
+                        dtype='float32',
                         dimmode='all',
                         mode='binary',
                         store_whole_genome=False,
                         overwrite=False,
                         channel_last=True,
+                        normalizer=None,
                         datatags=None, cache=False):
         """Create a Cover class from a bed-file (or files).
 
@@ -615,6 +635,14 @@ class Cover(Dataset):
             Indicates whether the condition axis should be the last dimension
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
+        normalizer : None, str or callable
+            This option specifies the normalization that can be applied.
+            If None, no normalization is applied. If 'zscore', 'zscorelog', 'tpm'
+            then zscore transformation, zscore transformation on log transformed data
+            and rpkm normalization are performed, respectively.
+            If callable, a function with signature `norm(garray)` should be
+            provided that performs the normalization on the genomic array.
+            Default: None.
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         """
