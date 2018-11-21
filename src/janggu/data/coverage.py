@@ -1048,21 +1048,22 @@ class Cover(Dataset):
 
             bw_file.addHeader(bw_header)
 
-            # we need the new filter_by_region method here
-            #for chrom, size in bw_header:
-                # ngindexer = self.gindexer.filter_by_region()
-                # then use the new ngindexer to loop over as below
+            # we need to add data to the bigwig file handle
+            # in the same order as given by bw_header.
+            # therefore, we process each chromosome in order below
 
-            for ridx, region in enumerate(self.gindexer):
-                print(region)
-                cov = self[ridx][0, :, :, idx].sum(axis=1)
-                #print(region)
+            for chrom, size in bw_header:
+                idxs = self.gindexer.idx_by_region(include=chrom)
 
-                bw_file.addEntries(str(region.chrom),
-                                   int(region.start),
-                                   values=cov,
-                                   span=int(resolution),
-                                   step=int(resolution))
+                for ridx in idxs:
+                    region = self.gindexer[int(ridx)]
+                    cov = self[int(ridx)][0, :, :, idx].sum(axis=1)
+
+                    bw_file.addEntries(str(region.chrom),
+                                       int(region.start),
+                                       values=cov,
+                                       span=int(resolution),
+                                       step=int(resolution))
             bw_file.close()
 
 
