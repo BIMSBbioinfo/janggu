@@ -308,7 +308,7 @@ def _str_to_iv(givstr, template_extension):
 
 def get_chrom_length(length, resolution):
     """obtain the chromosome length for a given resolution."""
-    return int(np.ceil(length/resolution))
+    return int(np.ceil(float(length)/resolution))
 
 
 def get_genome_size_from_regions(regions):
