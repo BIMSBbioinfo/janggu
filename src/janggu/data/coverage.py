@@ -1070,13 +1070,14 @@ def plotGenomeTrack(covers, chr, start, end):
 
     """plotGenomeTrack shows plots of a specific interval from cover objects data.
 
-    It takes a list of cover objects, number of chromosome, the start and the end of
-    a required interval and shows a plot of the same interval for each condition of each cover.
+    It takes one or more cover objects as well as a genomic interval consisting
+    of chromosome name, start and end and creates
+    a genome browser-like plot.
 
     Parameters
     ----------
-    covers : list(str)
-        List of cover objects.
+    covers : janggu.data.Cover or list(janggu.data.Cover)
+        One or more coverge objects.
     chr : str
         chromosome name.
     start : int
@@ -1086,10 +1087,11 @@ def plotGenomeTrack(covers, chr, start, end):
 
     Returns
     -------
-    Figure
-        A matplotlib figure built for the required interval for each condition of each cover objects.
-        It is possible to show that figure with show() function integrated in matplotlib or even save it
-        with the 'savefig()' function of the same library.
+    matplotlib Figure
+        A matplotlib figure illustrating the genome browser-view of the coverage
+        objects for the given interval.
+        To depict and save the figure the native matplotlib functions show()
+        and savefig() can be used.
     """
     if not isinstance(covers, list):
         covers = [covers]
