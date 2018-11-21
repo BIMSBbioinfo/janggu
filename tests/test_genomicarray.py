@@ -4,6 +4,7 @@ import numpy as np
 from HTSeq import GenomicInterval
 
 from janggu.data import create_genomic_array
+from janggu.data.genomicarray import get_normalizer
 
 
 def test_bwga_instance_unstranded_taged(tmpdir):
@@ -67,3 +68,54 @@ def test_bwga_instance_stranded_notcached(tmpdir):
     np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300)
     np.testing.assert_equal(ga[iv].sum(), 20)
+
+
+def test_zscore_normalization(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    def loading(garray):
+        garray[GenomicInterval('chr1', 0, 150), 0] = 1
+        garray[GenomicInterval('chr2', 0, 300), 0] = -1
+        return garray
+
+    for store in ['ndarray', 'hdf5']:
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+                                  storage=store, cache=True, loader=loading,
+                                  loader_args=(),
+                                  normalizer=get_normalizer('zscore'))
+        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[1.5000001]]]))
+        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[-0.75]]]))
+
+
+def test_logzscore_normalization(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    def loading(garray):
+        garray[GenomicInterval('chr1', 0, 150), 0] = 10
+        garray[GenomicInterval('chr2', 0, 300), 0] = 100
+        return garray
+
+    for store in ['ndarray', 'hdf5']:
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+                                  storage=store, cache=True, loader=loading,
+                                  loader_args=(),
+                                  normalizer=get_normalizer('zscorelog'))
+        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[-1.5000001]]]))
+        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[0.75]]]))
+
+
+def test_tmp_normalization(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    def loading(garray):
+        garray[GenomicInterval('chr1', 0, 150), 0] = 10
+        garray[GenomicInterval('chr2', 0, 300), 0] = 1
+        return garray
+
+    for store in ['ndarray', 'hdf5']:
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+                                  storage=store, cache=True, resolution=50, loader=loading,
+                                  loader_args=(),
+                                  normalizer=get_normalizer('tpm'))
+        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[10 * 1000/50 * 1e6/(720.)]]]))
+        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[1 * 1000/50 * 1e6/(720.)]]]))
