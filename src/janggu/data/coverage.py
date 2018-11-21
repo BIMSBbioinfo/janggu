@@ -1040,11 +1040,7 @@ class Cover(Dataset):
         bw_header = [(chrom, gsize[chrom])
                      for chrom in gsize]
 
-        print('check header:')
-        print(bw_header)
-
         for idx, condition in enumerate(self.conditions):
-            print(condition)
             bw_file = pyBigWig.open(os.path.join(
                 output_dir,
                 '{name}.{condition}.bigwig'.format(
