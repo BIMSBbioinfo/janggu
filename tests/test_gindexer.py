@@ -60,7 +60,8 @@ def test_gindexer_merged_variable_length_ranges():
 
     # with fixed size
     gi = GenomicIndexer.create_from_file(
-        os.path.join(data_path, 'sample.bed'), binsize=3000, stepsize=3000)
+        os.path.join(data_path, 'sample.bed'), binsize=3000, stepsize=3000,
+        zero_padding=False)
     np.testing.assert_equal(len(gi), 6)
 
     iv = gi[0]
@@ -73,7 +74,7 @@ def test_gindexer_merged_variable_length_ranges():
     # with variable size regions
     gi = GenomicIndexer.create_from_file(
         os.path.join(data_path, 'sample.bed'), binsize=3000,
-        stepsize=3000, fixed_size_batches=False)
+        stepsize=3000, zero_padding=True)
     np.testing.assert_equal(len(gi), 8)
 
     iv = gi[0]

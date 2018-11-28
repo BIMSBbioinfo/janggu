@@ -35,9 +35,9 @@ def split_train_test(dataset, holdout_chroms):
     gind_test = gind.filter_by_region(include=holdout_chroms)
     if isinstance(dataset, Cover):
         traindata = Cover(dataset.name, dataset.garray, gind_train,
-                          dataset.padding_value, dataset.dimmode, dataset._channel_last)
+                          dataset._channel_last)
         testdata = Cover(dataset.name, dataset.garray, gind_test,
-                         dataset.padding_value, dataset.dimmode, dataset._channel_last)
+                         dataset._channel_last)
     elif isinstance(dataset, Bioseq):
         traindata = Bioseq(dataset.name, dataset.garray, gind_train,
                            dataset._alphabetsize, dataset._channel_last)

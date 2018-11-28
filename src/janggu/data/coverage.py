@@ -12,7 +12,6 @@ from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
-from janggu.utils import get_chrom_length
 
 import matplotlib.pyplot as plt
 from matplotlib import style
@@ -46,13 +45,6 @@ class Cover(Dataset):
         A genomic indexer translates an integer index to a
         corresponding genomic coordinate.
         It can be None the genomic indexer is supplied later.
-    padding_value : int or float
-        Padding value used to pad variable size fragments. Default: 0.
-    dimmode : str
-        Dimension mode can be 'first' or 'all'.
-        'first' returns only the first element of the array
-        representing the interval. By default, 'all' returns
-        all elements.
     """
 
     _flank = None
@@ -60,15 +52,11 @@ class Cover(Dataset):
 
     def __init__(self, name, garray,
                  gindexer,  # indices of pointing to region start
-                 padding_value,
-                 dimmode, channel_last):  # padding value
+                 channel_last):  # padding value
 
         self.garray = garray
         self.gindexer = gindexer
-        self.padding_value = padding_value
-        self.dimmode = dimmode
         self._channel_last = channel_last
-
         Dataset.__init__(self, name)
 
     @classmethod
@@ -87,11 +75,11 @@ class Cover(Dataset):
                         overwrite=False,
                         pairedend='5prime',
                         template_extension=0,
-                        aggregate=None,
                         datatags=None,
                         cache=False,
                         channel_last=True,
                         normalizer=None,
+                        zero_padding=True,
                         store_whole_genome=False):
         """Create a Cover class from a bam-file (or files).
 
@@ -129,11 +117,12 @@ class Cover(Dataset):
             filtered out. If None, all reads are used.
         binsize : int or None
             Binsize in basepairs. For binsize=None,
-            the binsize will be determined from the bed-file directly
-            which requires that all intervals in the bed-file are of equal
-            length. Otherwise, the intervals in the bed-file will be
-            split to subintervals of length binsize in conjunction with
-            stepsize. Default: None.
+            the binsize will be determined from the bed-file.
+            If resolution is of type integer, this
+            requires that all intervals in the bed-file are of equal
+            length. If resolution is None, the intervals in the bed-file
+            may be of variable size.
+            Default: None.
         stepsize : int or None
             stepsize in basepairs for traversing the genome.
             If stepsize is None, it will be set equal to binsize.
@@ -141,12 +130,16 @@ class Cover(Dataset):
         flank : int
             Flanking size increases the interval size at both ends by
             flank base pairs. Default: 0
-        resolution : int
-            Resolution in base pairs divides the region of interest
-            in windows of length resolution.
-            This effectively reduces the storage for coverage data.
-            The resolution must be selected such that min(stepsize, binsize)
-            is a multiple of resolution.
+        resolution : int or None
+            If resolution represents an interger, it determines
+            the base pairs resolution by which an interval should be divided.
+            This requires equally sized bins or zero padding and
+            effectively reduces the storage for coverage data.
+            If resolution=None, the intervals will be represented by
+            a collapsed summary score.
+            For example, gene expression may be expressed by TPM in that manner.
+            In the latter case, variable size intervals are permitted
+            and zero padding does not have an effect.
             Default: 1.
         storage : str
             Storage mode for storing the coverage data can be
@@ -174,16 +167,18 @@ class Cover(Dataset):
             This option is only relevant for paired-end reads counted at the
             'midpoint' and if the coverage is not obtained from the
             whole genome, e.g. regions is not None.
-        aggregate : callable or None
-            Aggregation operation for loading genomic array. If None,
-            the coverage amounts to the raw counts.
-            Default: None
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         channel_last : boolean
             Indicates whether the condition axis should be the last dimension
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
+        zero_padding : boolean
+            Indicates if variable size intervals should be zero padded.
+            Zero padding is only supported with a specified
+            binsize. If zero padding is false, intervals shorter than binsize will
+            be skipped.
+            Default: True.
         normalizer : None, str or callable
             This option specifies the normalization that can be applied.
             If None, no normalization is applied. If 'zscore', 'zscorelog', 'rpkm'
@@ -202,9 +197,11 @@ class Cover(Dataset):
             raise Exception('pysam not available. '
                             '`create_from_bam` requires pysam to be installed.')
 
+        collapse = True if resolution is None else False
+
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                       stepsize, flank)
+                                                       stepsize, flank, zero_padding, collapse)
         else:
             gindexer = None
 
@@ -246,13 +243,19 @@ class Cover(Dataset):
                 aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
                 for chrom in gsize:
 
-                    array = np.zeros((get_chrom_length(gsize[chrom], resolution),
-                                     2), dtype=dtype)
-
                     locus = _str_to_iv(chrom, template_extension=template_extension)
                     if len(locus) == 1:
                         locus = (locus[0], 0, gsize[chrom])
+
+                    if resolution is None:
+                        length = locus[2] - locus[1]
+                    else:
+                        length = garray.get_iv_end(locus[2]-locus[1]) * resolution
+
+                    array = np.zeros((length, 2), dtype=dtype)
+
                     # locus = (chr, start, end)
+                    start = locus[1]
                     # or locus = (chr, )
 
                     for aln in aln_file.fetch(*locus):
@@ -306,34 +309,23 @@ class Cover(Dataset):
                         if not garray._full_genome_stored:
                             # if we get here, a region was given,
                             # otherwise, the entire chromosome is read.
-                            pos -= locus[1] + template_extension
+                            pos -= start + template_extension
 
-                            if pos < 0 or pos >= locus[2] - locus[1]:
+                            if pos < 0 or pos >= length:
                                 # if the read 5 p end or mid point is outside
                                 # of the region of interest, the read is discarded
                                 continue
 
                         # compute divide by the resolution
-                        pos //= resolution
+                        #pos = garray.get_iv_start(pos)
 
                         # fill up the read strand specifically
                         if aln.is_reverse:
                             array[pos, 1] += 1
                         else:
                             array[pos, 0] += 1
-                    # apply the aggregation
-                    if aggregate is not None:
-                        array = aggregate(array)
 
-                    if stranded:
-                        lp = locus + ('+',)
-                        garray[GenomicInterval(*lp), i] = array[:, 0]
-                        lm = locus + ('-',)
-                        garray[GenomicInterval(*lm), i] = array[:, 1]
-                    else:
-                        # if unstranded, aggregate the reads from
-                        # both strands
-                        garray[GenomicInterval(*locus), i] = array.sum(axis=1)
+                    garray[GenomicInterval(*locus), i] = array
 
             return garray
 
@@ -351,9 +343,10 @@ class Cover(Dataset):
                                      resolution=resolution,
                                      loader=_bam_loader,
                                      loader_args=(bamfiles,),
-                                     normalizer=normalizer)
+                                     normalizer=normalizer,
+                                     collapser='sum')
 
-        return cls(name, cover, gindexer, padding_value=0, dimmode='all',
+        return cls(name, cover, gindexer,
                    channel_last=channel_last)
 
     @classmethod
@@ -367,12 +360,13 @@ class Cover(Dataset):
                            flank=0, storage='ndarray',
                            dtype='float32',
                            overwrite=False,
-                           dimmode='all',
-                           aggregate=np.mean,
+                           aggregate='mean',
                            datatags=None, cache=False,
                            store_whole_genome=False,
                            channel_last=True,
+                           zero_padding=True,
                            normalizer=None,
+                           collapser=None,
                            nan_to_num=True):
         """Create a Cover class from a bigwig-file (or files).
 
@@ -402,21 +396,26 @@ class Cover(Dataset):
             and file-ending).
         binsize : int or None
             Binsize in basepairs. For binsize=None,
-            the binsize will be determined from the bed-file directly
-            which requires that all intervals in the bed-file are of equal
-            length. Otherwise, the intervals in the bed-file will be
-            split to subintervals of length binsize in conjunction with
-            stepsize. Default: None.
+            the binsize will be determined from the bed-file.
+            If resolution is of type integer, this
+            requires that all intervals in the bed-file are of equal
+            length. If resolution is None, the intervals in the bed-file
+            may be of variable size.
+            Default: None.
         stepsize : int or None
             stepsize in basepairs for traversing the genome.
             If stepsize is None, it will be set equal to binsize.
             Default: None.
-        resolution : int
-            Resolution in base pairs divides the region of interest
-            in windows of length resolution.
-            This effectively reduces the storage for coverage data.
-            The resolution must be selected such that min(stepsize, binsize)
-            is a multiple of resolution.
+        resolution : int or None
+            If resolution represents an interger, it determines
+            the base pairs resolution by which an interval should be divided.
+            This requires equally sized bins or zero padding and
+            effectively reduces the storage for coverage data.
+            If resolution=None, the intervals will be represented by
+            a collapsed summary score.
+            For example, gene expression may be expressed by TPM in that manner.
+            In the latter case, variable size intervals are permitted
+            and zero padding does not have an effect.
             Default: 1.
         flank : int
             Flanking size increases the interval size at both ends by
@@ -428,11 +427,6 @@ class Cover(Dataset):
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'float32'.
-        dimmode : str
-            Dimension mode can be 'first' or 'all'. If 'first', only
-            the first element of size resolution is returned. Otherwise,
-            all elements of size resolution spanning the interval are returned.
-            Default: 'all'.
         overwrite : boolean
             Overwrite cachefiles. Default: False.
         datatags : list(str) or None
@@ -453,6 +447,12 @@ class Cover(Dataset):
             Indicates whether the condition axis should be the last dimension
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
+        zero_padding : boolean
+            Indicates if variable size intervals should be zero padded.
+            Zero padding is only supported with a specified
+            binsize. If zero padding is false, intervals shorter than binsize will
+            be skipped.
+            Default: True.
         normalizer : None, str or callable
             This option specifies the normalization that can be applied.
             If None, no normalization is applied. If 'zscore', 'zscorelog', 'rpkm'
@@ -461,6 +461,13 @@ class Cover(Dataset):
             If callable, a function with signature `norm(garray)` should be
             provided that performs the normalization on the genomic array.
             Default: None.
+        collapser : None, str or callable
+            This option defines how the genomic signal should be summarized when resolution
+            is None or greater than one. It is possible to choose a number of options by
+            name, including 'sum', 'mean', 'max'. In addtion, a function may be supplied
+            that defines a custom aggregation method. If collapser is None,
+            'mean' aggregation will be used.
+            Default: None.
         nan_to_num : boolean
             Indicates whether NaN values contained in the bigwig files should
             be interpreted as zeros. Default: True
@@ -468,9 +475,12 @@ class Cover(Dataset):
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
                             '`create_from_bigwig` requires pyBigWig to be installed.')
+
+        collapse = True if resolution is None else False
+
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                       stepsize, flank)
+                                                       stepsize, flank, zero_padding, collapse)
         else:
             gindexer = None
 
@@ -505,35 +515,33 @@ class Cover(Dataset):
 
                 for chrom in gsize:
 
-                    vals = np.zeros((get_chrom_length(gsize[chrom], resolution), ),
-                                    dtype=dtype)
-
-                    locus = _str_to_iv(chrom, template_extension=0)
+                    locus = _str_to_iv(chrom)
                     if len(locus) == 1:
-                        locus = locus + (0, gsize[chrom])
+                        locus = (locus[0], 0, gsize[chrom])
 
-                    # when only to load parts of the genome
-                    for start in range(locus[1], locus[2], resolution):
+                    if resolution is None:
+                        length = locus[2] - locus[1]
+                    else:
+                        length = garray.get_iv_end(locus[2]-locus[1]) * resolution
 
-                        if garray._full_genome_stored:
-                            # be careful not to overshoot at the chromosome end
-                            end = min(start+resolution, gsize[chrom])
-                        else:
-                            end = start + resolution
+                    array = np.zeros((length, 1), dtype=dtype)
 
-                        x = np.asarray(bwfile.values(
-                            locus[0],
-                            int(start),
-                            int(end)))
-                        if nan_to_num:
-                            x = np.nan_to_num(x, copy=False)
-                        vals[(start - locus[1])//resolution] = aggregate(x)
+                    x = np.asarray(bwfile.values(
+                                   locus[0],
+                                   int(locus[1]),
+                                   int(locus[2])))
+                    if nan_to_num:
+                        x = np.nan_to_num(x, copy=False)
 
-                    garray[GenomicInterval(*locus), i] = vals
+                    array[:len(x), 0] = x
+
+                    garray[GenomicInterval(*locus), i] = array
             return garray
 
         datatags = [name] + datatags if datatags else [name]
         datatags += ['resolution{}'.format(resolution)]
+
+        collapser_ = collapser if collapser is not None else 'mean'
 
         cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, datatags=datatags,
@@ -544,10 +552,11 @@ class Cover(Dataset):
                                      store_whole_genome=store_whole_genome,
                                      typecode=dtype,
                                      loader=_bigwig_loader,
-                                     loader_args=(aggregate,))
+                                     loader_args=(aggregate,),
+                                     collapser=collapser_)
 
         return cls(name, cover, gindexer,
-                   padding_value=0, dimmode=dimmode, channel_last=channel_last)
+                   channel_last=channel_last)
 
     @classmethod
     def create_from_bed(cls, name,  # pylint: disable=too-many-locals
@@ -559,12 +568,13 @@ class Cover(Dataset):
                         resolution=1,
                         flank=0, storage='ndarray',
                         dtype='float32',
-                        dimmode='all',
                         mode='binary',
                         store_whole_genome=False,
                         overwrite=False,
                         channel_last=True,
+                        zero_padding=True,
                         normalizer=None,
+                        collapser=None,
                         datatags=None, cache=False):
         """Create a Cover class from a bed-file (or files).
 
@@ -590,21 +600,26 @@ class Cover(Dataset):
             and file-ending).
         binsize : int or None
             Binsize in basepairs. For binsize=None,
-            the binsize will be determined from the bed-file directly
-            which requires that all intervals in the bed-file are of equal
-            length. Otherwise, the intervals in the bed-file will be
-            split to subintervals of length binsize in conjunction with
-            stepsize. Default: None.
+            the binsize will be determined from the bed-file.
+            If resolution is of type integer, this
+            requires that all intervals in the bed-file are of equal
+            length. If resolution is None, the intervals in the bed-file
+            may be of variable size.
+            Default: None.
         stepsize : int or None
             stepsize in basepairs for traversing the genome.
             If stepsize is None, it will be set equal to binsize.
             Default: None.
-        resolution : int
-            Resolution in base pairs divides the region of interest
-            in windows of length resolution.
-            This effectively reduces the storage for coverage data.
-            The resolution must be selected such that min(stepsize, binsize)
-            is a multiple of resolution.
+        resolution : int or None
+            If resolution represents an interger, it determines
+            the base pairs resolution by which an interval should be divided.
+            This requires equally sized bins or zero padding and
+            effectively reduces the storage for coverage data.
+            If resolution=None, the intervals will be represented by
+            a collapsed summary score.
+            For example, gene expression may be expressed by TPM in that manner.
+            In the latter case, variable size intervals are permitted
+            and zero padding does not have an effect.
             Default: 1.
         flank : int
             Flanking size increases the interval size at both ends by
@@ -616,11 +631,6 @@ class Cover(Dataset):
         dtype : str
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
-        dimmode : str
-            Dimension mode can be 'first' or 'all'. If 'first', only
-            the first element of size resolution is returned. Otherwise,
-            all elements of size resolution spanning the interval are returned.
-            Default: 'all'.
         mode : str
             Mode of the dataset may be 'binary', 'score' or 'categorical'.
             Default: 'binary'.
@@ -639,6 +649,12 @@ class Cover(Dataset):
             Indicates whether the condition axis should be the last dimension
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
+        zero_padding : boolean
+            Indicates if variable size intervals should be zero padded.
+            Zero padding is only supported with a specified
+            binsize. If zero padding is false, intervals shorter than binsize will
+            be skipped.
+            Default: True.
         normalizer : None, str or callable
             This option specifies the normalization that can be applied.
             If None, no normalization is applied. If 'zscore', 'zscorelog', 'tpm'
@@ -647,6 +663,13 @@ class Cover(Dataset):
             If callable, a function with signature `norm(garray)` should be
             provided that performs the normalization on the genomic array.
             Default: None.
+        collapser : None, str or callable
+            This option defines how the genomic signal should be summarized when resolution
+            is None or greater than one. It is possible to choose a number of options by
+            name, including 'sum', 'mean', 'max'. In addtion, a function may be supplied
+            that defines a custom aggregation method. If collapser is None,
+            'max' aggregation will be used.
+            Default: None.
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         """
@@ -654,9 +677,12 @@ class Cover(Dataset):
         if regions is None and genomesize is None:
             raise ValueError('Either regions or genomesize must be specified.')
 
+        collapse = True if resolution is None else False
+
         if regions is not None:
             gindexer = GenomicIndexer.create_from_file(regions, binsize,
-                                                       stepsize, flank)
+                                                       stepsize, flank, zero_padding, collapse)
+            binsize = gindexer.binsize
         else:
             gindexer = None
 
@@ -700,13 +726,13 @@ class Cover(Dataset):
                 regions_ = _get_genomic_reader(sample_file)
 
                 for region in regions_:
+
                     gidx = GenomicIndexer.create_from_region(
                         region.iv.chrom,
                         region.iv.start,
                         region.iv.end, region.iv.strand,
                         binsize, stepsize, flank)
                     for greg in gidx:
-
                         if region.score is None and mode in ['score',
                                                              'categorical']:
                             raise ValueError(
@@ -715,13 +741,17 @@ class Cover(Dataset):
                                 'for mode="{}"'.format(mode))
                         # if region score is not defined, take the mere
                         # presence of a range as positive label.
+
+                        score = region.score if mode == 'score' else 1
+                        array = np.repeat(np.dtype(dtype).type(score).reshape((1,1)),
+                                          greg.length, axis=0)
+
                         if mode == 'score':
-                            garray[greg, i] = np.dtype(dtype).type(region.score)
+                            garray[greg, i] = array
                         elif mode == 'categorical':
-                            garray[greg,
-                                   int(region.score)] = np.dtype(dtype).type(1)
+                            garray[greg, int(region.score)] = array
                         elif mode == 'binary':
-                            garray[greg, i] = np.dtype(dtype).type(1)
+                            garray[greg, i] = array
             return garray
 
         # At the moment, we treat the information contained
@@ -730,6 +760,7 @@ class Cover(Dataset):
         datatags = [name] + datatags if datatags else [name]
         datatags += ['resolution{}'.format(resolution)]
 
+        collapser_ = collapser if collapser is not None else 'max'
         cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, datatags=datatags,
                                      cache=cache,
@@ -739,10 +770,11 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      store_whole_genome=store_whole_genome,
                                      loader=_bed_loader,
-                                     loader_args=(bedfiles, gsize, mode))
+                                     loader_args=(bedfiles, gsize, mode),
+                                     collapser=collapser_)
 
         return cls(name, cover, gindexer,
-                   padding_value=0, dimmode=dimmode, channel_last=channel_last)
+                   channel_last=channel_last)
 
     @classmethod
     def create_from_array(cls, name,  # pylint: disable=too-many-locals
@@ -750,7 +782,6 @@ class Cover(Dataset):
                           gindexer,
                           genomesize=None,
                           conditions=None,
-                          resolution=1,
                           storage='ndarray',
                           overwrite=False,
                           datatags=None,
@@ -781,13 +812,6 @@ class Cover(Dataset):
             the conditions are obtained from
             the filenames (without the directories
             and file-ending).
-        resolution : int
-            Resolution in base pairs divides the region of interest
-            in windows of length resolution.
-            This effectively reduces the storage for coverage data.
-            The resolution must be selected such that min(stepsize, binsize)
-            is a multiple of resolution.
-            Default: 1.
         storage : str
             Storage mode for storing the coverage data can be
             'ndarray', 'hdf5' or 'sparse'. Default: 'ndarray'.
@@ -844,7 +868,11 @@ class Cover(Dataset):
                     "Please ensure that binsize <= stepsize.")
 
         # determine the resolution
-        resolution = gindexer[0].length // array.shape[1]
+        if gindexer.binsize is None:
+            # binsize will not be set if gindexer was loaded in collapse mode
+            resolution = None
+        else:
+            resolution = gindexer.binsize // array.shape[1]
 
         # determine strandedness
         stranded = True if array.shape[2] == 2 else False
@@ -855,13 +883,10 @@ class Cover(Dataset):
             for i, region in enumerate(gindexer):
                 iv = region
                 for cond in range(array.shape[-1]):
-                    if stranded:
-                        iv.strand = '+'
-                        garray[iv, cond] = array[i, :, 0, cond].astype(dtype)
-                        iv.strand = '-'
-                        garray[iv, cond] = array[i, :, 1, cond].astype(dtype)
+                    if resolution is None:
+                        garray[iv, cond] = np.repeat(array[i, :, :, cond], iv.length, axis=0)
                     else:
-                        garray[iv, cond] = array[i, :, 0, cond]
+                        garray[iv, cond] = np.repeat(array[i, :, :, cond], resolution, axis=0)
 
             return garray
 
@@ -870,6 +895,13 @@ class Cover(Dataset):
 
         datatags = [name] + datatags if datatags else [name]
         datatags += ['resolution{}'.format(resolution)]
+
+        # define a dummy collapser
+
+        def dummy_collapser(x):
+            # should be 3D
+            # seqlen, resolution, strand
+            return x[:,0,:]
 
         cover = create_genomic_array(gsize, stranded=stranded,
                                      storage=storage, datatags=datatags,
@@ -880,10 +912,11 @@ class Cover(Dataset):
                                      typecode=array.dtype,
                                      store_whole_genome=store_whole_genome,
                                      loader=_array_loader,
-                                     loader_args=(array, gindexer))
+                                     loader_args=(array, gindexer),
+                                     collapser=dummy_collapser)
 
         return cls(name, cover, gindexer,
-                   padding_value=0, dimmode='all', channel_last=channel_last)
+                   channel_last=channel_last)
 
     @property
     def gindexer(self):
@@ -894,13 +927,6 @@ class Cover(Dataset):
 
     @gindexer.setter
     def gindexer(self, gindexer):
-        if gindexer is None:
-            self._gindexer = None
-            return
-
-        if (min(gindexer.stepsize,
-                gindexer.binsize) % self.garray.resolution) != 0:
-            raise ValueError('min(binsize, stepsize) must be divisible by resolution')
         self._gindexer = gindexer
 
     def __repr__(self):  # pragma: no cover
@@ -918,9 +944,7 @@ class Cover(Dataset):
                          idxs.step if idxs.step else 1)
         elif isinstance(idxs, GenomicInterval):
             if self.garray._full_genome_stored:
-                print(idxs)
                 # accept a genomic interval directly
-                #data = np.zeros((1,) + self.shape[1:])
                 data = self._getsingleitem(idxs)
                 data = data.reshape((1,) + data.shape)
                 for transform in self.transformations:
@@ -930,13 +954,14 @@ class Cover(Dataset):
                 chrom = idxs.chrom
                 start = idxs.start
                 end = idxs.end
-                gindexer_new = self.gindexer.filter_by_region(include=chrom, start=start, end=end)
-                data = np.zeros((1, ((end - start) // self.garray.resolution) + (2 * (gindexer_new.stepsize) // self.garray.resolution)) + self.shape[2:])
-                if self.padding_value != 0:
-                    data.fill(self.padding_value)
-                step_size = gindexer_new.stepsize
+                strand = idxs.strand
+                gindexer_new = self.gindexer.filter_by_region(include=chrom,
+                                                               start=start,
+                                                               end=end)
+
+                data = np.zeros((1, (end - start)) + self.shape[2:])
+
                 for interval in gindexer_new:
-                    print('new gindexer interval:', interval)
                     tmp_data = np.array(self._getsingleitem(interval))
                     tmp_data = tmp_data.reshape((1,) + tmp_data.shape)
 
@@ -946,15 +971,46 @@ class Cover(Dataset):
                         # this avoids having to change the rel_pos computation
                         tmp_data = tmp_data[:,::-1,::-1,:]
 
-                    rel_pos = (interval.start - (start - step_size)) // self.garray.resolution
+                    #determine upsampling factor
+                    # so both tmp_data and data represent signals on
+                    # nucleotide resolution
+                    factor = interval.length // tmp_data.shape[1]
+                    tmp_data = tmp_data.repeat(factor, axis=1)
 
-                    data[:, rel_pos: rel_pos + (step_size // self.garray.resolution), :, :] = tmp_data
+                    if start - interval.start > 0:
+                        tmp_start = start - interval.start
+                        ref_start = 0
+                    else:
+                        tmp_start = 0
+                        ref_start = interval.start - start
 
-                if interval.strand == '-':
+                    if interval.end - end > 0:
+                        tmp_end = tmp_data.shape[1] - (interval.end - end)
+                        ref_end = data.shape[1]
+                    else:
+                        tmp_end = tmp_data.shape[1]
+                        ref_end = data.shape[1] - (end - interval.end)
+
+                    rel_start = start - interval.start
+                    rel_end = interval.end - start
+
+                    data[:, ref_start:ref_end, :, :] = tmp_data[:, tmp_start:tmp_end, :, :]
+
+                # issue with different resolution
+                # it might not be optimal to return the data on a base-pair
+                # resolution scale. If the user has loaded the array with resolution > 1
+                # it might be expected to be applied to the returned dataset as well.
+                # however, when store_whole_genome=False, resolution may also
+                # be None. In this case, it is much more easy to project the variable
+                # size intervals onto a common reference.
+                #
+                # A compromise for the future would be to apply downscaling
+                # if resolution is > 1. But then also the dataset must be resized and reshaped.
+                # We leave this change for the future, if it seems to matter.
+
+                if strand == '-':
                     # invert it back relative to minus strand
                     data = data[:,::-1,::-1,:]
-
-                data = data[:,(1*(step_size) // self.garray.resolution): -1 * (1*(step_size) // self.garray.resolution),:,:]
 
             if not self._channel_last:
                 data = np.transpose(data, (0, 3, 1, 2))
@@ -967,8 +1023,6 @@ class Cover(Dataset):
             raise IndexError('Cover.__getitem__: index must be iterable')
 
         data = np.zeros((len(idxs),) + self.shape_static[1:])
-        if self.padding_value != 0:
-            data.fill(self.padding_value)
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
@@ -990,9 +1044,6 @@ class Cover(Dataset):
         else:
             data = np.asarray(self.garray[pinterval])
 
-        if self.dimmode == 'first':
-            data = data[:1, :, :]
-
         return data
 
     def __len__(self):
@@ -1010,16 +1061,13 @@ class Cover(Dataset):
     @property
     def shape_static(self):
         """Shape of the dataset"""
-        if self.dimmode == 'all':
+        if self.garray.resolution is not None:
             blen = (self.gindexer.binsize) // self.garray.resolution
-            seqlen = 2*self.gindexer.flank // self.garray.resolution + \
-                (blen if blen > 0 else 1)
-        elif self.dimmode == 'first':
-            seqlen = 1
-        return (len(self),
-                seqlen,
-                2 if self.garray.stranded else 1,
-                len(self.garray.condition))
+            seqdims = (2*self.gindexer.flank // self.garray.resolution + \
+                (blen if blen > 0 else 1), 2 if self.garray.stranded else 1)
+        else:
+            seqdims = (1, 1)
+        return (len(self),) + seqdims + (len(self.garray.condition),)
 
     @property
     def conditions(self):

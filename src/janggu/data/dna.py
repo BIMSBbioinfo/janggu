@@ -101,8 +101,7 @@ class Bioseq(Dataset):
                                               i) for i in range(order)])
                     indarray = np.convolve(indarray, filter_, mode='valid')
 
-                cover[interval, 0] = indarray
-
+                cover[interval, 0] = indarray.reshape(-1, 1)
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
         datatags = [name] + datatags if datatags else [name]
@@ -317,9 +316,9 @@ class Bioseq(Dataset):
         # with pseudo genomic coordinates
         gindexer = GenomicIndexer(reglen, stepsize, flank)
         gindexer.chrs = chroms
-        gindexer.offsets = [0]*len(lens)
+        gindexer.starts = [0]*len(lens)
         gindexer.strand = ['.']*len(lens)
-        gindexer.rel_end = [reglen + 2*flank]*len(lens)
+        gindexer.ends = [reglen + 2*flank]*len(lens)
 
         return cls(name, garray, gindexer,
                    alphabetsize=len(seqs[0].seq.alphabet.letters),

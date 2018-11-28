@@ -1,4 +1,5 @@
 import os
+import pytest
 
 import numpy as np
 from HTSeq import GenomicInterval
@@ -15,7 +16,7 @@ def test_bwga_instance_unstranded_taged(tmpdir):
     np.testing.assert_equal(ga[iv].shape, (20, 1, 1))
     np.testing.assert_equal(ga[iv], np.zeros((20, 1, 1)))
 
-    ga[iv, 0] = 1
+    ga[iv, 0] = np.ones((20,1))
     np.testing.assert_equal(ga[iv], np.ones((20, 1, 1)))
     np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300, '.')
@@ -29,7 +30,7 @@ def test_bwga_instance_unstranded(tmpdir):
     np.testing.assert_equal(ga[iv].shape, (20, 1, 1))
     np.testing.assert_equal(ga[iv], np.zeros((20, 1, 1)))
 
-    ga[iv, 0] = 1
+    ga[iv, 0] = np.ones((20,1))
     np.testing.assert_equal(ga[iv], np.ones((20, 1, 1)))
     np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300, '.')
@@ -44,9 +45,9 @@ def test_bwga_instance_stranded(tmpdir):
     np.testing.assert_equal(ga[iv].shape, (20, 2, 1))
     np.testing.assert_equal(ga[iv], np.zeros((20, 2, 1)))
 
-    ga[iv, 0] = 1
     x = np.zeros((20, 2, 1))
-    x[:, :1, :] = np.ones((20, 1, 1))
+    x[:, :1, :] = 1
+    ga[iv, 0] = x[:,:,0]
     np.testing.assert_equal(ga[iv], x)
     np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300)
@@ -61,9 +62,9 @@ def test_bwga_instance_stranded_notcached(tmpdir):
     np.testing.assert_equal(ga[iv].shape, (20, 2, 1))
     np.testing.assert_equal(ga[iv], np.zeros((20, 2, 1)))
 
-    ga[iv, 0] = 1
     x = np.zeros((20, 2, 1))
-    x[:, :1, :] = np.ones((20, 1, 1))
+    x[:, :1, :] = 1
+    ga[iv, 0] = x[:,:,0]
     np.testing.assert_equal(ga[iv], x)
     np.testing.assert_equal(ga[iv].sum(), 20)
     iv = GenomicInterval('chr10', 0, 300)
@@ -74,48 +75,99 @@ def test_zscore_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = 1
-        garray[GenomicInterval('chr2', 0, 300), 0] = -1
+        garray[GenomicInterval('chr1', 0, 150), 0] = np.repeat(1, 150).reshape(-1,1)
+        garray[GenomicInterval('chr2', 0, 300), 0] = np.repeat(-1, 300).reshape(-1,1)
         return garray
 
     for store in ['ndarray', 'hdf5']:
-        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300},
+                                  stranded=False, typecode='float32',
                                   storage=store, cache=True, loader=loading,
                                   loader_args=(),
                                   normalizer=get_normalizer('zscore'))
-        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[1.5000001]]]))
-        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[-0.75]]]))
+        np.testing.assert_allclose(ga.weighted_mean(), np.asarray([0.0]),
+                                   rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(ga.weighted_sd(), np.asarray([1.]),
+                                   rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)],
+                                   np.asarray([[[1.412641340027806]]]),
+                                   rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)],
+                                   np.asarray([[[-0.706320670013903]]]),
+                                   rtol=1e-5, atol=1e-5)
 
 
 def test_logzscore_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = 10
-        garray[GenomicInterval('chr2', 0, 300), 0] = 100
+        garray[GenomicInterval('chr1', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
+        garray[GenomicInterval('chr2', 0, 300), 0] = np.repeat(100, 300).reshape(-1,1)
         return garray
 
     for store in ['ndarray', 'hdf5']:
-        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300},
+                                  stranded=False, typecode='float32',
                                   storage=store, cache=True, loader=loading,
                                   loader_args=(),
                                   normalizer=get_normalizer('zscorelog'))
-        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[-1.5000001]]]))
-        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[0.75]]]))
+        np.testing.assert_allclose(ga.weighted_mean(), np.asarray([0.0]),
+                                   rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(ga.weighted_sd(), np.asarray([1.]),
+                                   rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)],
+                                   np.asarray([[[-1.412641340027806]]]),
+                                   rtol=1e-5, atol=1e-5)
+        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)],
+                                   np.asarray([[[0.706320670013903]]]),
+                                   rtol=1e-5, atol=1e-5)
 
 
 def test_tmp_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = 10
-        garray[GenomicInterval('chr2', 0, 300), 0] = 1
+        garray[GenomicInterval('chr1', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
+        garray[GenomicInterval('chr2', 0, 300), 0] = np.repeat(1, 300).reshape(-1, 1)
         return garray
 
     for store in ['ndarray', 'hdf5']:
         ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
                                   storage=store, cache=True, resolution=50, loader=loading,
-                                  loader_args=(),
+                                  loader_args=(), collapser='sum',
                                   normalizer=get_normalizer('tpm'))
         np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[10 * 1000/50 * 1e6/(720.)]]]))
         np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[1 * 1000/50 * 1e6/(720.)]]]))
+
+
+def test_check_resolution_collapse_compatibility():
+
+    def loading(garray):
+        garray[GenomicInterval('chr1:0-150', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
+        garray[GenomicInterval('chr2:0-300', 0, 300), 0] = np.repeat(1, 300).reshape(-1, 1)
+        return garray
+
+    with pytest.raises(Exception):
+        # Error because resolution=50 but no collapser defined
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+                                  storage="ndarray", cache=False, resolution=50, loader=loading,
+                                  loader_args=(), collapser=None,
+                                  normalizer=get_normalizer('tpm'))
+
+    with pytest.raises(Exception):
+        # Error because resolution=50 but no collapser defined
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
+                                  storage="ndarray", cache=False, resolution=None, loader=loading,
+                                  loader_args=(), collapser=None,
+                                  normalizer=get_normalizer('tpm'))
+
+    ga = create_genomic_array({'chr1:0-150': 150, 'chr2:0-300': 300}, stranded=False, typecode='float32',
+                              storage="ndarray", cache=False, resolution=1, loader=loading,
+                              loader_args=())
+    ga = create_genomic_array({'chr1:0-150': 150, 'chr2:0-300': 300}, stranded=False, typecode='float32',
+                              storage="ndarray", cache=False, resolution=None, loader=loading,
+                              loader_args=(), collapser='sum')
+    ga = create_genomic_array({'chr1:0-150': 150, 'chr2:0-300': 300}, stranded=False, typecode='float32',
+                              storage="ndarray", cache=False, resolution=None, loader=loading,
+                              loader_args=(), collapser='sum',
+                              normalizer=get_normalizer('tpm'))

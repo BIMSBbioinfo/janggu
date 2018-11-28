@@ -224,7 +224,7 @@ def test_janggu_instance_conv(tmpdir):
         resolution=50,
         store_whole_genome=False,
         flank=0,
-        dimmode='all',
+        collapser=None,
         storage='ndarray')
 
     ctcf = Cover.create_from_bed(
@@ -235,7 +235,7 @@ def test_janggu_instance_conv(tmpdir):
         resolution=50,
         store_whole_genome=True,
         flank=0,
-        dimmode='all',
+        collapser=None,
         storage='ndarray')
 
     @inputlayer
@@ -517,9 +517,9 @@ def test_janggu_chr2_validation(tmpdir):
         bedfiles=posfile,
         regions=bed_file,
         binsize=200, stepsize=50,
-        resolution=50,
+        resolution=None,
         flank=0,
-        dimmode='first',
+        collapser='max',
         storage='ndarray')
 
     @inputlayer

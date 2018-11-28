@@ -18,14 +18,14 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     _binsize = None
     _flank = None
     chrs = None
-    offsets = None
+    starts = None
     strand = None
-    rel_end = None
+    ends = None
 
     @classmethod
     def create_from_file(cls, regions,  # pylint: disable=too-many-locals
                          binsize, stepsize, flank=0,
-                         fixed_size_batches=True):
+                         zero_padding=True, collapse=False):
         """Creates a GenomicIndexer object.
 
         This method constructs a GenomicIndexer from
@@ -45,54 +45,62 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         flank : int
             flank size in bp to be attached to
             both ends of a region. Default: 0.
-        fixed_size_batches : boolean
-            fixed_size_batches indicate if variable sequence
-            lengths should be used.
+        zero_padding : boolean
+            zero_padding indicate if variable sequence
+            lengths are used in conjunction with zero-padding.
+            If zero_padding is True, a binsize must be specified.
             Default: True.
+        collapse : boolean
+            collapse indicates that the genomic interval will be represented by a
+            scalar summary value. For example, the gene expression value in TPM.
+            In this case, zero_padding does not have an effect. Intervals
+            may be of fixed or variable lengths.
+            Default: False.
         """
 
         regions_ = _get_genomic_reader(regions)
 
-        if binsize is None:
+        if binsize is None and not collapse:
             binsize_ = None
             # binsize will be inferred from bed file
             for reg in regions_:
                 if binsize_ is None:
                     binsize_ = reg.iv.length
                 if reg.iv.length != binsize_:
-                    raise ValueError('Intervals must be of equal length '
-                                     'if binsize=None. Otherwise, please '
-                                     'specify a binsize.')
+                    raise ValueError('An interval length must be specified if collapse=False.')
             binsize = binsize_
 
         if stepsize is None:
-            stepsize = binsize
+            if binsize is None:
+                stepsize = 1
+            else:
+                stepsize = binsize
 
         gind = cls(binsize, stepsize, flank)
 
         gind.chrs = []
-        gind.offsets = []
+        gind.starts = []
         gind.strand = []
-        gind.rel_end = []
+        gind.ends = []
 
         for reg in regions_:
 
             tmp_gidx = cls.create_from_region(
                 reg.iv.chrom,
                 reg.iv.start, reg.iv.end, reg.iv.strand,
-                binsize, stepsize, flank, fixed_size_batches)
+                binsize, stepsize, flank, zero_padding)
 
             gind.chrs += tmp_gidx.chrs
-            gind.offsets += tmp_gidx.offsets
+            gind.starts += tmp_gidx.starts
             gind.strand += tmp_gidx.strand
-            gind.rel_end += tmp_gidx.rel_end
+            gind.ends += tmp_gidx.ends
 
         return gind
 
     @classmethod
     def create_from_region(cls, chrom, start, end, strand,
                            binsize, stepsize, flank=0,
-                           fixed_size_batches=True):
+                           zero_padding=True):
         if binsize is None:
             binsize = end - start
 
@@ -105,23 +113,27 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             val = (end - start - binsize + stepsize)
         else:
             val = (end - start)
+
         reglen = val // stepsize
         chrs = [chrom] * reglen
-        offsets = [x for x in range(start, start+(stepsize*reglen) , stepsize)]
-        rel_end = [binsize] * reglen
+        starts = [x for x in range(start, start+(stepsize*reglen) , stepsize)]
+        #ends = np.asarray(starts) + binsize
+        #ends = ends.tolist()
+        ends = [x + binsize for x in starts]
         strands = [strand] * reglen
         # if there is a variable length fragment at the end,
         # we record the remaining fragment length
-        if not fixed_size_batches and val % stepsize > 0:
+        if zero_padding and val % stepsize > 0:
             chrs += [chrom]
-            offsets += [offsets[-1] + stepsize]
-            rel_end += [val - (val//stepsize) * stepsize]
+            starts += [starts[-1] + stepsize]
+            #ends += [val - (val//stepsize) * stepsize]
+            ends += [end]
             strands += [strand]
 
         gind.chrs = chrs
-        gind.offsets = offsets
+        gind.starts = starts
         gind.strand = strands
-        gind.rel_end = rel_end
+        gind.ends = ends
         return gind
 
     def __init__(self, binsize, stepsize, flank=0):
@@ -141,9 +153,11 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     def __getitem__(self, index):
         if isinstance(index, int):
-            start = self.offsets[index]
-            val = self.rel_end[index]
-            end = start + (val if val > 0 else 1)
+            start = self.starts[index]
+            end = self.ends[index]
+            if end == start:
+                end += 1
+        #    end = start + (val if val > 0 else 1)
             return GenomicInterval(self.chrs[index], start - self.flank,
                                    end + self.flank, self.strand[index])
 
@@ -157,7 +171,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     @binsize.setter
     def binsize(self, value):
-        if value <= 0:
+        if value is not None and value <= 0:
             raise ValueError('binsize must be positive')
         self._binsize = value
 
@@ -168,7 +182,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     @stepsize.setter
     def stepsize(self, value):
-        if value <= 0:
+        if value is not None and value <= 0:
             raise ValueError('stepsize must be positive')
         self._stepsize = value
 
@@ -187,8 +201,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         """Returns representing the region."""
         return ['{}:{}-{}'.format(iv.chrom, iv.start, iv.end) for iv in self]
 
-
-
     def idx_by_region(self, include=None, exclude=None, start=None, end=None):
 
         """idx_by_region filters for chromosome and region ids.
@@ -199,14 +211,14 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         Parameters
         ----------
-        include : list(str)
-            List of chromosome names to be included. Default: [] means
+        include : list(str) or None
+            List of chromosome names to be included. Default: None means
             all chromosomes are included.
         exclude : list(str)
-            List of chromosome names to be excluded. Default: [].
-        start : int
+            List of chromosome names to be excluded. Default: None.
+        start : int or None
             The start of the required interval.
-        end : int
+        end : int or None
             The end of the required interval.
 
         Returns
@@ -233,11 +245,16 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                 idxs = idxs.difference(
                     np.where(np.asarray(self.chrs) == exc)[0])
 
-        if isinstance(start, int) & isinstance(end, int):
-            regionmatch = ((np.array(self.offsets) > (start - self.stepsize)) & (
-                    np.array(self.offsets) < end))
+        if start is not None:
+            regionmatch = (np.array(self.ends) > start)
             indexmatch = np.where(regionmatch)[0]
             idxs = idxs.intersection(indexmatch)
+
+        if end is not None:
+            regionmatch = (np.array(self.starts) < end)
+            indexmatch = np.where(regionmatch)[0]
+            idxs = idxs.intersection(indexmatch)
+
         idxs = list(idxs)
         idxs.sort()
         return idxs
@@ -272,8 +289,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         #  construct the filtered gindexer
         new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
         new_gindexer.chrs = [self.chrs[i] for i in idxs]
-        new_gindexer.offsets = [self.offsets[i] for i in idxs]
+        new_gindexer.starts = [self.starts[i] for i in idxs]
         new_gindexer.strand = [self.strand[i] for i in idxs]
-        new_gindexer.rel_end = [self.rel_end[i] for i in idxs]
+        new_gindexer.ends = [self.ends[i] for i in idxs]
 
         return new_gindexer

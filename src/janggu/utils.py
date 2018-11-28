@@ -294,7 +294,7 @@ def _iv_to_str(chrom, start, end):
     return '{}:{}-{}'.format(chrom, start, end)
 
 
-def _str_to_iv(givstr, template_extension):
+def _str_to_iv(givstr, template_extension=0):
     """Converts a string representation 'chr:start-end' into genomic coordinates."""
     sub = givstr.split(':')
     if len(sub) == 1:
@@ -304,11 +304,6 @@ def _str_to_iv(givstr, template_extension):
     start = int(sub[1].split('-')[0])
     end = int(sub[1].split('-')[1])
     return (chr_, start - template_extension, end + template_extension)
-
-
-def get_chrom_length(length, resolution):
-    """obtain the chromosome length for a given resolution."""
-    return int(np.ceil(float(length)/resolution))
 
 
 def get_genome_size_from_regions(regions):
