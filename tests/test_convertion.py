@@ -29,13 +29,13 @@ def test_create_from_array(tmpdir):
     PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
     DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                       regions=ROI_FILE,
+                                       roi=ROI_FILE,
                                        binsize=200, stepsize=200,
                                        order=1,
                                        store_whole_genome=True,
                                        datatags=['ref'])
 
-    LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
+    LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                    bedfiles=PEAK_FILE,
                                    binsize=200, stepsize=200,
                                    resolution=200,
@@ -91,13 +91,13 @@ def test_create_from_array_whole_genome_false(tmpdir):
     PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
     DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                       regions=ROI_FILE,
+                                       roi=ROI_FILE,
                                        binsize=200, stepsize=200,
                                        order=1,
                                        store_whole_genome=False,
                                        datatags=['ref'])
 
-    LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
+    LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                    bedfiles=PEAK_FILE,
                                    binsize=200, stepsize=200,
                                    resolution=200,

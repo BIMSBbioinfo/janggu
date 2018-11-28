@@ -62,7 +62,7 @@ class Cover(Dataset):
     @classmethod
     def create_from_bam(cls, name,  # pylint: disable=too-many-locals
                         bamfiles,
-                        regions=None,
+                        roi=None,
                         genomesize=None,
                         conditions=None,
                         min_mapq=None,
@@ -95,7 +95,7 @@ class Cover(Dataset):
             Name of the dataset
         bamfiles : str or list
             bam-file or list of bam files.
-        regions : str or None
+        roi : str or None
             Bed-file defining the region of interest.
             If set to None, the coverage will be
             fetched from the entire genome and a
@@ -166,7 +166,7 @@ class Cover(Dataset):
             template mid-points whose reads lie outside of the interval.
             This option is only relevant for paired-end reads counted at the
             'midpoint' and if the coverage is not obtained from the
-            whole genome, e.g. regions is not None.
+            whole genome, e.g. roi is not None.
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         channel_last : boolean
@@ -188,7 +188,7 @@ class Cover(Dataset):
             provided that performs the normalization on the genomic array.
             Default: None.
         store_whole_genome : boolean
-            Indicates whether the whole genome or only selected regions
+            Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False
         """
@@ -199,8 +199,8 @@ class Cover(Dataset):
 
         collapse = True if resolution is None else False
 
-        if regions is not None:
-            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+        if roi is not None:
+            gindexer = GenomicIndexer.create_from_file(roi, binsize,
                                                        stepsize, flank, zero_padding, collapse)
         else:
             gindexer = None
@@ -217,7 +217,7 @@ class Cover(Dataset):
         full_genome_index = store_whole_genome
 
         if not full_genome_index and not gindexer:
-            raise ValueError('Either regions must be supplied or store_whole_genome must be True')
+            raise ValueError('Either roi must be supplied or store_whole_genome must be True')
 
         if not full_genome_index:
             # if whole genome should not be loaded
@@ -352,7 +352,7 @@ class Cover(Dataset):
     @classmethod
     def create_from_bigwig(cls, name,  # pylint: disable=too-many-locals
                            bigwigfiles,
-                           regions=None,
+                           roi=None,
                            genomesize=None,
                            conditions=None,
                            binsize=None, stepsize=None,
@@ -376,7 +376,7 @@ class Cover(Dataset):
             Name of the dataset
         bigwigfiles : str or list
             bigwig-file or list of bigwig files.
-        regions : str or None
+        roi : str or None
             Bed-file defining the region of interest.
             If set to None, the coverage will be
             fetched from the entire genome and a
@@ -440,7 +440,7 @@ class Cover(Dataset):
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         store_whole_genome : boolean
-            Indicates whether the whole genome or only selected regions
+            Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
         channel_last : boolean
@@ -478,8 +478,8 @@ class Cover(Dataset):
 
         collapse = True if resolution is None else False
 
-        if regions is not None:
-            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+        if roi is not None:
+            gindexer = GenomicIndexer.create_from_file(roi, binsize,
                                                        stepsize, flank, zero_padding, collapse)
         else:
             gindexer = None
@@ -488,7 +488,7 @@ class Cover(Dataset):
             bigwigfiles = [bigwigfiles]
 
         if not store_whole_genome and not gindexer:
-            raise ValueError('Either regions must be supplied or store_whole_genome must be True')
+            raise ValueError('Either roi must be supplied or store_whole_genome must be True')
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -561,7 +561,7 @@ class Cover(Dataset):
     @classmethod
     def create_from_bed(cls, name,  # pylint: disable=too-many-locals
                         bedfiles,
-                        regions=None,
+                        roi=None,
                         genomesize=None,
                         conditions=None,
                         binsize=None, stepsize=None,
@@ -584,7 +584,7 @@ class Cover(Dataset):
             Name of the dataset
         bedfiles : str or list
             bed-file or list of bed files.
-        regions : str or None
+        roi : str or None
             Bed-file defining the region of interest.
             If set to None a genomesize must be supplied and
             a genomic indexer must be attached later.
@@ -642,7 +642,7 @@ class Cover(Dataset):
             If :code:`cache=False`, this option does not have an effect.
             Default: None.
         store_whole_genome : boolean
-            Indicates whether the whole genome or only selected regions
+            Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
         channel_last : boolean
@@ -674,13 +674,13 @@ class Cover(Dataset):
             Indicates whether to cache the dataset. Default: False.
         """
 
-        if regions is None and genomesize is None:
-            raise ValueError('Either regions or genomesize must be specified.')
+        if roi is None and genomesize is None:
+            raise ValueError('Either roi or genomesize must be specified.')
 
         collapse = True if resolution is None else False
 
-        if regions is not None:
-            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+        if roi is not None:
+            gindexer = GenomicIndexer.create_from_file(roi, binsize,
                                                        stepsize, flank, zero_padding, collapse)
             binsize = gindexer.binsize
         else:
@@ -698,7 +698,7 @@ class Cover(Dataset):
                 # if a genome size has specifically been given, use it.
                 gsize = genomesize.copy()
             else:
-                gsize = get_genome_size_from_regions(regions)
+                gsize = get_genome_size_from_regions(roi)
 
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
@@ -825,7 +825,7 @@ class Cover(Dataset):
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         store_whole_genome : boolean
-            Indicates whether the whole genome or only selected regions
+            Indicates whether the whole genome or only ROI
             should be loaded. Default: False.
         channel_last : boolean
             This tells the constructor how to interpret the array dimensions.

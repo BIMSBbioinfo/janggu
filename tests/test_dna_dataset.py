@@ -36,14 +36,14 @@ def test_dna_first_last_channel():
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data1 = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      storage='ndarray',
                                      channel_last=True)
     assert data1.shape == (2, 10000, 1, 4)
     assert data1[0].shape == (1, 10000, 1, 4)
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      storage='ndarray',
                                      channel_last=False)
     assert data.shape == (2, 4, 10000, 1)
@@ -60,7 +60,7 @@ def test_dna_genomic_interval_access(tmpdir):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      storage='ndarray',
                                      order=order)
 
@@ -69,7 +69,7 @@ def test_dna_genomic_interval_access(tmpdir):
         data[data.gindexer[0]]
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      storage='ndarray',
                                      order=order,
                                      store_whole_genome=True)
@@ -89,7 +89,7 @@ def test_dna_dims_order_1_from_subset(tmpdir):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      storage='ndarray',
                                      order=order)
 
@@ -109,7 +109,7 @@ def test_dna_dims_order_1_from_subset(tmpdir):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      binsize=200, stepsize=200,
                                      storage='ndarray',
                                      order=order)
@@ -224,7 +224,7 @@ def test_dna_dims_order_2(tmpdir):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_merged,
+                                     roi=bed_merged,
                                      binsize=200,
                                      storage='ndarray',
                                      order=order)
@@ -279,7 +279,7 @@ def reverse_layer(order):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_file,
+                                     roi=bed_file,
                                      storage='ndarray',
                                      binsize=binsize,
                                      flank=flank,
@@ -303,7 +303,7 @@ def complement_layer(order):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     regions=bed_file,
+                                     roi=bed_file,
                                      storage='ndarray',
                                      binsize=binsize,
                                      flank=flank,
@@ -403,48 +403,48 @@ def test_dna_dataset_sanity(tmpdir):
         # name must be a string
         Bioseq.create_from_refgenome(1.23, refgenome='',
                                   storage='ndarray',
-                                  regions=bed_file, order=1)
+                                  roi=bed_file, order=1)
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome='',
                                   storage='ndarray',
-                                  regions=bed_file, order=1)
+                                  roi=bed_file, order=1)
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome='test',
                                   storage='ndarray',
-                                  regions=bed_file, order=1)
+                                  roi=bed_file, order=1)
 
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
-                                  regions=bed_file, order=0)
+                                  roi=bed_file, order=0)
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
-                                  regions=bed_file, flank=-1)
+                                  roi=bed_file, flank=-1)
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
-                                  regions=bed_file, binsize=0)
+                                  roi=bed_file, binsize=0)
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
-                                  regions=bed_file, stepsize=0)
+                                  roi=bed_file, stepsize=0)
 
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='step',
-                                  regions=bed_file, order=1)
+                                  roi=bed_file, order=1)
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'storage.h5'))
 
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='ndarray',
-                              regions=None, order=1,
+                              roi=None, order=1,
                               store_whole_genome=True)
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
-                              regions=bed_file, order=1, cache=True)
+                              roi=bed_file, order=1, cache=True)
 
     assert os.path.exists(os.path.join(tmpdir.strpath, 'datasets', 'train',
                                        'order1', 'storage.h5'))

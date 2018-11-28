@@ -97,7 +97,7 @@ all intervals to be of equal lengths:
 
    dna = Bioseq.create_from_refgenome(name='dna',
                                       refgenome=refgenome,
-                                      regions=roi)
+                                      roi=roi)
 
    dna.shape  # is (4, 200, 1, 4)
    # One-hot encoding of the first 10 nucleotides in region 0
@@ -122,7 +122,7 @@ and :code:`stepsize` as shown below:
 
    dna = Bioseq.create_from_refgenome(name='dna',
                                       refgenome=refgenome,
-                                      regions=roi,
+                                      roi=roi,
                                       binsize=200,
                                       stepsize=200)
 
@@ -138,7 +138,7 @@ the intervals up and downstream by a given length
 
    dna = Bioseq.create_from_refgenome(name='dna',
                                       refgenome=refgenome,
-                                      regions=bed_file,
+                                      roi=bed_file,
                                       binsize=200,
                                       stepsize=200,
                                       flank=100)
@@ -155,7 +155,7 @@ of a di-nucleotide-based one-hot representation is shown below
 
    dna = Bioseq.create_from_refgenome(name='dna',
                                       refgenome=refgenome,
-                                      regions=bed_file,
+                                      roi=bed_file,
                                       binsize=200,
                                       stepsize=200,
                                       order=2)
@@ -200,7 +200,7 @@ from single-end reads:
    # example with automatic binsize determination from ROI
    cover = Cover.create_from_bam('whole_genome',
                                  bamfiles=bam_file,
-                                 regions=roi)
+                                 roi=roi)
    cover.shape  # is (4, 200, 2, 1)
 
    # example with specified binsize and stepsize
@@ -211,7 +211,7 @@ from single-end reads:
                                  bamfiles=bam_file,
                                  binsize=200,
                                  stepsize=200,
-                                 regions=roi)
+                                 roi=roi)
 
    cover.shape  # is (100, 200, 2, 1)
    cover[0]  # coverage of the first region
@@ -222,7 +222,7 @@ from single-end reads:
                                  binsize=200,
                                  stepsize=200,
                                  stranded=False,
-                                 regions=roi)
+                                 roi=roi)
 
    cover.shape  # is (100, 200, 1, 1)
 
@@ -243,7 +243,7 @@ For example, consider
                                  binsize=200,
                                  stepsize=200,
                                  resolution=200,
-                                 regions=roi)
+                                 roi=roi)
 
    cover.shape  # is (100, 1, 2, 1)
 
@@ -260,7 +260,7 @@ analogously:
 
    cover = Cover.create_from_bigwig('bigwig_coverage',
                                     bigwigfiles=bw_file,
-                                    regions=roi,
+                                    roi=roi,
                                     binsize=200,
                                     stepsize=200)
 
@@ -287,7 +287,7 @@ Examples of loading data from a BED file are shown below
    # binary mode (default)
    cover = Cover.create_from_bed('binary_coverage',
                                  bedfiles=score_file,
-                                 regions=roi,
+                                 roi=roi,
                                  binsize=200,
                                  stepsize=200,
                                  resolution=200)
@@ -298,7 +298,7 @@ Examples of loading data from a BED file are shown below
    # score mode
    cover = Cover.create_from_bed('score_coverage',
                                  bedfiles=score_file,
-                                 regions=roi,
+                                 roi=roi,
                                  binsize=200,
                                  stepsize=200,
                                  resolution=200,
@@ -310,7 +310,7 @@ Examples of loading data from a BED file are shown below
    # categorical mode
    cover = Cover.create_from_bed('cat_coverage',
                                  bedfiles=score_file,
-                                 regions=roi,
+                                 roi=roi,
                                  binsize=200,
                                  stepsize=200,
                                  resolution=200,
@@ -454,7 +454,7 @@ the sequence features that discriminate the two sets of sequences:
 
    # DNA sequences are loaded directly from the reference genome
    DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                      regions=ROI_FILE,
+                                      roi=ROI_FILE,
                                       binsize=200)
 
    # Classification labels over the same regions are loaded
@@ -462,7 +462,7 @@ the sequence features that discriminate the two sets of sequences:
    # It is important that both DNA and LABELS load with the same
    # binsize, stepsize and resolution to ensure
    # the correct correspondence between both datasets.
-   LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
+   LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                   bedfiles=PEAK_FILE,
                                   binsize=200,
                                   resolution=200)

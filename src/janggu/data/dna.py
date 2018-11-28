@@ -122,7 +122,7 @@ class Bioseq(Dataset):
         return cover
 
     @classmethod
-    def create_from_refgenome(cls, name, refgenome, regions=None,
+    def create_from_refgenome(cls, name, refgenome, roi=None,
                               binsize=None,
                               stepsize=None,
                               flank=0, order=1,
@@ -135,7 +135,7 @@ class Bioseq(Dataset):
         """Create a Bioseq class from a reference genome.
 
         This constructor loads nucleotide sequences from a reference genome.
-        If regions (of interest) is supplied, only the respective sequences
+        If regions of interest (ROI) is supplied, only the respective sequences
         are loaded, otherwise the entire genome is fetched.
 
         Parameters
@@ -144,7 +144,7 @@ class Bioseq(Dataset):
             Name of the dataset
         refgenome : str
             Fasta file.
-        regions : str or None
+        roi : str or None
             Bed-file defining the region of interest.
             If set to None, the sequence will be
             fetched from the entire genome and a
@@ -163,7 +163,7 @@ class Bioseq(Dataset):
             If stepsize is None, it will be set equal to binsize.
             Default: None.
         flank : int
-            Flanking regions in basepairs to be extended up and downstream.
+            Flanking region in basepairs to be extended up and downstream of each interval.
             Default: 0.
         order : int
             Order for the one-hot representation. Default: 1.
@@ -180,7 +180,7 @@ class Bioseq(Dataset):
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         store_whole_genome : boolean
-            Indicates whether the whole genome or all selected chromosomes
+            Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
         """
@@ -188,14 +188,14 @@ class Bioseq(Dataset):
         # load bioseq, region index, and within region index
 
 
-        if regions is not None:
-            gindexer = GenomicIndexer.create_from_file(regions, binsize,
+        if roi is not None:
+            gindexer = GenomicIndexer.create_from_file(roi, binsize,
                                                        stepsize, flank)
         else:
             gindexer = None
 
         if not store_whole_genome and gindexer is None:
-            raise ValueError('Either regions must be supplied or store_whole_genome must be True')
+            raise ValueError('Either roi must be supplied or store_whole_genome must be True')
 
         if not isinstance(refgenome, Bio.SeqRecord.SeqRecord):
             seqs = sequences_from_fasta(refgenome, 'dna')

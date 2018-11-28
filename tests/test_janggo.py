@@ -96,7 +96,7 @@ def test_janggu_instance_dense(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file, order=1)
+                                    roi=bed_file, order=1)
 
     ctcf = Table('ctcf', filename=csvfile)
 
@@ -212,14 +212,14 @@ def test_janggu_instance_conv(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                        storage='ndarray',
-                                       regions=bed_file, order=1,
+                                       roi=bed_file, order=1,
                                        binsize=200,
                                        stepsize=50)
 
     ctcf = Cover.create_from_bed(
         "positives",
         bedfiles=posfile,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
         store_whole_genome=False,
@@ -230,7 +230,7 @@ def test_janggu_instance_conv(tmpdir):
     ctcf = Cover.create_from_bed(
         "positives",
         bedfiles=posfile,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
         store_whole_genome=True,
@@ -275,7 +275,7 @@ def test_janggu_use_dnaconv_none(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file, order=1)
+                                    roi=bed_file, order=1)
 
     @inputlayer
     def _cnn_model1(inputs, inp, oup, params):
@@ -332,7 +332,7 @@ def test_janggu_use_dnaconv_concat(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file, order=1)
+                                    roi=bed_file, order=1)
 
     @inputlayer
     def _cnn_model1(inputs, inp, oup, params):
@@ -391,7 +391,7 @@ def test_janggu_use_dnaconv_ave(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file, order=1)
+                                    roi=bed_file, order=1)
 
     @inputlayer
     def _cnn_model1(inputs, inp, oup, params):
@@ -450,7 +450,7 @@ def test_janggu_use_dnaconv_max(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file, order=1)
+                                    roi=bed_file, order=1)
 
     @inputlayer
     def _cnn_model1(inputs, inp, oup, params):
@@ -510,12 +510,12 @@ def test_janggu_chr2_validation(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     binsize=200, stepsize=50,
-                                    regions=bed_file, order=1)
+                                    roi=bed_file, order=1)
 
     ctcf = Cover.create_from_bed(
         "positives",
         bedfiles=posfile,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=None,
         flank=0,

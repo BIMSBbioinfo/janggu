@@ -58,12 +58,12 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                   regions=ROI_FILE,
+                                   roi=ROI_FILE,
                                    binsize=200,
                                    order=args.order,
                                    datatags=['ref'])
 
-LABELS = Cover.create_from_bed('peaks', regions=ROI_FILE,
+LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                bedfiles=PEAK_FILE,
                                binsize=200,
                                resolution=200,
@@ -178,14 +178,14 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
 DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                        regions=ROI_FILE,
+                                        roi=ROI_FILE,
                                         binsize=200,
                                         order=args.order,
                                         datatags=['ref'])
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
-                                    regions=ROI_FILE,
+                                    roi=ROI_FILE,
                                     binsize=200,
                                     resolution=200,
                                     datatags=['test'])

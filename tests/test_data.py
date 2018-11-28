@@ -21,7 +21,7 @@ def test_dna_props_extraction(tmpdir):
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                     storage='ndarray',
-                                    regions=bed_file,
+                                    roi=bed_file,
                                     binsize=200, stepsize=200,
                                     order=1)
 
@@ -41,7 +41,7 @@ def test_split_train_test():
 
     dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
                                        storage='ndarray',
-                                       regions=bed_file,
+                                       roi=bed_file,
                                        binsize=200, stepsize=200,
                                        order=1, store_whole_genome=True)
 

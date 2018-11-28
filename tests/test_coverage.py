@@ -23,7 +23,7 @@ def test_channel_last_first():
         bigwigfiles=bwfile_,
         resolution=1,
         binsize=200,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=True,
         channel_last=True,
         storage='ndarray')
@@ -36,7 +36,7 @@ def test_channel_last_first():
         bigwigfiles=bwfile_,
         resolution=1,
         binsize=200,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=True,
         channel_last=False,
         storage='ndarray')
@@ -62,7 +62,7 @@ def test_cover_export_bigwig(tmpdir):
                 bigwigfiles=bwfile_,
                 resolution=resolution,
                 binsize=200,
-                regions=bed_file,
+                roi=bed_file,
                 store_whole_genome=storage,
                 storage='ndarray')
 
@@ -74,7 +74,7 @@ def test_cover_export_bigwig(tmpdir):
                 sample=cover.conditions[0]),
                 resolution=resolution,
                 binsize=200,
-                regions=bed_file,
+                roi=bed_file,
                 store_whole_genome=storage,
                 storage='ndarray')
 
@@ -98,7 +98,7 @@ def test_bam_genomic_interval_access_whole_genome():
             cover = Cover.create_from_bam(
                 'test',
                 bamfiles=bamfile_,
-                regions=bed_file,
+                roi=bed_file,
                 flank=0,
                 storage='ndarray',
                 store_whole_genome=storage,
@@ -142,7 +142,7 @@ def test_bam_genomic_interval_access_part_genome():
             cover = Cover.create_from_bam(
                 'test',
                 bamfiles=bamfile_,
-                regions=bed_file,
+                roi=bed_file,
                 flank=0,
                 storage='ndarray',
                 store_whole_genome=storage,
@@ -192,7 +192,7 @@ def test_bigwig_genomic_interval_access_whole_genome():
             cover = Cover.create_from_bigwig(
                 'test',
                 bigwigfiles=bamfile_,
-                regions=bed_file,
+                roi=bed_file,
                 flank=0,
                 storage='ndarray',
                 store_whole_genome=storage,
@@ -233,7 +233,7 @@ def test_bigwig_genomic_interval_access_part_genome():
             cover = Cover.create_from_bigwig(
                 'test',
                 bigwigfiles=bamfile_,
-                regions=bed_file,
+                roi=bed_file,
                 flank=0,
                 storage='ndarray',
                 store_whole_genome=storage,
@@ -283,7 +283,7 @@ def test_bed_genomic_interval_access_whole_genome():
             cover = Cover.create_from_bed(
                 'test',
                 bedfiles=bamfile_,
-                regions=bed_file,
+                roi=bed_file,
                 flank=0,
                 storage='ndarray',
                 store_whole_genome=storage,
@@ -324,7 +324,7 @@ def test_bed_genomic_interval_access_part_genome():
             cover = Cover.create_from_bed(
                 'test',
                 bedfiles=bamfile_,
-                regions=bed_file,
+                roi=bed_file,
                 flank=0,
                 storage='ndarray',
                 store_whole_genome=storage,
@@ -371,7 +371,7 @@ def test_bam_inferred_binsize():
     cover = Cover.create_from_bam(
         'test',
         bamfiles=bamfile_,
-        regions=bed_file,
+        roi=bed_file,
         flank=0,
         storage='ndarray')
     assert len(cover) == 25
@@ -387,7 +387,7 @@ def test_bigwig_inferred_binsize():
         'test',
         bigwigfiles=bwfile_,
         resolution=1,
-        regions=bed_file,
+        roi=bed_file,
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
@@ -401,7 +401,7 @@ def test_bed_inferred_binsize():
     cover = Cover.create_from_bed(
         'test',
         bedfiles=bed_file,
-        regions=bed_file,
+        roi=bed_file,
         resolution=1,
         storage='ndarray')
     assert len(cover) == 25
@@ -417,7 +417,7 @@ def test_bed_overreaching_ends():
         cover = Cover.create_from_bed(
             'test',
             bedfiles=bed_file,
-            regions=bed_file,
+            roi=bed_file,
             flank=2000,
             resolution=1,
             store_whole_genome=True,
@@ -433,7 +433,7 @@ def test_bed_overreaching_ends():
         cover = Cover.create_from_bed(
             'test',
             bedfiles=bed_file,
-            regions=bed_file,
+            roi=bed_file,
             flank=2000,
             resolution=1,
             store_whole_genome=False,
@@ -454,13 +454,13 @@ def test_bed_store_whole_genome_option():
     cover1 = Cover.create_from_bed(
         'test',
         bedfiles=bed_file,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=True,
         storage='ndarray')
     cover2 = Cover.create_from_bed(
         'test2',
         bedfiles=bed_file,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=False,
         storage='ndarray')
 
@@ -480,14 +480,14 @@ def test_bigwig_store_whole_genome_option():
     cover1 = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=True,
         binsize=200, stepsize=200,
         storage='ndarray')
     cover2 = Cover.create_from_bigwig(
         'test2',
         bigwigfiles=bwfile_,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=False,
         binsize=200, stepsize=200,
         storage='ndarray')
@@ -508,14 +508,14 @@ def test_bam_store_whole_genome_option():
     cover1 = Cover.create_from_bam(
         'test',
         bamfiles=bamfile_,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=True,
         binsize=200, stepsize=200,
         storage='ndarray')
     cover2 = Cover.create_from_bam(
         'test2',
         bamfiles=bamfile_,
-        regions=bed_file,
+        roi=bed_file,
         store_whole_genome=False,
         binsize=200, stepsize=200,
         storage='ndarray')
@@ -536,7 +536,7 @@ def test_cover_from_bam_sanity():
     cover = Cover.create_from_bam(
         'test',
         bamfiles=bamfile_,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=200,
         flank=0,
         storage='ndarray')
@@ -556,7 +556,7 @@ def test_cover_from_bam_sanity():
         Cover.create_from_bam(
             1.2,
             bamfiles=bamfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
 
@@ -564,7 +564,7 @@ def test_cover_from_bam_sanity():
         Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             flank=-1,
             storage='ndarray')
@@ -572,7 +572,7 @@ def test_cover_from_bam_sanity():
         Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=-1,
             flank=0,
             storage='ndarray')
@@ -580,7 +580,7 @@ def test_cover_from_bam_sanity():
         Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=-1, stepsize=1,
             flank=0,
             storage='ndarray')
@@ -594,7 +594,7 @@ def test_cover_from_bigwig_sanity():
     cover = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
         flank=0,
@@ -606,7 +606,7 @@ def test_cover_from_bigwig_sanity():
     cover = Cover.create_from_bigwig(
         'test',
         bigwigfiles=bwfile_,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
         flank=0,
@@ -635,7 +635,7 @@ def test_cover_from_bigwig_sanity():
         Cover.create_from_bigwig(
             1.2,
             bigwigfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
 
@@ -643,7 +643,7 @@ def test_cover_from_bigwig_sanity():
         Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             flank=-1,
             storage='ndarray')
@@ -651,7 +651,7 @@ def test_cover_from_bigwig_sanity():
         Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=-1,
             flank=0,
             storage='ndarray')
@@ -659,7 +659,7 @@ def test_cover_from_bigwig_sanity():
         Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=-1, stepsize=1,
             flank=0,
             storage='ndarray')
@@ -673,7 +673,7 @@ def test_cover_from_bed_sanity():
     cover = Cover.create_from_bed(
         'test',
         bedfiles=bwfile_,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
         flank=0,
@@ -682,7 +682,7 @@ def test_cover_from_bed_sanity():
     Cover.create_from_bed(
         'test',
         bedfiles=bwfile_,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=50,
         resolution=50,
         storage='ndarray')
@@ -692,7 +692,7 @@ def test_cover_from_bed_sanity():
         Cover.create_from_bed(
             1.2,
             bedfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
 
@@ -700,7 +700,7 @@ def test_cover_from_bed_sanity():
         Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             flank=-1,
             storage='ndarray')
@@ -708,7 +708,7 @@ def test_cover_from_bed_sanity():
         Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=-1,
             flank=0,
             storage='ndarray')
@@ -716,7 +716,7 @@ def test_cover_from_bed_sanity():
         Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=-1, stepsize=1,
             flank=0,
             storage='ndarray')
@@ -726,7 +726,7 @@ def test_cover_from_bed_sanity():
         Cover.create_from_bed(
             'test',
             bedfiles=csvfile,
-            regions=bed_file,
+            roi=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
 
@@ -747,7 +747,7 @@ def test_cover_bam_unstranded():
     cover = Cover.create_from_bam(
         "yeast_I_II_III.bam",
         bamfiles=bamfile_,
-        regions=bed_file,
+        roi=bed_file,
         binsize=200, stepsize=200,
         genomesize=gsize,
         stranded=False)
@@ -843,7 +843,7 @@ def test_cover_bam(tmpdir):
         cover = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             genomesize=gsize,
             storage=store, cache=True)
@@ -898,7 +898,7 @@ def test_load_bam_resolution10(tmpdir):
         cover = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             genomesize=gsize,
             resolution=10,
@@ -953,7 +953,7 @@ def test_load_cover_bigwig_default(tmpdir):
         cover = Cover.create_from_bigwig(
             "cov",
             bigwigfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             genomesize=gsize,
             storage=store, cache=True)
@@ -980,7 +980,7 @@ def test_load_cover_bigwig_resolution1(tmpdir):
         cover = Cover.create_from_bigwig(
             "cov",
             bigwigfiles=bwfile_,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             resolution=1,
             storage=store, cache=True)
@@ -1033,7 +1033,7 @@ def test_load_cover_bed_binary(tmpdir):
         cover = Cover.create_from_bed(
             "cov",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             resolution=200,
             storage=store,
@@ -1046,7 +1046,7 @@ def test_load_cover_bed_binary(tmpdir):
         cover = Cover.create_from_bed(
             "cov50",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             storage=store,
             resolution=50,
@@ -1060,7 +1060,7 @@ def test_load_cover_bed_binary(tmpdir):
         cover = Cover.create_from_bed(
             "cov50_firstdim",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             storage=store,
             resolution=None,
@@ -1081,7 +1081,7 @@ def test_load_cover_bed_scored():
         cover = Cover.create_from_bed(
             "cov",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             resolution=200,
             storage=store,
@@ -1095,7 +1095,7 @@ def test_load_cover_bed_scored():
         cover = Cover.create_from_bed(
             "cov50",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             storage=store,
             resolution=50,
@@ -1109,7 +1109,7 @@ def test_load_cover_bed_scored():
         cover = Cover.create_from_bed(
             "cov50",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             storage=store,
             resolution=None,
             binsize=200, stepsize=200,
@@ -1131,7 +1131,7 @@ def test_load_cover_bed_categorical():
         cover = Cover.create_from_bed(
             "cov",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             resolution=200,
             storage=store,
@@ -1145,7 +1145,7 @@ def test_load_cover_bed_categorical():
         cover = Cover.create_from_bed(
             "cov50",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             binsize=200, stepsize=200,
             resolution=50,
             storage=store,
@@ -1159,7 +1159,7 @@ def test_load_cover_bed_categorical():
         cover = Cover.create_from_bed(
             "cov50",
             bedfiles=score_file,
-            regions=bed_file,
+            roi=bed_file,
             resolution=None,
             binsize=200, stepsize=200,
             storage=store,
@@ -1265,23 +1265,22 @@ def test_plotgenometracks():
 
 
 
-    cover = Cover.create_from_bigwig('coverage2', 
-                                     bigwigfiles=bw_file, 
-                                     regions=roi, 
-                                     binsize=200, 
-                                     stepsize=200, 
+    cover = Cover.create_from_bigwig('coverage2',
+                                     bigwigfiles=bw_file,
+                                     roi=roi,
+                                     binsize=200,
+                                     stepsize=200,
                                      resolution=50)
 
 
 
-    cover2 = Cover.create_from_bigwig('coverage2', 
-                                      bigwigfiles=bw_file, 
-                                      regions=roi, 
-                                      binsize=200, 
-                                      stepsize=200, 
+    cover2 = Cover.create_from_bigwig('coverage2',
+                                      bigwigfiles=bw_file,
+                                      roi=roi,
+                                      binsize=200,
+                                      stepsize=200,
                                       resolution=50)
-    
-    
-    
-    a = plotGenomeTrack([cover,cover2],'chr1',16000,18000)
 
+
+
+    a = plotGenomeTrack([cover,cover2],'chr1',16000,18000)
