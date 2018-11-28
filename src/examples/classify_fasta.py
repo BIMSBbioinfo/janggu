@@ -66,9 +66,11 @@ DATA_PATH = pkg_resources.resource_filename('janggu', 'resources/')
 SAMPLE_1 = os.path.join(DATA_PATH, 'sample.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2.fa')
 
+# DNA sequences in one-hot encoding will be used as input
 DNA = Bioseq.create_from_seq('dna', fastafile=[SAMPLE_1, SAMPLE_2],
                             order=args.order, datatags=['train'], cache=True)
 
+# An array of 1/0 will be used as labels for training
 Y = np.asarray([1 for line in range(nseqs(SAMPLE_1))] +
                [0 for line in range(nseqs(SAMPLE_2))])
 LABELS = Array('y', Y, conditions=['TF-binding'])
@@ -112,10 +114,17 @@ pred_plotly = Scorer('pred', exporter=export_plotly)
 
 
 # Define the model templates
+
 @inputlayer
 @outputdense('sigmoid')
 def single_stranded_model(inputs, inp, oup, params):
+    """ keras model that scans a DNA sequence using
+    a number of motifs.
+
+    This model only scans one strand for sequence patterns.
+    """
     with inputs.use('dna') as layer:
+        # the name in inputs.use() should be the same as the dataset name.
         layer = Conv2D(params[0], (params[1], 1), activation=params[2])(layer)
     output = GlobalAveragePooling2D(name='motif')(layer)
     return inputs, output
@@ -124,7 +133,17 @@ def single_stranded_model(inputs, inp, oup, params):
 @inputlayer
 @outputdense('sigmoid')
 def double_stranded_model(inputs, inp, oup, params):
+    """ keras model for scanning both DNA strands.
+
+    Sequence patterns may be present on either strand.
+    By scanning both DNA strands with the same motifs (kernels)
+    the performance of the model will generally improve.
+
+    In the model below, this is achieved by reverse complementing
+    the input tensor and keeping the convolution filters fixed.
+    """
     with inputs.use('dna') as layer:
+        # the name in inputs.use() should be the same as the dataset name.
         forward = layer
     convlayer = Conv2D(params[0], (params[1], 1), activation=params[2])
     revcomp = Reverse()(forward)
@@ -141,10 +160,17 @@ def double_stranded_model(inputs, inp, oup, params):
 @inputlayer
 @outputdense('sigmoid')
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
-    with inputs.use('dna') as layer:
+    """ keras model for scanning both DNA strands.
 
-        conv = DnaConv2D(Conv2D(params[0], 
-                                (params[1], 1), 
+    A more elegant way of scanning both strands for motif occurrences
+    is achieved by the DnaConv2D layer wrapper, which internally
+    performs the convolution operation with the normal kernel weights
+    and the reverse complemented weights.
+    """
+    with inputs.use('dna') as layer:
+        # the name in inputs.use() should be the same as the dataset name.
+        conv = DnaConv2D(Conv2D(params[0],
+                                (params[1], 1),
                                 activation=params[2]), name='conv1')(layer)
 
     output = GlobalAveragePooling2D(name='motif')(conv)
@@ -170,6 +196,7 @@ model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
 model.summary()
 
+# fit the model
 hist = model.fit(DNA, LABELS, epochs=100)
 
 print('#' * 40)
@@ -177,6 +204,7 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
+# load test data
 SAMPLE_1 = os.path.join(DATA_PATH, 'sample_test.fa')
 SAMPLE_2 = os.path.join(DATA_PATH, 'sample2_test.fa')
 
@@ -190,27 +218,12 @@ LABELS_TEST = Array('y', Y, conditions=['TF-binding'])
 annot_test = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
 
-# do the evaluation on the training data
-# model.evaluate(DNA, LABELS, datatags=['train'],
-#                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
-#
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[pred_tsv, pred_json, pred_plotly],
-#               layername='motif',
-#               exporter_kwargs={'annot': annot,
-#                              'row_names': DNA.gindexer.chrs})
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[heatmap_eval],
-#               layername='motif',
-#               exporter_kwargs={'annot': annot,
-#                              'z_score': 1})
-# model.predict(DNA, datatags=['train'],
-#               callbacks=[tsne_eval],
-#               layername='motif',
-#               exporter_kwargs={'annot': annot,
-#                              'alpha': .1})
 
 # do the evaluation on the independent test data
+# after the evaluation and prediction has been performed,
+# the callbacks further process the results allowing
+# to automatically generate summary statistics or figures
+# into the JANGGU_OUTPUT directory.
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
 
@@ -224,8 +237,3 @@ model.predict(DNA_TEST, datatags=['test'],
               layername='motif',
               exporter_kwargs={'annot': annot_test,
                                'z_score': 1})
-# model.predict(DNA_TEST, datatags=['test'],
-#               callbacks=[tsne_eval],
-#               layername='motif',
-#               exporter_kwargs={'annot': annot_test,
-#                              'alpha': .1})

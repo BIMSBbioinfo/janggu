@@ -57,6 +57,7 @@ ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
 PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 
+# Training input and labels are purely defined genomic coordinates
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                    roi=ROI_FILE,
                                    binsize=200,
@@ -109,7 +110,13 @@ pred_plotly = Scorer('pred', exporter=export_plotly)
 @inputlayer
 @outputconv('sigmoid')
 def single_stranded_model(inputs, inp, oup, params):
+    """ keras model that scans a DNA sequence using
+    a number of motifs.
+
+    This model only scans one strand for sequence patterns.
+    """
     with inputs.use('dna') as layer:
+        # the name in inputs.use() should be the same as the dataset name.
         layer = Conv2D(params[0], (params[1], 1),
                        activation=params[2])(layer)
     output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
@@ -120,7 +127,17 @@ def single_stranded_model(inputs, inp, oup, params):
 @inputlayer
 @outputconv('sigmoid')
 def double_stranded_model(inputs, inp, oup, params):
+    """ keras model for scanning both DNA strands.
+
+    Sequence patterns may be present on either strand.
+    By scanning both DNA strands with the same motifs (kernels)
+    the performance of the model will generally improve.
+
+    In the model below, this is achieved by reverse complementing
+    the input tensor and keeping the convolution filters fixed.
+    """
     with inputs.use('dna') as layer:
+        # the name in inputs.use() should be the same as the dataset name.
         forward = layer
     convlayer = Conv2D(params[0], (params[1], 1),
                        activation=params[2])
@@ -139,7 +156,15 @@ def double_stranded_model(inputs, inp, oup, params):
 @inputlayer
 @outputconv('sigmoid')
 def double_stranded_model_dnaconv(inputs, inp, oup, params):
+    """ keras model for scanning both DNA strands.
+
+    A more elegant way of scanning both strands for motif occurrences
+    is achieved by the DnaConv2D layer wrapper, which internally
+    performs the convolution operation with the normal kernel weights
+    and the reverse complemented weights.
+    """
     with inputs.use('dna') as layer:
+        # the name in inputs.use() should be the same as the dataset name.
         layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
                                  activation=params[2]))(layer)
     output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
@@ -196,6 +221,8 @@ model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
 
 pred = model.predict(DNA_TEST)
 cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
+
+
 
 model.predict(DNA_TEST, datatags=['test'],
               callbacks=[pred_tsv, pred_json, pred_plotly],
