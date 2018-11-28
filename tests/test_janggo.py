@@ -2,6 +2,7 @@ import os
 
 import matplotlib
 import numpy as np
+import pandas as pd
 import pkg_resources
 import pytest
 from keras.layers import Average
@@ -20,7 +21,6 @@ from janggu import outputdense
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover
-from janggu.data import Table
 from janggu.data.data import JangguSequence
 from janggu.layers import Complement
 from janggu.layers import DnaConv2D
@@ -98,7 +98,8 @@ def test_janggu_instance_dense(tmpdir):
                                     storage='ndarray',
                                     roi=bed_file, order=1)
 
-    ctcf = Table('ctcf', filename=csvfile)
+    df = pd.read_csv(csvfile, header=None)
+    ctcf = Array('ctcf', df.values, conditions='peaks')
 
     @inputlayer
     @outputdense('sigmoid')

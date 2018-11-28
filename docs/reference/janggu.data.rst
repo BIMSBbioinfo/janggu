@@ -27,7 +27,6 @@ Classes
 .. autosummary::
    Cover
    Bioseq
-   Table
    Array
 
 .. autoclass:: Cover

@@ -6,7 +6,6 @@ import pytest
 
 from janggu.data import Bioseq
 from janggu.data import split_train_test
-from janggu.data import Table
 from janggu.data.data import _data_props
 
 matplotlib.use('AGG')
@@ -50,23 +49,3 @@ def test_split_train_test():
     assert len(traindna) == 50
     assert len(testdna) == 50
     assert len(dna) == len(traindna) + len(testdna)
-
-
-def test_tab_props_extraction():
-
-    data_path = pkg_resources.resource_filename('janggu',
-                                                'resources/')
-    csvfile = os.path.join(data_path, 'sample.csv')
-
-    sam1 = Table('sample1', filename=csvfile)
-    sam2 = Table('sample2', filename=csvfile)
-
-    props = _data_props([sam1, sam2])
-
-    assert 'sample1' in props
-    assert 'sample2' in props
-    assert props['sample1']['shape'] == (1,)
-    assert props['sample2']['shape'] == (1,)
-
-    with pytest.raises(Exception):
-        _data_props((0,))
