@@ -10,6 +10,7 @@ import pytest
 
 from janggu.data import Cover
 from janggu.data import GenomicIndexer
+from janggu.data import plotGenomeTrack
 
 def test_channel_last_first():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -1254,3 +1255,33 @@ def test_filter_by_region():
 
     test6 = f1.filter_by_region(include='chr1', start=20, end=30)
     np.testing.assert_equal(len(test6), 0)
+
+
+def test_plotgenometracks():
+
+    roi = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+
+    bw_file = pkg_resources.resource_filename('janggu', 'resources/sample.bw')
+
+
+
+    cover = Cover.create_from_bigwig('coverage2', 
+                                     bigwigfiles=bw_file, 
+                                     regions=roi, 
+                                     binsize=200, 
+                                     stepsize=200, 
+                                     resolution=50)
+
+
+
+    cover2 = Cover.create_from_bigwig('coverage2', 
+                                      bigwigfiles=bw_file, 
+                                      regions=roi, 
+                                      binsize=200, 
+                                      stepsize=200, 
+                                      resolution=50)
+    
+    
+    
+    a = plotGenomeTrack([cover,cover2],'chr1',16000,18000)
+
