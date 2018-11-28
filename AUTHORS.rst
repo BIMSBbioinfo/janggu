@@ -2,4 +2,8 @@
 Authors
 =======
 
-* Wolfgang Kopp - wkopp.github.io
+Main developer: Wolfgang Kopp (https://github.com/wkopp)
+
+We are greatful for contributions from
+
+* Annalaura Tamburini (https://github.com/Annalaura94) for advancing the filtering options of the GenomicIndexer and for developing `plotGenomeTrack`.
