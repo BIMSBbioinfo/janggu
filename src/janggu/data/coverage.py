@@ -27,6 +27,240 @@ try:
 except ImportError:  # pragma: no cover
     pysam = None
 
+class BamLoader:
+    def __init__(self, files, gsize, template_extension,
+                 min_mapq, pairedend):
+        self.files = files
+        self.gsize = gsize
+        self.template_extension = template_extension
+        self.min_mapq = min_mapq
+        self.pairedend = pairedend
+
+    def __call__(self, garray):
+        files = self.files
+        gsize = self.gsize
+        template_extension = self.template_extension
+        resolution = garray.resolution
+        dtype = garray.typecode
+        min_mapq = self.min_mapq
+        pairedend = self.pairedend
+
+        print("load from bam")
+        for i, sample_file in enumerate(files):
+            print('Counting from {}'.format(sample_file))
+            aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
+            for chrom in gsize:
+
+                locus = _str_to_iv(chrom,
+                                   template_extension=template_extension)
+                if len(locus) == 1:
+                    locus = (locus[0], 0, gsize[chrom])
+
+                if resolution is None:
+                    length = locus[2] - locus[1]
+                else:
+                    length = garray.get_iv_end(locus[2] -
+                                               locus[1]) * resolution
+
+                array = np.zeros((length, 2), dtype=dtype)
+
+                # locus = (chr, start, end)
+                start = locus[1]
+                # or locus = (chr, )
+
+                for aln in aln_file.fetch(*locus):
+
+                    if aln.is_unmapped:
+                        continue
+
+                    if aln.mapq < min_mapq:
+                        continue
+
+                    if aln.is_read2:
+                        # only consider read1 so as not to double count
+                        # fragments for paired end reads
+                        # read2 will also be false for single end
+                        # reads.
+                        continue
+
+                    if aln.is_paired:
+                        # if paired end read, consider the midpoint
+                        if not (aln.is_proper_pair and
+                                aln.reference_name == aln.next_reference_name):
+                            # only consider paired end reads if both mates
+                            # are properly mapped and they map to the
+                            # same reference_name
+                            continue
+                        # if the next reference start >= 0,
+                        # the read is considered as a paired end read
+                        # in this case we consider the mid point
+                        if pairedend == 'midpoint':
+                            pos = min(aln.reference_start,
+                                      aln.next_reference_start) + \
+                                      abs(aln.template_length) // 2
+                        else:
+                            if aln.is_reverse:
+                                # last position of the downstream read
+                                pos = max(aln.reference_end,
+                                          aln.next_reference_start +
+                                          aln.query_length)
+                            else:
+                                # first position of the upstream read
+                                pos = min(aln.reference_start,
+                                          aln.next_reference_start)
+                    else:
+                        # here we consider single end reads
+                        # whose 5 prime end is determined strand specifically
+                        if aln.is_reverse:
+                            pos = aln.reference_end
+                        else:
+                            pos = aln.reference_start
+
+                    if not garray._full_genome_stored:
+                        # if we get here, a region was given,
+                        # otherwise, the entire chromosome is read.
+                        pos -= start + template_extension
+
+                        if pos < 0 or pos >= length:
+                            # if the read 5 p end or mid point is outside
+                            # of the region of interest, the read is discarded
+                            continue
+
+                    # compute divide by the resolution
+                    #pos = garray.get_iv_start(pos)
+
+                    # fill up the read strand specifically
+                    if aln.is_reverse:
+                        array[pos, 1] += 1
+                    else:
+                        array[pos, 0] += 1
+
+                garray[GenomicInterval(*locus), i] = array
+
+        return garray
+
+
+
+class BigWigLoader:
+    def __init__(self, files, gsize, nan_to_num):
+        self.files = files
+        self.gsize = gsize
+        self.nan_to_num = nan_to_num
+
+    def __call__(self, garray):
+        files = self.files
+        gsize = self.gsize
+        resolution = garray.resolution
+        dtype = garray.typecode
+        nan_to_num = self.nan_to_num
+
+        print("load from bigwig")
+        for i, sample_file in enumerate(files):
+            bwfile = pyBigWig.open(sample_file)
+
+            for chrom in gsize:
+
+                locus = _str_to_iv(chrom)
+                if len(locus) == 1:
+                    locus = (locus[0], 0, gsize[chrom])
+
+                if resolution is None:
+                    length = locus[2] - locus[1]
+                else:
+                    length = garray.get_iv_end(locus[2]-locus[1]) * resolution
+
+                array = np.zeros((length, 1), dtype=dtype)
+
+                x = np.asarray(bwfile.values(
+                               locus[0],
+                               int(locus[1]),
+                               int(locus[2])))
+                if nan_to_num:
+                    x = np.nan_to_num(x, copy=False)
+
+                array[:len(x), 0] = x
+
+                garray[GenomicInterval(*locus), i] = array
+        return garray
+
+
+class BedLoader:
+    def __init__(self, files, gsize, mode, binsize,
+                 stepsize, flank):
+        self.files = files
+        self.gsize = gsize
+        self.mode = mode
+        self.binsize = binsize
+        self.stepsize = stepsize
+        self.flank = flank
+
+    def __call__(self, garray):
+        files = self.files
+        gsize = self.gsize
+        resolution = garray.resolution
+        dtype = garray.typecode
+        mode = self.mode
+        binsize = self.binsize
+        stepsize = self.stepsize
+        flank = self.flank
+
+        print("load from bed")
+        for i, sample_file in enumerate(files):
+            regions_ = _get_genomic_reader(sample_file)
+
+            for region in regions_:
+
+                gidx = GenomicIndexer.create_from_region(
+                    region.iv.chrom,
+                    region.iv.start,
+                    region.iv.end, region.iv.strand,
+                    binsize, stepsize, flank)
+                for greg in gidx:
+                    if region.score is None and mode in ['score',
+                                                         'categorical']:
+                        raise ValueError(
+                            'No Score available. Score field must '
+                            'present in {}'.format(sample_file) + \
+                            'for mode="{}"'.format(mode))
+                    # if region score is not defined, take the mere
+                    # presence of a range as positive label.
+
+                    score = region.score if mode == 'score' else 1
+                    array = np.repeat(np.dtype(dtype).type(score).reshape((1,1)),
+                                      greg.length, axis=0)
+
+                    if mode == 'score':
+                        garray[greg, i] = array
+                    elif mode == 'categorical':
+                        garray[greg, int(region.score)] = array
+                    elif mode == 'binary':
+                        garray[greg, i] = array
+        return garray
+
+class ArrayLoader:
+    def __init__(self, array, gindexer):
+        self.array = array
+        self.gindexer = gindexer
+
+    def __call__(self, garray):
+        array = self.array
+        gindexer = self.gindexer
+        resolution = garray.resolution
+
+        print("load from array")
+
+        for i, region in enumerate(gindexer):
+            iv = region
+            for cond in range(array.shape[-1]):
+                if resolution is None:
+                    garray[iv, cond] = np.repeat(array[i, :, :, cond],
+                                                 iv.length, axis=0)
+                else:
+                    garray[iv, cond] = np.repeat(array[i, :, :, cond],
+                                                 resolution, axis=0)
+
+        return garray
+
 
 class Cover(Dataset):
     """Cover class.
@@ -236,98 +470,9 @@ class Cover(Dataset):
                 for chrom, length in zip(header.references, header.lengths):
                     gsize[chrom] = length
 
-        def _bam_loader(garray, files):
-            print("load from bam")
-            for i, sample_file in enumerate(files):
-                print('Counting from {}'.format(sample_file))
-                aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
-                for chrom in gsize:
 
-                    locus = _str_to_iv(chrom, template_extension=template_extension)
-                    if len(locus) == 1:
-                        locus = (locus[0], 0, gsize[chrom])
-
-                    if resolution is None:
-                        length = locus[2] - locus[1]
-                    else:
-                        length = garray.get_iv_end(locus[2]-locus[1]) * resolution
-
-                    array = np.zeros((length, 2), dtype=dtype)
-
-                    # locus = (chr, start, end)
-                    start = locus[1]
-                    # or locus = (chr, )
-
-                    for aln in aln_file.fetch(*locus):
-
-                        if aln.is_unmapped:
-                            continue
-
-                        if aln.mapq < min_mapq:
-                            continue
-
-                        if aln.is_read2:
-                            # only consider read1 so as not to double count
-                            # fragments for paired end reads
-                            # read2 will also be false for single end
-                            # reads.
-                            continue
-
-                        if aln.is_paired:
-                            # if paired end read, consider the midpoint
-                            if not (aln.is_proper_pair and
-                                    aln.reference_name == aln.next_reference_name):
-                                # only consider paired end reads if both mates
-                                # are properly mapped and they map to the
-                                # same reference_name
-                                continue
-                            # if the next reference start >= 0,
-                            # the read is considered as a paired end read
-                            # in this case we consider the mid point
-                            if pairedend == 'midpoint':
-                                pos = min(aln.reference_start,
-                                          aln.next_reference_start) + \
-                                          abs(aln.template_length) // 2
-                            else:
-                                if aln.is_reverse:
-                                    # last position of the downstream read
-                                    pos = max(aln.reference_end,
-                                              aln.next_reference_start +
-                                              aln.query_length)
-                                else:
-                                    # first position of the upstream read
-                                    pos = min(aln.reference_start,
-                                              aln.next_reference_start)
-                        else:
-                            # here we consider single end reads
-                            # whose 5 prime end is determined strand specifically
-                            if aln.is_reverse:
-                                pos = aln.reference_end
-                            else:
-                                pos = aln.reference_start
-
-                        if not garray._full_genome_stored:
-                            # if we get here, a region was given,
-                            # otherwise, the entire chromosome is read.
-                            pos -= start + template_extension
-
-                            if pos < 0 or pos >= length:
-                                # if the read 5 p end or mid point is outside
-                                # of the region of interest, the read is discarded
-                                continue
-
-                        # compute divide by the resolution
-                        #pos = garray.get_iv_start(pos)
-
-                        # fill up the read strand specifically
-                        if aln.is_reverse:
-                            array[pos, 1] += 1
-                        else:
-                            array[pos, 0] += 1
-
-                    garray[GenomicInterval(*locus), i] = array
-
-            return garray
+        bamloader = BamLoader(bamfiles, gsize, template_extension,
+                              min_mapq, pairedend)
 
         datatags = [name] + datatags if datatags else [name]
 
@@ -341,8 +486,7 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      store_whole_genome=store_whole_genome,
                                      resolution=resolution,
-                                     loader=_bam_loader,
-                                     loader_args=(bamfiles,),
+                                     loader=bamloader,
                                      normalizer=normalizer,
                                      collapser='sum')
 
@@ -508,36 +652,8 @@ class Cover(Dataset):
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
 
-        def _bigwig_loader(garray, aggregate):
-            print("load from bigwig")
-            for i, sample_file in enumerate(bigwigfiles):
-                bwfile = pyBigWig.open(sample_file)
 
-                for chrom in gsize:
-
-                    locus = _str_to_iv(chrom)
-                    if len(locus) == 1:
-                        locus = (locus[0], 0, gsize[chrom])
-
-                    if resolution is None:
-                        length = locus[2] - locus[1]
-                    else:
-                        length = garray.get_iv_end(locus[2]-locus[1]) * resolution
-
-                    array = np.zeros((length, 1), dtype=dtype)
-
-                    x = np.asarray(bwfile.values(
-                                   locus[0],
-                                   int(locus[1]),
-                                   int(locus[2])))
-                    if nan_to_num:
-                        x = np.nan_to_num(x, copy=False)
-
-                    array[:len(x), 0] = x
-
-                    garray[GenomicInterval(*locus), i] = array
-            return garray
-
+        bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num)
         datatags = [name] + datatags if datatags else [name]
         datatags += ['resolution{}'.format(resolution)]
 
@@ -551,8 +667,7 @@ class Cover(Dataset):
                                      resolution=resolution,
                                      store_whole_genome=store_whole_genome,
                                      typecode=dtype,
-                                     loader=_bigwig_loader,
-                                     loader_args=(aggregate,),
+                                     loader=bigwigloader,
                                      collapser=collapser_)
 
         return cls(name, cover, gindexer,
@@ -720,40 +835,7 @@ class Cover(Dataset):
             conditions = [os.path.splitext(os.path.basename(f))[0]
                           for f in bedfiles]
 
-        def _bed_loader(garray, bedfiles, genomesize, mode):
-            print("load from bed")
-            for i, sample_file in enumerate(bedfiles):
-                regions_ = _get_genomic_reader(sample_file)
-
-                for region in regions_:
-
-                    gidx = GenomicIndexer.create_from_region(
-                        region.iv.chrom,
-                        region.iv.start,
-                        region.iv.end, region.iv.strand,
-                        binsize, stepsize, flank)
-                    for greg in gidx:
-                        if region.score is None and mode in ['score',
-                                                             'categorical']:
-                            raise ValueError(
-                                'No Score available. Score field must '
-                                'present in {}'.format(sample_file) + \
-                                'for mode="{}"'.format(mode))
-                        # if region score is not defined, take the mere
-                        # presence of a range as positive label.
-
-                        score = region.score if mode == 'score' else 1
-                        array = np.repeat(np.dtype(dtype).type(score).reshape((1,1)),
-                                          greg.length, axis=0)
-
-                        if mode == 'score':
-                            garray[greg, i] = array
-                        elif mode == 'categorical':
-                            garray[greg, int(region.score)] = array
-                        elif mode == 'binary':
-                            garray[greg, i] = array
-            return garray
-
+        bedloader = BedLoader(bedfiles, gsize, mode, binsize, stepsize, flank)
         # At the moment, we treat the information contained
         # in each bed-file as unstranded
 
@@ -769,8 +851,7 @@ class Cover(Dataset):
                                      overwrite=overwrite,
                                      typecode=dtype,
                                      store_whole_genome=store_whole_genome,
-                                     loader=_bed_loader,
-                                     loader_args=(bedfiles, gsize, mode),
+                                     loader=bedloader,
                                      collapser=collapser_)
 
         return cls(name, cover, gindexer,
@@ -877,19 +958,8 @@ class Cover(Dataset):
         # determine strandedness
         stranded = True if array.shape[2] == 2 else False
 
-        def _array_loader(garray, array, gindexer):
-            print("load from array")
 
-            for i, region in enumerate(gindexer):
-                iv = region
-                for cond in range(array.shape[-1]):
-                    if resolution is None:
-                        garray[iv, cond] = np.repeat(array[i, :, :, cond], iv.length, axis=0)
-                    else:
-                        garray[iv, cond] = np.repeat(array[i, :, :, cond], resolution, axis=0)
-
-            return garray
-
+        arrayloader = ArrayLoader(array, gindexer)
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
 
@@ -911,8 +981,7 @@ class Cover(Dataset):
                                      overwrite=overwrite,
                                      typecode=array.dtype,
                                      store_whole_genome=store_whole_genome,
-                                     loader=_array_loader,
-                                     loader_args=(array, gindexer),
+                                     loader=arrayloader,
                                      collapser=dummy_collapser)
 
         return cls(name, cover, gindexer,

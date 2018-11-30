@@ -83,7 +83,6 @@ def test_zscore_normalization(tmpdir):
         ga = create_genomic_array({'chr1': 150, 'chr2': 300},
                                   stranded=False, typecode='float32',
                                   storage=store, cache=True, loader=loading,
-                                  loader_args=(),
                                   normalizer=get_normalizer('zscore'))
         np.testing.assert_allclose(ga.weighted_mean(), np.asarray([0.0]),
                                    rtol=1e-5, atol=1e-5)
@@ -109,7 +108,6 @@ def test_logzscore_normalization(tmpdir):
         ga = create_genomic_array({'chr1': 150, 'chr2': 300},
                                   stranded=False, typecode='float32',
                                   storage=store, cache=True, loader=loading,
-                                  loader_args=(),
                                   normalizer=get_normalizer('zscorelog'))
         np.testing.assert_allclose(ga.weighted_mean(), np.asarray([0.0]),
                                    rtol=1e-5, atol=1e-5)
@@ -134,7 +132,7 @@ def test_tmp_normalization(tmpdir):
     for store in ['ndarray', 'hdf5']:
         ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
                                   storage=store, cache=True, resolution=50, loader=loading,
-                                  loader_args=(), collapser='sum',
+                                  collapser='sum',
                                   normalizer=get_normalizer('tpm'))
         np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[10 * 1000/50 * 1e6/(720.)]]]))
         np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[1 * 1000/50 * 1e6/(720.)]]]))
@@ -151,23 +149,22 @@ def test_check_resolution_collapse_compatibility():
         # Error because resolution=50 but no collapser defined
         ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
                                   storage="ndarray", cache=False, resolution=50, loader=loading,
-                                  loader_args=(), collapser=None,
+                                  collapser=None,
                                   normalizer=get_normalizer('tpm'))
 
     with pytest.raises(Exception):
         # Error because resolution=50 but no collapser defined
         ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
                                   storage="ndarray", cache=False, resolution=None, loader=loading,
-                                  loader_args=(), collapser=None,
+                                  collapser=None,
                                   normalizer=get_normalizer('tpm'))
 
     ga = create_genomic_array({'chr1:0-150': 150, 'chr2:0-300': 300}, stranded=False, typecode='float32',
-                              storage="ndarray", cache=False, resolution=1, loader=loading,
-                              loader_args=())
+                              storage="ndarray", cache=False, resolution=1, loader=loading)
     ga = create_genomic_array({'chr1:0-150': 150, 'chr2:0-300': 300}, stranded=False, typecode='float32',
                               storage="ndarray", cache=False, resolution=None, loader=loading,
-                              loader_args=(), collapser='sum')
+                              collapser='sum')
     ga = create_genomic_array({'chr1:0-150': 150, 'chr2:0-300': 300}, stranded=False, typecode='float32',
                               storage="ndarray", cache=False, resolution=None, loader=loading,
-                              loader_args=(), collapser='sum',
+                              collapser='sum',
                               normalizer=get_normalizer('tpm'))

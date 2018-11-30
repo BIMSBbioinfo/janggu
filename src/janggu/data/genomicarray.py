@@ -359,8 +359,6 @@ class HDF5GenomicArray(GenomicArray):
         Whether to overwrite the cache. Default: False
     loader : callable or None
         Function to be called for loading the genomic array.
-    loader_args : tuple or None
-        Arguments for loader.
     collapser : None or callable
         Method to aggregate values along a given interval.
     """
@@ -374,7 +372,7 @@ class HDF5GenomicArray(GenomicArray):
                  order=1,
                  store_whole_genome=True,
                  cache=True,
-                 overwrite=False, loader=None, loader_args=None,
+                 overwrite=False, loader=None,
                  normalizer=None,
                  collapser=None):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
@@ -409,7 +407,7 @@ class HDF5GenomicArray(GenomicArray):
 
             # invoke the loader
             if loader:
-                loader(self, *loader_args)
+                loader(self)
 
             if normalizer:
                 normalizer(self)
@@ -455,8 +453,6 @@ class NPGenomicArray(GenomicArray):
         Whether to overwrite the cache. Default: False
     loader : callable or None
         Function to be called for loading the genomic array.
-    loader_args : tuple or None
-        Arguments for loader.
     normalizer : callable or None
         Normalization to be applied. This argumenet can be None,
         if no normalization is applied, or a callable that takes
@@ -475,7 +471,7 @@ class NPGenomicArray(GenomicArray):
                  order=1,
                  store_whole_genome=True,
                  cache=True,
-                 overwrite=False, loader=None, loader_args=None,
+                 overwrite=False, loader=None,
                  normalizer=None, collapser=None):
 
         super(NPGenomicArray, self).__init__(stranded, conditions, typecode,
@@ -501,7 +497,7 @@ class NPGenomicArray(GenomicArray):
 
             # invoke the loader
             if loader:
-                loader(self, *loader_args)
+                loader(self)
 
             if normalizer:
                 normalizer(self)
@@ -565,8 +561,6 @@ class SparseGenomicArray(GenomicArray):
         Whether to overwrite the cache. Default: False
     loader : callable or None
         Function to be called for loading the genomic array.
-    loader_args : tuple or None
-        Arguments for loader.
     normalizer : callable or None
         Normalization to be applied. This argumenet can be None,
         if no normalization is applied, or a callable that takes
@@ -586,7 +580,7 @@ class SparseGenomicArray(GenomicArray):
                  store_whole_genome=True,
                  cache=True,
                  overwrite=False,
-                 loader=None, loader_args=None,
+                 loader=None,
                  collapser=None):
         super(SparseGenomicArray, self).__init__(stranded, conditions,
                                                  typecode,
@@ -612,7 +606,7 @@ class SparseGenomicArray(GenomicArray):
 
             # invoke the loader
             if loader:
-                loader(self, *loader_args)
+                loader(self)
 
             data = self.handle
 
@@ -812,7 +806,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                          order=1,
                          store_whole_genome=True,
                          datatags=None, cache=True, overwrite=False,
-                         loader=None, loader_args=None,
+                         loader=None,
                          normalizer=None, collapser=None):
     """Factory function for creating a GenomicArray.
 
@@ -857,8 +851,6 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
         Whether to overwrite the cache. Default: False
     loader : callable or None
         Function to be called for loading the genomic array.
-    loader_args : tuple or None
-        Arguments for loader.
     normalizer : callable or None
         Normalization to be applied. This argumenet can be None,
         if no normalization is applied, or a callable that takes
@@ -892,7 +884,6 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                 cache=cache,
                                 overwrite=overwrite,
                                 loader=loader,
-                                loader_args=loader_args,
                                 normalizer=get_normalizer(normalizer),
                                 collapser=get_collapser(collapser))
     elif storage == 'ndarray':
@@ -906,7 +897,6 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               cache=cache,
                               overwrite=overwrite,
                               loader=loader,
-                              loader_args=loader_args,
                               normalizer=get_normalizer(normalizer),
                               collapser=get_collapser(collapser))
     elif storage == 'sparse':
@@ -922,7 +912,6 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                   cache=cache,
                                   overwrite=overwrite,
                                   loader=loader,
-                                  loader_args=loader_args,
                                   collapser=get_collapser(collapser))
 
     raise Exception("Storage type must be 'hdf5', 'ndarray' or 'sparse'")

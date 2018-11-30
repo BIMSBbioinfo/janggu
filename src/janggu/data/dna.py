@@ -16,6 +16,35 @@ from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
 
 
+class SeqLoader:
+    def __init__(self, seqs, order):
+        self.seqs = seqs
+        self.order = order
+
+    def __call__(self, garray):
+        seqs = self.seqs
+        order = self.order
+        dtype = garray.typecode
+
+        print('Convert sequences to index array')
+        for seq in seqs:
+            if garray._full_genome_stored:
+                interval = GenomicInterval(seq.id, 0,
+                                           len(seq) - order + 1, '.')
+            else:
+                interval = GenomicInterval(*_str_to_iv(seq.id,
+                                            template_extension=0))
+
+            indarray = np.asarray(seq2ind(seq), dtype=dtype)
+
+            if order > 1:
+                # for higher order motifs, this part is used
+                filter_ = np.asarray([pow(len(seq.seq.alphabet.letters),
+                                          i) for i in range(order)])
+                indarray = np.convolve(indarray, filter_, mode='valid')
+
+            garray[interval, 0] = indarray.reshape(-1, 1)
+
 class Bioseq(Dataset):
     """Bioseq class.
 
@@ -83,31 +112,14 @@ class Bioseq(Dataset):
         for seq in seqs:
             chromlens[seq.id] = len(seq) - order + 1
 
-        def _seq_loader(cover, seqs, order):
-            print('Convert sequences to index array')
-            for seq in seqs:
-                if cover._full_genome_stored:
-                    interval = GenomicInterval(seq.id, 0,
-                                               len(seq) - order + 1, '.')
-                else:
-                    interval = GenomicInterval(*_str_to_iv(seq.id,
-                                                template_extension=0))
+        seqloader = SeqLoader(seqs, order)
 
-                indarray = np.asarray(seq2ind(seq), dtype=dtype)
-
-                if order > 1:
-                    # for higher order motifs, this part is used
-                    filter_ = np.asarray([pow(len(seq.seq.alphabet.letters),
-                                              i) for i in range(order)])
-                    indarray = np.convolve(indarray, filter_, mode='valid')
-
-                cover[interval, 0] = indarray.reshape(-1, 1)
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
         datatags = [name] + datatags if datatags else [name]
         datatags += ['order{}'.format(order)]
 
-        cover = create_genomic_array(chromlens, stranded=False,
+        garray = create_genomic_array(chromlens, stranded=False,
                                      storage=storage,
                                      datatags=datatags,
                                      cache=cache,
@@ -116,10 +128,9 @@ class Bioseq(Dataset):
                                      conditions=['idx'],
                                      overwrite=overwrite,
                                      typecode=dtype,
-                                     loader=_seq_loader,
-                                     loader_args=(seqs, order))
+                                     loader=seqloader)
 
-        return cover
+        return garray
 
     @classmethod
     def create_from_refgenome(cls, name, refgenome, roi=None,
