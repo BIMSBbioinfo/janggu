@@ -722,42 +722,58 @@ class SparseGenomicArray(GenomicArray):
     def _reshape(self, data, shape):
         return data.toarray().reshape(shape)
 
+class ZScore(object):
+    """z-score normalization.
 
-def normalize_garray_zscore(garray):
-    """This function performs zscore normalization for a given
-    GenomicArray.
-
+    If no means or stds are provided they will be estimated
+    on the given dataset. Otherwise, the supplied means and stds
+    will be directly applied.
     """
-    # length scaling
+    def __init__(self, mean=None, std=None):
+        self.mean = mean
+        self.std = std
 
-    garray.scale_by_region_length()
+    def __call__(self, garray):
+        """This function performs zscore normalization for a given
+        GenomicArray.
 
-    # determine the mean signal per condition
-    means = garray.weighted_mean()
+        """
+        # length scaling
 
-    # centering to zero-mean
-    garray.shift(means)
+        garray.scale_by_region_length()
 
-    # determines standard deviation per contition
-    stds = garray.weighted_sd()
+        # determine the mean signal per condition
+        if self.mean is None:
+            self.means = garray.weighted_mean()
 
-    # rescale by standard deviation
-    garray.rescale(stds)
+        # centering to zero-mean
+        garray.shift(self.means)
 
-    return garray
+        # determines standard deviation per contition
+        if self.std is None:
+            self.stds = garray.weighted_sd()
+
+        # rescale by standard deviation
+        garray.rescale(self.stds)
+
+        return garray
 
 
-def normalize_garray_zscorelog(garray):
-    """This function performs zscore normalization
-    after log transformation for a given GenomicArray.
+class ZScoreLog(ZScore):
+    def __init__(self, means=None, stds=None):
+        super(ZScoreLog, self).__init__(means, stds)
 
-    """
-    # overall mean
-    # first log transform
-    for chrom in garray.handle:
-        garray.handle[chrom][:] = np.log(garray.handle[chrom][:] + 1.)
+    def __call__(self, garray):
+        """This function performs zscore normalization
+        after log transformation for a given GenomicArray.
 
-    return normalize_garray_zscore(garray)
+        """
+        # overall mean
+        # first log transform
+        for chrom in garray.handle:
+            garray.handle[chrom][:] = np.log(garray.handle[chrom][:] + 1.)
+
+        return super(ZScoreLog, self).__call__(garray)
 
 
 def normalize_garray_tpm(garray):
@@ -789,9 +805,9 @@ def get_normalizer(normalizer):
         return None
     elif isinstance(normalizer, str):
         if normalizer == 'zscore':
-            return normalize_garray_zscore
+            return ZScore()
         elif normalizer == 'zscorelog':
-            return normalize_garray_zscorelog
+            return ZScoreLog()
         elif normalizer == 'tpm':
             return normalize_garray_tpm
         else:
