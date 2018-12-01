@@ -8,17 +8,13 @@ Welcome to Janggu
     :target: https://readthedocs.org/projects/janggu
     :alt: Documentation Status
 
-.. image:: https://travis-ci.org/wkopp/janggu.svg?branch=master
+.. image:: https://travis-ci.org/BIMSBbioinfo/janggu.svg?branch=master
     :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/wkopp/janggu
+    :target: https://travis-ci.org/BIMSBbioinfo/janggu
 
-.. image:: https://requires.io/github/wkopp/janggu/requirements.svg?branch=master
-    :alt: Requirements Status
-    :target: https://requires.io/github/wkopp/janggu/requirements/?branch=master
-
-.. image:: https://codecov.io/github/wkopp/janggu/coverage.svg?branch=master
+.. image:: https://codecov.io/github/BIMSBbioinfo/janggu/coverage.svg?branch=master
     :alt: Coverage Status
-    :target: https://codecov.io/github/wkopp/janggu
+    :target: https://codecov.io/github/BIMSBbioinfo/janggu
 
 .. image:: https://img.shields.io/pypi/v/janggu.svg
     :alt: PyPI Package latest release
