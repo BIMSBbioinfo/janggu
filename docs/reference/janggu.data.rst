@@ -10,7 +10,8 @@ janggu.data - Genomics datasets for deep learning
    Cover.create_from_bam
    Cover.create_from_bigwig
    Cover.create_from_bed
-
+   Cover.create_from_array
+   plotGenomeTrack
 
 .. currentmodule:: janggu.data
 
@@ -30,7 +31,11 @@ Classes
    Array
 
 .. autoclass:: Cover
-   :members: create_from_bam, create_from_bigwig, create_from_bed
+   :members: create_from_bam, create_from_bigwig, create_from_bed, create_from_array
 
 .. autoclass:: Bioseq
    :members: create_from_refgenome, create_from_seq
+
+Functions
+----------
+.. autofunction:: plotGenomeTrack

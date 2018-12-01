@@ -54,3 +54,4 @@ Special Network layers
 .. autoclass:: Complement
 .. autoclass:: Reverse
 .. autoclass:: LocalAveragePooling2D
+.. autoclass:: DnaConv2D
