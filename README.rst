@@ -44,18 +44,25 @@ of quickly testing biological hypothesis.
 
 Hallmarks of Janggu:
 
-1. Janggu builds upon `keras <https://keras.io>`_ to define, train and evaluate neural network in a flexible manner.
-2. Janggu provides special **Genomics datasets**, including for processing nucleotide sequences or coverage tracks from next-generation sequencing experiments.
-3. Janggu supports **processing of large memory** dataset directly from disk.
-4. Janggu facilitates **reproducibility** and eases model comparison by automatically producing log files, storage of model parameters and evaluating various performance metrics out of the box.
-5. Janggu provides a **webinterface** that allows you to browse through the results.
+1. Janggu provides special **Genomics datasets** that allow you to access raw data in FASTA, BAM, BIGWIG, BED and GFF file format.
+2. Various **normalization** procedures are supported for dealing with of the genomics dataset, including 'TPM', 'zscore' or custom normalizers.
+3. The dataset are directly consumable with neural networks implemented in  `keras <https://keras.io>`_.
+4. Numpy format output of a keras model can be converted to represent genomic coverage tracks, which allows exporting the predictions as BIGWIG files and visualization of genome browser-like plots.
+5. Genomic datasets can be stored in various ways, including as numpy array, sparse dataset or in hdf5 format.
+6. Caching of Genomic datasets avoids time consuming preprocessing steps and facilitates fast reloading.
+7. Janggu provides a wrapper for `keras <https://keras.io>`_ models with built-in logging functionality and automatized result evaluation.
+8. Janggu provides a special keras layer for scanning both DNA strands for motif occurrences.
+9. Janggu provides  `keras <https://keras.io>`_ models constructors that automatically infer input and output layer shapes to reduce code redundancy.
+10. Janggu provides a **web application** that allows to browse through the results.
 
 Why Janggu?
 
-`Janggu <https://en.wikipedia.org/wiki/Janggu>`_ is a Korean percussion instrument that looks like an hourglass.
+`Janggu <https://en.wikipedia.org/wiki/Janggu>`_ is a Korean percussion
+instrument that looks like an hourglass.
 
-Like the two ends of the instrument, the Janggu package represents
-the two ends of a deep learning application in genomics,
+Like the two ends of the instrument, the philosophy of the
+Janggu package is to help with the two ends of a
+deep learning application in genomics,
 namely data acquisition and evaluation (see Figure above).
 
 
@@ -77,8 +84,7 @@ Subsequently, clone the github repository and install janggu via pip
 
 ::
 
-   git clone https://github.com/BIMSBbioinfo/janggu
-   pip install janggu/
+   pip install janggu
 
 To verify if the installation works try to run
 
