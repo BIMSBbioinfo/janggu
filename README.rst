@@ -1,6 +1,6 @@
-=================
-Welcome to Janggu
-=================
+=====================================
+Janggu - Deep learning for Genomics
+=====================================
 
 .. start-badges
 
@@ -86,6 +86,8 @@ To verify if the installation works try to run
 
 ::
 
+   git clone https://github.com/BIMSBbioinfo/janggu
+   cd janggu
    python janggu/src/examples/classify_fasta.py single
 
 For CPU-only support:
@@ -116,27 +118,3 @@ Then compile the docs with::
 
 Afterwards, the documentation in html format is available in
 `dist/docs/index.html`.
-
-Development
-===========
-
-To run the all tests run::
-
-    tox
-
-Note, to combine the coverage data from all the tox environments run:
-
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
-
-    - - Windows
-      - ::
-
-            set PYTEST_ADDOPTS=--cov-append
-            tox
-
-    - - Other
-      - ::
-
-            PYTEST_ADDOPTS=--cov-append tox
