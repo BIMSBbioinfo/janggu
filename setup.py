@@ -37,7 +37,7 @@ setup(
     ),
     author='Wolfgang Kopp',
     author_email='wolfgang.kopp@mdc-berlin.de',
-    url='https://github.com/wkopp/janggu',
+    url='https://github.com/BIMSBbioinfo/janggu',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     package_data={'janggu': ['resources/*.fa',
