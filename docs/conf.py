@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 
 import os
-
+import sys
+#import mock
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -17,6 +18,26 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
 ]
+
+#MOCK_MODULES = [
+#'tensorflow',
+#'pysam',
+#'pyBigWig'
+#'matplotlib',
+#'seaborn',
+#'dash_html_components',
+#'dash_core_components',
+#'dash',
+#'dash_renderer',
+#'scikit-learn',
+#]
+#
+#for mod_name in MOCK_MODULES:
+#    sys.modules[mod_name] = mock.Mock()
+
+autodoc_mock_imports = ["keras", "tensorflow", "matplotlib",
+                        "pandas", "compat", "scipy", "scipy.sparse"]
+
 if os.getenv('SPELLCHECK'):
     extensions += 'sphinxcontrib.spelling',
     spelling_show_suggestions = True
@@ -25,7 +46,7 @@ if os.getenv('SPELLCHECK'):
 source_suffix = '.rst'
 master_doc = 'index'
 project = u'Janggu'
-year = u'2017'
+year = u'2017-2018'
 author = u'Wolfgang Kopp'
 copyright = '{0}, {1}'.format(year, author)
 version = release = '0.7.0'
