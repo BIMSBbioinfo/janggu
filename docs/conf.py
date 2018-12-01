@@ -8,8 +8,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.coverage',
-    'matplotlib.sphinxext.plot_directive',
-    'matplotlib.sphinxext.only_directives',
+    #'matplotlib.sphinxext.plot_directive',
+    #'matplotlib.sphinxext.only_directives',
     'sphinx.ext.doctest',
     'sphinx.ext.extlinks',
     'sphinx.ext.ifconfig',
@@ -33,8 +33,8 @@ version = release = '0.7.0'
 pygments_style = 'trac'
 templates_path = ['.']
 extlinks = {
-    'issue': ('https://github.com/wkopp/janggu/issues/%s', '#'),
-    'pr': ('https://github.com/wkopp/janggu/pull/%s', 'PR #'),
+    'issue': ('https://github.com/BIMSBbioinfo/janggu/issues/%s', '#'),
+    'pr': ('https://github.com/BIMSBbioinfo/janggu/pull/%s', 'PR #'),
 }
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
