@@ -7,6 +7,7 @@ from janggu.decorators import outputconv  # noqa
 from janggu.decorators import outputdense  # noqa
 from janggu.evaluation import Scorer  # noqa
 from janggu.layers import Complement  # noqa
+from janggu.layers import DnaConv2D  # noqa
 from janggu.layers import LocalAveragePooling2D  # noqa
 from janggu.layers import Reverse  # noqa
 from janggu.model import Janggu  # noqa
