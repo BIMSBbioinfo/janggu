@@ -8,6 +8,7 @@ include .coveragerc
 include .cookiecutterrc
 include .editorconfig
 include .pylintrc
+include *.png
 
 include AUTHORS.rst
 include CHANGELOG.rst
