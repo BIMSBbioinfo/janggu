@@ -1213,7 +1213,7 @@ class Cover(Dataset):
             bw_file.close()
 
 
-def plotGenomeTrack(covers, chr, start, end):
+def plotGenomeTrack(covers, chrom, start, end):
 
     """plotGenomeTrack shows plots of a specific interval from cover objects data.
 
@@ -1225,7 +1225,7 @@ def plotGenomeTrack(covers, chr, start, end):
     ----------
     covers : janggu.data.Cover or list(janggu.data.Cover)
         One or more coverge objects.
-    chr : str
+    chrom : str
         chromosome name.
     start : int
         The start of the required interval.
@@ -1245,27 +1245,32 @@ def plotGenomeTrack(covers, chr, start, end):
 
     n_covers = len(covers)
     color = iter(cm.rainbow(np.linspace(0, 1, n_covers)))
-    data = covers[0][chr, start, end]
+    #data = covers[0][chr, start, end]
     len_files = [len(cover.conditions) for cover in covers]
     nfiles = np.sum(len_files)
-    grid = plt.GridSpec(2 + (nfiles * 3) + (n_covers - 1), 10, wspace=0.4, hspace=0.3)
-    fig = plt.figure(figsize=(1 + nfiles * 3, 2*nfiles))
+    grid = plt.GridSpec(2 + (nfiles * 3) + (n_covers - 1),
+                        10, wspace=0.4, hspace=0.3)
+    fig = plt.figure(figsize=(1 + nfiles * 3,
+                              2*nfiles))
 
     title = fig.add_subplot(grid[0, 1:])
-    title.set_title(chr)
-    plt.xlim([0, len(data[0, :, 0, 0])])
+
+    title.set_title(chrom)
+    plt.xlim([0, end - start])
     title.spines['right'].set_visible(False)
     title.spines['top'].set_visible(False)
     title.spines['left'].set_visible(False)
-    plt.xticks([0, len(data[0, :, 0, 0])], [start, end])
+    plt.xticks([0, end-start], [start, end])
     plt.yticks(())
     cover_start = 2
     abs_cont = 0
-    lat_titles = [None]*len(covers)
+    lat_titles = [None] * len(covers)
     plots = []
     for j, cover in enumerate(covers):
         color_ = next(color)
-        lat_titles[j] = fig.add_subplot(grid[(cover_start + j):(cover_start + len_files[j]*3) + j, 0])
+        lat_titles[j] = fig.add_subplot(grid[(cover_start + j):
+                                             (cover_start +
+                                              len_files[j]*3) + j, 0])
         cover_start += (len_files[j]*3)
         lat_titles[j].set_xticks(())
         lat_titles[j].spines['right'].set_visible(False)
@@ -1276,10 +1281,11 @@ def plotGenomeTrack(covers, chr, start, end):
         cont = 0
         for i in cover.conditions:
             plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 + 2 +j:(cont + abs_cont) * 3 + 5+j, 1:]))
-            plots[-1].plot(data[0, :, 0, cont], linewidth=2, color = color_)
+            plots[-1].plot(cover[chrom, start, end][0, :, 0, cont],
+                           linewidth=2, color = color_)
             plots[-1].set_yticks(())
             plots[-1].set_xticks(())
-            plots[-1].set_xlim([0, len(data[0, :, 0, 0])])
+            plots[-1].set_xlim([0, len(cover[chrom, start, end][0, :, 0, 0])])
             plots[-1].set_ylabel(i, labelpad=12)
             plots[-1].spines['right'].set_visible(False)
             plots[-1].spines['top'].set_visible(False)
