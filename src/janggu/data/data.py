@@ -60,11 +60,6 @@ class Dataset:
         """Shape of the dataset"""
         pass
 
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
 
 def _data_props(data):
     """Extracts the shape of a provided Input-Dataset.
@@ -90,8 +85,8 @@ def _data_props(data):
         return dataprops
     elif isinstance(data, dict):
         return data
-    else:
-        raise Exception('inputSpace wrong argument: {}'.format(data))
+
+    raise Exception('inputSpace wrong argument: {}'.format(data))
 
 
 class JangguSequence(Sequence):

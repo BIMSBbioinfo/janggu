@@ -101,6 +101,36 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     def create_from_region(cls, chrom, start, end, strand,
                            binsize, stepsize, flank=0,
                            zero_padding=True):
+        """Creates a GenomicIndexer object.
+
+        This method constructs a GenomicIndexer from
+        a given genomic interval.
+
+        Parameters
+        ----------
+        chrom : str
+            Chromosome name.
+        start : int
+            Interval start
+        end : int
+            Interval end
+        binsize : int or None
+            Binsize in base pairs. If None, the binsize is obtained from
+            the interval lengths in the bed file, which requires intervals
+            to be of equal length.
+        stepsize : int or None
+            Stepsize in base pairs. If stepsize is None,
+            stepsize is set to equal to binsize.
+        flank : int
+            flank size in bp to be attached to
+            both ends of a region. Default: 0.
+        zero_padding : boolean
+            zero_padding indicate if variable sequence
+            lengths are used in conjunction with zero-padding.
+            If zero_padding is True, a binsize must be specified.
+            Default: True.
+        """
+
         if binsize is None:
             binsize = end - start
 
@@ -116,7 +146,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         reglen = val // stepsize
         chrs = [chrom] * reglen
-        starts = [x for x in range(start, start+(stepsize*reglen) , stepsize)]
+        starts = [x for x in range(start, start+(stepsize*reglen), stepsize)]
         #ends = np.asarray(starts) + binsize
         #ends = ends.tolist()
         ends = [x + binsize for x in starts]
@@ -205,7 +235,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         """idx_by_region filters for chromosome and region ids.
 
-        It takes a list of chromosome ids which should be included or excluded, the start and the end of
+        It takes a list of chromosome ids which should be
+        included or excluded, the start and the end of
         a required interval as integers and returns a new GenomicIndexer
         associated with the compatible intervals after filtering.
 
@@ -264,7 +295,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         """filter_by_region filters for chromosome and region ids.
 
-        It takes a list of chromosome ids which should be included or excluded, the start and the end of
+        It takes a list of chromosome ids which should be
+        included or excluded, the start and the end of
         a required interval as integers and returns a new GenomicIndexer
         associated with the compatible intervals after filtering.
 

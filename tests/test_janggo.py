@@ -7,11 +7,11 @@ import pkg_resources
 import pytest
 from keras.layers import Average
 from keras.layers import Concatenate
+from keras.layers import Conv2D
 from keras.layers import Dense
-from keras.layers import Maximum
 from keras.layers import Flatten
 from keras.layers import Input
-from keras.layers import Conv2D
+from keras.layers import Maximum
 from keras.layers import MaxPooling2D
 
 from janggu import Janggu

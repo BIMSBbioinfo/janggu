@@ -1,9 +1,8 @@
-from pkg_resources import resource_filename
 import matplotlib.pyplot as plt
+from pkg_resources import resource_filename
 
 from janggu.data import Cover
 from janggu.data import plotGenomeTrack
-
 
 roi = resource_filename('janggu',
                         'resources/sample.bed')

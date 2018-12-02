@@ -12,9 +12,9 @@ from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from HTSeq import BED_Reader
-from HTSeq import GFF_Reader
 from HTSeq import GenomicFeature
 from HTSeq import GenomicInterval
+from HTSeq import GFF_Reader
 
 try:
     import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -136,8 +136,8 @@ def seq2ind(seq):
     if isinstance(seq, (str, Seq)):
         if type(seq.alphabet) is type(IUPAC.unambiguous_dna):
             return [NMAP[x.upper()] for x in seq]
-        elif type(seq.alphabet) is type(IUPAC.protein):
-            return [PMAP[x.upper()] for x in seq]
+        # else proteins should be used
+        return [PMAP[x.upper()] for x in seq]
     raise TypeError('seq2ind: Format is not supported')
 
 
@@ -259,8 +259,8 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     outputfile = os.path.join(outputdir, '{}.chrom.sizes'.format(refgenome))
     if not os.path.exists(outputfile):  # pragma: no cover
         # not part of unit tests, because this requires internet connection
-        urlpath = 'http://hgdownload.cse.ucsc.edu/goldenPath/{}/bigZips/{}.chrom.sizes'.format(
-            refgenome, refgenome)
+        urlpath = 'http://hgdownload.cse.ucsc.edu/goldenPath/{ref1}/bigZips/{ref2}.chrom.sizes'\
+            .format(ref1=refgenome, ref2=refgenome)
 
         # From the md5sum.txt we extract the
         print("Downloading {}".format(urlpath))
@@ -333,13 +333,13 @@ def get_genome_size_from_regions(regions):
     gsize = {}
     for region in regions_:
         if isinstance(region, GenomicFeature):
-            iv = region.iv
+            interval = region.iv
         elif isinstance(region, GenomicInterval):
-            iv = region
-        if iv.chrom not in gsize:
-            gsize[iv.chrom] = iv.end
-        elif gsize[iv.chrom] < iv.end:
-            gsize[iv.chrom] = iv.end
+            interval = region
+        if interval.chrom not in gsize:
+            gsize[interval.chrom] = interval.end
+        elif gsize[interval.chrom] < interval.end:
+            gsize[interval.chrom] = interval.end
     return gsize
 
 
@@ -662,7 +662,7 @@ class ExportClustermap(object):
                  method='ward', metric='euclidean', z_score=None,
                  standard_scale=None, row_cluster=True, col_cluster=True,
                  row_linkage=None, col_linkage=None, row_colors=None,
-                 col_colors=None, mask=None, **kwargs):
+                 col_colors=None, mask=None):
 
         self.fform = fform
         self.figsize = figsize
@@ -690,7 +690,7 @@ class ExportClustermap(object):
             firstkey = list(annot.keys())[0]
             pal = sns.color_palette('hls', len(set(annot[firstkey])))
             lut = dict(zip(set(annot[firstkey]), pal))
-            row_colors = [lut[k] for k in annot[firstkey]]
+            self.row_colors = [lut[k] for k in annot[firstkey]]
 
         _rs = {k: results[k]['value'] for k in results}
         data = pd.DataFrame.from_dict(_rs)
@@ -715,9 +715,8 @@ class ExportClustermap(object):
                        row_colors=self.row_colors,
                        mask=self.mask,
                        figsize=self.figsize).savefig(
-                            os.path.join(output_dir,
-                                         name + '.' + fform),
-                            format=fform, dpi=700)
+                           os.path.join(output_dir, name + '.' + fform),
+                           format=fform, dpi=700)
 
 
 class ExportTsne(object):
@@ -757,6 +756,8 @@ class ExportTsne(object):
         self.annot = annot
 
     def __call__(self, output_dir, name, results):
+        figsize = self.figsize
+        annot = self.annot
 
         if TSNE is None:  # pragma: no cover
             raise Exception('scikit-learn not available. '

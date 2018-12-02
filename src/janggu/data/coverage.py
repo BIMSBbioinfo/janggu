@@ -2,6 +2,8 @@
 
 import os
 
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import cm
 import numpy as np
 from HTSeq import GenomicInterval
 
@@ -13,11 +15,6 @@ from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
 
-import matplotlib.pyplot as plt
-from matplotlib import style
-from matplotlib.gridspec import GridSpec
-from matplotlib.pyplot import cm
-
 try:
     import pyBigWig
 except ImportError:  # pragma: no cover
@@ -28,6 +25,29 @@ except ImportError:  # pragma: no cover
     pysam = None
 
 class BamLoader:
+    """BamLoader class.
+
+    This class loads the GenomicArray with read count coverage
+    extracted from BAM files.
+
+    Parameters
+    ----------
+    files : str or list(str)
+        Bam file locations.
+    gsize : dict
+        Dictionary of genome sizes.
+    template_extension : int
+        Extension of intervals by template_extension for counting
+        paired-end midpoints correctly.
+        It may be possible that both read ends are located outside
+        of the given interval, but the mid-points inside.
+        template_extension extends the interval in order to correcly determine
+        the mid-points.
+    min_mapq : int
+        Minimum mapping quality to be considered.
+    pairedend : str
+        Paired-end mode 'midpoint' or '5prime'.
+    """
     def __init__(self, files, gsize, template_extension,
                  min_mapq, pairedend):
         self.files = files
@@ -142,6 +162,20 @@ class BamLoader:
 
 
 class BigWigLoader:
+    """BigWigLoader class.
+
+    This class loads the GenomicArray with signal coverage
+    extracted from BIGWIG files.
+
+    Parameters
+    ----------
+    files : str or list(str)
+        Bigwig file locations.
+    gsize : dict
+        Dictionary of genome sizes.
+    nan_to_num : bool
+        Whether to convert NAN's to zeros or not. Default: True.
+    """
     def __init__(self, files, gsize, nan_to_num):
         self.files = files
         self.gsize = gsize
@@ -171,20 +205,39 @@ class BigWigLoader:
 
                 array = np.zeros((length, 1), dtype=dtype)
 
-                x = np.asarray(bwfile.values(
-                               locus[0],
-                               int(locus[1]),
-                               int(locus[2])))
+                values = np.asarray(bwfile.values(locus[0],
+                                                  int(locus[1]),
+                                                  int(locus[2])))
                 if nan_to_num:
-                    x = np.nan_to_num(x, copy=False)
+                    values = np.nan_to_num(values, copy=False)
 
-                array[:len(x), 0] = x
+                array[:len(values), 0] = values
 
                 garray[GenomicInterval(*locus), i] = array
         return garray
 
 
 class BedLoader:
+    """BedLoader class.
+
+    This class loads the GenomicArray with signal coverage
+    extracted from BED files.
+
+    Parameters
+    ----------
+    files : str or list(str)
+        Bed file locations.
+    gsize : dict
+        Dictionary of genome sizes.
+    mode : str
+        Mode might be 'binary', 'score' or 'categorical'.
+    binsize : int
+        Binsize (interval sizes).
+    stepsize : int
+        Stepsize
+    flank : int
+        Flank
+    """
     def __init__(self, files, gsize, mode, binsize,
                  stepsize, flank):
         self.files = files
@@ -196,8 +249,6 @@ class BedLoader:
 
     def __call__(self, garray):
         files = self.files
-        gsize = self.gsize
-        resolution = garray.resolution
         dtype = garray.typecode
         mode = self.mode
         binsize = self.binsize
@@ -226,8 +277,9 @@ class BedLoader:
                     # presence of a range as positive label.
 
                     score = region.score if mode == 'score' else 1
-                    array = np.repeat(np.dtype(dtype).type(score).reshape((1,1)),
-                                      greg.length, axis=0)
+                    array = np.repeat(
+                        np.dtype(dtype).type(score).reshape((1, 1)),
+                        greg.length, axis=0)
 
                     if mode == 'score':
                         garray[greg, i] = array
@@ -238,6 +290,19 @@ class BedLoader:
         return garray
 
 class ArrayLoader:
+    """BedLoader class.
+
+    This class loads the GenomicArray with signal coverage
+    extracted from BED files.
+
+    Parameters
+    ----------
+    array : np.ndarray
+        A numpy array that should be converted to a Cover object
+    gindexer : GenomicIndexer
+        A GenomicIndexer that holds the corresponding genomic intervals
+        for the predictions in the array.
+    """
     def __init__(self, array, gindexer):
         self.array = array
         self.gindexer = gindexer
@@ -250,14 +315,14 @@ class ArrayLoader:
         print("load from array")
 
         for i, region in enumerate(gindexer):
-            iv = region
+            interval = region
             for cond in range(array.shape[-1]):
                 if resolution is None:
-                    garray[iv, cond] = np.repeat(array[i, :, :, cond],
-                                                 iv.length, axis=0)
+                    garray[interval, cond] = np.repeat(array[i, :, :, cond],
+                                                       interval.length, axis=0)
                 else:
-                    garray[iv, cond] = np.repeat(array[i, :, :, cond],
-                                                 resolution, axis=0)
+                    garray[interval, cond] = np.repeat(array[i, :, :, cond],
+                                                       resolution, axis=0)
 
         return garray
 
@@ -504,7 +569,6 @@ class Cover(Dataset):
                            flank=0, storage='ndarray',
                            dtype='float32',
                            overwrite=False,
-                           aggregate='mean',
                            datatags=None, cache=False,
                            store_whole_genome=False,
                            channel_last=True,
@@ -578,9 +642,6 @@ class Cover(Dataset):
             the datatags are used to construct a cache file.
             If :code:`cache=False`, this option does not have an effect.
             Default: None.
-        aggregate : callable
-            Aggregation operation for loading genomic array.
-            Default: numpy.mean
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         store_whole_genome : boolean
@@ -668,7 +729,8 @@ class Cover(Dataset):
                                      store_whole_genome=store_whole_genome,
                                      typecode=dtype,
                                      loader=bigwigloader,
-                                     collapser=collapser_)
+                                     collapser=collapser_,
+                                     normalizer=normalizer)
 
         return cls(name, cover, gindexer,
                    channel_last=channel_last)
@@ -852,7 +914,8 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      store_whole_genome=store_whole_genome,
                                      loader=bedloader,
-                                     collapser=collapser_)
+                                     collapser=collapser_,
+                                     normalizer=normalizer)
 
         return cls(name, cover, gindexer,
                    channel_last=channel_last)
@@ -935,18 +998,18 @@ class Cover(Dataset):
         # check if dimensions of gindexer and array match
         if len(gindexer) != array.shape[0]:
             raise ValueError("Data incompatible: "
-                "The number intervals in gindexer"
-                " must match the number of datapoints in the array "
-                "(len(gindexer) != array.shape[0])")
+                             "The number intervals in gindexer"
+                             " must match the number of datapoints in "
+                             "the array (len(gindexer) != array.shape[0])")
 
         if store_whole_genome:
             # in this case the intervals must be non-overlapping
             # in order to obtain unambiguous data.
             if gindexer.binsize > gindexer.stepsize:
-                raise ValueError("Overlapping intervals: "
-                    "With overlapping intervals the mapping between "
-                    "the array and genomic-array values is ambiguous. "
-                    "Please ensure that binsize <= stepsize.")
+                raise ValueError("Overlapping intervals: With overlapping "
+                                 "intervals the mapping between the array and "
+                                 "genomic-array values is ambiguous. "
+                                 "Please ensure that binsize <= stepsize.")
 
         # determine the resolution
         if gindexer.binsize is None:
@@ -968,10 +1031,10 @@ class Cover(Dataset):
 
         # define a dummy collapser
 
-        def dummy_collapser(x):
+        def _dummy_collapser(values):
             # should be 3D
             # seqlen, resolution, strand
-            return x[:,0,:]
+            return values[:, 0, :]
 
         cover = create_genomic_array(gsize, stranded=stranded,
                                      storage=storage, datatags=datatags,
@@ -982,7 +1045,7 @@ class Cover(Dataset):
                                      typecode=array.dtype,
                                      store_whole_genome=store_whole_genome,
                                      loader=arrayloader,
-                                     collapser=dummy_collapser)
+                                     collapser=_dummy_collapser)
 
         return cls(name, cover, gindexer,
                    channel_last=channel_last)
@@ -1025,8 +1088,8 @@ class Cover(Dataset):
                 end = idxs.end
                 strand = idxs.strand
                 gindexer_new = self.gindexer.filter_by_region(include=chrom,
-                                                               start=start,
-                                                               end=end)
+                                                              start=start,
+                                                              end=end)
 
                 data = np.zeros((1, (end - start)) + self.shape[2:])
 
@@ -1038,7 +1101,7 @@ class Cover(Dataset):
                         # invert the data so that is again relative
                         # to the positive strand,
                         # this avoids having to change the rel_pos computation
-                        tmp_data = tmp_data[:,::-1,::-1,:]
+                        tmp_data = tmp_data[:, ::-1, ::-1, :]
 
                     #determine upsampling factor
                     # so both tmp_data and data represent signals on
@@ -1060,10 +1123,8 @@ class Cover(Dataset):
                         tmp_end = tmp_data.shape[1]
                         ref_end = data.shape[1] - (end - interval.end)
 
-                    rel_start = start - interval.start
-                    rel_end = interval.end - start
-
-                    data[:, ref_start:ref_end, :, :] = tmp_data[:, tmp_start:tmp_end, :, :]
+                    data[:, ref_start:ref_end, :, :] = \
+                        tmp_data[:, tmp_start:tmp_end, :, :]
 
                 # issue with different resolution
                 # it might not be optimal to return the data on a base-pair
@@ -1079,7 +1140,7 @@ class Cover(Dataset):
 
                 if strand == '-':
                     # invert it back relative to minus strand
-                    data = data[:,::-1,::-1,:]
+                    data = data[:, ::-1, ::-1, :]
 
             if not self._channel_last:
                 data = np.transpose(data, (0, 3, 1, 2))
@@ -1124,8 +1185,8 @@ class Cover(Dataset):
 
         if self._channel_last:
             return self.shape_static
-        else:
-            return tuple(self.shape_static[x] for x in [0, 3, 1, 2])
+
+        return tuple(self.shape_static[x] for x in [0, 3, 1, 2])
 
     @property
     def shape_static(self):
@@ -1198,7 +1259,7 @@ class Cover(Dataset):
             # in the same order as given by bw_header.
             # therefore, we process each chromosome in order below
 
-            for chrom, size in bw_header:
+            for chrom, _ in bw_header:
                 idxs = self.gindexer.idx_by_region(include=chrom)
 
                 for ridx in idxs:
@@ -1280,9 +1341,11 @@ def plotGenomeTrack(covers, chrom, start, end):
         lat_titles[j].set_yticklabels([cover.name], color=color_)
         cont = 0
         for i in cover.conditions:
-            plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 + 2 +j:(cont + abs_cont) * 3 + 5+j, 1:]))
+            plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 +
+                                              2 +j:(cont + abs_cont) * 3 + 5+j,
+                                              1:]))
             plots[-1].plot(cover[chrom, start, end][0, :, 0, cont],
-                           linewidth=2, color = color_)
+                           linewidth=2, color=color_)
             plots[-1].set_yticks(())
             plots[-1].set_xticks(())
             plots[-1].set_xlim([0, len(cover[chrom, start, end][0, :, 0, 0])])

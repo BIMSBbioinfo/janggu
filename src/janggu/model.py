@@ -6,13 +6,13 @@ import os
 import time
 
 import h5py
-from keras import backend as K
 from keras.callbacks import LambdaCallback
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import Sequence
 from keras.utils import plot_model
 
+from janggu.data import split_train_test
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
 from janggu.layers import Complement
@@ -20,7 +20,6 @@ from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
-from janggu.data import split_train_test
 
 
 def _convert_data(kerasmodel, data, layer):
@@ -485,9 +484,9 @@ class Janggu(object):
 
         if isinstance(validation_data, tuple):
             valinputs = _convert_data(self.kerasmodel, validation_data[0],
-            'input_layers')
+                                      'input_layers')
             valoutputs = _convert_data(self.kerasmodel, validation_data[1],
-            'output_layers')
+                                       'output_layers')
             sweights = validation_data[2] if len(validation_data) == 3 else None
             valjseq = JangguSequence(batch_size, valinputs, valoutputs, sweights, shuffle=False)
         elif isinstance(validation_data, Sequence):
@@ -500,7 +499,7 @@ class Janggu(object):
             # are Cover or Bioseq dataset.
             if not all(hasattr(datum, 'gindexer') \
                 for datum in [jseq.inputs[k] for k in jseq.inputs] +
-                             [jseq.outputs[k] for k in jseq.outputs]):
+                       [jseq.outputs[k] for k in jseq.outputs]):
                 raise ValueError("Not all dataset are Cover or Bioseq dataset"
                                  " which is required for this options.")
 

@@ -17,6 +17,18 @@ from janggu.utils import sequences_from_fasta
 
 
 class SeqLoader:
+    """SeqLoader class.
+
+    This class loads a GenomicArray with sequences obtained
+    from FASTA files.
+
+    Parameters
+    -----------
+    seqs : list(Bio.SeqRecord)
+        List of sequences contained in Biopython SeqRecords.
+    order : int
+        Order of the one-hot representation.
+    """
     def __init__(self, seqs, order):
         self.seqs = seqs
         self.order = order
@@ -33,7 +45,7 @@ class SeqLoader:
                                            len(seq) - order + 1, '.')
             else:
                 interval = GenomicInterval(*_str_to_iv(seq.id,
-                                            template_extension=0))
+                                                       template_extension=0))
 
             indarray = np.asarray(seq2ind(seq), dtype=dtype)
 
@@ -120,15 +132,15 @@ class Bioseq(Dataset):
         datatags += ['order{}'.format(order)]
 
         garray = create_genomic_array(chromlens, stranded=False,
-                                     storage=storage,
-                                     datatags=datatags,
-                                     cache=cache,
-                                     store_whole_genome=store_whole_genome,
-                                     order=order,
-                                     conditions=['idx'],
-                                     overwrite=overwrite,
-                                     typecode=dtype,
-                                     loader=seqloader)
+                                      storage=storage,
+                                      datatags=datatags,
+                                      cache=cache,
+                                      store_whole_genome=store_whole_genome,
+                                      order=order,
+                                      conditions=['idx'],
+                                      overwrite=overwrite,
+                                      typecode=dtype,
+                                      loader=seqloader)
 
         return garray
 
@@ -392,9 +404,9 @@ class Bioseq(Dataset):
         # sequence, depending on the strand flag.
         if interval.strand in ['.', '+']:
             return np.asarray(self.garray[interval][:, 0, 0])
-        else:
-            return np.asarray([self._rcindex[val] for val
-                               in self.garray[interval][:, 0, 0]])[::-1]
+
+        return np.asarray([self._rcindex[val] for val
+                           in self.garray[interval][:, 0, 0]])[::-1]
 
 
     def __getitem__(self, idxs):
@@ -456,8 +468,8 @@ class Bioseq(Dataset):
             return (len(self), self.gindexer.binsize +
                     2*self.gindexer.flank - self.garray.order + 1, 1,
                     pow(self._alphabetsize, self.garray.order))
-        else:
-            return (len(self),
-                    pow(self._alphabetsize, self.garray.order),
-                    self.gindexer.binsize +
-                    2*self.gindexer.flank - self.garray.order + 1, 1)
+
+        return (len(self),
+                pow(self._alphabetsize, self.garray.order),
+                self.gindexer.binsize +
+                2*self.gindexer.flank - self.garray.order + 1, 1)

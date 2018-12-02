@@ -2,28 +2,25 @@ import argparse
 import os
 
 import numpy as np
+from keras import Model
 from keras import backend as K
 from keras.layers import Conv2D
+from keras.layers import Dense
+from keras.layers import GlobalAveragePooling2D
+from keras.layers import Input
 from keras.layers import Maximum
+from keras.layers import Reshape
 from pkg_resources import resource_filename
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
-from keras.layers import Input
-from keras.layers import Conv2D
-from keras.layers import Dense
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import Reshape
-from keras import Model
-
 from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
-
 
 np.random.seed(1234)
 

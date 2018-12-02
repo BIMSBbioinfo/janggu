@@ -1,7 +1,7 @@
 import os
-import pytest
 
 import numpy as np
+import pytest
 from HTSeq import GenomicInterval
 
 from janggu.data import create_genomic_array
