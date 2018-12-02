@@ -24,12 +24,11 @@ from janggu.data import Bioseq
 from janggu.layers import Complement
 from janggu.layers import DnaConv2D
 from janggu.layers import Reverse
-from janggu.utils import export_clustermap
-from janggu.utils import export_json
-from janggu.utils import export_plotly
-from janggu.utils import export_score_plot
-from janggu.utils import export_tsne
-from janggu.utils import export_tsv
+from janggu.utils import ExportClustermap
+from janggu.utils import ExportJson
+from janggu.utils import ExportScorePlot
+from janggu.utils import ExportTsne
+from janggu.utils import ExportTsv
 
 np.random.seed(1234)
 
@@ -91,26 +90,6 @@ def wrap_prc(y_true, y_pred):
     aux = str('({:.2%})'.format(average_precision_score(y_true, y_pred)))
     print('prc', aux)
     return recall, precision, aux
-
-
-# instantiate various evaluation callback objects
-# score metrics
-auc_eval = Scorer('auROC', roc_auc_score, exporter=export_tsv)
-prc_eval = Scorer('PRC', wrap_prc, exporter=export_score_plot)
-roc_eval = Scorer('ROC', wrap_roc, exporter=export_score_plot)
-auprc_eval = Scorer('auPRC', average_precision_score, exporter=export_tsv)
-
-# clustering plots based on hidden features
-heatmap_eval = Scorer('heatmap', exporter=export_clustermap)
-tsne_eval = Scorer('tsne', exporter=export_tsne)
-
-# output the predictions as tables or json files
-pred_tsv = Scorer('pred', exporter=export_tsv)
-pred_json = Scorer('pred', exporter=export_json)
-
-# plotly will export a special table that is used for interactive browsing
-# of the results
-pred_plotly = Scorer('pred', exporter=export_plotly)
 
 
 # Define the model templates
@@ -219,6 +198,29 @@ annot_test = pd.DataFrame(Y[:], columns=LABELS_TEST.conditions).applymap(
     lambda x: 'Oct4' if x == 1 else 'Mafk').to_dict(orient='list')
 
 
+# instantiate various evaluation callback objects
+# score metrics
+auc_eval = Scorer('auROC', roc_auc_score, exporter=ExportTsv())
+prc_eval = Scorer('PRC', wrap_prc, exporter=ExportScorePlot())
+roc_eval = Scorer('ROC', wrap_roc, exporter=ExportScorePlot())
+auprc_eval = Scorer('auPRC', average_precision_score, exporter=ExportTsv())
+
+# clustering plots based on hidden features
+heatmap_eval = Scorer('heatmap', exporter=ExportClustermap(annot=annot_test,
+                                                           z_score=1.))
+tsne_eval = Scorer('tsne', exporter=ExportTsne())
+
+# output the predictions as tables or json files
+pred_tsv = Scorer('pred', exporter=ExportTsv(annot=annot_test,
+                                             row_names=DNA_TEST.gindexer.chrs))
+pred_json = Scorer('pred', exporter=ExportJson(annot=annot_test,
+                                               row_names=DNA_TEST.gindexer.chrs))
+
+# plotly will export a special table that is used for interactive browsing
+# of the results
+pred_plotly = Scorer('pred', exporter=ExportTsv(filesuffix='ply',
+                                                annot=annot_test,
+                                                row_names=DNA_TEST.gindexer.chrs))
 # do the evaluation on the independent test data
 # after the evaluation and prediction has been performed,
 # the callbacks further process the results allowing
@@ -228,12 +230,5 @@ model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
                callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
 
 model.predict(DNA_TEST, datatags=['test'],
-              callbacks=[pred_tsv, pred_json, pred_plotly],
-              layername='motif',
-              exporter_kwargs={'annot': annot_test,
-                               'row_names': DNA_TEST.gindexer.chrs})
-model.predict(DNA_TEST, datatags=['test'],
-              callbacks=[heatmap_eval],
-              layername='motif',
-              exporter_kwargs={'annot': annot_test,
-                               'z_score': 1})
+              callbacks=[pred_tsv, pred_json, pred_plotly, heatmap_eval],
+              layername='motif')

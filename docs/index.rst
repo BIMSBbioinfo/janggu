@@ -6,9 +6,9 @@ Contents
    :maxdepth: 2
 
    readme
-   installation
    tutorial
    storage
+   custom_scorer
    reference/index
    contributing
    authors

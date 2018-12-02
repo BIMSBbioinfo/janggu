@@ -573,8 +573,6 @@ class Janggu(object):
                 layername=None,
                 datatags=None,
                 callbacks=None,
-                score_kwargs=None,
-                exporter_kwargs=None,
                 use_multiprocessing=False,
                 workers=1):
 
@@ -603,11 +601,6 @@ class Janggu(object):
             Tags to annotate the evaluation results. Default: None.
         callbacks : List(:code:`Scorer`)
             Scorer instances to be applied on the predictions.
-        score_kwargs : dict or None
-            keyword arguments to be passed on to the scoring function.
-            Default: None.
-        exporter_kwargs : dict or None
-            keyword arguments to be passed on to the exporter function. Default: None.
         use_multiprocessing : boolean
             Whether to use multiprocessing for the prediction. Default: False.
         workers : int
@@ -671,9 +664,7 @@ class Janggu(object):
             else:
                 datatags.append(layername)
         for callback in callbacks or []:
-            callback.score(model, prd, datatags=datatags,
-                           score_kwargs=score_kwargs,
-                           exporter_kwargs=exporter_kwargs)
+            callback.score(model, prd, datatags=datatags)
         return preds
 
     def evaluate(self, inputs=None, outputs=None,  # pylint: disable=too-many-locals
@@ -682,8 +673,6 @@ class Janggu(object):
                  steps=None,
                  datatags=None,
                  callbacks=None,
-                 score_kwargs=None,
-                 exporter_kwargs=None,
                  use_multiprocessing=False,
                  workers=1):
         """Evaluates the performance.
@@ -712,11 +701,6 @@ class Janggu(object):
             Tags to annotate the evaluation results. Default: None.
         callbacks : List(:code:`Scorer`)
             Scorer instances to be applied on the predictions.
-        score_kwargs : dict or None
-            keyword arguments to be passed on to the scoring function.
-            Default: None.
-        exporter_kwargs : dict or None
-            keyword arguments to be passed on to the exporter function. Default: None.
         use_multiprocessing : boolean
             Whether to use multiprocessing for the prediction. Default: False.
         workers : int
@@ -784,9 +768,7 @@ class Janggu(object):
         preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
-            callback.score(self, preds, outputs=outputs_, datatags=datatags,
-                           score_kwargs=score_kwargs,
-                           exporter_kwargs=exporter_kwargs)
+            callback.score(self, preds, outputs=outputs_, datatags=datatags)
         return values
 
     def __dim_logging(self, data):

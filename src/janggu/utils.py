@@ -343,18 +343,11 @@ def get_genome_size_from_regions(regions):
     return gsize
 
 
-def export_json(output_dir, name, results, filesuffix='json',
-                annot=None, row_names=None):
+class ExportJson(object):
     """Method that dumps the results in a json file.
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     filesuffix : str
         Target file ending. Default: 'json'.
     annot: None, dict
@@ -363,34 +356,41 @@ def export_json(output_dir, name, results, filesuffix='json',
     row_names : None or list
         List of row names. Default: None.
     """
+    def __init__(self, filesuffix='json',
+                 annot=None, row_names=None):
 
-    filename = os.path.join(output_dir, name + '.' + filesuffix)
+        self.filesuffix = filesuffix
+        self.annot = annot
+        self.row_names = row_names
 
-    content = {}  # needed for py27
-    with open(filename, 'w') as jsonfile:
-        try:
-            content.update({'-'.join(key): results[key]['value'].tolist() for key in results})
-        except AttributeError:
-            content.update({'-'.join(key): results[key]['value'] for key in results})
-        if annot is not None:
-            content.update({'annot': annot})
+    def __call__(self, output_dir, name, results):
+        filesuffix = self.filesuffix
+        annot = self.annot
+        row_names = self.row_names
 
-        if row_names is not None:
-            content.update({'row_names': row_names})
-        json.dump(content, jsonfile)
+        filename = os.path.join(output_dir, name + '.' + filesuffix)
+
+        content = {}  # needed for py27
+        with open(filename, 'w') as jsonfile:
+            try:
+                content.update({'-'.join(key): results[key]['value'].tolist() for key in results})
+            except AttributeError:
+                content.update({'-'.join(key): results[key]['value'] for key in results})
+            if annot is not None:
+                content.update({'annot': annot})
+
+            if row_names is not None:
+                content.update({'row_names': row_names})
+            json.dump(content, jsonfile)
 
 
-def export_tsv(output_dir, name, results, filesuffix='tsv', annot=None, row_names=None):
+class ExportTsv(object):
     """Method that dumps the results as tsv file.
+
+    This class can be used to export general table summaries.
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     filesuffix : str
         File ending. Default: 'tsv'.
     annot: None, dict
@@ -401,64 +401,40 @@ def export_tsv(output_dir, name, results, filesuffix='tsv', annot=None, row_name
     row_names : None, list
         List of row names. For example, chromosomal loci. Default: None.
     """
+    def __init__(self, filesuffix='tsv', annot=None, row_names=None):
 
-    filename = os.path.join(output_dir, name + '.' + filesuffix)
-    try:
-        # check if the result is iterable
-        iter(results[list(results.keys())[0]]['value'])
-        _rs = {'-'.join(k): results[k]['value'] for k in results}
-    except TypeError:
-        # if the result is not iterable, wrap it up as list
-        _rs = {'-'.join(k): [results[k]['value']] for k in results}
-    _df = pd.DataFrame.from_dict(_rs)
-    for _an in annot or []:
-        _df['annot.' + _an] = annot[_an]
-    if row_names is not None:
-        _df['row_names'] = row_names
-    _df.to_csv(filename, sep='\t', index=False)
+        self.filesuffix = filesuffix
+        self.annot = annot
+        self.row_names = row_names
 
+    def __call__(self, output_dir, name, results):
+        filesuffix = self.filesuffix
+        annot = self.annot
+        row_names = self.row_names
 
-def export_plotly(output_dir, name, results, annot=None, row_names=None):
-    """This method exports data for interactive visualization.
-
-    Essentially, it exports a table with the filename suffix
-    being '.ply'. In contrast table files generally, which have
-    the file ending '.tsv', .ply file is ment to have a more specific
-    structure so that the Dash app can interpret it.
-
-    Parameters
-    ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
-    annot: None, dict
-        Annotation data. If encoded as dict the key indicates the name,
-        while the values holds a list of annotation labels.
-        For example, this can be used to store color information to overlay
-        with the interactive scatter plot. Default: None.
-    row_names : None, list
-        List of row names. For instance, chromosomal loci. Default: None.
-    """
-    # this produces a normal json file, but for the dedicated
-    # purpose of visualization in the dash app.
-    export_tsv(output_dir, name, results, 'ply', annot, row_names)
+        filename = os.path.join(output_dir, name + '.' + filesuffix)
+        try:
+            # check if the result is iterable
+            iter(results[list(results.keys())[0]]['value'])
+            _rs = {'-'.join(k): results[k]['value'] for k in results}
+        except TypeError:
+            # if the result is not iterable, wrap it up as list
+            _rs = {'-'.join(k): [results[k]['value']] for k in results}
+        _df = pd.DataFrame.from_dict(_rs)
+        for _an in annot or []:
+            _df['annot.' + _an] = annot[_an]
+        if row_names is not None:
+            _df['row_names'] = row_names
+        _df.to_csv(filename, sep='\t', index=False)
 
 
-def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disable=too-many-locals
-                      xlabel=None, ylabel=None, fform=None):
-    """Method that dumps the results in a json file.
+class ExportScorePlot(object):
+    """Exporting score plot.
+
+    This class can be used for producing an AUC or PRC plot.
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     figsize : tuple(int, int)
         Used to specify the figure size for matplotlib.
     xlabel : str or None
@@ -468,42 +444,54 @@ def export_score_plot(output_dir, name, results, figsize=None,  # pylint: disabl
     fform : str or None
         Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
     """
-    if plt is None:  # pragma: no cover
-        raise Exception('matplotlib not available. Please install matplotlib.')
+    def __init__(self, figsize=None, xlabel=None, ylabel=None, fform=None):
+        self.figsize = figsize
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+        self.fform = fform
 
-    if figsize is not None:
-        fig = plt.figure(figsize=figsize)
-    else:
-        fig = plt.figure()
+    def __call__(self, output_dir, name, results):
+        figsize = self.figsize
+        xlabel = self.xlabel
+        ylabel = self.ylabel
+        fform = self.fform
 
-    ax_ = fig.add_axes([0.1, 0.1, .55, .5])
+        if plt is None:  # pragma: no cover
+            raise Exception('matplotlib not available. Please install matplotlib.')
 
-    ax_.set_title(name)
-    for keys in results:
-        # avg might be returned using a custom function
-        x_score, y_score, auxstr = results[keys]['value']
-        label = "{}".format('-'.join([keys[0][:8], keys[1], keys[2]]))
-        if isinstance(auxstr, str):
-            label += ' ' + auxstr
-        ax_.plot(x_score, y_score, label=label)
+        if figsize is not None:
+            fig = plt.figure(figsize=figsize)
+        else:
+            fig = plt.figure()
 
-    lgd = ax_.legend(bbox_to_anchor=(1.05, 1),
-                     loc=2, prop={'size': 10}, ncol=1)
-    if xlabel is not None:
-        ax_.set_xlabel(xlabel, size=14)
-    if ylabel is not None:
-        ax_.set_ylabel(ylabel, size=14)
-    if fform is not None:
-        fform = fform
-    else:
-        fform = 'png'
-    filename = os.path.join(output_dir, name + '.' + fform)
-    fig.savefig(filename, format=fform,
-                dpi=1000,
-                bbox_extra_artists=(lgd,), bbox_inches="tight")
+        ax_ = fig.add_axes([0.1, 0.1, .55, .5])
+
+        ax_.set_title(name)
+        for keys in results:
+            # avg might be returned using a custom function
+            x_score, y_score, auxstr = results[keys]['value']
+            label = "{}".format('-'.join([keys[0][:8], keys[1], keys[2]]))
+            if isinstance(auxstr, str):
+                label += ' ' + auxstr
+            ax_.plot(x_score, y_score, label=label)
+
+        lgd = ax_.legend(bbox_to_anchor=(1.05, 1),
+                         loc=2, prop={'size': 10}, ncol=1)
+        if xlabel is not None:
+            ax_.set_xlabel(xlabel, size=14)
+        if ylabel is not None:
+            ax_.set_ylabel(ylabel, size=14)
+        if fform is not None:
+            fform = fform
+        else:
+            fform = 'png'
+        filename = os.path.join(output_dir, name + '.' + fform)
+        fig.savefig(filename, format=fform,
+                    dpi=1000,
+                    bbox_extra_artists=(lgd,), bbox_inches="tight")
 
 
-def export_bigwig(output_dir, name, results, gindexer=None):
+class ExportBigwig(object):
     """Export predictions to bigwig.
 
     This function exports the predictions to bigwig format which allows you to
@@ -512,73 +500,69 @@ def export_bigwig(output_dir, name, results, gindexer=None):
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     gindexer : GenomicIndexer
         GenomicIndexer that links the prediction for a certain region to
         its associated genomic coordinates.
     """
+    def __init__(self, gindexer):
+        self.gindexer = gindexer
 
-    if pyBigWig is None:  # pragma: no cover
-        raise Exception('pyBigWig not available. '
-                        '`export_bigwig` requires pyBigWig to be installed.')
+    def __call__(self, output_dir, name, results):
 
-    if gindexer is None:
-        raise ValueError('Please specify a GenomicIndexer for export_to_bigiwig')
+        gindexer = self.gindexer
 
-    genomesize = {}
+        if pyBigWig is None:  # pragma: no cover
+            raise Exception('pyBigWig not available. '
+                            '`export_bigwig` requires pyBigWig to be installed.')
 
-    # extract genome size from gindexer
-    # check also if sorted and non-overlapping
-    for region in gindexer:
-        if region.chrom not in genomesize:
-            genomesize[region.chrom] = region.end
-        if genomesize[region.chrom] < region.end:
-            genomesize[region.chrom] = region.end
+        genomesize = {}
 
-    bw_header = [(chrom, genomesize[chrom])
-                 for chrom in genomesize]
+        # extract genome size from gindexer
+        # check also if sorted and non-overlapping
+        for region in gindexer:
+            if region.chrom not in genomesize:
+                genomesize[region.chrom] = region.end
+            if genomesize[region.chrom] < region.end:
+                genomesize[region.chrom] = region.end
 
-    # the last dimension holds the conditions. Each condition
-    # needs to be stored in a separate file
-    for modelname, layername, condition in results:
-        bw_file = pyBigWig.open(os.path.join(
-            output_dir,
-            '{prefix}.{model}.{output}.{condition}.bigwig'.format(
-                prefix=name, model=modelname,
-                output=layername, condition=condition)), 'w')
-        bw_file.addHeader(bw_header)
-        pred = results[modelname, layername, condition]['value']
-        # compute the ratio between binsize and stepsize
-        bsss = float(gindexer.binsize) / float(gindexer.stepsize)
-        if bsss < 1.:
-            bsss = 1.
-        ppi = int(np.rint(len(pred)/(len(gindexer) - 1. + bsss)))
+        bw_header = [(chrom, genomesize[chrom])
+                     for chrom in genomesize]
 
-        # case 1) stepsize >= binsize
-        # then bsss = 1; ppi = len(pred)/len(gindexer)
-        #
-        # case 2) stepsize < binsize
-        # then bsss > 1; ppi = len(pred)/ (len(gindexer) -1 + bsss)
-        resolution = int(region.length / bsss) // ppi
-        for idx, region in enumerate(gindexer):
+        # the last dimension holds the conditions. Each condition
+        # needs to be stored in a separate file
+        for modelname, layername, condition in results:
+            bw_file = pyBigWig.open(os.path.join(
+                output_dir,
+                '{prefix}.{model}.{output}.{condition}.bigwig'.format(
+                    prefix=name, model=modelname,
+                    output=layername, condition=condition)), 'w')
+            bw_file.addHeader(bw_header)
+            pred = results[modelname, layername, condition]['value']
+            # compute the ratio between binsize and stepsize
+            bsss = float(gindexer.binsize) / float(gindexer.stepsize)
+            if bsss < 1.:
+                bsss = 1.
+            ppi = int(np.rint(len(pred)/(len(gindexer) - 1. + bsss)))
 
-            val = [float(p) for p in pred[(idx*ppi):((idx+1)*ppi)]]
+            # case 1) stepsize >= binsize
+            # then bsss = 1; ppi = len(pred)/len(gindexer)
+            #
+            # case 2) stepsize < binsize
+            # then bsss > 1; ppi = len(pred)/ (len(gindexer) -1 + bsss)
+            resolution = int(region.length / bsss) // ppi
+            for idx, region in enumerate(gindexer):
 
-            bw_file.addEntries(str(region.chrom),
-                               int(region.start),
-                               values=val,
-                               span=int(resolution),
-                               step=int(resolution))
-        bw_file.close()
+                val = [float(p) for p in pred[(idx*ppi):((idx+1)*ppi)]]
+
+                bw_file.addEntries(str(region.chrom),
+                                   int(region.start),
+                                   values=val,
+                                   span=int(resolution),
+                                   step=int(resolution))
+            bw_file.close()
 
 
-def export_bed(output_dir, name, results,  # pylint: disable=too-many-locals
-               gindexer=None, resolution=None):
+class ExportBed(object):
     """Export predictions to bed.
 
     This function exports the predictions to bed format which allows you to
@@ -586,64 +570,57 @@ def export_bed(output_dir, name, results,  # pylint: disable=too-many-locals
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     gindexer : GenomicIndexer
         GenomicIndexer that links the prediction for a certain region to
         its associated genomic coordinates.
     resolution : int
         Used to output the results.
     """
+    def __init__(self, gindexer, resolution):
+        self.gindexer = gindexer
+        self.resolution = resolution
 
-    if gindexer is None:
-        raise ValueError('Please specify a GenomicIndexer for export_to_bed')
-    if resolution is None:
-        raise ValueError('Resolution must be specify')
-    # the last dimension holds the conditions. Each condition
-    # needs to be stored in a separate file
+    def __call__(self, output_dir, name, results):
 
-    for modelname, layername, condition in results:
-        bed_content = pd.DataFrame(columns=['chr', 'start',
-                                            'end', 'name', 'score'])
-        for ridx, region in enumerate(gindexer):
-            pred = results[modelname, layername, condition]['value']
+        gindexer = self.gindexer
+        resolution = self.resolution
 
-            nsplit = (region.end-region.start)//resolution
+        # the last dimension holds the conditions. Each condition
+        # needs to be stored in a separate file
 
-            starts = list(range(region.start,
-                                region.end,
-                                resolution))
-            ends = list(range(region.start + resolution,
-                              region.end + resolution,
-                              resolution))
-            cont = {'chr': [region.chrom] * nsplit,
-                    'start': [s for s in starts],
-                    'end': [e for e in ends],
-                    'name': ['.'] * nsplit,
-                    'score': pred[ridx*nsplit:((ridx+1)*nsplit)]}
+        for modelname, layername, condition in results:
+            bed_content = pd.DataFrame(columns=['chr', 'start',
+                                                'end', 'name', 'score'])
+            for ridx, region in enumerate(gindexer):
+                pred = results[modelname, layername, condition]['value']
 
-            bed_entry = pd.DataFrame(cont)
-            bed_content = bed_content.append(bed_entry, ignore_index=True, sort=False)
+                nsplit = (region.end-region.start)//resolution
 
-        bed_content.to_csv(os.path.join(
-            output_dir,
-            '{prefix}.{model}.{output}.{condition}.bed'.format(
-                prefix=name, model=modelname,
-                output=layername, condition=condition)),
-                           sep='\t', header=False, index=False,
-                           columns=['chr', 'start', 'end', 'name', 'score'])
+                starts = list(range(region.start,
+                                    region.end,
+                                    resolution))
+                ends = list(range(region.start + resolution,
+                                  region.end + resolution,
+                                  resolution))
+                cont = {'chr': [region.chrom] * nsplit,
+                        'start': [s for s in starts],
+                        'end': [e for e in ends],
+                        'name': ['.'] * nsplit,
+                        'score': pred[ridx*nsplit:((ridx+1)*nsplit)]}
+
+                bed_entry = pd.DataFrame(cont)
+                bed_content = bed_content.append(bed_entry, ignore_index=True, sort=False)
+
+            bed_content.to_csv(os.path.join(
+                output_dir,
+                '{prefix}.{model}.{output}.{condition}.bed'.format(
+                    prefix=name, model=modelname,
+                    output=layername, condition=condition)),
+                               sep='\t', header=False, index=False,
+                               columns=['chr', 'start', 'end', 'name', 'score'])
 
 
-def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # pylint: disable=too-many-locals
-                      annot=None,
-                      method='ward', metric='euclidean', z_score=None,
-                      standard_scale=None, row_cluster=True, col_cluster=True,
-                      row_linkage=None, col_linkage=None, row_colors=None,
-                      col_colors=None, mask=None, **kwargs):
+class ExportClustermap(object):
     """Create of clustermap of the feature activities.
 
     This method utilizes
@@ -652,12 +629,6 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # py
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     fform : str or None
         Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
     figsize : tuple(int, int) or None
@@ -686,116 +657,150 @@ def export_clustermap(output_dir, name, results, fform=None, figsize=None,  # py
         See `seaborn.clustermap <https://seaborn.pydata.org/generated/seaborn.clustermap.html>`_.
     """
 
-    if sns is None:  # pragma: no cover
-        raise Exception('seaborn not available. Please install seaborn.')
+    def __init__(self, fform=None, figsize=None,  # pylint: disable=too-many-locals
+                 annot=None,
+                 method='ward', metric='euclidean', z_score=None,
+                 standard_scale=None, row_cluster=True, col_cluster=True,
+                 row_linkage=None, col_linkage=None, row_colors=None,
+                 col_colors=None, mask=None, **kwargs):
 
-    if annot is not None:
+        self.fform = fform
+        self.figsize = figsize
+        self.annot = annot
+        self.method = method
+        self.metric = metric
+        self.z_score = z_score
+        self.standard_scale = standard_scale
+        self.row_cluster = row_cluster
+        self.col_cluster = col_cluster
+        self.row_linkage = row_linkage
+        self.col_linkage = col_linkage
+        self.row_colors = row_colors
+        self.col_colors = col_colors
+        self.mask = mask
 
-        firstkey = list(annot.keys())[0]
-        pal = sns.color_palette('hls', len(set(annot[firstkey])))
-        lut = dict(zip(set(annot[firstkey]), pal))
-        row_colors = [lut[k] for k in annot[firstkey]]
+    def __call__(self, output_dir, name, results):
 
-    _rs = {k: results[k]['value'] for k in results}
-    data = pd.DataFrame.from_dict(_rs)
-    if fform is not None:
-        fform = fform
-    else:
-        fform = 'png'
+        if sns is None:  # pragma: no cover
+            raise Exception('seaborn not available. Please install seaborn.')
 
-    sns.clustermap(data,
-                   method=method,
-                   metric=metric,
-                   z_score=z_score,
-                   standard_scale=standard_scale,
-                   row_cluster=row_cluster,
-                   col_cluster=col_cluster,
-                   row_linkage=row_linkage,
-                   col_linkage=col_linkage,
-                   col_colors=col_colors,
-                   row_colors=row_colors,
-                   mask=mask,
-                   figsize=figsize,
-                   **kwargs).savefig(os.path.join(output_dir,
-                                                  name + '.' + fform),
-                                     format=fform, dpi=700)
+        annot = self.annot
+        if annot is not None:
+
+            firstkey = list(annot.keys())[0]
+            pal = sns.color_palette('hls', len(set(annot[firstkey])))
+            lut = dict(zip(set(annot[firstkey]), pal))
+            row_colors = [lut[k] for k in annot[firstkey]]
+
+        _rs = {k: results[k]['value'] for k in results}
+        data = pd.DataFrame.from_dict(_rs)
+
+        fform = self.fform
+
+        if fform is not None:
+            fform = fform
+        else:
+            fform = 'png'
+
+        sns.clustermap(data,
+                       method=self.method,
+                       metric=self.metric,
+                       z_score=self.z_score,
+                       standard_scale=self.standard_scale,
+                       row_cluster=self.row_cluster,
+                       col_cluster=self.col_cluster,
+                       row_linkage=self.row_linkage,
+                       col_linkage=self.col_linkage,
+                       col_colors=self.col_colors,
+                       row_colors=self.row_colors,
+                       mask=self.mask,
+                       figsize=self.figsize).savefig(
+                            os.path.join(output_dir,
+                                         name + '.' + fform),
+                            format=fform, dpi=700)
 
 
-def export_tsne(output_dir, name, results, figsize=None,  # pylint: disable=too-many-locals
-                cmap=None, colors=None, norm=None, alpha=None, fform=None,
-                annot=None):
+class ExportTsne(object):
     """Create a plot of the 2D t-SNE embedding of the feature activities.
 
     Parameters
     ----------
-    output_dir : str
-        Output directory.
-    name : str
-        Output name.
-    results : dict
-        Dictionary containing the evaluation results which needs to be stored.
     fform : str or None
-        Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
+     Output file format. E.g. 'png', 'eps', etc. Default: 'png'.
     figsize : tuple(int, int) or None
-        Used to specify the figure size for matplotlib.
+     Used to specify the figure size for matplotlib.
     cmap : None or colormap
-        Optional argument for matplotlib.pyplot.scatter. Only used if annot
-        is abscent. Otherwise, marker colors are derived from the annotation.
+     Optional argument for matplotlib.pyplot.scatter. Only used if annot
+     is abscent. Otherwise, marker colors are derived from the annotation.
     colors : None
-        Optional argument for matplotlib.pyplot.scatter.
-        Only used if annot
-        is abscent. Otherwise, marker colors are derived from the annotation.
+     Optional argument for matplotlib.pyplot.scatter.
+     Only used if annot
+     is abscent. Otherwise, marker colors are derived from the annotation.
     norm :
-        Optional argument for matplotlib.pyplot.scatter.
+     Optional argument for matplotlib.pyplot.scatter.
     alpha : None or float
-        Opacity used for scatter plot markers.
+     Opacity used for scatter plot markers.
     annot : None or dict.
-        If annotation data is available, the color of the markers is automatically
-        derived for the annotation.
+     If annotation data is available, the color of the markers is automatically
+     derived for the annotation.
     """
 
-    if TSNE is None:  # pragma: no cover
-        raise Exception('scikit-learn not available. '
-                        'Please install scikit-learn to be able to use export_tsne.')
-    if plt is None:  # pragma: no cover
-        raise Exception('matplotlib not available. '
-                        'Please install matplotlib to be able to use export_tsne.')
+    def __init__(self, figsize=None, cmap=None, colors=None, norm=None,
+                 alpha=None, fform=None, annot=None):
 
-    _rs = {k: results[k]['value'] for k in results}
-    data = pd.DataFrame.from_dict(_rs)
+        self.figsize = figsize
+        self.cmap = cmap
+        self.colors = colors
+        self.norm = norm
+        self.alpha = alpha
+        self.fform = fform
+        self.annot = annot
 
-    tsne = TSNE()
-    embedding = tsne.fit_transform(data.values)
+    def __call__(self, output_dir, name, results):
 
-    if figsize is not None:
-        fig = plt.figure(figsize=figsize)
-    else:
-        fig = plt.figure()
+        if TSNE is None:  # pragma: no cover
+            raise Exception('scikit-learn not available. '
+                            'Please install scikit-learn to be able to use export_tsne.')
+        if plt is None:  # pragma: no cover
+            raise Exception('matplotlib not available. '
+                            'Please install matplotlib to be able to use export_tsne.')
 
-    if annot is not None:
-        firstkey = list(annot.keys())[0]
-        pal = sns.color_palette('hls', len(set(annot[firstkey])))
-        lut = dict(zip(set(annot[firstkey]), pal))
+        _rs = {k: results[k]['value'] for k in results}
+        data = pd.DataFrame.from_dict(_rs)
 
-        for label in lut:
-            plt.scatter(x=embedding[np.asarray(annot[firstkey]) == label, 0],
-                        y=embedding[np.asarray(annot[firstkey]) == label, 1],
-                        c=lut[label],
-                        label=label,
-                        norm=norm, alpha=alpha)
+        tsne = TSNE()
+        embedding = tsne.fit_transform(data.values)
 
-        plt.legend()
-    else:
-        plt.scatter(x=embedding[:, 0],
-                    y=embedding[:, 1],
-                    c=colors, cmap=cmap,
-                    norm=norm, alpha=alpha)
+        if self.figsize is not None:
+            fig = plt.figure(figsize=figsize)
+        else:
+            fig = plt.figure()
 
-    plt.axis('off')
-    if fform is not None:
-        fform = fform
-    else:
-        fform = 'png'
+        if self.annot is not None:
+            firstkey = list(annot.keys())[0]
+            pal = sns.color_palette('hls', len(set(annot[firstkey])))
+            lut = dict(zip(set(annot[firstkey]), pal))
 
-    fig.savefig(os.path.join(output_dir, name + '.' + fform),
-                format=fform, dpi=700)
+            for label in lut:
+                plt.scatter(x=embedding[np.asarray(annot[firstkey]) == label, 0],
+                            y=embedding[np.asarray(annot[firstkey]) == label, 1],
+                            c=lut[label],
+                            label=label,
+                            norm=self.norm, alpha=self.alpha)
+
+            plt.legend()
+        else:
+            plt.scatter(x=embedding[:, 0],
+                        y=embedding[:, 1],
+                        c=self.colors, cmap=self.cmap,
+                        norm=self.norm, alpha=self.alpha)
+
+        plt.axis('off')
+        fform = self.fform
+        if fform is not None:
+            fform = fform
+        else:
+            fform = 'png'
+
+        fig.savefig(os.path.join(output_dir, name + '.' + fform),
+                    format=fform, dpi=700)

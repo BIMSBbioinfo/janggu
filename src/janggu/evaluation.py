@@ -9,7 +9,7 @@ import os
 
 import numpy
 
-from janggu.utils import export_json
+from janggu.utils import ExportJson
 
 
 def _dimension_match(kerasmodel, data, layertype):
@@ -88,30 +88,33 @@ class Scorer(object):
     """Scorer class.
 
     This class implements the callback interface that is used
-    with Janggu.evaluate.
-    An Scorer can apply a desired scoring metric, e.g. from sklearn.
-    and write the results into a desired output file, e.g. json, tsv
-    or a plot.
+    with :code:`Janggu.evaluate` and :code:`Janggu.predict`.
+    The scorer maintains a scoring callable and an exporter callable
+    which take care of determining the desired score and writing
+    the result into a desired file, e.g. json, tsv or a figure, respectively.
+
 
     Parameters
     ----------
     name : str
         Name of the score to be performed.
     score_fct : None or callable
-        Score function that is invoked upon calling score.
-        This function must satisfy the signature
-        :code:`fct(y_true, y_pred, **kwargs)` if used with
-        :code:`Janggu.evaluate` and :code:`fct(y_pred, **kwargs)` if
-        used with :code:`Janggu.predict`.
+        Callable that is invoked for scoring.
+        This callable must satisfy the signature
+        :code:`fct(y_true, y_pred)` if used with
+        :code:`Janggu.evaluate` and :code:`fct(y_pred)` if
+        used with :code:`Janggu.predict`. The returned score should be
+        compatible with the exporter.
     conditions : list(str) or None
         List of strings describing the conditions dimension of the dataset
         that is processed. If None, conditions are extracted from the
         y_true Dataset, if available. Otherwise, the conditions are integers
         ranging from zero to :code:`len(conditions) - 1`.
     exporter : callable
-        Exporter function is used to export the results in the desired manner,
+        Exporter function is used to export the scoring results
+        in the desired manner,
         e.g. as json or tsv file. This function must satisfy the signature
-        :code:`fct(output_path, filename_prefix, results, **kwargs)`.
+        :code:`fct(output_path, filename_prefix, results)`.
     immediate_export : boolean
         If set to True, the exporter function will be invoked immediately
         after the evaluation of the dataset. If set to False, the results
@@ -129,7 +132,7 @@ class Scorer(object):
 
     def __init__(self, name, score_fct=None,
                  conditions=None,
-                 exporter=export_json,
+                 exporter=ExportJson(),
                  immediate_export=True,
                  percondition=True,
                  subdir=None):
@@ -147,7 +150,7 @@ class Scorer(object):
             subdir = 'evaluation'
         self.subdir = subdir
 
-    def export(self, path, collection_name, datatags=None, **kwargs):
+    def export(self, path, collection_name, datatags=None):
         """Exporting of the results.
 
         When calling export, the results which have been collected
@@ -163,8 +166,6 @@ class Scorer(object):
         datatags : list(str) or None
             Optional tags describing the dataset. E.g. 'training_set'.
             Default: None
-        **kwargs :
-            Optional kwargs that are passed on to exporter.
         """
         output_path = os.path.join(path, collection_name)
         if datatags is not None:
@@ -176,10 +177,9 @@ class Scorer(object):
             # if there are some results, export them
             print('exporting', self.score_name, 'to', output_path)
             self._exporter(output_path, self.score_name,
-                           self.results, **kwargs)
+                           self.results)
 
-    def score(self, model, predicted, outputs=None, datatags=None,  # pylint: disable=too-many-locals
-              score_kwargs=None, exporter_kwargs=None):
+    def score(self, model, predicted, outputs=None, datatags=None):
         """Scoring of the predictions relative to true outputs.
 
         When calling score, the provided
@@ -202,10 +202,6 @@ class Scorer(object):
             absent.
         datatags : list(str) or None
             Optional tags describing the dataset, e.g. 'test_set'.
-        score_kwargs : dict or None
-            Optional kwargs that are passed on to score_fct.
-        exporter_kwargs : dict or None
-            Optional kwargs that are passed on to exporter.
         """
 
         if not datatags:
@@ -224,19 +220,15 @@ class Scorer(object):
                 return value
             score_fct = _dummy
 
-        score_kwargs = score_kwargs if score_kwargs is not None else {}
-        exporter_kwargs = exporter_kwargs if exporter_kwargs is not None else {}
         for layername in model.get_config()['output_layers']:
 
             for idx in range(_pre[layername[0]].shape[-1]):
 
                 if outputs is None:
-                    score = score_fct(_pre[layername[0]][:, idx],
-                                      **score_kwargs)
+                    score = score_fct(_pre[layername[0]][:, idx])
                 else:
                     score = score_fct(_out[layername[0]][:, idx],
-                                      _pre[layername[0]][:, idx],
-                                      **score_kwargs)
+                                      _pre[layername[0]][:, idx])
 
                 if not self.percondition:
                     condition = 'across'
@@ -260,7 +252,7 @@ class Scorer(object):
             # export directly if required
             output_dir = os.path.join(model.outputdir, self.subdir)
 
-            self.export(output_dir, model.name, datatags, **exporter_kwargs)
+            self.export(output_dir, model.name, datatags)
 
             # reset the results
             self.results = {}

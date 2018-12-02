@@ -730,16 +730,16 @@ and export it as plot and into a tsv file, respectively, is shown below
    from sklearn.metrics import roc_auc_score
    from sklearn.metrics import roc_curve
    from janggu import Scorer
-   from janggu.utils import export_tsv
-   from janggu.utils import export_score_plot
+   from janggu.utils import ExportTsv
+   from janggu.utils import ExportScorePlot
 
    # create a scorer
    score_auroc = Scorer('auROC',
                         roc_auc_score,
-                        exporter=export_tsv)
+                        exporter=ExportTsv())
    score_roc = Scorer('ROC',
                         roc_curve,
-                        exporter=export_score_plot)
+                        exporter=ExportScorePlot())
    # determine the auROC
    model.evaluate(DNA, LABELS, callbacks=[score_auroc, score_roc])
 
@@ -752,10 +752,10 @@ of the model. Below, the output predictions are exported in json format.
 .. code:: python
 
    from janggu import Scorer
-   from janggu import export_json
+   from janggu import ExportJson
 
    # create scorer
-   pred_scorer = Scorer('predict', exporter=export_json)
+   pred_scorer = Scorer('predict', exporter=ExportJson())
 
    # Evaluate predictions
    model.predict(DNA, callbacks=[pred_scorer])
@@ -771,7 +771,7 @@ Alternatively, you can also plug in custom functions
 
    # computes the per-data point loss
    score_loss = Scorer('loss', lambda t, p: -t * numpy.log(p),
-                            exporter=export_json)
+                            exporter=ExportJson())
 
 
 Browse through the results

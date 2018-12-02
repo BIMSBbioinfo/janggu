@@ -19,12 +19,12 @@ from janggu.data import Array
 from janggu.data import GenomicIndexer
 from janggu.evaluation import Scorer
 from janggu.evaluation import _dimension_match
-from janggu.utils import export_bed
-from janggu.utils import export_bigwig
-from janggu.utils import export_clustermap
-from janggu.utils import export_score_plot
-from janggu.utils import export_tsne
-from janggu.utils import export_tsv
+from janggu.utils import ExportBed
+from janggu.utils import ExportBigwig
+from janggu.utils import ExportClustermap
+from janggu.utils import ExportScorePlot
+from janggu.utils import ExportTsne
+from janggu.utils import ExportTsv
 
 
 def test_input_dims():
@@ -148,7 +148,7 @@ def test_output_tsv_score(tmpdir):
 
     bwm = get_janggu(inputs, outputs)
 
-    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15, exporter=export_tsv)
+    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15, exporter=ExportTsv())
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
@@ -169,14 +169,22 @@ def test_output_export_score_plot(tmpdir):
                         lambda y_true, y_pred:
                         ([0., 0.5, 0.5, 1.],
                          [0.5, 0.5, 1., 1.],
-                         [0.8, 0.4, 0.35, 0.1]), exporter=export_score_plot)
+                         [0.8, 0.4, 0.35, 0.1]),
+                        exporter=ExportScorePlot())
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'figsize': (10, 12),
-                                  'xlabel': 'FPR',
-                                  'ylabel': 'TPR',
-                                  'fform': 'eps'})
+
+    dummy_eval = Scorer('score',
+                        lambda y_true, y_pred:
+                        ([0., 0.5, 0.5, 1.],
+                         [0.5, 0.5, 1., 1.],
+                         [0.8, 0.4, 0.35, 0.1]),
+                        exporter=ExportScorePlot(figsize=(10,12),
+                                                 xlabel='FPR',
+                                                 ylabel='TPR',
+                                                 fform='eps'))
+
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
@@ -205,14 +213,14 @@ def test_output_export_clustermap(tmpdir):
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    dummy_eval = Scorer('cluster', exporter=export_clustermap)
+    dummy_eval = Scorer('cluster', exporter=ExportClustermap())
 
     bwm.predict(inputs, layername='hidden',
                 callbacks=[dummy_eval])
 
+    dummy_eval = Scorer('cluster', exporter=ExportClustermap(fform='eps'))
     bwm.predict(inputs, layername='hidden',
-                callbacks=[dummy_eval],
-                exporter_kwargs={'fform': 'eps'})
+                callbacks=[dummy_eval])
 
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
@@ -243,14 +251,14 @@ def test_output_export_tsne(tmpdir):
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    dummy_eval = Scorer('tsne',
-                        exporter=export_tsne)
+    dummy_eval = Scorer('tsne', exporter=ExportTsne())
 
     bwm.predict(inputs, layername='hidden',
                 callbacks=[dummy_eval])
+
+    dummy_eval = Scorer('tsne', exporter=ExportTsne(fform='eps'))
     bwm.predict(inputs, layername='hidden',
-                callbacks=[dummy_eval],
-                exporter_kwargs={'fform': 'eps'})
+                callbacks=[dummy_eval])
     # check if plot was produced
     assert os.path.exists(os.path.join(tmpdir.strpath,
                                        "evaluation", bwm.name, 'hidden',
@@ -278,10 +286,9 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
-                        exporter=export_bed)
+                        exporter=ExportBed(gindexer=gi, resolution=200))
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi, 'resolution': 200})
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -320,10 +327,9 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     # dummy_eval = Scorer('loss', lambda t, p: -t * numpy.log(p),
     #                    exporter=export_bed, export_args={'gindexer': gi})
     dummy_eval = Scorer('loss', lambda t, p: [0.1] * len(t),
-                        exporter=export_bed)
+                        exporter=ExportBed(gindexer=gi, resolution=50))
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi, 'resolution': 50})
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bed')
@@ -359,11 +365,10 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=export_bed,
+                        exporter=ExportBed(gindexer=gi, resolution=200),
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi, 'resolution': 200})
+    bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -399,10 +404,10 @@ def test_output_bed_predict_denseout(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=export_bed,
+                        exporter=ExportBed(gindexer=gi, resolution=200),
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval], exporter_kwargs={'gindexer': gi, 'resolution': 200})
+    bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -438,11 +443,10 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=export_bed,
+                        exporter=ExportBed(gindexer=gi, resolution=50),
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi, 'resolution': 50})
+    bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bed')
@@ -478,11 +482,10 @@ def test_output_bigwig_predict_denseout(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=export_bigwig,
+                        exporter=ExportBigwig(gindexer=gi),
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi})
+    bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -515,11 +518,10 @@ def test_output_bigwig_predict_convout(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.2] * len(p),
-                        exporter=export_bigwig,
+                        exporter=ExportBigwig(gindexer=gi),
                         conditions=['c1', 'c2', 'c3', 'c4'])
 
-    bwm.predict(inputs, callbacks=[dummy_eval],
-                exporter_kwargs={'gindexer': gi})
+    bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.nptest.y.{}.bigwig')
@@ -552,10 +554,9 @@ def test_output_bigwig_loss_resolution_equal_stepsize(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
-                        exporter=export_bigwig)
+                        exporter=ExportBigwig(gindexer=gi))
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi})
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bigwig')
@@ -588,10 +589,9 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
                                          stepsize=50)
 
     dummy_eval = Scorer('loss', lambda t, p: [0.2] * len(t),
-                        exporter=export_bigwig)
+                        exporter=ExportBigwig(gindexer=gi))
 
-    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval],
-                 exporter_kwargs={'gindexer': gi})
+    bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.nptest.y.{}.bigwig')
@@ -615,9 +615,10 @@ def test_output_tsv_score_across_conditions(tmpdir):
     bwm = get_janggu(inputs, outputs)
 
     dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15,
-                        exporter=export_tsv)
+                        exporter=ExportTsv())
     dummy_evalacross = Scorer('scoreacross',
-                              lambda y_true, y_pred: 0.15, exporter=export_tsv,
+                              lambda y_true, y_pred: 0.15,
+                              exporter=ExportTsv(),
                               percondition=False)
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval, dummy_evalacross])

@@ -11,10 +11,10 @@ from janggu.layers import DnaConv2D  # noqa
 from janggu.layers import LocalAveragePooling2D  # noqa
 from janggu.layers import Reverse  # noqa
 from janggu.model import Janggu  # noqa
-from janggu.utils import export_bed  # noqa
-from janggu.utils import export_bigwig  # noqa
-from janggu.utils import export_clustermap  # noqa
-from janggu.utils import export_json  # noqa
-from janggu.utils import export_score_plot  # noqa
-from janggu.utils import export_tsne  # noqa
-from janggu.utils import export_tsv  # noqa
+from janggu.utils import ExportBed  # noqa
+from janggu.utils import ExportBigwig  # noqa
+from janggu.utils import ExportClustermap  # noqa
+from janggu.utils import ExportJson  # noqa
+from janggu.utils import ExportScorePlot  # noqa
+from janggu.utils import ExportTsne  # noqa
+from janggu.utils import ExportTsv  # noqa

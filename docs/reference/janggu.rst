@@ -34,11 +34,11 @@ Evaluator
 Utilities
 =========
 
-.. autofunction:: export_json
-.. autofunction:: export_tsv
-.. autofunction:: export_bed
-.. autofunction:: export_bigwig
-.. autofunction:: export_score_plot
+.. autoclass:: ExportJson
+.. autoclass:: ExportTsv
+.. autoclass:: ExportBed
+.. autoclass:: ExportBigwig
+.. autoclass:: ExportScorePlot
 
 Decorators
 ^^^^^^^^^^^
