@@ -95,7 +95,7 @@ class Bioseq(Dataset):
 
     @staticmethod
     def _make_genomic_array(name, fastafile, order, storage,
-                            seqtype, cache=True, datatags=None,
+                            cache=True, datatags=None,
                             overwrite=False, store_whole_genome=True):
         """Create a genomic array or reload an existing one."""
 
@@ -105,18 +105,7 @@ class Bioseq(Dataset):
         dtype = 'int16'
 
         # Load sequences from refgenome
-        seqs = []
-        if isinstance(fastafile, str):
-            fastafile = [fastafile]
-
-        if not isinstance(fastafile[0], Bio.SeqRecord.SeqRecord):
-            for fasta in fastafile:
-                # += is necessary since sequences_from_fasta
-                # returns a list
-                seqs += sequences_from_fasta(fasta, seqtype)
-        else:
-            # This is already a list of SeqRecords
-            seqs = fastafile
+        seqs = fastafile
 
         # Extract chromosome lengths
         chromlens = {}
@@ -220,7 +209,7 @@ class Bioseq(Dataset):
         if not store_whole_genome and gindexer is None:
             raise ValueError('Either roi must be supplied or store_whole_genome must be True')
 
-        if not isinstance(refgenome, Bio.SeqRecord.SeqRecord):
+        if isinstance(refgenome, str):
             seqs = sequences_from_fasta(refgenome, 'dna')
         else:
             # This is already a list of SeqRecords
@@ -242,7 +231,7 @@ class Bioseq(Dataset):
                 subseqs.append(subseq)
             seqs = subseqs
 
-        garray = cls._make_genomic_array(name, seqs, order, storage, 'dna',
+        garray = cls._make_genomic_array(name, seqs, order, storage,
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite,
@@ -326,7 +315,7 @@ class Bioseq(Dataset):
         assert len(set(chroms)) == len(seqs), "Sequence IDs must be unique."
         # now mimic a dataframe representing a bed file
 
-        garray = cls._make_genomic_array(name, seqs, order, storage, seqtype,
+        garray = cls._make_genomic_array(name, seqs, order, storage,
                                          cache=cache, datatags=datatags,
                                          overwrite=overwrite,
                                          store_whole_genome=True)

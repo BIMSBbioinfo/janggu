@@ -52,6 +52,20 @@ def test_dna_first_last_channel():
     np.testing.assert_equal(data1[0], np.transpose(data[0], (0, 2, 3, 1)))
 
 
+def test_dna_loading_from_seqrecord(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    order = 2
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.gtf')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    seqs = sequences_from_fasta(refgenome)
+
+    data = Bioseq.create_from_refgenome('train', refgenome=seqs,
+                                     roi=bed_merged,
+                                     storage='ndarray',
+                                     order=order)
+
+
 def test_dna_genomic_interval_access(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     order = 2
@@ -540,3 +554,14 @@ def test_read_protein_sequences():
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]], dtype='int8'))
     np.testing.assert_equal(
         data[0][0, -2:, 0, :], np.zeros((2, 20), dtype='int8'))
+
+    data = Bioseq.create_from_seq('train', fastafile=filename,
+                                 order=order, seqtype='protein', fixedlen=5)
+    np.testing.assert_equal(len(data), 3)
+    np.testing.assert_equal(data.shape, (3, 5, 1, 20))
+    np.testing.assert_equal(
+        data[0][0, :4, 0, :],
+        np.asarray([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]], dtype='int8'))

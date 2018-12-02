@@ -542,6 +542,10 @@ def test_cover_from_bam_sanity():
         storage='ndarray')
     cover[0]
 
+    with pytest.raises(IndexError):
+        # not interable
+        cover[1.2]
+
     cov2 = Cover.create_from_bam(
            'test',
            bamfiles=bamfile_,
@@ -935,6 +939,46 @@ def test_load_bam_resolution10(tmpdir):
         np.testing.assert_equal(val[2], np.asarray([1]))  # strand
 
 
+
+def test_load_bam_resolutionNone(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bamfile_ = os.path.join(data_path, "sample.bam")
+    gsfile_ = os.path.join(data_path, 'sample.chrom.sizes')
+
+    content = pandas.read_csv(gsfile_, sep='\t', names=['chr', 'length'],
+                              index_col='chr')
+
+    gsize = content.to_dict()['length']
+
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    for store in ['ndarray', 'hdf5', 'sparse']:
+        # base pair binsize
+        # print(store)
+        cover1 = Cover.create_from_bam(
+            "yeast_I_II_III.bam",
+            bamfiles=bamfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            genomesize=gsize,
+            resolution=1,
+            storage=store, cache=True)
+        cover = Cover.create_from_bam(
+            "yeast_I_II_III.bam",
+            bamfiles=bamfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            genomesize=gsize,
+            resolution=None,
+            storage=store, cache=True, datatags=['None'])
+
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 2, 1))
+
+        np.testing.assert_equal(cover1[:].sum(axis=1), cover[:].sum(axis=1))
+
+
 def test_load_cover_bigwig_default(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -1020,6 +1064,40 @@ def test_load_cover_bigwig_resolution1(tmpdir):
          0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
          0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.,
          0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))
+
+
+
+def test_load_cover_bigwig_resolutionNone(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    for store in ['ndarray', 'hdf5', 'sparse']:
+        # base pair binsize
+        print(store)
+        cover1 = Cover.create_from_bigwig(
+            "cov",
+            bigwigfiles=bwfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=1,
+            storage=store, cache=True)
+
+        cover = Cover.create_from_bigwig(
+            "cov",
+            bigwigfiles=bwfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=None,
+            storage=store, cache=True, datatags=['None'],
+            collapser='sum')
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
+
+        np.testing.assert_equal(cover1[:].sum(axis=1), cover[:].sum(axis=1))
 
 
 def test_load_cover_bed_binary(tmpdir):
@@ -1284,3 +1362,4 @@ def test_plotgenometracks():
 
 
     a = plotGenomeTrack([cover,cover2],'chr1',16000,18000)
+    a = plotGenomeTrack(cover,'chr1',16000,18000)

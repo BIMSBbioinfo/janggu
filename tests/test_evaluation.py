@@ -218,7 +218,8 @@ def test_output_export_clustermap(tmpdir):
     bwm.predict(inputs, layername='hidden',
                 callbacks=[dummy_eval])
 
-    dummy_eval = Scorer('cluster', exporter=ExportClustermap(fform='eps'))
+    dummy_eval = Scorer('cluster', exporter=ExportClustermap(fform='eps',
+                                                             annot={'annot':[1]*50 + [0]*50}))
     bwm.predict(inputs, layername='hidden',
                 callbacks=[dummy_eval])
 
@@ -256,7 +257,9 @@ def test_output_export_tsne(tmpdir):
     bwm.predict(inputs, layername='hidden',
                 callbacks=[dummy_eval])
 
-    dummy_eval = Scorer('tsne', exporter=ExportTsne(fform='eps'))
+    dummy_eval = Scorer('tsne', exporter=ExportTsne(fform='eps',
+                                                    annot={'annot':[1]*50 + [0]*50},
+                                                    figsize=(10, 10)))
     bwm.predict(inputs, layername='hidden',
                 callbacks=[dummy_eval])
     # check if plot was produced

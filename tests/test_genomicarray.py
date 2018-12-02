@@ -5,7 +5,64 @@ import pytest
 from HTSeq import GenomicInterval
 
 from janggu.data import create_genomic_array
+from janggu.data.genomicarray import get_collapser
 from janggu.data.genomicarray import get_normalizer
+
+
+def test_get_collapser():
+    with pytest.raises(Exception):
+        # this collapser is not available
+        get_collapser('blabla')
+
+
+def test_get_normalizer():
+    with pytest.raises(Exception):
+        # this normalizer is not available
+        get_normalizer('blabla')
+
+
+def test_resolution_negative():
+    with pytest.raises(Exception):
+        ga = create_genomic_array({'chr10': 300}, stranded=True,
+                                  typecode='int8',
+                                  storage='ndarray', cache=False,
+                                  resolution=-1)
+
+
+def test_hdf5_no_cache():
+
+    with pytest.raises(Exception):
+        # cache must be True
+        ga = create_genomic_array({'chr10': 300},
+                                  stranded=True, typecode='int8',
+                                  storage='hdf5', cache=False)
+
+
+def test_invalid_access():
+
+    ga = create_genomic_array({'chr10': 300}, stranded=False,
+                              typecode='int8',
+                              storage='ndarray')
+
+    with pytest.raises(Exception):
+        # access only via genomic interval
+        ga[1]
+
+    with pytest.raises(Exception):
+        # access only via genomic interval and condition
+        ga[1] = 1
+
+    ga = create_genomic_array({'chr10': 300}, stranded=False,
+                              typecode='int8',
+                              storage='sparse')
+
+    with pytest.raises(Exception):
+        # access only via genomic interval
+        ga[1]
+
+    with pytest.raises(Exception):
+        # access only via genomic interval and condition
+        ga[1] = 1
 
 
 def test_bwga_instance_unstranded_taged(tmpdir):
@@ -13,6 +70,15 @@ def test_bwga_instance_unstranded_taged(tmpdir):
     iv = GenomicInterval('chr10', 100, 120, '.')
     ga = create_genomic_array({'chr10': 300}, stranded=False, typecode='int8',
                               storage='ndarray', datatags='test_bwga_instance_unstranded')
+
+    with pytest.raises(Exception):
+        # access only via genomic interval
+        ga[1]
+
+    with pytest.raises(Exception):
+        # access only via genomic interval and condition
+        ga[1] = 1
+
     np.testing.assert_equal(ga[iv].shape, (20, 1, 1))
     np.testing.assert_equal(ga[iv], np.zeros((20, 1, 1)))
 
