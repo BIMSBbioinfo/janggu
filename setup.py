@@ -26,7 +26,7 @@ def _read(*names, **kwargs):
 
 setup(
     name='janggu',
-    version='0.8.0',
+    version='0.8.1',
     license='GLP-3.0',
     description='Code infrastructure for deep learning to make modelling '
     + 'reproducible and maintainable',

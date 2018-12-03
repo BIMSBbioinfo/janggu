@@ -2,18 +2,23 @@
 Changelog
 =========
 
+0.8.1 (2018-12-03)
+------------------
+
+- Bugfix in GenomicIndexer.create_from_region
+
 0.8.0 (2018-12-02)
 ------------------
 
-o Improved test coverage
-o Improved linter issues
-o Bugs fixed
-o Improved documentation for scorers
-o Removed kwargs for scorers and exporters
-o Adapted exporters to classes
+- Improved test coverage
+- Improved linter issues
+- Bugs fixed
+- Improved documentation for scorers
+- Removed kwargs for scorers and exporters
+- Adapted exporters to classes
 
 
 0.7.0 (2018-12-01)
 ------------------
 
-o First public version
+- First public version

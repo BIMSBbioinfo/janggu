@@ -147,16 +147,14 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         reglen = val // stepsize
         chrs = [chrom] * reglen
         starts = [x for x in range(start, start+(stepsize*reglen), stepsize)]
-        #ends = np.asarray(starts) + binsize
-        #ends = ends.tolist()
+
         ends = [x + binsize for x in starts]
         strands = [strand] * reglen
         # if there is a variable length fragment at the end,
         # we record the remaining fragment length
         if zero_padding and val % stepsize > 0:
             chrs += [chrom]
-            starts += [starts[-1] + stepsize]
-            #ends += [val - (val//stepsize) * stepsize]
+            starts += [start+(stepsize*reglen)]
             ends += [end]
             strands += [strand]
 

@@ -9,6 +9,28 @@ from janggu.data import GenomicIndexer
 
 matplotlib.use('AGG')
 
+def test_gindexer_short_interval():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+
+    gi = GenomicIndexer.create_from_file(os.path.join(data_path,
+                                                 'sample_equalsize.bed'),
+                                    binsize=200, stepsize=200)
+    assert len(gi) == 4
+    gi = GenomicIndexer.create_from_file(os.path.join(data_path,
+                                                 'sample_equalsize.bed'),
+                                    binsize=180, stepsize=20)
+    assert len(gi) == 8
+    gi = GenomicIndexer.create_from_file(os.path.join(data_path,
+                                                 'sample_equalsize.bed'),
+                                    binsize=210, stepsize=20, zero_padding=False)
+    assert len(gi) == 0
+
+    gi = GenomicIndexer.create_from_file(os.path.join(data_path,
+                                                 'sample_equalsize.bed'),
+                                    binsize=210, stepsize=20, zero_padding=True)
+    assert len(gi) == 4
+
 
 def test_gindexer_errors():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
