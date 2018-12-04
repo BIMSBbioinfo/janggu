@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.8.2 (2018-12-04)
+------------------
+
+- Bugfix for zero-padding functionality
+- Added ndim for keras compatibility
+
 0.8.1 (2018-12-03)
 ------------------
 
