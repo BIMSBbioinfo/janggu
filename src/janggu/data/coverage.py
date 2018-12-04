@@ -1157,7 +1157,8 @@ class Cover(Dataset):
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
 
-            data[i, :, :, :] = self._getsingleitem(interval)
+            dat = self._getsingleitem(interval)
+            data[i, :len(dat), :, :] = dat
 
         for transform in self.transformations:
             data = transform(data)

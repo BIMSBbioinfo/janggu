@@ -382,7 +382,9 @@ class Bioseq(Dataset):
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]
 
-            iseq[i] = self._getsingleitem(interval)
+            dat = self._getsingleitem(interval)
+
+            iseq[i, :len(dat)] = dat
 
         return iseq
 
