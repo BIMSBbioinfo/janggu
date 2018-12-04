@@ -48,3 +48,8 @@ class Array(Dataset):
         if len(self.data.shape) == 1:
             return self.data.shape + (1,)
         return self.data.shape
+
+
+    @property
+    def ndim(self):
+        return len(self.shape)

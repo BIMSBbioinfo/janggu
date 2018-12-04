@@ -1201,6 +1201,10 @@ class Cover(Dataset):
         return (len(self),) + seqdims + stranded + (len(self.garray.condition),)
 
     @property
+    def ndim(self):
+        return len(self.shape)
+
+    @property
     def conditions(self):
         """Conditions"""
         return [s.decode('utf-8') for s in self.garray.condition]

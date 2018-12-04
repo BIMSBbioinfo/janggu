@@ -462,3 +462,7 @@ class Bioseq(Dataset):
                 pow(self._alphabetsize, self.garray.order),
                 self.gindexer.binsize +
                 2*self.gindexer.flank - self.garray.order + 1, 1)
+
+    @property
+    def ndim(self):
+        return len(self.shape)
