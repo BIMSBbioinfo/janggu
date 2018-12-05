@@ -18,7 +18,7 @@ Janggu - Deep learning for Genomics
 
 .. image:: https://img.shields.io/pypi/v/janggu.svg
     :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/janggu
+    :target: https://pypi.org/project/janggu
 
 .. end-badges
 
@@ -36,7 +36,7 @@ typical **Genomics data formats**
 and **out-of-the-box evaluation** so that you can concentrate
 on designing the neural network architecture for the purpose
 of quickly testing biological hypothesis.
-A comprehensive documentation is available `here <https://janggu.readthedocs.io>`_.
+A comprehensive documentation is available `here <https://janggu.readthedocs.io/en/latest>`_.
 
 
 Hallmarks of Janggu:
