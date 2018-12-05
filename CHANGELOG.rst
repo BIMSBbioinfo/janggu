@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.8.3 (2018-12-05)
+------------------
+
+- Fixed issues for loading SparseGenomicArray
+- Made GenomicIndexer.filter_by_region aware of flank
+- Fixed BedLoader of partially overlapping ROI and bedfiles issue using filter_by_region.
+- Adapted classifier, license and keywords in setup.py
+- Fixed hyperlinks
+
 0.8.2 (2018-12-04)
 ------------------
 
