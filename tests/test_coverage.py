@@ -468,10 +468,9 @@ def test_bed_inferred_binsize():
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
 
-
-def test_bed_overreaching_ends():
+def test_bed_overreaching_ends_whole_genome():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "positive.bed")
+    bed_file = os.path.join(data_path, "bed_test.bed")
 
     for store in ['ndarray', 'sparse']:
         print(store)
@@ -479,15 +478,40 @@ def test_bed_overreaching_ends():
             'test',
             bedfiles=bed_file,
             roi=bed_file,
-            flank=2000,
+            binsize=2,
+            flank=20,
             resolution=1,
             store_whole_genome=True,
             storage=store)
-        cover.garray.handle['chr1'][0]=1
-        assert len(cover) == 25
-        assert cover.shape == (25, 200+2*2000, 1, 1)
-        np.testing.assert_equal(cover[0][0, :550, 0, 0].sum(), 0)
-        np.testing.assert_equal(cover[0][0, 550, 0, 0], 1.)
+        assert len(cover) == 9
+        assert cover.shape == (9, 2+2*20, 1, 1)
+        np.testing.assert_equal(cover[0].sum(), 18)
+        np.testing.assert_equal(cover[:].sum(), 9*18)
+
+#def test_bed_overreaching_ends_whole_genome():
+#    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+#    bed_file = os.path.join(data_path, "positive.bed")
+#
+#    for store in ['ndarray', 'sparse']:
+#        print(store)
+#        cover = Cover.create_from_bed(
+#            'test',
+#            bedfiles=bed_file,
+#            roi=bed_file,
+#            flank=2000,
+#            resolution=1,
+#            store_whole_genome=True,
+#            storage=store)
+#        assert len(cover) == 25
+#        assert cover.shape == (25, 200+2*2000, 1, 1)
+#        np.testing.assert_equal(cover[0][0, :550, 0, 0].sum(), 0)
+#        np.testing.assert_equal(cover[0].sum(), 1400)
+#        np.testing.assert_equal(cover[:].sum(), 25*1400)
+
+
+def test_bed_overreaching_ends_part_genome():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "bed_test.bed")
 
     for store in ['ndarray', 'sparse']:
         print(store)
@@ -495,17 +519,34 @@ def test_bed_overreaching_ends():
             'test',
             bedfiles=bed_file,
             roi=bed_file,
-            flank=2000,
+            binsize=2,
+            flank=20,
             resolution=1,
             store_whole_genome=False,
             storage=store)
-        cover.garray.handle['chr1:-550-3650'][0]=1
-        assert len(cover) == 25
-        assert cover.shape == (25, 200+2*2000, 1, 1)
-        # due to store_whole_genome=False, the entire array should contain
-        # ones. Above, :550 only held zeros.
-        np.testing.assert_equal(cover[0][0, :550, 0, 0].sum(), 550)
-        np.testing.assert_equal(cover[0][0, 550, 0, 0], 1.)
+        assert len(cover) == 9
+        assert cover.shape == (9, 2+2*20, 1, 1)
+        np.testing.assert_equal(cover[0].sum(), 18)
+        np.testing.assert_equal(cover[:].sum(), 9*18)
+
+
+#def test_bed_overreaching_ends_part_genome():
+#    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+#    bed_file = os.path.join(data_path, "positive.bed")
+#    for store in ['ndarray', 'sparse']:
+#        print(store)
+#        cover = Cover.create_from_bed(
+#            'test',
+#            bedfiles=bed_file,
+#            roi=bed_file,
+#            flank=2000,
+#            resolution=1,
+#            store_whole_genome=False,
+#            storage=store)
+#        assert len(cover) == 25
+#        assert cover.shape == (25, 200+2*2000, 1, 1)
+#        np.testing.assert_equal(cover[0].sum(), 1400)
+#        np.testing.assert_equal(cover[:].sum(), 25*1400)
 
 
 def test_bed_store_whole_genome_option():

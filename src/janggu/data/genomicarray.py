@@ -704,21 +704,27 @@ class SparseGenomicArray(GenomicArray):
                                                    idx, sind * len(self.condition)
                                                    + condition] = val
                     else:
+                        if start < 0:
+                            tmp_start = -start
+                            ref_start = 0
+                        else:
+                            tmp_start = 0
+                            ref_start = start
 
-                        start_offset = max(start, 0)
-                        end_offset = min(end, len(self.handle[chrom]))
-                        dstart = start_offset - start
-                        #dend = end_offset - end
-                        #cend = end + (dend)
+                        if end > self.handle[chrom].shape[0]:
+                            tmp_end = value.shape[0] - (end - self.handle[chrom].shape[0])
+                            ref_end = self.handle[chrom].shape[0]
+                        else:
+                            tmp_end = value.shape[0]
+                            ref_end = end
 
-                        for idx, iarray in enumerate(range(start_offset,
-                                                           end_offset)):
-                            val = value[idx + dstart, sind]
-
+                        for idx, iarray in enumerate(range(ref_start, ref_end)):
+                            val = value[idx + tmp_start, sind]
                             if val > 0:
                                 self.handle[chrom][iarray,
                                                    sind * len(self.condition)
                                                    + condition] = val
+
             except KeyError:
                 # we end up here if the peak regions are not a subset of
                 # the regions of interest. that might be the case if
