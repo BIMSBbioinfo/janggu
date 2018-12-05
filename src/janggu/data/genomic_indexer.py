@@ -185,7 +185,6 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             end = self.ends[index]
             if end == start:
                 end += 1
-        #    end = start + (val if val > 0 else 1)
             return GenomicInterval(self.chrs[index], start - self.flank,
                                    end + self.flank, self.strand[index])
 
@@ -275,12 +274,12 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                     np.where(np.asarray(self.chrs) == exc)[0])
 
         if start is not None:
-            regionmatch = (np.array(self.ends) > start)
+            regionmatch = ((np.array(self.ends) + self.flank) > start)
             indexmatch = np.where(regionmatch)[0]
             idxs = idxs.intersection(indexmatch)
 
         if end is not None:
-            regionmatch = (np.array(self.starts) < end)
+            regionmatch = ((np.array(self.starts) - self.flank) < end)
             indexmatch = np.where(regionmatch)[0]
             idxs = idxs.intersection(indexmatch)
 
