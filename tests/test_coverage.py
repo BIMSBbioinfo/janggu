@@ -392,6 +392,67 @@ def test_bigwig_inferred_binsize():
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
 
+
+def test_bed_unsync_roi_targets():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+    bed_shift_file = os.path.join(data_path, "positive_shift.bed")
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=bed_file,
+        resolution=None,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 1, 1, 1)
+    assert cover[:].sum() == 25
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=bed_file,
+        resolution=50,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 4, 1, 1)
+    assert cover[:].sum() == 25 * 4
+
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=bed_file,
+        resolution=50,
+        store_whole_genome=True,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 4, 1, 1)
+    assert cover[:].sum() == 25 * 4
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=bed_file,
+        resolution=1,
+        store_whole_genome=False,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 1, 1)
+    assert cover[:].sum() == 25 * 200 - 2
+
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=bed_file,
+        resolution=1,
+        store_whole_genome=True,
+        storage='ndarray')
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 1, 1)
+    assert cover[:].sum() == 25 * 200 - 2
+
+
 def test_bed_inferred_binsize():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")

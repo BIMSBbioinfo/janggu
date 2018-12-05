@@ -227,33 +227,22 @@ class BedLoader:
     ----------
     files : str or list(str)
         Bed file locations.
-    gsize : dict
-        Dictionary of genome sizes.
+    gindexer : GenomicIndexer
+        GenomicIndexer object.
     mode : str
         Mode might be 'binary', 'score' or 'categorical'.
-    binsize : int
-        Binsize (interval sizes).
-    stepsize : int
-        Stepsize
-    flank : int
-        Flank
     """
-    def __init__(self, files, gsize, mode, binsize,
-                 stepsize, flank):
+    def __init__(self, files, gindexer, mode):
         self.files = files
-        self.gsize = gsize
+        self.gindexer = gindexer
         self.mode = mode
-        self.binsize = binsize
-        self.stepsize = stepsize
-        self.flank = flank
+
 
     def __call__(self, garray):
         files = self.files
         dtype = garray.typecode
+        gindexer = self.gindexer
         mode = self.mode
-        binsize = self.binsize
-        stepsize = self.stepsize
-        flank = self.flank
 
         print("load from bed")
         for i, sample_file in enumerate(files):
@@ -261,11 +250,10 @@ class BedLoader:
 
             for region in regions_:
 
-                gidx = GenomicIndexer.create_from_region(
-                    region.iv.chrom,
-                    region.iv.start,
-                    region.iv.end, region.iv.strand,
-                    binsize, stepsize, flank)
+                gidx = gindexer.filter_by_region(
+                    include=region.iv.chrom,
+                    start=region.iv.start,
+                    end=region.iv.end)
                 for greg in gidx:
                     if region.score is None and mode in ['score',
                                                          'categorical']:
@@ -281,6 +269,21 @@ class BedLoader:
                         np.dtype(dtype).type(score).reshape((1, 1)),
                         greg.length, axis=0)
 
+                    if greg.start < region.iv.start:
+                        # set the beginning of array to zero
+                        array[:(region.iv.start - greg.start), 0] = 0
+                    if greg.end > region.iv.end:
+                        # set the end of the array to zero
+                        array[-(greg.end - region.iv.end):, 0] = 0
+
+                    #if garray.resolution is not None:
+                    array = np.maximum(array,
+                                       np.repeat(garray[greg][:, :, i],
+                                       greg.length if garray.resolution is None \
+                                       else garray.resolution, axis=0))
+
+                    #    array = np.maximum(array, np.repeat(garray[greg][:, :, i], greg.length, axis=0)
+
                     if mode == 'score':
                         garray[greg, i] = array
                     elif mode == 'categorical':
@@ -290,10 +293,10 @@ class BedLoader:
         return garray
 
 class ArrayLoader:
-    """BedLoader class.
+    """ArrayLoader class.
 
     This class loads the GenomicArray with signal coverage
-    extracted from BED files.
+    extracted from a numpy array.
 
     Parameters
     ----------
@@ -500,7 +503,8 @@ class Cover(Dataset):
 
         if roi is not None:
             gindexer = GenomicIndexer.create_from_file(roi, binsize,
-                                                       stepsize, flank, zero_padding, collapse)
+                                                       stepsize, flank,
+                                                       zero_padding, collapse)
         else:
             gindexer = None
 
@@ -897,7 +901,7 @@ class Cover(Dataset):
             conditions = [os.path.splitext(os.path.basename(f))[0]
                           for f in bedfiles]
 
-        bedloader = BedLoader(bedfiles, gsize, mode, binsize, stepsize, flank)
+        bedloader = BedLoader(bedfiles, gindexer, mode)
         # At the moment, we treat the information contained
         # in each bed-file as unstranded
 
