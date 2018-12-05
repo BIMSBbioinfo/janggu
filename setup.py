@@ -27,9 +27,8 @@ def _read(*names, **kwargs):
 setup(
     name='janggu',
     version='0.8.2',
-    license='GLP-3.0',
-    description='Code infrastructure for deep learning to make modelling '
-    + 'reproducible and maintainable',
+    license='GPL-3.0',
+    description='Utilities and datasets for deep learning in genomics',
     long_description='%s\n%s' % (
         re.compile('^.. start-badges.*^.. end-badges',
                    re.M | re.S).sub('', _read('README.rst')),
@@ -50,27 +49,18 @@ setup(
         # complete list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: Unix',
         'Operating System :: POSIX',
         'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy',
-        # uncomment if you test on these interpreters:
-        # 'Programming Language :: Python :: Implementation :: IronPython',
-        # 'Programming Language :: Python :: Implementation :: Jython',
-        # 'Programming Language :: Python :: Implementation :: Stackless',
         'Topic :: Utilities',
     ],
     keywords=[
-        # eg: 'keyword1', 'keyword2', 'keyword3',
+        'genomics', 'deep learning', 'keras',
     ],
     install_requires=[
         'numpy',
