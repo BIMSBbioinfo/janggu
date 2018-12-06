@@ -248,9 +248,18 @@ class BedLoader:
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
 
+            prev_chrom = ""
             for region in regions_:
 
-                gidx = gindexer.filter_by_region(
+                # prefilter by chromosome
+                if region.iv.chrom != prev_chrom:
+                    # assuming that the bed-file is sorted,
+                    # prefiltering should give a performance improvement.
+                    gidx_chrom = gindexer.filter_by_region(
+                        include=region.iv.chrom)
+                    prev_chrom = region.iv.chrom
+
+                gidx = gidx_chrom.filter_by_region(
                     include=region.iv.chrom,
                     start=region.iv.start,
                     end=region.iv.end)
