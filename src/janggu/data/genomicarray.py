@@ -87,6 +87,47 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         self._full_genome_stored = store_whole_genome
         self.collapser = collapser
 
+    def _get_indices(self, interval, arraylen):
+        """Given the original genomic coordinates,
+           the array indices of the reference dataset (garray.handle)
+           and the array indices of the view are returned.
+
+        Parameters
+        ----------
+        interval : GenomicInterval
+            GenomicInterval containing (chr, start, end)
+        arraylen : int
+            Length of the numpy target array.
+
+        Returns
+        -------
+        tuple
+            Tuple of indices corresponding to the slice in the arrays
+            (ref_start, ref_end, array_start, array_end).
+            ref_[start,end] indicate the slice in garray.handle
+            while array_[start,end] indicates the slice in the
+            target array / view.
+        """
+        chrom = interval.chrom
+        start = self.get_iv_start(interval.start)
+        end = self.get_iv_end(interval.end)
+
+        if start < 0:
+            array_start = -start
+            ref_start = 0
+        else:
+            array_start = 0
+            ref_start = start
+
+        if end > self.handle[chrom].shape[0]:
+            array_end = arraylen - (end - self.handle[chrom].shape[0])
+            ref_end = self.handle[chrom].shape[0]
+        else:
+            array_end = arraylen
+            ref_end = end
+
+        return ref_start, ref_end, array_start, array_end
+
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
@@ -126,28 +167,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                                            interval.end)][:(length), :, condition] = value
 
                 else:
-                    if start < 0:
-                        tmp_start = -start
-                        ref_start = 0
-                    else:
-                        tmp_start = 0
-                        ref_start = start
+                    ref_start, ref_end, array_start, \
+                        array_end = self._get_indices(interval, value.shape[0])
 
-                    if end > self.handle[chrom].shape[0]:
-                        tmp_end = value.shape[0] - (end - self.handle[chrom].shape[0])
-                        ref_end = self.handle[chrom].shape[0]
-                    else:
-                        tmp_end = value.shape[0]
-                        ref_end = end
-
-                    #start_offset = max(start, 0)
-                    #end_offset = min(end, self.handle[chrom].shape[0])
-                    #dstart = start_offset - start
-                    #dend = end_offset - end
-                    #cend = end + (dend)
-                    #if dend < 0:
                     self.handle[chrom][ref_start:ref_end, :, condition] = \
-                                       value[tmp_start:tmp_end, :]
+                                       value[array_start:array_end, :]
 
             except KeyError:
                 # we end up here if the peak regions are not a subset of
@@ -194,22 +218,10 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                              len(self.condition)),
                             dtype=self.handle[chrom].dtype)
 
-            dstart = 0
-            dend = length
-            # if start of interval is negative, due to flank, discard the start
-            if start < 0:
-                dstart = -start
-                start = 0
+            ref_start, ref_end, array_start, array_end = self._get_indices(interval, data.shape[0])
 
-            # if end of interval reached out of the chromosome, clip it
-            if self.handle[chrom].shape[0] < end:
-                dend -= end - self.handle[chrom].shape[0]
-                end = self.handle[chrom].shape[0]
-
-            # dstart and dend are offset by the number of positions
-            # the region reaches out of the chromosome
-            data[dstart:dend, :, :] = self._reshape(self.handle[chrom][start:end],
-                                                    (end-start,
+            data[array_start:array_end, :, :] = self._reshape(self.handle[chrom][ref_start:ref_end],
+                                                    (ref_end-ref_start,
                                                      2 if self.stranded else 1,
                                                      len(self.condition)))
             return data
@@ -428,6 +440,7 @@ class HDF5GenomicArray(GenomicArray):
         self.order = self.handle.attrs['order']
         self.resolution = self.handle.attrs['resolution'] \
             if self.handle.attrs['resolution'] > 0 else None
+
 
 class NPGenomicArray(GenomicArray):
     """NPGenomicArray stores multi-dimensional genomic information.
@@ -704,22 +717,11 @@ class SparseGenomicArray(GenomicArray):
                                                    idx, sind * len(self.condition)
                                                    + condition] = val
                     else:
-                        if start < 0:
-                            tmp_start = -start
-                            ref_start = 0
-                        else:
-                            tmp_start = 0
-                            ref_start = start
-
-                        if end > self.handle[chrom].shape[0]:
-                            tmp_end = value.shape[0] - (end - self.handle[chrom].shape[0])
-                            ref_end = self.handle[chrom].shape[0]
-                        else:
-                            tmp_end = value.shape[0]
-                            ref_end = end
+                        ref_start, ref_end, array_start, \
+                            array_end = self._get_indices(interval, value.shape[0])
 
                         for idx, iarray in enumerate(range(ref_start, ref_end)):
-                            val = value[idx + tmp_start, sind]
+                            val = value[idx + array_start, sind]
                             if val > 0:
                                 self.handle[chrom][iarray,
                                                    sind * len(self.condition)
