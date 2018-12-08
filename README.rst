@@ -20,6 +20,14 @@ Janggu - Deep learning for Genomics
     :alt: PyPI Package latest release
     :target: https://pypi.org/project/janggu
 
+.. image:: https://img.shields.io/pypi/l/janggu.svg
+    :alt: License
+    :target: https://pypi.org/project/janggu
+
+.. image:: https://img.shields.io/pypi/pyversions/janggu.svg
+    :alt: Supported Python Versions
+    :target: https://pypi.org/project/janggu/
+
 .. end-badges
 
 Janggu is a python package that facilitates deep learning in the context of
