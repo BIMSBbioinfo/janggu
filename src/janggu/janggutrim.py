@@ -1,8 +1,6 @@
 
 import argparse
-from janggu.utils import _get_genomic_reader
-import numpy as np
-
+from janggu.utils import trim_bed
 
 def main():
 
@@ -24,19 +22,4 @@ def main():
     ARGS = PARSER.parse_args()
     trim_bed(ARGS.inputbed, ARGS.outputbed, ARGS.divby)
 
-
-def trim_bed(inputbed, outputbed, divby):
-    """Trims starts and ends of intervals."""
-    with open(outputbed, 'w') as bed:
-        regions = _get_genomic_reader(inputbed)
-        for region in regions:
-            start = int(np.ceil(region.iv.start / divby)) * divby
-            end = (region.iv.end // divby) * divby
-            bed.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'
-                .format(chrom=region.iv.chrom,
-                        start=start,
-                        end=end,
-                        name=region.name, 
-                        score=region.score if region.score is not None else 0,
-                        strand=region.iv.strand))
 

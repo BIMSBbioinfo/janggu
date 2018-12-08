@@ -16,3 +16,4 @@ omit =
     *migrations*
     src/janggu/cli.py
     src/janggu/__main__.py
+    src/janggu/janggutrim.py
