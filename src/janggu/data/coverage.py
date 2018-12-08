@@ -522,7 +522,10 @@ class Cover(Dataset):
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                     raise ValueError('Please prepare all ROI starts and ends to be '
                                      'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.')
+                                     'avoid undesired rounding effects.'
+                                     'Consider using '
+                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                                     .format(roi, roi, resolution))
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -714,7 +717,10 @@ class Cover(Dataset):
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                     raise ValueError('Please prepare all ROI starts and ends to be '
                                      'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.')
+                                     'avoid undesired rounding effects.'
+                                     'Consider using '
+                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                                     .format(roi, roi, resolution))
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -895,7 +901,10 @@ class Cover(Dataset):
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                     raise ValueError('Please prepare all ROI starts and ends to be '
                                      'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.')
+                                     'avoid undesired rounding effects.'
+                                     'Consider using '
+                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                                     .format(roi, roi, resolution))
 
         if not store_whole_genome:
             # if whole genome should not be loaded
