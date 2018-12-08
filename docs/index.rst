@@ -9,6 +9,7 @@ Contents
    tutorial
    storage
    custom_scorer
+   commandline
    reference/index
    contributing
    authors
