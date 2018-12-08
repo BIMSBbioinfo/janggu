@@ -820,5 +820,5 @@ class Janggu(object):
         weights = content['model_weights']
         for key in hyper_params:
             if hyper_params[key]:
-                weights.attrs[key] = hyper_params[key]
+                weights.attrs[key] = str(hyper_params[key])
         content.close()
