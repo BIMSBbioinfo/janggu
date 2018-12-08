@@ -1032,6 +1032,13 @@ class Cover(Dataset):
             # based on the gindexer intervals.
             gsize = get_genome_size_from_regions(gindexer)
 
+        if array.ndim == 2:
+            # convert to 4D array if the array is a table
+            array = array[:, np.newaxis, np.newaxis, :]
+            # conversion according to channel_last
+            # ignore user arguments
+            channel_last = True
+
         if not channel_last:
             array = np.transpose(array, (0, 3, 1, 2))
 
