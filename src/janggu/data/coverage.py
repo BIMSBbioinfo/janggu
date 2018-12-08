@@ -517,6 +517,13 @@ class Cover(Dataset):
         else:
             gindexer = None
 
+        if resolution is not None and resolution > 1 and store_whole_genome:
+            for iv_ in gindexer or []:
+                if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
+                    raise ValueError('Please prepare all ROI starts and ends to be '
+                                     'divisible by resolution={} to '.format(resolution) + \
+                                     'avoid undesired rounding effects.')
+
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
 
@@ -702,6 +709,13 @@ class Cover(Dataset):
         else:
             gindexer = None
 
+        if resolution is not None and resolution > 1 and store_whole_genome:
+            for iv_ in gindexer or []:
+                if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
+                    raise ValueError('Please prepare all ROI starts and ends to be '
+                                     'divisible by resolution={} to '.format(resolution) + \
+                                     'avoid undesired rounding effects.')
+
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
 
@@ -875,6 +889,13 @@ class Cover(Dataset):
             binsize = gindexer.binsize
         else:
             gindexer = None
+
+        if resolution is not None and resolution > 1 and store_whole_genome:
+            for iv_ in gindexer or []:
+                if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
+                    raise ValueError('Please prepare all ROI starts and ends to be '
+                                     'divisible by resolution={} to '.format(resolution) + \
+                                     'avoid undesired rounding effects.')
 
         if not store_whole_genome:
             # if whole genome should not be loaded
