@@ -1,4 +1,5 @@
 """Array dataset"""
+import numpy as np
 from janggu.data.data import Dataset
 
 
@@ -49,6 +50,54 @@ class Array(Dataset):
             return self.data.shape + (1,)
         return self.data.shape
 
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+
+class ReduceDim(Dataset):
+    """ReduceDim class.
+
+    This class wraps an arbitrary array
+    and removes single-dimensional entries from the shape
+    using numpy.squeeze.
+    It can be used to transform a 4D Cover object to
+    a table-like representation.
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset 
+    """
+
+    def __init__(self, array):
+
+        self.data = array
+
+    @property
+    def name(self):
+        return self.data.name
+
+    def __repr__(self):  # pragma: no cover
+        return 'ReduceDim("{}")'.format(self.name)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        data = np.squeeze(self.data[idxs])
+        if data.ndim == 1:
+            data = data[:, np.newaxis]
+        return data
+
+    @property
+    def shape(self):
+        """Shape of the dataset"""
+        shape = tuple(s for s in self.data.shape if s>1)
+        if len(shape) == 1:
+            return shape + (1,)
+        return shape
 
     @property
     def ndim(self):

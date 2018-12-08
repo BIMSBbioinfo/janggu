@@ -522,7 +522,10 @@ class Cover(Dataset):
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                     raise ValueError('Please prepare all ROI starts and ends to be '
                                      'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.')
+                                     'avoid undesired rounding effects.'
+                                     'Consider using '
+                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                                     .format(roi, roi, resolution))
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -714,7 +717,10 @@ class Cover(Dataset):
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                     raise ValueError('Please prepare all ROI starts and ends to be '
                                      'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.')
+                                     'avoid undesired rounding effects.'
+                                     'Consider using '
+                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                                     .format(roi, roi, resolution))
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -895,7 +901,10 @@ class Cover(Dataset):
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                     raise ValueError('Please prepare all ROI starts and ends to be '
                                      'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.')
+                                     'avoid undesired rounding effects.'
+                                     'Consider using '
+                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                                     .format(roi, roi, resolution))
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -1022,6 +1031,13 @@ class Cover(Dataset):
             # if not supplied, determine the genome size automatically
             # based on the gindexer intervals.
             gsize = get_genome_size_from_regions(gindexer)
+
+        if array.ndim == 2:
+            # convert to 4D array if the array is a table
+            array = array[:, np.newaxis, np.newaxis, :]
+            # conversion according to channel_last
+            # ignore user arguments
+            channel_last = True
 
         if not channel_last:
             array = np.transpose(array, (0, 3, 1, 2))

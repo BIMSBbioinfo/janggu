@@ -805,3 +805,34 @@ class ExportTsne(object):
 
         fig.savefig(os.path.join(output_dir, name + '.' + fform),
                     format=fform, dpi=700)
+
+
+def trim_bed(inputbed, outputbed, divby):
+    """Trims starts and ends of intervals.
+
+    This function takes a BED file and produces a BED file
+    with starts and ends being trimmed such that they
+    are divisible by divby.
+
+    Parameters
+    ----------
+    inputbed : str
+        Input BED file.
+    outputbed : str
+        Trimmed output BED file.
+    divby : int
+        Factor to trim the starts and ends with.
+    """
+    with open(outputbed, 'w') as bed:
+        regions = _get_genomic_reader(inputbed)
+        for region in regions:
+            start = int(np.ceil(region.iv.start / divby)) * divby
+            end = (region.iv.end // divby) * divby
+            bed.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'
+                .format(chrom=region.iv.chrom,
+                        start=start,
+                        end=end,
+                        name=region.name, 
+                        score=region.score if region.score is not None else 0,
+                        strand=region.iv.strand))
+
