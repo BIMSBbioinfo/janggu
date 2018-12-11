@@ -70,37 +70,29 @@ Installation
 ============
 The simplest way to install janggu is via the conda package management system.
 Assuming you have already installed conda, create a new environment
-and install tensorflow with or without gpu support
-
-::
-
-   conda create -y -n jenv
-   conda activate jenv
-   conda install tensorflow  # or tensorflow-gpu
-
-Subsequently use pip as follows
+and type
 
 ::
 
    pip install janggu
 
-To verify that the installation works try to run
+The janggu neural network model depends on tensorflow which
+you have to install depending on whether you want to use GPU
+support or CPU only. To install tensorflow type
+
+::
+
+   conda install tensorflow  # or tensorflow-gpu
+
+Further information regarding the installation of tensorflow can be found on
+the official `tensorflow webpage <https://www.tensorflow.org>`_
+
+
+To verify that the installation works try to run the example contained in the
+janggu package as follows
 
 ::
 
    git clone https://github.com/BIMSBbioinfo/janggu
    cd janggu
-   python janggu/src/examples/classify_fasta.py single
-
-Alternatively, janggu with CPU-only and GPU-supported tensorflow functionality
-can be installed as shown below.
-
-For CPU-only support:
-::
-
-    pip install janggu[tf]
-
-For GPU-support:
-::
-
-    pip install janggu[tf_gpu]
+   python ./src/examples/classify_fasta.py single
