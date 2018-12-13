@@ -41,7 +41,7 @@ except ImportError as exception:
     print('scikit-learn not available. Please install scikit-learn.')
     raise(exception)
 
-PARSER = argparse.ArgumentParser(description='Command description.')
+PARSER = argparse.ArgumentParser(description='janggu model explorer.')
 PARSER.add_argument('-path', dest='janggu_results',
                     default=os.path.join(os.path.expanduser("~"),
                                          'janggu_results'),

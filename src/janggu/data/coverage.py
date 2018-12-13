@@ -287,13 +287,10 @@ class BedLoader:
                         # set the end of the array to zero
                         array[-(greg.end - region.iv.end):, 0] = 0
 
-                    #if garray.resolution is not None:
                     array = np.maximum(array,
                                        np.repeat(garray[greg][:, :, i],
-                                       greg.length if garray.resolution is None \
-                                       else garray.resolution, axis=0))
-
-                    #    array = np.maximum(array, np.repeat(garray[greg][:, :, i], greg.length, axis=0)
+                                                 greg.length if garray.resolution is None \
+                                                 else garray.resolution, axis=0))
 
                     if mode == 'score':
                         garray[greg, i] = array
@@ -538,7 +535,7 @@ class Cover(Dataset):
                                      'avoid undesired rounding effects.'
                                      'Consider using '
                                      '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                                     .format(roi, roi, resolution))
+                                     .format(input=roi, output=roi, resolution=resolution))
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -755,7 +752,7 @@ class Cover(Dataset):
                                      'avoid undesired rounding effects.'
                                      'Consider using '
                                      '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                                     .format(roi, roi, resolution))
+                                     .format(input=roi, output=roi, resolution=resolution))
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -961,7 +958,7 @@ class Cover(Dataset):
                                      'avoid undesired rounding effects.'
                                      'Consider using '
                                      '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                                     .format(roi, roi, resolution))
+                                     .format(input=roi, output=roi, resolution=resolution))
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -1166,7 +1163,7 @@ class Cover(Dataset):
         if cache:
             files = [array]
             parameters = [genomesize, gindexer.binsize,
-                          resolution, storage, dtype, stranded,
+                          resolution, storage, stranded,
                           _dummy_collapser.__name__,
                           store_whole_genome] + [str(reg_) for reg_ in gindexer]
             cache_hash = create_sha256_cache(files, parameters)
@@ -1340,6 +1337,7 @@ class Cover(Dataset):
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     @property

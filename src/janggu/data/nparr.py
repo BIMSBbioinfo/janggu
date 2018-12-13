@@ -1,5 +1,6 @@
 """Array dataset"""
 import numpy as np
+
 from janggu.data.data import Dataset
 
 
@@ -53,6 +54,7 @@ class Array(Dataset):
 
     @property
     def ndim(self):
+        "ndim"
         return len(self.shape)
 
 
@@ -68,16 +70,13 @@ class ReduceDim(Dataset):
     Parameters
     -----------
     array : Dataset
-        Dataset 
+        Dataset
     """
 
     def __init__(self, array):
 
         self.data = array
-
-    @property
-    def name(self):
-        return self.data.name
+        Dataset.__init__(self, array.name)
 
     def __repr__(self):  # pragma: no cover
         return 'ReduceDim("{}")'.format(self.name)
@@ -94,11 +93,12 @@ class ReduceDim(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        shape = tuple(s for s in self.data.shape if s>1)
+        shape = tuple(s for s in self.data.shape if s > 1)
         if len(shape) == 1:
             return shape + (1,)
         return shape
 
     @property
     def ndim(self):
+        "ndim"
         return len(self.shape)

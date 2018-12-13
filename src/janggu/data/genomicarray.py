@@ -1,8 +1,8 @@
 """Genomic arrays"""
 
+import hashlib
 import os
 
-import hashlib
 import h5py
 import numpy as np
 from HTSeq import GenomicInterval
@@ -46,8 +46,8 @@ def create_sha256_cache(data, parameters):
     # add file content to hash
     for datum in data or []:
         if isinstance(datum, str) and os.path.exists(datum):
-            with open(datum, 'rb') as f:
-                for bblock in iter(lambda: f.read(1024**2), b""):
+            with open(datum, 'rb') as file_:
+                for bblock in iter(lambda: file_.read(1024**2), b""):
                     sha256_hash.update(bblock)
         elif isinstance(datum, np.ndarray):
             sha256_hash.update(datum.tobytes())
@@ -59,6 +59,26 @@ def create_sha256_cache(data, parameters):
 
     return sha256_hash.hexdigest()
 
+
+def _get_cachefile(cachestr, tags, fileending):
+    """ Determine cache file location """
+    filename = None
+    if cachestr is not None:
+        memmap_dir = _get_output_data_location(tags)
+        if not os.path.exists(memmap_dir):
+            os.makedirs(memmap_dir)
+
+        filename = str(cachestr) + fileending
+        filename = os.path.join(memmap_dir, filename)
+        return filename
+    return None
+
+def _load_data(cachestr, tags, fileending):
+    """ loading data from scratch or from cache """
+    filename = _get_cachefile(cachestr, tags, fileending)
+    if filename is not None and os.path.exists(filename):
+        return False
+    return True
 
 class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     """GenomicArray stores multi-dimensional genomic information.
@@ -212,26 +232,6 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             raise IndexError("Index must be a GenomicInterval and a condition index")
 
 
-    def _get_cachefile(self, cachestr, tags, fileending):
-        """ Determine cache file location """
-        filename = None
-        if cachestr is not None:
-            memmap_dir = _get_output_data_location(tags)
-            if not os.path.exists(memmap_dir):
-                os.makedirs(memmap_dir)
-
-            filename = str(cachestr) + fileending
-            filename = os.path.join(memmap_dir, filename)
-            return filename
-        return None
-
-    def _load_data(self, cachestr, tags, fileending):
-        """ loading data from scratch or from cache """
-        filename = self._get_cachefile(cachestr, tags, fileending)
-        if filename is not None and os.path.exists(filename):
-            return False
-        return True
-
     def __getitem__(self, index):
         # for now lets ignore everything except for chrom, start and end.
         if isinstance(index, GenomicInterval):
@@ -266,9 +266,9 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             ref_start, ref_end, array_start, array_end = self._get_indices(interval, data.shape[0])
 
             data[array_start:array_end, :, :] = self._reshape(self.handle[chrom][ref_start:ref_end],
-                                                    (ref_end-ref_start,
-                                                     2 if self.stranded else 1,
-                                                     len(self.condition)))
+                                                              (ref_end - ref_start,
+                                                               2 if self.stranded else 1,
+                                                               len(self.condition)))
             return data
 
         raise IndexError("Index must be a GenomicInterval")
@@ -446,8 +446,8 @@ class HDF5GenomicArray(GenomicArray):
         if cache is None:
             raise ValueError('HDF5 format requires cache=True')
 
-        cachefile = self._get_cachefile(cache, datatags, '.h5')
-        load_from_file = self._load_data(cache, datatags, '.h5')
+        cachefile = _get_cachefile(cache, datatags, '.h5')
+        load_from_file = _load_data(cache, datatags, '.h5')
 
         if load_from_file:
             self.handle = h5py.File(cachefile, 'w')
@@ -538,8 +538,8 @@ class NPGenomicArray(GenomicArray):
                                              resolution,
                                              order, store_whole_genome, collapser)
 
-        cachefile = self._get_cachefile(cache, datatags, '.npz')
-        load_from_file = self._load_data(cache, datatags, '.npz')
+        cachefile = _get_cachefile(cache, datatags, '.npz')
+        load_from_file = _load_data(cache, datatags, '.npz')
 
         if load_from_file:
             data = {chrom: np.zeros(shape=(_get_iv_length(chroms[chrom],
@@ -642,8 +642,8 @@ class SparseGenomicArray(GenomicArray):
                                                  resolution,
                                                  order, store_whole_genome, collapser)
 
-        cachefile = self._get_cachefile(cache, datatags, '.npz')
-        load_from_file = self._load_data(cache, datatags, '.npz')
+        cachefile = _get_cachefile(cache, datatags, '.npz')
+        load_from_file = _load_data(cache, datatags, '.npz')
 
         if load_from_file:
             data = {chrom: sparse.dok_matrix((_get_iv_length(chroms[chrom],

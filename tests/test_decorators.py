@@ -2,7 +2,6 @@ import keras.backend as K
 import matplotlib
 import numpy as np
 import pytest
-
 from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import Input

@@ -1,9 +1,10 @@
 """Bioseq dataset"""
 
+import warnings
+
 import Bio
 import numpy as np
 from HTSeq import GenomicInterval
-import warnings
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
@@ -486,4 +487,5 @@ class Bioseq(Dataset):
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)

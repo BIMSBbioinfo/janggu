@@ -3,6 +3,7 @@ import numpy as np
 from janggu.data import Array
 from janggu.data import ReduceDim
 
+
 def test_nparr(tmpdir):
     X = Array("X", np.random.random((1000, 100)))
     y = Array('y', np.random.randint(2, size=(1000,)))

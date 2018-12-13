@@ -829,10 +829,9 @@ def trim_bed(inputbed, outputbed, divby):
             start = int(np.ceil(region.iv.start / divby)) * divby
             end = (region.iv.end // divby) * divby
             bed.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'
-                .format(chrom=region.iv.chrom,
-                        start=start,
-                        end=end,
-                        name=region.name, 
-                        score=region.score if region.score is not None else 0,
-                        strand=region.iv.strand))
-
+                      .format(chrom=region.iv.chrom,
+                              start=start,
+                              end=end,
+                              name=region.name,
+                              score=region.score if region.score is not None else 0,
+                              strand=region.iv.strand))

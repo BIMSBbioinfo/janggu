@@ -1,8 +1,11 @@
 
 import os
+
 from pkg_resources import resource_filename
+
 from janggu.janggutrim import trim_bed
 from janggu.data import GenomicIndexer
+
 
 def test_create_from_array(tmpdir):
     inbed = resource_filename('janggu', 'resources/bed_test.bed')
