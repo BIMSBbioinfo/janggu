@@ -7,6 +7,7 @@ import numpy as np
 from keras import backend as K
 from keras.layers import Conv2D
 from pkg_resources import resource_filename
+import pytest
 
 from janggu import Janggu
 from janggu import inputlayer
@@ -16,6 +17,8 @@ from janggu.data import Cover
 from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 
+@pytest.mark.filterwarnings("ignore:inspect")
+@pytest.mark.filterwarnings("ignore:The binary")
 def test_create_from_array(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # load the dataset
@@ -32,15 +35,13 @@ def test_create_from_array(tmpdir):
                                        roi=ROI_FILE,
                                        binsize=200, stepsize=200,
                                        order=1,
-                                       store_whole_genome=True,
-                                       datatags=['ref'])
+                                       store_whole_genome=True)
 
     LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                    bedfiles=PEAK_FILE,
                                    binsize=200, stepsize=200,
                                    resolution=200,
-                                   store_whole_genome=True,
-                                   datatags=['train'])
+                                   store_whole_genome=True)
 
     @inputlayer
     @outputconv('sigmoid')
@@ -78,6 +79,7 @@ def test_create_from_array(tmpdir):
     assert len(cov_out.garray.handle) == 1
 
 
+@pytest.mark.filterwarnings("ignore:The binary")
 def test_create_from_array_whole_genome_false(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # load the dataset
@@ -94,15 +96,13 @@ def test_create_from_array_whole_genome_false(tmpdir):
                                        roi=ROI_FILE,
                                        binsize=200, stepsize=200,
                                        order=1,
-                                       store_whole_genome=False,
-                                       datatags=['ref'])
+                                       store_whole_genome=False)
 
     LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                    bedfiles=PEAK_FILE,
                                    binsize=200, stepsize=200,
                                    resolution=200,
-                                   store_whole_genome=False,
-                                   datatags=['train'])
+                                   store_whole_genome=False)
 
     @inputlayer
     @outputconv('sigmoid')

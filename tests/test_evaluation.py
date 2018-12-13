@@ -6,6 +6,7 @@ import numpy
 import pandas
 import pkg_resources
 import pyBigWig
+import pytest
 from keras import Input
 from keras import Model
 from keras.layers import Dense
@@ -232,6 +233,7 @@ def test_output_export_clustermap(tmpdir):
                                        "cluster.eps"))
 
 
+@pytest.mark.filterwarnings("ignore:the matrix")
 def test_output_export_tsne(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     inputs = Array("x", numpy.random.random((100, 10)))

@@ -1,4 +1,5 @@
 import os
+import glob
 
 import matplotlib
 import numpy as np
@@ -444,6 +445,17 @@ def test_dna_dataset_sanity(tmpdir):
                                   storage='ndarray',
                                   roi=bed_file, stepsize=0)
 
+    with pytest.warns(DeprecationWarning):
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  roi=bed_file,
+                                  datatags=['help'])
+
+    with pytest.warns(DeprecationWarning):
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='ndarray',
+                                  roi=bed_file,
+                                  overwrite=True)
     with pytest.raises(Exception):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='step',
@@ -456,12 +468,20 @@ def test_dna_dataset_sanity(tmpdir):
                               storage='ndarray',
                               roi=None, order=1,
                               store_whole_genome=True)
+    file_ = glob.glob(os.path.join(tmpdir.strpath, 'datasets', 'train', '*.h5'))
+    assert len(file_) == 0
+    Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                              storage='hdf5',
+                              roi=bed_file, order=1, cache=True)
+    # a cache file must exist now
+    file_ = glob.glob(os.path.join(tmpdir.strpath, 'datasets', 'train', '*.h5'))
+    assert len(file_) == 1
+
+    # reload the cached file
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
                               roi=bed_file, order=1, cache=True)
 
-    assert os.path.exists(os.path.join(tmpdir.strpath, 'datasets', 'train',
-                                       'order1', 'storage.h5'))
 
 
 def test_read_dna_from_biostring_order_1():

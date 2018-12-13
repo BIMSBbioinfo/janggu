@@ -3,10 +3,12 @@
 import Bio
 import numpy as np
 from HTSeq import GenomicInterval
+import warnings
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
+from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
@@ -94,18 +96,27 @@ class Bioseq(Dataset):
         Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _make_genomic_array(name, fastafile, order, storage,
-                            cache=True, datatags=None,
+    def _make_genomic_array(name, seqs, order, storage,
+                            cache=None, datatags=None,
                             overwrite=False, store_whole_genome=True):
+
+        if overwrite:
+            warnings.warn('overwrite=True is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+        if datatags is not None:
+            warnings.warn('datatags is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+
         """Create a genomic array or reload an existing one."""
 
         # always use int 16 to store bioseq indices
         # do not use int8 at the moment, because 'N' is encoded
         # as -1024, which causes an underflow with int8.
         dtype = 'int16'
-
-        # Load sequences from refgenome
-        seqs = fastafile
 
         # Extract chromosome lengths
         chromlens = {}
@@ -117,13 +128,21 @@ class Bioseq(Dataset):
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
-        datatags = [name] + datatags if datatags else [name]
-        datatags += ['order{}'.format(order)]
+        datatags = [name]
+
+        if cache:
+            files = seqs
+            parameters = [chromlens,
+                          storage, dtype,
+                          store_whole_genome]
+            cache_hash = create_sha256_cache(files, parameters)
+        else:
+            cache_hash = None
 
         garray = create_genomic_array(chromlens, stranded=False,
                                       storage=storage,
                                       datatags=datatags,
-                                      cache=cache,
+                                      cache=cache_hash,
                                       store_whole_genome=store_whole_genome,
                                       order=order,
                                       conditions=['idx'],

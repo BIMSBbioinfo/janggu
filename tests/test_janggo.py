@@ -30,6 +30,7 @@ from janggu.layers import Reverse
 matplotlib.use('AGG')
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_localaveragepooling2D(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # some test data
@@ -62,6 +63,8 @@ def test_localaveragepooling2D(tmpdir):
     np.testing.assert_equal(testout[0, 0, 0, 1], 2)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_generate_name(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
@@ -84,6 +87,7 @@ def test_janggu_generate_name(tmpdir):
     Janggu.create_by_name(bwm.name)
 
 
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_instance_dense(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """
@@ -201,6 +205,7 @@ def test_janggu_instance_dense(tmpdir):
     Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
 
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_instance_conv(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """
@@ -264,6 +269,7 @@ def test_janggu_instance_conv(tmpdir):
     Janggu.create_by_name('dna_ctcf_HepG2-cnn')
 
 
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_use_dnaconv_none(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
@@ -321,6 +327,8 @@ def test_janggu_use_dnaconv_none(tmpdir):
 
     Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
 
+
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_use_dnaconv_concat(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
@@ -380,6 +388,7 @@ def test_janggu_use_dnaconv_concat(tmpdir):
     Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
 
 
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_use_dnaconv_ave(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
@@ -439,6 +448,7 @@ def test_janggu_use_dnaconv_ave(tmpdir):
     Janggu.create_by_name('dna_ctcf_HepG2-cnn1')
 
 
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_use_dnaconv_max(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
@@ -499,6 +509,7 @@ def test_janggu_use_dnaconv_max(tmpdir):
 
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_chr2_validation(tmpdir):
     os.environ['JANGGU_OUTPUT']=tmpdir.strpath
 
@@ -541,6 +552,7 @@ def test_janggu_chr2_validation(tmpdir):
     p1 = bwm1.fit(dna, ctcf, validation_data=['chr2'])
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option1(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Train, predict and evaluate on dummy data.
@@ -578,6 +590,7 @@ def test_janggu_train_predict_option1(tmpdir):
     bwm.evaluate(inputs, outputs)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option2(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Train, predict and evaluate on dummy data.
@@ -613,6 +626,7 @@ def test_janggu_train_predict_option2(tmpdir):
     bwm.evaluate([inputs], [outputs])
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option3(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -655,6 +669,7 @@ def test_janggu_train_predict_option3(tmpdir):
     bwm.evaluate([inputs], [outputs], batch_size=32)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option4(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -700,6 +715,7 @@ def test_janggu_train_predict_option4(tmpdir):
     bwm.evaluate(inputs, outputs, batch_size=32)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option5(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -738,6 +754,7 @@ def test_janggu_train_predict_option5(tmpdir):
                  use_multiprocessing=False)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option6(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -778,6 +795,7 @@ def test_janggu_train_predict_option6(tmpdir):
                  use_multiprocessing=False)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option7(tmpdir):
     """Train, predict and evaluate on dummy data.
 
@@ -825,6 +843,7 @@ def test_janggu_train_predict_option7(tmpdir):
                  use_multiprocessing=False)
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_sequence(tmpdir):
     """Train, predict and evaluate on dummy data.
 

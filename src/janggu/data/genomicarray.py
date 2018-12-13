@@ -2,6 +2,7 @@
 
 import os
 
+import hashlib
 import h5py
 import numpy as np
 from HTSeq import GenomicInterval
@@ -35,6 +36,29 @@ def get_collapser(method):
         return method
 
     raise ValueError('Unknown method: {}'.format(method))
+
+
+def create_sha256_cache(data, parameters):
+    """Cache file determined from files and parameters."""
+
+    sha256_hash = hashlib.sha256()
+
+    # add file content to hash
+    for datum in data or []:
+        if isinstance(datum, str) and os.path.exists(datum):
+            with open(datum, 'rb') as f:
+                for bblock in iter(lambda: f.read(1024**2), b""):
+                    sha256_hash.update(bblock)
+        elif isinstance(datum, np.ndarray):
+            sha256_hash.update(datum.tobytes())
+        else:
+            sha256_hash.update(str(datum).encode('utf-8'))
+
+    # add parameter settings to hash
+    sha256_hash.update(str(parameters).encode('utf-8'))
+
+    return sha256_hash.hexdigest()
+
 
 class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     """GenomicArray stores multi-dimensional genomic information.
@@ -186,6 +210,27 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                 pass
         else:
             raise IndexError("Index must be a GenomicInterval and a condition index")
+
+
+    def _get_cachefile(self, cachestr, tags, fileending):
+        """ Determine cache file location """
+        filename = None
+        if cachestr is not None:
+            memmap_dir = _get_output_data_location(tags)
+            if not os.path.exists(memmap_dir):
+                os.makedirs(memmap_dir)
+
+            filename = str(cachestr) + fileending
+            filename = os.path.join(memmap_dir, filename)
+            return filename
+        return None
+
+    def _load_data(self, cachestr, tags, fileending):
+        """ loading data from scratch or from cache """
+        filename = self._get_cachefile(cachestr, tags, fileending)
+        if filename is not None and os.path.exists(filename):
+            return False
+        return True
 
     def __getitem__(self, index):
         # for now lets ignore everything except for chrom, start and end.
@@ -372,8 +417,9 @@ class HDF5GenomicArray(GenomicArray):
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
-    cache : boolean
-        Whether to cache the dataset. Default: True
+    cache : str or None
+        Hash string of the data and parameters to cache the dataset. If None,
+        caching is deactivated. Default: None.
     overwrite : boolean
         Whether to overwrite the cache. Default: False
     loader : callable or None
@@ -390,28 +436,21 @@ class HDF5GenomicArray(GenomicArray):
                  resolution=1,
                  order=1,
                  store_whole_genome=True,
-                 cache=True,
+                 cache=None,
                  overwrite=False, loader=None,
                  normalizer=None,
                  collapser=None):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
                                                resolution,
                                                order, store_whole_genome, collapser)
-
-        if not cache:
+        if cache is None:
             raise ValueError('HDF5 format requires cache=True')
 
-        if stranded:
-            datatags = datatags + ['stranded'] if datatags else ['stranded']
+        cachefile = self._get_cachefile(cache, datatags, '.h5')
+        load_from_file = self._load_data(cache, datatags, '.h5')
 
-        memmap_dir = _get_output_data_location(datatags)
-
-        filename = 'storage.h5'
-
-        if not os.path.exists(memmap_dir):
-            os.makedirs(memmap_dir)
-        if not os.path.exists(os.path.join(memmap_dir, filename)) or overwrite:
-            self.handle = h5py.File(os.path.join(memmap_dir, filename), 'w')
+        if load_from_file:
+            self.handle = h5py.File(cachefile, 'w')
 
             for chrom in chroms:
                 shape = (_get_iv_length(chroms[chrom], self.resolution),
@@ -432,9 +471,8 @@ class HDF5GenomicArray(GenomicArray):
                 normalizer(self)
 
             self.handle.close()
-        print('reload {}'.format(os.path.join(memmap_dir, filename)))
-        self.handle = h5py.File(os.path.join(memmap_dir, filename), 'r',
-                                driver='stdio')
+        print('reload {}'.format(cachefile))
+        self.handle = h5py.File(cachefile, 'r', driver='stdio')
 
         self.condition = self.handle.attrs['conditions']
         self.order = self.handle.attrs['order']
@@ -468,8 +506,9 @@ class NPGenomicArray(GenomicArray):
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
-    cache : boolean
-        Specifies whether to cache the dataset. Default: True
+    cache : str or None
+        Hash string of the data and parameters to cache the dataset. If None,
+        caching is deactivated. Default: None.
     overwrite : boolean
         Whether to overwrite the cache. Default: False
     loader : callable or None
@@ -491,7 +530,7 @@ class NPGenomicArray(GenomicArray):
                  resolution=1,
                  order=1,
                  store_whole_genome=True,
-                 cache=True,
+                 cache=None,
                  overwrite=False, loader=None,
                  normalizer=None, collapser=None):
 
@@ -499,17 +538,10 @@ class NPGenomicArray(GenomicArray):
                                              resolution,
                                              order, store_whole_genome, collapser)
 
-        if stranded:
-            datatags = datatags + ['stranded'] if datatags else ['stranded']
+        cachefile = self._get_cachefile(cache, datatags, '.npz')
+        load_from_file = self._load_data(cache, datatags, '.npz')
 
-        memmap_dir = _get_output_data_location(datatags)
-
-        filename = 'storage.npz'
-        if cache and not os.path.exists(memmap_dir):
-            os.makedirs(memmap_dir)
-
-        if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
-                or overwrite or not cache:
+        if load_from_file:
             data = {chrom: np.zeros(shape=(_get_iv_length(chroms[chrom],
                                                           self.resolution),
                                            2 if stranded else 1,
@@ -530,12 +562,12 @@ class NPGenomicArray(GenomicArray):
             data['order'] = order
             data['resolution'] = resolution if resolution is not None else 0
 
-            if cache:
-                np.savez(os.path.join(memmap_dir, filename), **data)
+            if cachefile is not None:
+                np.savez(cachefile, **data)
 
-        if cache:
-            print('reload {}'.format(os.path.join(memmap_dir, filename)))
-            data = np.load(os.path.join(memmap_dir, filename))
+        if cachefile is not None:
+            print('reload {}'.format(cachefile))
+            data = np.load(cachefile)
             names = [x for x in data.files if x not in ['conditions', 'order', 'resolution']]
             condition = data['conditions']
             order = data['order']
@@ -577,8 +609,9 @@ class SparseGenomicArray(GenomicArray):
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
-    cache : boolean
-        Whether to cache the dataset. Default: True
+    cache : str or None
+        Hash string of the data and parameters to cache the dataset. If None,
+        caching is deactivated. Default: None.
     overwrite : boolean
         Whether to overwrite the cache. Default: False
     loader : callable or None
@@ -600,7 +633,7 @@ class SparseGenomicArray(GenomicArray):
                  resolution=1,
                  order=1,
                  store_whole_genome=True,
-                 cache=True,
+                 cache=None,
                  overwrite=False,
                  loader=None,
                  collapser=None):
@@ -609,16 +642,10 @@ class SparseGenomicArray(GenomicArray):
                                                  resolution,
                                                  order, store_whole_genome, collapser)
 
-        if stranded:
-            datatags = datatags + ['stranded'] if datatags else ['stranded']
+        cachefile = self._get_cachefile(cache, datatags, '.npz')
+        load_from_file = self._load_data(cache, datatags, '.npz')
 
-        memmap_dir = _get_output_data_location(datatags)
-
-        filename = 'sparse.npz'
-        if not os.path.exists(memmap_dir):
-            os.makedirs(memmap_dir)
-        if cache and not os.path.exists(os.path.join(memmap_dir, filename)) \
-            or overwrite or not cache:
+        if load_from_file:
             data = {chrom: sparse.dok_matrix((_get_iv_length(chroms[chrom],
                                                              self.resolution),
                                               (2 if stranded else 1) *
@@ -649,12 +676,12 @@ class SparseGenomicArray(GenomicArray):
             storage['order'] = order
             storage['resolution'] = resolution if resolution is not None else 0
 
-            if cache:
-                np.savez(os.path.join(memmap_dir, filename), **storage)
+            if cachefile is not None:
+                np.savez(cachefile, **storage)
 
-        if cache:
-            print('reload {}'.format(os.path.join(memmap_dir, filename)))
-            storage = np.load(os.path.join(memmap_dir, filename))
+        if cachefile is not None:
+            print('reload {}'.format(cachefile))
+            storage = np.load(cachefile)
 
             names = [x for x in storage.files if
                      x not in ['conditions', 'order', 'resolution'] and x[:6] != 'shape.']
@@ -867,7 +894,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                          storage='hdf5', resolution=1,
                          order=1,
                          store_whole_genome=True,
-                         datatags=None, cache=True, overwrite=False,
+                         datatags=None, cache=None, overwrite=False,
                          loader=None,
                          normalizer=None, collapser=None):
     """Factory function for creating a GenomicArray.
@@ -907,8 +934,9 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
-    cache : boolean
-        Whether to cache the dataset. Default: True
+    cache : str or None
+        Hash string of the data and parameters to cache the dataset. If None,
+        caching is deactivated. Default: None.
     overwrite : boolean
         Whether to overwrite the cache. Default: False
     loader : callable or None

@@ -691,6 +691,24 @@ def test_cover_from_bam_sanity():
             flank=0,
             storage='ndarray')
 
+    with pytest.warns(DeprecationWarning):
+        Cover.create_from_bam(
+            'test',
+            bamfiles=bamfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            storage='ndarray',
+            overwrite=True)
+
+    with pytest.warns(DeprecationWarning):
+        Cover.create_from_bam(
+            'test',
+            bamfiles=bamfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            storage='ndarray',
+            datatags=['asdf'])
+
 
 def test_cover_from_bigwig_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -770,6 +788,24 @@ def test_cover_from_bigwig_sanity():
             flank=0,
             storage='ndarray')
 
+    with pytest.warns(DeprecationWarning):
+        Cover.create_from_bigwig(
+            'test',
+            bigwigfiles=bwfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            flank=0,
+            storage='ndarray',
+            overwrite=True)
+    with pytest.warns(DeprecationWarning):
+        Cover.create_from_bigwig(
+            'test',
+            bigwigfiles=bwfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            storage='ndarray',
+            datatags=['asdf'])
+
 
 def test_cover_from_bed_sanity():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -835,6 +871,23 @@ def test_cover_from_bed_sanity():
             roi=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
+    with pytest.warns(DeprecationWarning):
+        Cover.create_from_bed(
+            'test',
+            bedfiles=bwfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            flank=0,
+            storage='ndarray',
+            overwrite=True)
+    with pytest.warns(DeprecationWarning):
+        Cover.create_from_bed(
+            'test',
+            bedfiles=bwfile_,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            storage='ndarray',
+            datatags=['asdf'])
 
 
 def test_cover_bam_unstranded():
@@ -1041,7 +1094,6 @@ def test_load_bam_resolution10(tmpdir):
         np.testing.assert_equal(val[2], np.asarray([1]))  # strand
 
 
-
 def test_load_bam_resolutionNone(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -1073,7 +1125,7 @@ def test_load_bam_resolutionNone(tmpdir):
             binsize=200, stepsize=200,
             genomesize=gsize,
             resolution=None,
-            storage=store, cache=True, datatags=['None'])
+            storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 2, 1))
@@ -1194,7 +1246,7 @@ def test_load_cover_bigwig_resolutionNone(tmpdir):
             roi=bed_file,
             binsize=200, stepsize=200,
             resolution=None,
-            storage=store, cache=True, datatags=['None'],
+            storage=store, cache=True,
             collapser='sum')
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))

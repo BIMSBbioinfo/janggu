@@ -142,21 +142,18 @@ In order to avoid having to create the coverage profiles each time you want
 to use them, they can be cached and quickly reloaded
 later.
 Caching can be activated via the options :code:`cache=True`.
-In order to prevent naming conflicts with the cache files, a list of
-:code:`datatags` may be specified, describing the dataset.
+When caching is required, janggu will check for changes in the
+file content, file composition and various dataset specific argument
+(e.g. binsize, resolution) by constructing a SHA256. The dataset will
+be loaded or reloaded from scratch if the determined hash does not exist.
 
-For example, caching the data of hg19 may be done as follows:
+Example:
 
 .. code:: python
 
    # load hg19 if the cache file does not exist yet, otherwise
    # reload it.
-   Bioseq.create_from_refgenome('dna', refgenome, datatags=['hg19'],
-                                order=1, cache=True)
-
-Finally, in order to force recreation of :code:`Cover` or :code:`Bioseq` from scratch,
-:code:`overwrite=True` may be set which leads to
-preexisting cache files being overwritten.
+   Bioseq.create_from_refgenome('dna', refgenome, order=1, cache=True)
 
 
 Dataset storage

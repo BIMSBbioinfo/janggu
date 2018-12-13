@@ -35,7 +35,7 @@ def test_hdf5_no_cache():
         # cache must be True
         ga = create_genomic_array({'chr10': 300},
                                   stranded=True, typecode='int8',
-                                  storage='hdf5', cache=False)
+                                  storage='hdf5', cache=None)
 
 
 def test_invalid_access():

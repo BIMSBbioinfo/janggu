@@ -1,6 +1,7 @@
 """Coverage dataset"""
 
 import os
+import warnings
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
@@ -10,6 +11,7 @@ from HTSeq import GenomicInterval
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
+from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
@@ -504,6 +506,17 @@ class Cover(Dataset):
             must be specified. Default: False
         """
 
+        if overwrite:
+            warnings.warn('overwrite=True is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+        if datatags is not None:
+            warnings.warn('datatags is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+
         if pysam is None:  # pragma: no cover
             raise Exception('pysam not available. '
                             '`create_from_bam` requires pysam to be installed.')
@@ -562,13 +575,23 @@ class Cover(Dataset):
         bamloader = BamLoader(bamfiles, gsize, template_extension,
                               min_mapq, pairedend)
 
-        datatags = [name] + datatags if datatags else [name]
+        datatags = [name]
 
+        if cache:
+            files = bamfiles + [roi]
+            parameters = [genomesize, min_mapq, binsize, stepsize, flank,
+                          resolution, storage, dtype, stranded,
+                          pairedend, template_extension, zero_padding,
+                          normalizer.__name__ if hasattr(normalizer, '__name__') else normalizer,
+                          store_whole_genome]
+            cache_hash = create_sha256_cache(files, parameters)
+        else:
+            cache_hash = None
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
         cover = create_genomic_array(gsize, stranded=stranded,
                                      storage=storage, datatags=datatags,
-                                     cache=cache,
+                                     cache=cache_hash,
                                      conditions=conditions,
                                      overwrite=overwrite,
                                      typecode=dtype,
@@ -700,6 +723,18 @@ class Cover(Dataset):
             Indicates whether NaN values contained in the bigwig files should
             be interpreted as zeros. Default: True
         """
+
+        if overwrite:
+            warnings.warn('overwrite=True is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+        if datatags is not None:
+            warnings.warn('datatags is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
                             '`create_from_bigwig` requires pyBigWig to be installed.')
@@ -748,14 +783,25 @@ class Cover(Dataset):
 
 
         bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num)
-        datatags = [name] + datatags if datatags else [name]
-        datatags += ['resolution{}'.format(resolution)]
+        datatags = [name]
 
         collapser_ = collapser if collapser is not None else 'mean'
 
+        if cache:
+            files = bigwigfiles + [roi]
+            parameters = [genomesize, binsize, stepsize, flank,
+                          resolution, storage, dtype,
+                          zero_padding,
+                          normalizer.__name__ if hasattr(normalizer, '__name__') else normalizer,
+                          collapser.__name__ if hasattr(collapser, '__name__') else collapser,
+                          store_whole_genome, nan_to_num]
+            cache_hash = create_sha256_cache(files, parameters)
+        else:
+            cache_hash = None
+
         cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, datatags=datatags,
-                                     cache=cache,
+                                     cache=cache_hash,
                                      conditions=conditions,
                                      overwrite=overwrite,
                                      resolution=resolution,
@@ -884,6 +930,17 @@ class Cover(Dataset):
             Indicates whether to cache the dataset. Default: False.
         """
 
+        if overwrite:
+            warnings.warn('overwrite=True is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+        if datatags is not None:
+            warnings.warn('datatags is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+
         if roi is None and genomesize is None:
             raise ValueError('Either roi or genomesize must be specified.')
 
@@ -944,13 +1001,25 @@ class Cover(Dataset):
         # At the moment, we treat the information contained
         # in each bed-file as unstranded
 
-        datatags = [name] + datatags if datatags else [name]
-        datatags += ['resolution{}'.format(resolution)]
+        datatags = [name]
 
         collapser_ = collapser if collapser is not None else 'max'
+
+        if cache:
+            files = bedfiles + [roi]
+            parameters = [genomesize, binsize, stepsize, flank,
+                          resolution, storage, dtype,
+                          zero_padding, mode,
+                          normalizer.__name__ if hasattr(normalizer, '__name__') else normalizer,
+                          collapser.__name__ if hasattr(collapser, '__name__') else collapser,
+                          store_whole_genome]
+            cache_hash = create_sha256_cache(files, parameters)
+        else:
+            cache_hash = None
+
         cover = create_genomic_array(gsize, stranded=False,
                                      storage=storage, datatags=datatags,
-                                     cache=cache,
+                                     cache=cache_hash,
                                      conditions=conditions,
                                      resolution=resolution,
                                      overwrite=overwrite,
@@ -971,8 +1040,8 @@ class Cover(Dataset):
                           conditions=None,
                           storage='ndarray',
                           overwrite=False,
-                          datatags=None,
                           cache=False,
+                          datatags=None,
                           channel_last=True,
                           store_whole_genome=False):
         """Create a Cover class from a numpy.array.
@@ -1009,8 +1078,6 @@ class Cover(Dataset):
             the datatags are used to construct a cache file.
             If :code:`cache=False`, this option does not have an effect.
             Default: None.
-        cache : boolean
-            Indicates whether to cache the dataset. Default: False.
         store_whole_genome : boolean
             Indicates whether the whole genome or only ROI
             should be loaded. Default: False.
@@ -1020,6 +1087,17 @@ class Cover(Dataset):
             or the first. For example, tensorflow expects the channel at the
             last position. Default: True.
         """
+
+        if overwrite:
+            warnings.warn('overwrite=True is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
+        if datatags is not None:
+            warnings.warn('datatags is without effect '
+                          'due to revised caching functionality.'
+                          'The argument will be removed in the future.',
+                          DeprecationWarning)
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -1076,8 +1154,7 @@ class Cover(Dataset):
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
 
-        datatags = [name] + datatags if datatags else [name]
-        datatags += ['resolution{}'.format(resolution)]
+        datatags = [name]
 
         # define a dummy collapser
 
@@ -1086,9 +1163,19 @@ class Cover(Dataset):
             # seqlen, resolution, strand
             return values[:, 0, :]
 
+        if cache:
+            files = [array]
+            parameters = [genomesize, gindexer.binsize,
+                          resolution, storage, dtype, stranded,
+                          _dummy_collapser.__name__,
+                          store_whole_genome] + [str(reg_) for reg_ in gindexer]
+            cache_hash = create_sha256_cache(files, parameters)
+        else:
+            cache_hash = None
+
         cover = create_genomic_array(gsize, stranded=stranded,
                                      storage=storage, datatags=datatags,
-                                     cache=cache,
+                                     cache=cache_hash,
                                      conditions=conditions,
                                      resolution=resolution,
                                      overwrite=overwrite,
