@@ -72,8 +72,9 @@ def _reshape(data, percondition):
 
     if isinstance(data, dict):
         if percondition:
+            # currently this only works for channel_last
             data = {k: data[k][:].reshape(
-                (numpy.prod(data[k].shape[:-1]),
+                (int(numpy.prod(data[k].shape[:-1])),
                  data[k].shape[-1])) for k in data}
         else:
             data = {k: data[k][:].reshape(
