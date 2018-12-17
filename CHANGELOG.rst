@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.8.4 (2018-12-11)
+------------------
+
+- Updated installation instructions in the readme
+
 0.8.3 (2018-12-05)
 ------------------
 

@@ -26,7 +26,7 @@ def _read(*names, **kwargs):
 
 setup(
     name='janggu',
-    version='0.8.3',
+    version='0.8.4',
     license='GPL-3.0',
     description='Utilities and datasets for deep learning in genomics',
     long_description='%s\n%s' % (
@@ -69,24 +69,21 @@ setup(
         'keras',
         'htseq',
         'h5py',
-        'pydot'
+        'pydot',
+        'pysam',
+        'pyBigWig',
+        'urllib3',
+        'matplotlib',
+        'seaborn',
+        'scikit-learn',
+        'dash',
+        'dash_renderer',
+        'dash_core_components',
+        'dash_html_components'
     ],
     extras_require={
-        "tf": ['tensorflow', 'pysam', 'pyBigWig',
-               'urllib3', 'matplotlib',
-               'seaborn', 'scikit-learn',
-               'dash', 'dash_renderer',
-               'dash_core_components',
-               'dash_html_components'],
-        "tf_gpu": ['tensorflow-gpu', 'pysam', 'pyBigWig',
-                   'urllib3', 'matplotlib',
-                   'seaborn', 'scikit-learn',
-                   'dash', 'dash_renderer',
-                   'dash_core_components',
-                   'dash_html_components'],
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
+        "tf": ['tensorflow'],
+        "tf_gpu": ['tensorflow-gpu']
     },
     entry_points={
         'console_scripts': [
