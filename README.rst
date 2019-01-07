@@ -30,12 +30,17 @@ Janggu - Deep learning for Genomics
 
 .. end-badges
 
+.. image:: jangguhex.png
+   :width: 40%
+   :alt: Janggu logo
+   :align: center
+
 Janggu is a python package that facilitates deep learning in the context of
 genomics. The package is freely available under a GPL-3.0 license.
 
-.. image:: motivation.png
+.. image:: Janggu-visAbstract.png
    :width: 100%
-   :alt: Janggu motivation
+   :alt: Janggu visual abstract
    :align: center
 
 
