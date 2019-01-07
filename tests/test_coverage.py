@@ -691,7 +691,7 @@ def test_cover_from_bam_sanity():
             flank=0,
             storage='ndarray')
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
@@ -700,7 +700,7 @@ def test_cover_from_bam_sanity():
             storage='ndarray',
             overwrite=True)
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
@@ -788,7 +788,7 @@ def test_cover_from_bigwig_sanity():
             flank=0,
             storage='ndarray')
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
@@ -797,7 +797,7 @@ def test_cover_from_bigwig_sanity():
             flank=0,
             storage='ndarray',
             overwrite=True)
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Cover.create_from_bigwig(
             'test',
             bigwigfiles=bwfile_,
@@ -871,7 +871,7 @@ def test_cover_from_bed_sanity():
             roi=bed_file,
             binsize=1, stepsize=1,
             storage='ndarray')
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,
@@ -880,7 +880,7 @@ def test_cover_from_bed_sanity():
             flank=0,
             storage='ndarray',
             overwrite=True)
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Cover.create_from_bed(
             'test',
             bedfiles=bwfile_,

@@ -445,13 +445,13 @@ def test_dna_dataset_sanity(tmpdir):
                                   storage='ndarray',
                                   roi=bed_file, stepsize=0)
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
                                   roi=bed_file,
                                   datatags=['help'])
 
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                   storage='ndarray',
                                   roi=bed_file,

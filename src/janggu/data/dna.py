@@ -105,12 +105,12 @@ class Bioseq(Dataset):
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
         if datatags is not None:
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
 
         """Create a genomic array or reload an existing one."""
 

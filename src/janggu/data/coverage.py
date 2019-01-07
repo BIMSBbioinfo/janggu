@@ -507,12 +507,12 @@ class Cover(Dataset):
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
         if datatags is not None:
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
 
         if pysam is None:  # pragma: no cover
             raise Exception('pysam not available. '
@@ -725,12 +725,12 @@ class Cover(Dataset):
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
         if datatags is not None:
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
 
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
@@ -931,12 +931,12 @@ class Cover(Dataset):
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
         if datatags is not None:
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
 
         if roi is None and genomesize is None:
             raise ValueError('Either roi or genomesize must be specified.')
@@ -1089,12 +1089,12 @@ class Cover(Dataset):
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
         if datatags is not None:
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
-                          DeprecationWarning)
+                          FutureWarning)
 
         if not store_whole_genome:
             # if whole genome should not be loaded
