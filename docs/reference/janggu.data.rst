@@ -29,6 +29,7 @@ Classes
    Cover
    Bioseq
    Array
+   ReduceDim
 
 .. autoclass:: Cover
    :members: create_from_bam, create_from_bigwig, create_from_bed, create_from_array

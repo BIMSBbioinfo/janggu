@@ -654,7 +654,8 @@ rather than just scanning the forward strand:
 
 
    # 2. define a simple conv net with 30 filters of length 15 bp
-   # and relu activation
+   # and relu activation.
+   # outputconv as opposed to outputdense will put a conv layer as output
    @inputlayer
    @outputconv('sigmoid')
    def double_stranded_model(inputs, inp, oup, params):
@@ -664,6 +665,8 @@ rather than just scanning the forward strand:
            layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
                                     activation=params[2]))(layer)
 
+       # like GlobalAveragePooling2D, but it maintains the dimensionality
+       # and uses a moving window average.
        output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
                                       name='motif')(layer)
        return inputs, output
@@ -694,6 +697,39 @@ After the model has been trained, the model parameters and the
 illustration of the architecture are stored in :code:`<results_root>/models`.
 Furthermore, information about the model fitting, model and dataset dimensions
 are written to :code:`<results_root>/logs`.
+
+Note that in the example above the output dimensionality of the network is 4D.
+However, it might be more convenient at times to remove the single dimensional
+elements of the array.
+This can be achieved by wrapping the LABELS dataset using :code:`ReduceDim`.
+In this case the example becomes
+
+.. code:: python
+
+   @inputlayer
+   @outputdense('sigmoid')
+   def double_stranded_model(inputs, inp, oup, params):
+       with inputs.use('dna') as layer:
+           # The DnaConv2D wrapper can be used with Conv2D
+           # to scan both DNA strands with the weight matrices.
+           layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
+                                    activation=params[2]))(layer)
+
+       output = GlobalAveragePooling2D(window_size=layer.shape.as_list()[1],
+                                      name='motif')(layer)
+       return inputs, output
+
+
+   # 3. instantiate and compile the model
+   model = Janggu.create(template=double_stranded_model,
+                         modelparams=(30, 15, 'relu'),
+                         inputs=DNA, outputs=ReduceDim(LABELS))
+   model.compile(optimizer='adadelta', loss='binary_crossentropy',
+                 metrics=['acc'])
+
+   # 4. fit the model
+   model.fit(DNA, ReduceDim(LABELS), epochs=100)
+
 
 
 Evaluation through Scorer callbacks

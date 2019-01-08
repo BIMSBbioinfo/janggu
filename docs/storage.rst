@@ -243,6 +243,13 @@ dimension, while theano or pytorch expect the channel at the first dimension.
 With the option `channel_last=True/False` it is possible to configure the output
 dimensionality of :code:`Cover` and :code:`Bioseq`.
 
+Wrapper Datasets
+----------------
+
+A Cover object is represents a 4D object. However, sometimes one or more
+dimensions of Cover might be single dimensional (e.g. containing only one element).
+These dimensions can be dropped using :code:`ReduceDim`.
+For example :code:`ReduceDim(cover)`.
 
 ==============================
 Output directory configuration
