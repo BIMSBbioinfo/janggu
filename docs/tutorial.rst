@@ -715,8 +715,7 @@ In this case the example becomes
            layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
                                     activation=params[2]))(layer)
 
-       output = GlobalAveragePooling2D(window_size=layer.shape.as_list()[1],
-                                      name='motif')(layer)
+       output = GlobalAveragePooling2D(name='motif')(layer)
        return inputs, output
 
 
