@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.8.5 (2019-01-09)
+------------------
+
+- Updated abstract, added logo
+- Utility: janggutrim command line tool for cutting bed file regions to avoid unwanted rounding effects. If rounding issues are detected an error is raised.
+- Caching mechanism revisited. Caching of datasets is based on determining the sha256 hash of the dataset. If the data or some parameters change, the files are automatically reloaded. Consequently, the arguments overwrite and datatags become obsolete and have been marked for deprecation.
+- Refactored access of GenomicArray
+- Added ReduceDim wrapper to convert a 4D Cover object to a 2D table-like object.
+
 0.8.4 (2018-12-11)
 ------------------
 
