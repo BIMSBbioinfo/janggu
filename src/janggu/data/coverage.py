@@ -1085,6 +1085,12 @@ class Cover(Dataset):
             last position. Default: True.
         """
 
+        if array.ndim == 2:
+            array = array[:, None, None, :]
+
+        if array.ndim != 4:
+            raise ValueError('array must be two or four dimensional.')
+
         if overwrite:
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
