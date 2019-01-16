@@ -1478,12 +1478,22 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5)):
         lat_titles[j].set_yticks([0.5])
         lat_titles[j].set_yticklabels([cover.name], color=color_)
         cont = 0
+
+        coverage = cover[chrom, start, end][:, :, :, :]
         for i in cover.conditions:
             plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 +
                                               2 +j:(cont + abs_cont) * 3 + 5+j,
                                               1:]))
-            plots[-1].plot(cover[chrom, start, end][0, :, 0, cont],
-                           linewidth=2, color=color_)
+            if coverage.shape[-2] == 2:
+                #both strands are covered separately
+                plots[-1].plot(coverage[0, :, 0, cont]
+                               linewidth=2, color=color_, label="+", marker="+")
+                plots[-1].plot(coverage[0, :, 1, cont],
+                               linewidth=2, color=color_, label="-", marker=1)
+                plots[-1].legend()
+            else:
+                plots[-1].plot(coverage[0, :, 0, cont],
+                               linewidth=2, color=color_)
             plots[-1].set_yticks(())
             plots[-1].set_xticks(())
             plots[-1].set_xlim([0, len(cover[chrom, start, end][0, :, 0, 0])])
