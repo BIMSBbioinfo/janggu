@@ -1413,7 +1413,7 @@ class Cover(Dataset):
             bw_file.close()
 
 
-def plotGenomeTrack(covers, chrom, start, end):
+def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5)):
 
     """plotGenomeTrack shows plots of a specific interval from cover objects data.
 
@@ -1446,12 +1446,11 @@ def plotGenomeTrack(covers, chrom, start, end):
     n_covers = len(covers)
     color = iter(cm.rainbow(np.linspace(0, 1, n_covers)))
     #data = covers[0][chr, start, end]
-    len_files = [len(cover.conditions) for cover in covers]
+    len_files = [cover.shape[-1]  for cover in covers]
     nfiles = np.sum(len_files)
     grid = plt.GridSpec(2 + (nfiles * 3) + (n_covers - 1),
                         10, wspace=0.4, hspace=0.3)
-    fig = plt.figure(figsize=(1 + nfiles * 3,
-                              2*nfiles))
+    fig = plt.figure(figsize=figsize)
 
     title = fig.add_subplot(grid[0, 1:])
 
