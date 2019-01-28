@@ -1328,9 +1328,8 @@ class Cover(Dataset):
         """Shape of the dataset"""
         stranded = (2 if self.garray.stranded else 1, )
         if self.garray.resolution is not None:
-            blen = (self.gindexer.binsize) // self.garray.resolution
-            seqdims = (2*self.gindexer.flank // self.garray.resolution + \
-                (blen if blen > 0 else 1), )
+            seqdims = (int(np.ceil((self.gindexer.binsize + \
+                       2*self.gindexer.flank)/self.garray.resolution)),)
         else:
             seqdims = (1,)
         return (len(self),) + seqdims + stranded + (len(self.garray.condition),)
