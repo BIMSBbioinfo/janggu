@@ -1,5 +1,6 @@
 """Coverage dataset"""
 
+from itertools import product
 import os
 import warnings
 
@@ -1413,7 +1414,7 @@ class Cover(Dataset):
             bw_file.close()
 
 
-def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5)):
+def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
 
     """plotGenomeTrack shows plots of a specific interval from cover objects data.
 
@@ -1431,6 +1432,14 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5)):
         The start of the required interval.
     end : int
         The end of the required interval.
+    figsize : tuple(int, int)
+        Figure size passed on to matplotlib.
+    plottype : None or list(str)
+        Plot type indicates whether to plot the coverage track as line plot or as
+        heatmap using 'line' or 'heatmap', respectively.
+        By default, all coverage objects are depicted as line plots if plottype=None.
+        Otherwise, a list of types must be supplied containing the plot types for each
+        coverage object explicitly. For example, ['line', 'heatmap'].
 
     Returns
     -------
@@ -1443,15 +1452,23 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5)):
     if not isinstance(covers, list):
         covers = [covers]
 
-    n_covers = len(covers)
-    color = iter(cm.rainbow(np.linspace(0, 1, n_covers)))
-    #data = covers[0][chr, start, end]
-    len_files = [cover.shape[-1]  for cover in covers]
-    nfiles = np.sum(len_files)
-    grid = plt.GridSpec(2 + (nfiles * 3) + (n_covers - 1),
+    if plottypes is None:
+        plottypes = ['line'] * len(covers)
+
+    color = iter(cm.rainbow(np.linspace(0, 1, len(covers))))
+
+    nfiles = 0
+    for icov, cover in enumerate(covers):
+        if plottypes[icov] == 'heatmap':
+            nfiles += 1
+        else:
+            nfiles += cover.shape[-1]
+
+    grid = plt.GridSpec(2 + (nfiles * 3) + (len(covers) - 1),
                         10, wspace=0.4, hspace=0.3)
     fig = plt.figure(figsize=figsize)
 
+    # title and reference track
     title = fig.add_subplot(grid[0, 1:])
 
     title.set_title(chrom)
@@ -1461,45 +1478,58 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5)):
     title.spines['left'].set_visible(False)
     plt.xticks([0, end-start], [start, end])
     plt.yticks(())
-    cover_start = 2
-    abs_cont = 0
-    lat_titles = [None] * len(covers)
-    plots = []
-    for j, cover in enumerate(covers):
-        color_ = next(color)
-        lat_titles[j] = fig.add_subplot(grid[(cover_start + j):
-                                             (cover_start +
-                                              len_files[j]*3) + j, 0])
-        cover_start += (len_files[j]*3)
-        lat_titles[j].set_xticks(())
-        lat_titles[j].spines['right'].set_visible(False)
-        lat_titles[j].spines['top'].set_visible(False)
-        lat_titles[j].spines['bottom'].set_visible(False)
-        lat_titles[j].set_yticks([0.5])
-        lat_titles[j].set_yticklabels([cover.name], color=color_)
-        cont = 0
 
-        coverage = cover[chrom, start, end][:, :, :, :]
-        for i in cover.conditions:
-            plots.append(fig.add_subplot(grid[(cont + abs_cont) * 3 +
-                                              2 +j:(cont + abs_cont) * 3 + 5+j,
-                                              1:]))
+    y_offset = 1
+    for j, cover in enumerate(covers):
+        y_offset += 1
+        color_ = next(color)
+
+        y_block = (cover.shape[-1] if plottypes[j] != 'heatmap' else 1) * 3
+
+        # side bar indicator for current cover
+        ax = fig.add_subplot(grid[(y_offset): (y_offset + y_block), 0])
+
+        ax.set_xticks(())
+        ax.spines['right'].set_visible(False)
+        ax.spines['top'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.set_yticks([0.5])
+        ax.set_yticklabels([cover.name], color=color_)
+
+        coverage = cover[chrom, start, end][0, :, :, :]
+
+        if plottypes[j] == 'heatmap':
+            ax = fig.add_subplot(grid[(y_offset): (y_offset + 3), 1:])
+            im = ax.pcolor(coverage.reshape(coverage.shape[0], -1).T)
+            #im = ax.pcolor(np.random.rand(200, 60).T)
+            if coverage.shape[-2] == 2:
+                ticks = [':'.join([x,y]) for y,x in product(['+','-'], cover.conditions)]
+            else:
+                ticks = cover.conditions
+            #    ax.set_yticklabels(cover.conditions)
+            ax.set_yticklabels(ticks)
+            ax.set_xticks(())
+            ax.set_yticks(np.arange(0, len(ticks)+1, 1.0))
+            #cbar = ax.figure.colorbar(im, ax=ax)
+            y_offset += 3
+            continue
+
+        for i, condition in enumerate(cover.conditions):
+            ax = fig.add_subplot(grid[(y_offset):(y_offset + 3), 1:])
             if coverage.shape[-2] == 2:
                 #both strands are covered separately
-                plots[-1].plot(coverage[0, :, 0, cont]
-                               linewidth=2, color=color_, label="+", marker="+")
-                plots[-1].plot(coverage[0, :, 1, cont],
-                               linewidth=2, color=color_, label="-", marker=1)
-                plots[-1].legend()
+                ax.plot(coverage[:, 0, i],
+                        linewidth=2, color=color_, label="+", marker="+")
+                ax.plot(coverage[:, 1, i],
+                        linewidth=2, color=color_, label="-", marker=1)
+                ax.legend()
             else:
-                plots[-1].plot(coverage[0, :, 0, cont],
-                               linewidth=2, color=color_)
-            plots[-1].set_yticks(())
-            plots[-1].set_xticks(())
-            plots[-1].set_xlim([0, len(cover[chrom, start, end][0, :, 0, 0])])
-            plots[-1].set_ylabel(i, labelpad=12)
-            plots[-1].spines['right'].set_visible(False)
-            plots[-1].spines['top'].set_visible(False)
-            cont = cont + 1
-        abs_cont += cont
+                ax.plot(coverage[:, 0, i], linewidth=2, color=color_)
+            ax.set_yticks(())
+            ax.set_xticks(())
+            ax.set_xlim([0, len(coverage)])
+            ax.set_ylabel(condition, labelpad=12)
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            y_offset += 3
     return (fig)
