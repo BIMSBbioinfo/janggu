@@ -460,7 +460,7 @@ class HDF5GenomicArray(GenomicArray):
                                            data=np.zeros(shape, dtype=self.typecode))
 
             self.handle.attrs['conditions'] = [np.string_(x) for x in self.condition]
-            self.handle.attrs['order'] = self.order
+            self.handle.attrs['order'] = order
             self.handle.attrs['resolution'] = resolution if resolution is not None else 0
 
             # invoke the loader
@@ -473,11 +473,6 @@ class HDF5GenomicArray(GenomicArray):
             self.handle.close()
         print('reload {}'.format(cachefile))
         self.handle = h5py.File(cachefile, 'r', driver='stdio')
-
-        self.condition = self.handle.attrs['conditions']
-        self.order = self.handle.attrs['order']
-        self.resolution = self.handle.attrs['resolution'] \
-            if self.handle.attrs['resolution'] > 0 else None
 
 
 class NPGenomicArray(GenomicArray):
@@ -556,9 +551,8 @@ class NPGenomicArray(GenomicArray):
             if normalizer:
                 normalizer(self)
 
-            condition = [np.string_(x) for x in self.condition]
             names = [x for x in data]
-            data['conditions'] = condition
+            data['conditions'] = [np.string_(x) for x in self.condition]
             data['order'] = order
             data['resolution'] = resolution if resolution is not None else 0
 
@@ -569,18 +563,10 @@ class NPGenomicArray(GenomicArray):
             print('reload {}'.format(cachefile))
             data = np.load(cachefile)
             names = [x for x in data.files if x not in ['conditions', 'order', 'resolution']]
-            condition = data['conditions']
-            order = data['order']
-            resolution = data['resolution'] if data['resolution'] > 0 else None
 
         # here we get either the freshly loaded data or the reloaded
         # data from np.load.
         self.handle = {key: data[key] for key in names}
-
-        self.condition = condition
-        self.resolution = resolution
-        self.order = order
-
 
 class SparseGenomicArray(GenomicArray):
     """SparseGenomicArray stores multi-dimensional genomic information.
@@ -647,9 +633,9 @@ class SparseGenomicArray(GenomicArray):
 
         if load_from_file:
             data = {chrom: sparse.dok_matrix((_get_iv_length(chroms[chrom],
-                                                             self.resolution),
+                                                             resolution),
                                               (2 if stranded else 1) *
-                                              len(self.condition)),
+                                              len(conditions)),
                                              dtype=self.typecode)
                     for chrom in chroms}
             self.handle = data
@@ -662,8 +648,6 @@ class SparseGenomicArray(GenomicArray):
 
             data = {chrom: data[chrom].tocoo() for chrom in data}
 
-            condition = [np.string_(x) for x in self.condition]
-
             names = [x for x in data]
 
             storage = {chrom: np.column_stack([data[chrom].data,
@@ -672,7 +656,7 @@ class SparseGenomicArray(GenomicArray):
                                                for chrom in data}
             storage.update({'shape.'+chrom: \
                 np.asarray(data[chrom].shape) for chrom in data})
-            storage['conditions'] = condition
+            storage['conditions'] = self.condition
             storage['order'] = order
             storage['resolution'] = resolution if resolution is not None else 0
 
@@ -685,9 +669,6 @@ class SparseGenomicArray(GenomicArray):
 
             names = [x for x in storage.files if
                      x not in ['conditions', 'order', 'resolution'] and x[:6] != 'shape.']
-            condition = storage['conditions']
-            order = storage['order']
-            resolution = storage['resolution'] if storage['resolution'] > 0 else None
 
         self.handle = {key: sparse.coo_matrix((storage[key][:, 0],
                                                (storage[key][:, 1].astype('int'),
@@ -695,10 +676,6 @@ class SparseGenomicArray(GenomicArray):
                                               shape=tuple(storage['shape.' +
                                                                   key])).tocsr()
                        for key in names}
-
-        self.condition = condition
-        self.resolution = resolution
-        self.order = order
 
     def __setitem__(self, index, value):
         interval = index[0]
