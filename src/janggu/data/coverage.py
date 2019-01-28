@@ -1343,7 +1343,7 @@ class Cover(Dataset):
     @property
     def conditions(self):
         """Conditions"""
-        return [s.decode('utf-8') for s in self.garray.condition]
+        return self.garray.condition
 
     def export_to_bigwig(self, output_dir, genomesize=None):
         """ This method exports the coverage as bigwigs.
