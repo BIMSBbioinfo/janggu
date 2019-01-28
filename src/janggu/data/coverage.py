@@ -1196,7 +1196,7 @@ class Cover(Dataset):
         self._gindexer = gindexer
 
     def __repr__(self):  # pragma: no cover
-        return "Cover('{}') ".format(self.name)
+        return "Cover('{}')".format(self.name)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, tuple):
