@@ -1,6 +1,6 @@
 """Janggu model and utilities for deep learning in genomics."""
 
-__version__ = '0.8.5'
+from janggu.version import version as __version__
 
 from janggu.decorators import inputlayer  # noqa
 from janggu.decorators import outputconv  # noqa
@@ -11,6 +11,9 @@ from janggu.layers import DnaConv2D  # noqa
 from janggu.layers import LocalAveragePooling2D  # noqa
 from janggu.layers import Reverse  # noqa
 from janggu.model import Janggu  # noqa
+from janggu.model import create_model  # noqa
+from janggu.model import model_from_json  # noqa
+from janggu.model import model_from_yaml  # noqa
 from janggu.utils import ExportBed  # noqa
 from janggu.utils import ExportBigwig  # noqa
 from janggu.utils import ExportClustermap  # noqa

@@ -17,6 +17,7 @@ from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
+from janggu.version import version
 
 
 class SeqLoader:
@@ -135,7 +136,7 @@ class Bioseq(Dataset):
             files = seqs
             parameters = [chromlens,
                           storage, dtype,
-                          store_whole_genome]
+                          store_whole_genome, version]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None

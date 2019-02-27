@@ -467,12 +467,11 @@ class HDF5GenomicArray(GenomicArray):
             if loader:
                 loader(self)
 
-            if normalizer:
-                normalizer(self)
-
             self.handle.close()
         print('reload {}'.format(cachefile))
-        self.handle = h5py.File(cachefile, 'r', driver='stdio')
+        self.handle = h5py.File(cachefile, 'a', driver='stdio')
+        for norm in normalizer or []:
+            get_normalizer(norm)(self)
 
 
 class NPGenomicArray(GenomicArray):
@@ -548,9 +547,6 @@ class NPGenomicArray(GenomicArray):
             if loader:
                 loader(self)
 
-            if normalizer:
-                normalizer(self)
-
             names = [x for x in data]
             data['conditions'] = [np.string_(x) for x in self.condition]
             data['order'] = order
@@ -567,6 +563,10 @@ class NPGenomicArray(GenomicArray):
         # here we get either the freshly loaded data or the reloaded
         # data from np.load.
         self.handle = {key: data[key] for key in names}
+
+        for norm in normalizer or []:
+            get_normalizer(norm)(self)
+
 
 class SparseGenomicArray(GenomicArray):
     """SparseGenomicArray stores multi-dimensional genomic information.
@@ -951,7 +951,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                 cache=cache,
                                 overwrite=overwrite,
                                 loader=loader,
-                                normalizer=get_normalizer(normalizer),
+                                normalizer=normalizer,
                                 collapser=get_collapser(collapser))
     elif storage == 'ndarray':
         return NPGenomicArray(chroms, stranded=stranded,
@@ -964,7 +964,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               cache=cache,
                               overwrite=overwrite,
                               loader=loader,
-                              normalizer=get_normalizer(normalizer),
+                              normalizer=normalizer,
                               collapser=get_collapser(collapser))
     elif storage == 'sparse':
         if normalizer is not None:

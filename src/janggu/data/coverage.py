@@ -18,6 +18,8 @@ from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
 
+from janggu.version import version
+
 try:
     import pyBigWig
 except ImportError:  # pragma: no cover
@@ -301,6 +303,7 @@ class BedLoader:
                         garray[greg, i] = array
         return garray
 
+
 class ArrayLoader:
     """ArrayLoader class.
 
@@ -574,14 +577,18 @@ class Cover(Dataset):
                               min_mapq, pairedend)
 
         datatags = [name]
+        if normalizer is None:
+            normalizer = []
+        if not isinstance(normalizer, list):
+            normalizer = [normalizer]
 
         if cache:
             files = bamfiles + [roi]
+
             parameters = [genomesize, min_mapq, binsize, stepsize, flank,
                           resolution, storage, dtype, stranded,
                           pairedend, template_extension, zero_padding,
-                          normalizer.__name__ if hasattr(normalizer, '__name__') else normalizer,
-                          store_whole_genome]
+                          store_whole_genome, version]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -784,15 +791,18 @@ class Cover(Dataset):
         datatags = [name]
 
         collapser_ = collapser if collapser is not None else 'mean'
+        if normalizer is None:
+            normalizer = []
+        if not isinstance(normalizer, list):
+            normalizer = [normalizer]
 
         if cache:
             files = bigwigfiles + [roi]
             parameters = [genomesize, binsize, stepsize, flank,
                           resolution, storage, dtype,
                           zero_padding,
-                          normalizer.__name__ if hasattr(normalizer, '__name__') else normalizer,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome, nan_to_num]
+                          store_whole_genome, nan_to_num, version]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -1008,9 +1018,8 @@ class Cover(Dataset):
             parameters = [genomesize, binsize, stepsize, flank,
                           resolution, storage, dtype,
                           zero_padding, mode,
-                          normalizer.__name__ if hasattr(normalizer, '__name__') else normalizer,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome]
+                          store_whole_genome, version]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -1164,7 +1173,7 @@ class Cover(Dataset):
             files = [array]
             parameters = [genomesize, gindexer.binsize,
                           resolution, storage, stranded,
-                          _dummy_collapser.__name__,
+                          _dummy_collapser.__name__, version, 
                           store_whole_genome] + [str(reg_) for reg_ in gindexer]
             cache_hash = create_sha256_cache(files, parameters)
         else:
