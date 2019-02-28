@@ -3,6 +3,7 @@
 import warnings
 
 import Bio
+from itertools import product
 import numpy as np
 from HTSeq import GenomicInterval
 
@@ -77,22 +78,25 @@ class Bioseq(Dataset):
     gindexer : :class:`GenomicIndexer` or None
         A genomic index mapper that translates an integer index to a
         genomic coordinate. Can be None, if the Dataset is only loaded.
-    alphabetsize : int
-        Alphabetsize of the sequence.
+    alphabet : str
+        String of sequence alphabet. For example, 'ACGT'.
     """
 
     _order = None
+    _alphabet = None
     _alphabetsize = None
     _flank = None
     _gindexer = None
 
-    def __init__(self, name, garray, gindexer, alphabetsize, channel_last):
+    def __init__(self, name, garray, gindexer, alphabet, channel_last):
 
         self.garray = garray
         self.gindexer = gindexer
-        self._alphabetsize = alphabetsize
+        self._alphabet = alphabet
+        self.conditions = [''.join(item) for item in product(sorted(self._alphabet), repeat=self.garray.order)]
+        self._alphabetsize = len(self._alphabet)
         self._rcindex = [_complement_index(idx, garray.order)
-                         for idx in range(pow(alphabetsize, garray.order))]
+                         for idx in range(pow(self._alphabetsize, garray.order))]
         self._channel_last = channel_last
 
         Dataset.__init__(self, '{}'.format(name))
@@ -259,7 +263,7 @@ class Bioseq(Dataset):
                                          store_whole_genome=store_whole_genome)
 
         return cls(name, garray, gindexer,
-                   alphabetsize=len(seqs[0].seq.alphabet.letters),
+                   alphabet=seqs[0].seq.alphabet.letters,
                    channel_last=channel_last)
 
     @classmethod
@@ -354,7 +358,7 @@ class Bioseq(Dataset):
         gindexer.ends = [reglen + 2*flank]*len(lens)
 
         return cls(name, garray, gindexer,
-                   alphabetsize=len(seqs[0].seq.alphabet.letters),
+                   alphabet=seqs[0].seq.alphabet.letters,
                    channel_last=channel_last)
 
     def __repr__(self):  # pragma: no cover
