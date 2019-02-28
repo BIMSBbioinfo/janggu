@@ -58,41 +58,53 @@ class Array(Dataset):
 class ReduceDim(Dataset):
     """ReduceDim class.
 
-    This class wraps an arbitrary array
-    and removes single-dimensional entries from the shape
-    using numpy.squeeze.
-    It can be used to transform a 4D Cover object to
-    a table-like representation.
+    This class wraps an 4D coverage object and reduces
+    the middle two dimensions by applying the aggregate function.
+    Therefore, it transforms the 4D object into a table-like 2D representation
 
     Parameters
     -----------
     array : Dataset
         Dataset
+    aggregator : str
+        Aggregator used for reducing the intermediate dimensions.
+        Available aggregators are 'sum', 'mean', 'max' for performing
+        summation, averaging or obtaining the maximum value.
+        Default: 'sum'
     """
 
-    def __init__(self, array):
+    def __init__(self, array, aggregator=None):
 
-        self.data = array
+        self.data = copy.copy(array)
+        if aggregator is None:
+            aggregator = 'sum'
+
+        def _get_aggregator(name):
+            if name == 'sum':
+                return np.sum
+            elif name == 'mean':
+                return np.mean
+            elif name == 'max':
+                return np.max
+            else:
+                raise ValueError('ReduceDim aggregator="{}" not known. Must be "sum", "mean" or "max".'.format(name))
+        self.aggregator = _get_aggregator(aggregator)
         Dataset.__init__(self, array.name)
 
     def __repr__(self):  # pragma: no cover
-        return 'ReduceDim("{}")'.format(self.name)
+        return 'ReduceDim({})'.format(str(self.data))
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idxs):
-        data = np.squeeze(self.data[idxs])
-        if data.ndim == 1:
-            data = data[:, np.newaxis]
+        data = self.aggregator(self.data[idxs], axis=(1, 2))
         return data
 
     @property
     def shape(self):
         """Shape of the dataset"""
-        shape = tuple(s for s in self.data.shape if s > 1)
-        if len(shape) == 1:
-            return shape + (1,)
+        shape = (self.data.shape[0], self.data.shape[-1])
         return shape
 
     @property
