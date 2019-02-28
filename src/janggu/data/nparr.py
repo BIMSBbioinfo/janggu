@@ -1,4 +1,5 @@
 """Array dataset"""
+import copy
 import numpy as np
 
 from janggu.data.data import Dataset
@@ -24,9 +25,8 @@ class Array(Dataset):
 
     def __init__(self, name, array, conditions=None):
 
-        self.data = array
-        if conditions is not None and isinstance(conditions, list):
-            self.conditions = conditions
+        self.data = copy.copy(array)
+        self.conditions = conditions
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -48,11 +48,15 @@ class Array(Dataset):
             return self.data.shape + (1,)
         return self.data.shape
 
-
     @property
     def ndim(self):
         "ndim"
         return len(self.shape)
+
+    def __copy__(self):
+        obj = type(self)(self.name, self.data, self.conditions)
+        obj.__dict__.update(self.__dict__)
+        return obj
 
 
 class ReduceDim(Dataset):
@@ -108,6 +112,23 @@ class ReduceDim(Dataset):
         return shape
 
     @property
+    def gindexer(self):
+        if hasattr(self.data, 'gindexer'):
+             return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
     def ndim(self):
-        "ndim"
         return len(self.shape)
+
+    def __copy__(self):
+        obj = ReduceDim(copy.copy(self.data))
+        return obj
+
