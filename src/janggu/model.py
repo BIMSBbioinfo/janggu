@@ -7,6 +7,7 @@ import time
 
 import h5py
 from keras.callbacks import LambdaCallback
+from keras.callbacks import CSVLogger
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import Sequence
@@ -471,16 +472,21 @@ class Janggu(object):
                        abs(logs[k]) > 1e-3
                        else '{:.4e}').format(logs[k]) for k in logs]))))
 
+        if not os.path.exists(os.path.join(self.outputdir, 'evaluation')):
+            os.mkdir(os.path.join(self.outputdir, 'evaluation'))
+        if not os.path.exists(os.path.join(self.outputdir, 'evaluation', self.name)):
+            os.mkdir(os.path.join(self.outputdir, 'evaluation', self.name))
+
+        callbacks.append(CSVLogger(os.path.join(self.outputdir, 'evaluation', self.name, 'training.log')))
+
         if not batch_size:
             batch_size = 32
-
 
         if isinstance(inputs, Sequence):
             # input could be a sequence
             jseq = inputs
         else:
             jseq = JangguSequence(batch_size, inputs, outputs, sample_weight, shuffle=shuffle)
-
 
         if isinstance(validation_data, tuple):
             valinputs = _convert_data(self.kerasmodel, validation_data[0],

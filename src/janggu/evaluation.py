@@ -5,6 +5,7 @@ model evaluation.
 """
 
 import datetime
+import logging
 import os
 
 import numpy
@@ -141,6 +142,7 @@ class Scorer(object):
         self.score_name = name
         self.score_fct = score_fct
         self.percondition = percondition
+        self.logger = logging.getLogger('scorer')
 
         self.results = dict()
         self._exporter = exporter
@@ -176,7 +178,7 @@ class Scorer(object):
 
         if self.results:
             # if there are some results, export them
-            print('exporting', self.score_name, 'to', output_path)
+            self.logger.info('exporting', self.score_name, 'to', output_path)
             self._exporter(output_path, self.score_name,
                            self.results)
 
@@ -211,7 +213,7 @@ class Scorer(object):
         if outputs is not None:
             _out = _reshape(outputs, self.percondition)
         _pre = _reshape(predicted, self.percondition)
-        print('scoring', self.score_name)
+        self.logger.info('scoring:', self.score_name)
         score_fct = self.score_fct
         if score_fct is None and outputs is not None:
             raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')
@@ -244,6 +246,13 @@ class Scorer(object):
                 else:
                     # not conditions present, just number them.
                     condition = str(idx)
+
+                try:
+                    iter(score)
+                except TypeError:
+                    # if the score is a scalar value, we write it into
+                    # the log file.
+                    self.logger.info(self.score_name, model.name, layername[0], condition, ":", score)
 
                 self.results[model.name, layername[0], condition] = \
                     {'date': str(datetime.datetime.utcnow()),
