@@ -421,7 +421,7 @@ class Bioseq(Dataset):
         if interval.strand in ['.', '+']:
             return np.asarray(self.garray[interval][:, 0, 0])
 
-        return np.asarray([self._rcindex[val] for val
+        return np.asarray([self._rcindex[val] if val >=0 else val for val
                            in self.garray[interval][:, 0, 0]])[::-1]
 
 
