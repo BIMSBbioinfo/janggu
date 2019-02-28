@@ -18,6 +18,8 @@ from janggu import Janggu
 from janggu import inputlayer
 from janggu import outputconv
 from janggu import outputdense
+from janggu import model_from_json
+from janggu import model_from_yaml
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover
@@ -194,6 +196,9 @@ def test_janggu_instance_dense(tmpdir):
                         inputs=dna,
                         outputs=ctcf,
                         name='dna_ctcf_HepG2-cnn')
+    kbwm2 = model_from_json(bwm.kerasmodel.to_json())
+    kbwm3 = model_from_yaml(bwm.kerasmodel.to_yaml())
+
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
 

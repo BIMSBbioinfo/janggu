@@ -23,6 +23,12 @@ from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
 
 
+JANGGU_LAYERS = {'Reverse': Reverse,
+          'Complement': Complement,
+          'LocalAveragePooling2D': LocalAveragePooling2D,
+          'DnaConv2D': DnaConv2D}
+
+
 def _convert_data(kerasmodel, data, layer):
     """Converts different data formats to
     {name:values} dict.
@@ -186,14 +192,10 @@ class Janggu(object):
 
         path = cls._storage_path(name, _get_output_root_directory())
 
-        layers = {'Reverse': Reverse,
-                  'Complement': Complement,
-                  'LocalAveragePooling2D': LocalAveragePooling2D,
-                  'DnaConv2D': DnaConv2D}
         if not custom_objects:
             custom_objects = {}
 
-        custom_objects.update(layers)
+        custom_objects.update(JANGGU_LAYERS)
 
         model = load_model(path, custom_objects=custom_objects)
         return cls(model.inputs, model.outputs, name)
@@ -209,7 +211,7 @@ class Janggu(object):
             raise Exception("Name must be a string.")
         self._name = name
 
-    def save(self, filename=None, overwrite=True):
+    def save(self, filename=None, overwrite=True, show_shapes=True):
         """Saves the model.
 
         Parameters
@@ -224,7 +226,7 @@ class Janggu(object):
 
         plotname = os.path.splitext(filename)[0] + '.png'
         try:
-            plot_model(self.kerasmodel, to_file=plotname, show_shapes=True)
+            plot_model(self.kerasmodel, to_file=plotname, show_shapes=show_shapes)
         except Exception:  # pragma: no cover pylint: disable=broad-except
             # if graphviz is not installed on the system.
             self.logger.exception('plot_model failed, continue nevertheless: ')
@@ -828,3 +830,23 @@ class Janggu(object):
             if hyper_params[key]:
                 weights.attrs[key] = str(hyper_params[key])
         content.close()
+
+
+def model_from_json(json_string, custom_objects=None):
+    if not custom_objects:
+        custom_objects = {}
+
+    custom_objects.update(JANGGU_LAYERS)
+
+    return keras.models.model_from_json(json_string, custom_objects)
+
+
+def model_from_yaml(yaml_string, custom_objects=None):
+    if not custom_objects:
+        custom_objects = {}
+
+    custom_objects.update(JANGGU_LAYERS)
+
+    return keras.models.model_from_yaml(yaml_string, custom_objects)
+
+
