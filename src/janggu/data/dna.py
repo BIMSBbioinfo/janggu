@@ -451,8 +451,7 @@ class Bioseq(Dataset):
             data = as_onehot(data,
                              self.garray.order,
                              self._alphabetsize)
-            for transform in self.transformations:
-                data = transform(data)
+
             if not self._channel_last:
                 data = np.transpose(data, (0, 3, 1, 2))
             return data
@@ -465,9 +464,6 @@ class Bioseq(Dataset):
 
         data = as_onehot(self.iseq4idx(idxs), self.garray.order,
                          self._alphabetsize)
-
-        for transform in self.transformations:
-            data = transform(data)
 
         if not self._channel_last:
             data = np.transpose(data, (0, 3, 1, 2))

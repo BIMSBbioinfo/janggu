@@ -1222,8 +1222,6 @@ class Cover(Dataset):
                 # accept a genomic interval directly
                 data = self._getsingleitem(idxs)
                 data = data.reshape((1,) + data.shape)
-                for transform in self.transformations:
-                    data = transform(data)
 
             else:
                 chrom = idxs.chrom
@@ -1302,9 +1300,6 @@ class Cover(Dataset):
 
             dat = self._getsingleitem(interval)
             data[i, :len(dat), :, :] = dat
-
-        for transform in self.transformations:
-            data = transform(data)
 
         if not self._channel_last:
             data = np.transpose(data, (0, 3, 1, 2))

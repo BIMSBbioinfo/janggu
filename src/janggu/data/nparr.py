@@ -39,9 +39,6 @@ class Array(Dataset):
     def __getitem__(self, idxs):
         data = self.data[idxs]
 
-        for transform in self.transformations:
-            data = transform(data)
-
         return data
 
     @property
