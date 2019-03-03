@@ -749,6 +749,76 @@ class SparseGenomicArray(GenomicArray):
     def _reshape(self, data, shape):
         return data.toarray().reshape(shape)
 
+
+class PercentileTrimming(object):
+    """Percentile trimming normalization.
+
+    This class performs percentile trimming of a GenomicArray to aleviate
+    the effect of outliers.
+    All values that exceed the value associated with the given percentile
+    are set to be equal to the percentile.
+
+    Parameters
+    ----------
+    percentile : float
+        Percentile at which to perform chromosome-level trimming.
+    """
+    def __init__(self, percentile):
+        self.percentile = percentile
+
+    def __call__(self, garray):
+
+        quants = np.percentile(np.asarray([garray.handle[chrom] for \
+                                      chrom in garray.handle]),
+                          self.percentile, axis=(0,1,2))
+
+        for icond, quant in enumerate(quants):
+            for chrom in garray.handle:
+                arr = garray.handle[chrom][:,:,icond]
+                arr[arr > quant] = quant
+                garray.handle[chrom][:,:,icond] = arr
+        return garray
+
+    def __str__(self):
+        return 'PercentileTrimming({})'.format(self.percentile)
+
+    def __repr__(self):
+        return str(self)
+
+
+class RegionLengthNormalization(object):
+    """ Normalization for variable-region length.
+
+    This class performs region length normalization of a GenomicArray.
+    This is relevant when genomic features are of variable size, e.g.
+    enhancer regions of different width or when using variable length genes.
+
+    Parameters
+    ----------
+    regionmask : str or GenomicIndexer, None
+        A bed file or a genomic indexer that contains the masking region
+        that is considered for the signal. For instance, when normalizing
+        gene expression to TPM, the mask contains exons. Otherwise, the
+        TPM would normalize for the full length gene annotation.
+        If None, no mask is included.
+    """
+    def __init__(self, regionmask=None):
+        self.regionmask = regionmask
+
+    def __call__(self, garray):
+        # length scaling
+
+        garray.scale_by_region_length()
+
+        return garray
+
+    def __str__(self):
+        return 'RegionLengthNormalization({})'.format(self.regionmask)
+
+    def __repr__(self):
+        return str(self)
+
+
 class ZScore(object):
     """ZScore normalization.
 
@@ -773,9 +843,6 @@ class ZScore(object):
         self.std = std
 
     def __call__(self, garray):
-        # length scaling
-
-        garray.scale_by_region_length()
 
         # determine the mean signal per condition
         if self.mean is None:
@@ -793,8 +860,37 @@ class ZScore(object):
 
         return garray
 
+    def __str__(self):
+        return 'ZScore({},{})'.format(self.mean, self.std)
 
-class ZScoreLog(ZScore):
+    def __repr__(self):
+        return str(self)
+
+
+class LogTransform(object):
+    """Log transformation of intput signal.
+
+    This class performs log-transformation
+    of a GenomicArray using log(x + 1.) to avoid NAN's from zeros.
+
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, garray):
+
+        for chrom in garray.handle:
+            garray.handle[chrom][:] = np.log(garray.handle[chrom][:] + 1.)
+        return garray
+
+    def __str__(self):
+        return 'Log'
+
+    def __repr__(self):
+        return str(self)
+
+
+class ZScoreLog(object):
     """ZScore normalization after log transformation.
 
     This class performs ZScore normalization after log-transformation
@@ -814,17 +910,18 @@ class ZScoreLog(ZScore):
         from the GenomicArray and then applied.
         Default: None.
     """
-    def __init__(self, means=None, stds=None):
-        super(ZScoreLog, self).__init__(means, stds)
+    def __init__(self, mean=None, std=None):
+        self.logtr = LogTransform()
+        self.zscore = ZScore(mean, std)
 
     def __call__(self, garray):
+        return self.zscore(self.logtr(garray))
 
-        # overall mean
-        # first log transform
-        for chrom in garray.handle:
-            garray.handle[chrom][:] = np.log(garray.handle[chrom][:] + 1.)
+    def __str__(self):
+        return str(self.zscore) + str(self.logtr)
 
-        return super(ZScoreLog, self).__call__(garray)
+    def __repr__(self):
+        return str(self)
 
 
 def normalize_garray_tpm(garray):
@@ -834,7 +931,7 @@ def normalize_garray_tpm(garray):
     """
 
     # rescale by region lengths in bp
-    garray.scale_by_region_length()
+    garray = RegionLengthNormalization()(garray)
 
     # recale to kb
     garray.rescale(1e-3)
@@ -853,13 +950,16 @@ def normalize_garray_tpm(garray):
 def get_normalizer(normalizer):
     """ maps built-in normalizers by name and
     returns the respective function """
-    if normalizer is None:
-        return normalizer
-    elif isinstance(normalizer, str):
+
+    if isinstance(normalizer, str):
         if normalizer == 'zscore':
             return ZScore()
         elif normalizer == 'zscorelog':
             return ZScoreLog()
+        elif normalizer == 'binsizenorm':
+            return RegionLengthNormalization()
+        elif normalizer == 'perctrim':
+            return PercentileTrimming(99)
         elif normalizer == 'tpm':
             return normalize_garray_tpm
     elif callable(normalizer):
