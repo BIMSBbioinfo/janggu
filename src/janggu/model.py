@@ -1,5 +1,6 @@
 """Janggu - deep learning for genomics"""
 
+import copy
 import hashlib
 import logging
 import os
@@ -515,19 +516,20 @@ class Janggu(object):
                                  " which is required for this options.")
 
             # then split the original dataset into training and validation set.
-            testinp = []
-            traininp = []
-            testoup = []
-            trainoup = []
-            for inp in jseq.inputs:
-                trinp, teinp = split_train_test(jseq.inputs[inp], validation_data)
-                testinp.append(teinp)
-                traininp.append(trinp)
-            for oup in jseq.outputs:
-                troup, teoup = split_train_test(jseq.outputs[oup], validation_data)
-                testoup.append(teoup)
-                trainoup.append(troup)
+            train, test = split_train_test((jseq.inputs, jseq.outputs), validation_data)
 
+            traininp, trainoup = train
+            testinp, testoup = test
+
+            self.logger.info("Split in training and validation set:")
+            self.logger.info("Training-Input:")
+            self.__dim_logging(traininp)
+            self.logger.info("Training-Output:")
+            self.__dim_logging(trainoup)
+            self.logger.info("Test-Input:")
+            self.__dim_logging(testinp)
+            self.logger.info("Test-Output:")
+            self.__dim_logging(testoup)
             jseq = JangguSequence(jseq.batch_size,
                                   _convert_data(self.kerasmodel, traininp,
                                                 'input_layers'),
