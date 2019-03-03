@@ -298,7 +298,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         # data should just fall through
         return data
 
-    def _interval_length(self, chrom):
+    def interval_length(self, chrom):
         # extract the length by the interval length
         # or by the array shape
         locus = _str_to_iv(chrom)
@@ -310,20 +310,18 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     def scale_by_region_length(self):
         """ This method scales the regions by the region length ."""
         for chrom in self.handle:
-            self.handle[chrom][:] /= self._interval_length(chrom)
+            self.handle[chrom][:] /= self.interval_length(chrom)
 
     def weighted_mean(self):
         """ Base pair resolution mean weighted by interval length
         """
 
         # summing the signal
-        sums = [self.sum(chrom) * self._interval_length(chrom) \
-                for chrom in self.handle]
+        sums = [self.sum(chrom) for chrom in self.handle]
         sums = np.asarray(sums).sum(axis=0)
 
         # weights are determined by interval and chromosome length
-        weights = [np.prod(self.handle[chrom].shape[:-1]) * \
-                   self._interval_length(chrom) \
+        weights = [np.prod(self.handle[chrom].shape[:-1]) \
                    for chrom in self.handle]
         weights = np.asarray(weights).sum()
         return sums / weights
@@ -356,14 +354,12 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
         # summing the squared signal signal
         sums = [np.square(self.handle[chrom][:, :, :]).sum(
-            axis=tuple(range(self.handle[chrom].ndim - 1))) * \
-            self._interval_length(chrom) \
+            axis=tuple(range(self.handle[chrom].ndim - 1))) \
             for chrom in self.handle]
         sums = np.asarray(sums).sum(axis=0)
 
         # weights are determined by interval and chromosome length
-        weights = [np.prod(self.handle[chrom].shape[:-1]) * \
-                   self._interval_length(chrom) \
+        weights = [np.prod(self.handle[chrom].shape[:-1]) \
                    for chrom in self.handle]
         weights = np.asarray(weights).sum()
         return np.sqrt(sums / (weights - 1.))
@@ -635,7 +631,7 @@ class SparseGenomicArray(GenomicArray):
             data = {chrom: sparse.dok_matrix((_get_iv_length(chroms[chrom],
                                                              resolution),
                                               (2 if stranded else 1) *
-                                              len(conditions)),
+                                              len(self.condition)),
                                              dtype=self.typecode)
                     for chrom in chroms}
             self.handle = data
@@ -969,8 +965,7 @@ def get_normalizer(normalizer):
 
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float32',
                          storage='hdf5', resolution=1,
-                         order=1,
-                         store_whole_genome=True,
+                         order=1, store_whole_genome=True,
                          datatags=None, cache=None, overwrite=False,
                          loader=None,
                          normalizer=None, collapser=None):
