@@ -8,6 +8,7 @@ import pandas
 import pkg_resources
 import pytest
 
+from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.data import GenomicIndexer
 from janggu.data import plotGenomeTrack
@@ -1495,8 +1496,6 @@ def test_plotgenometracks():
 
     bw_file = pkg_resources.resource_filename('janggu', 'resources/sample.bw')
 
-
-
     cover = Cover.create_from_bigwig('coverage2',
                                      bigwigfiles=bw_file,
                                      roi=roi,
@@ -1504,16 +1503,58 @@ def test_plotgenometracks():
                                      stepsize=200,
                                      resolution=50)
 
-
-
-    cover2 = Cover.create_from_bigwig('coverage2',
-                                      bigwigfiles=bw_file,
+    cover2 = Cover.create_from_bigwig('morecoverage',
+                                      bigwigfiles=[bw_file] * 4,
                                       roi=roi,
                                       binsize=200,
                                       stepsize=200,
                                       resolution=50)
 
-
-
+    # line plots
     a = plotGenomeTrack([cover,cover2],'chr1',16000,18000)
     a = plotGenomeTrack(cover,'chr1',16000,18000)
+
+    a = plotGenomeTrack([cover,cover2],'chr1',16000,18000, plottypes=['heatmap'] * 2)
+    with pytest.raises(AssertionError):
+        # differing number of plottypes and coverage objects raises an error
+        a = plotGenomeTrack(cover,'chr1',16000,18000, plottypes=['heatmap'] * 2)
+    with pytest.raises(ValueError):
+        # coverage not a sequence
+        a = plotGenomeTrack(cover,'chr1',16000,18000, plottypes=['seqplot'])
+    with pytest.raises(ValueError):
+        # coverage not a sequence
+        a = plotGenomeTrack(cover2,'chr1',16000,18000, plottypes=['seqplot'])
+
+
+def test_plotgenometracks():
+
+    roi = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+
+    bw_file = pkg_resources.resource_filename('janggu', 'resources/sample.bam')
+
+    cover = Cover.create_from_bam('coverage',
+                                  bamfiles=bw_file,
+                                  roi=roi,
+                                  binsize=200,
+                                  stepsize=200,
+                                  resolution=50)
+
+    # line plots
+    a = plotGenomeTrack(cover,'chr1',16000,18000)
+
+    a = plotGenomeTrack([cover,cover],'chr1',16000,18000, plottypes=['heatmap'] * 2)
+
+
+def test_plotgenometracks_seqplot():
+
+    roi = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+
+    refgenome = pkg_resources.resource_filename('janggu',
+                                               'resources/sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       roi=roi, order=1,
+                                       store_whole_genome=True)
+
+    a = plotGenomeTrack(dna,'chr1',16000,18000, plottypes=['seqplot'])

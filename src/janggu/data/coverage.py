@@ -17,6 +17,7 @@ from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
+from janggu.utils import NMAP, PMAP
 
 from janggu.version import version
 
@@ -1173,7 +1174,7 @@ class Cover(Dataset):
             files = [array]
             parameters = [genomesize, gindexer.binsize,
                           resolution, storage, stranded,
-                          _dummy_collapser.__name__, version, 
+                          _dummy_collapser.__name__, version,
                           store_whole_genome] + [str(reg_) for reg_ in gindexer]
             cache_hash = create_sha256_cache(files, parameters)
         else:
@@ -1438,11 +1439,15 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
     figsize : tuple(int, int)
         Figure size passed on to matplotlib.
     plottype : None or list(str)
-        Plot type indicates whether to plot the coverage track as line plot or as
-        heatmap using 'line' or 'heatmap', respectively.
+        Plot type indicates whether to plot coverage tracks as line plots,
+        heatmap, or seqplot using 'line' or 'heatmap', respectively.
         By default, all coverage objects are depicted as line plots if plottype=None.
         Otherwise, a list of types must be supplied containing the plot types for each
-        coverage object explicitly. For example, ['line', 'heatmap'].
+        coverage object explicitly. For example, ['line', 'heatmap', 'seqplot'].
+        While, 'line' and 'heatmap' can be used for any type of coverage data,
+        'seqplot' is reserved to plot sequence influence on the output. It is
+        intended to be used in conjunction with 'input_attribution' method which
+        determines the importance of paricular sequence letters for the output prediction.
 
     Returns
     -------
@@ -1455,14 +1460,20 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
     if not isinstance(covers, list):
         covers = [covers]
 
+
     if plottypes is None:
         plottypes = ['line'] * len(covers)
+
+    assert len(plottypes) == len(covers), \
+        "The number of cover objects must be the same as the number of plottyes."
 
     color = iter(cm.rainbow(np.linspace(0, 1, len(covers))))
 
     nfiles = 0
     for icov, cover in enumerate(covers):
         if plottypes[icov] == 'heatmap':
+            nfiles += 1
+        elif plottypes[icov] == 'seqplot':
             nfiles += 1
         else:
             nfiles += cover.shape[-1]
@@ -1487,7 +1498,7 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
         y_offset += 1
         color_ = next(color)
 
-        y_block = (cover.shape[-1] if plottypes[j] != 'heatmap' else 1) * 3
+        y_block = (cover.shape[-1] if plottypes[j] == 'lineplot' else 1) * 3
 
         # side bar indicator for current cover
         ax = fig.add_subplot(grid[(y_offset): (y_offset + y_block), 0])
@@ -1514,6 +1525,48 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
             ax.set_xticks(())
             ax.set_yticks(np.arange(0, len(ticks)+1, 1.0))
             #cbar = ax.figure.colorbar(im, ax=ax)
+            y_offset += 3
+            continue
+
+        if plottypes[j] == 'seqplot':
+            # check if coverage represents dna
+            alphabetsize = 0
+            if len(cover.conditions) % len(NMAP) == 0:
+                alphabetsize = len(NMAP)
+                MAP = NMAP
+            if len(cover.conditions) % len(PMAP) == 0:
+                alphabetsize = len(PMAP)
+                MAP = PMAP
+
+            alphabetsize = int(alphabetsize)
+
+            if alphabetsize == 0:
+                raise ValueError("Coverage tracks seems not represent biological sequences. "
+                                 "The last dimension must be divisible by the alphabetsize.")
+
+            for cond in cover.conditions:
+                if cond[0] not in MAP:
+                    raise ValueError("Coverage tracks seems not represent biological sequences. "
+                                     "Condition names must represent the alphabet letters.")
+
+            coverage = coverage.reshape(coverage.shape[0], -1)
+            coverage = coverage.reshape(coverage.shape[:-1] + (alphabetsize, int(coverage.shape[-1]/alphabetsize)))
+            coverage = coverage.sum(-1)
+
+            ax = fig.add_subplot(grid[(y_offset): (y_offset + 3), 1:])
+            x = np.arange(coverage.shape[0])
+            y_figure_offset = np.zeros(coverage.shape[0])
+            handles = []
+            for letter in MAP:
+                handles.append(ax.bar(x, coverage[:, MAP[letter]],
+                                      bottom=y_figure_offset,
+                                      color=cm.rainbow(np.linspace(.0, 1., len(MAP)))[MAP[letter]],
+                                      label=letter))
+                y_figure_offset += coverage[:, MAP[letter]]
+            ax.legend(handles=handles)
+            ax.set_yticklabels(())
+            ax.set_yticks(())
+            ax.set_xticks(())
             y_offset += 3
             continue
 
