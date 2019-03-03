@@ -302,8 +302,20 @@ def _str_to_iv(givstr, template_extension=0):
         return (sub[0], )
 
     chr_ = sub[0]
-    start = int(sub[1].split('-')[0])
-    end = int(sub[1].split('-')[1])
+
+    second_split = sub[1].split('-')
+    # if the interval contains negative values, they will be zero-padded later
+    if second_split[0] == '':
+        # start is a negative value
+        second_split = second_split[1:]
+        second_split[0] = '-' + second_split[0]
+    if second_split[1] == '':
+        # if end is a negative value it does not make sense.
+        raise ValueError('Start and end appear to be netative: '.format(givstr))
+
+    start = int(second_split[0])
+    end = int(second_split[1])
+
     return (chr_, start - template_extension, end + template_extension)
 
 
