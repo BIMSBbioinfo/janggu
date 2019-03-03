@@ -32,13 +32,13 @@ def test_randomorientation():
     x_orig = np.zeros((3,1,1,2))
 
     x_tr = RandomOrientation(Array('test', x_orig))
-    t_tr[0]
+    x_tr[0]
     np.testing.assert_equal(len(x_tr), 3)
 
 
 def test_randomsignalscale():
-    x_orig = np.zeros((3,1,1,2))
+    x_orig = np.ones((3,1,1,2))
 
     x_tr = RandomSignalScale(Array('test', x_orig), .1)
-    t_tr[0]
+    x_tr[0]
     np.testing.assert_equal(len(x_tr), 3)

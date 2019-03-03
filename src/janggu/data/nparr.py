@@ -225,7 +225,7 @@ class RandomOrientation(Dataset):
         return len(self.data)
 
     def __getitem__(self, idxs):
-        data = self.data[idxs]
+        data = self.data[slice(idxs, idxs+1)]
 
         for i, _ in enumerate(data):
             if np.random.randint(2, size=1):
