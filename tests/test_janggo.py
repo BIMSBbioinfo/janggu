@@ -20,6 +20,7 @@ from janggu import outputconv
 from janggu import outputdense
 from janggu import model_from_json
 from janggu import model_from_yaml
+from janggu import input_attribution
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover
@@ -208,6 +209,45 @@ def test_janggu_instance_dense(tmpdir):
     assert os.path.exists(storage)
 
     Janggu.create_by_name('dna_ctcf_HepG2-cnn')
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_influence_genomic(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    csvfile = os.path.join(data_path, 'sample.csv')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       binsize=50,
+                                       roi=bed_file, order=1)
+
+    df = pd.read_csv(csvfile, header=None)
+    ctcf = Array('ctcf', df.values, conditions='peaks')
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def _cnn_model(inputs, inp, oup, params):
+        layer = inputs['dna']
+        layer = Flatten()(layer)
+        output = Dense(params[0])(layer)
+        return inputs, output
+    model = Janggu.create(_cnn_model, modelparams=(2,),
+                          inputs=dna,
+                          outputs=ctcf,
+                          name='dna_ctcf_HepG2-cnn')
+
+    model.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    influence = input_attribution(model, dna, idx=0)
+    iv = dna.gindexer[0]
+    chrom, start, end = iv.chrom, iv.start, iv.end
+    influence = input_attribution(model, dna, chrom=chrom, start=start, end=end)
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")

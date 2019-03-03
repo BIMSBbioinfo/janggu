@@ -6,6 +6,9 @@ import os
 import time
 
 import h5py
+import numpy as np
+import keras
+import keras.backend as K
 from keras.callbacks import LambdaCallback
 from keras.callbacks import CSVLogger
 from keras.models import Model
@@ -16,6 +19,8 @@ from keras.utils import plot_model
 from janggu.data import split_train_test
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
+from janggu.data.coverage import Cover
+from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.layers import Complement
 from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
@@ -129,6 +134,14 @@ class Janggu(object):
             hasher.update(self.kerasmodel.to_json().encode('utf-8'))
             name = hasher.hexdigest()
             print("Generated model-id: '{}'".format(name))
+
+        total_output = K.sum(self.kerasmodel.output, axis=-1)
+        grad = K.gradients(total_output, self.kerasmodel.input)
+        kinp = self.kerasmodel.input
+
+        if not isinstance(kinp, list):
+            kinp = [kinp]
+        self._influence =  K.function(kinp, grad)
 
         self.name = name
 
@@ -939,3 +952,147 @@ def create_model(template, modelparams=None, inputs=None,
     return model
 
 
+def input_attribution(model, inputs,  # pylint: disable=too-many-locals
+                      chrom=None, start=None, end=None, idx=None):
+
+    """Evaluates the integrated gradients method on the input coverage tracks.
+
+    This allows to attribute feature importance values to the prediction scores.
+    Integrated gradients have been introduced in
+    Sundararajan, Taly and Yan, Axiomatic Attribution for Deep Networks.
+    PMLR 70, 2017.
+
+    The method can either be called, by specifying the region of interest directly
+    by setting chrom, start and end. Alternatively, it is possible to specify the
+    region index. For example, the n^th region of the dataset.
+
+    Parameters
+    ----------
+    model : Janggu
+        Janggu model wrapper
+    inputs : :code:`Dataset`, list(Dataset)
+        Input Dataset.
+    chrom : str or None
+        Chromosome name.
+    start : int or None
+        Region start.
+    end : int or None
+        Region end.
+    idx : int or None
+        Index of the region.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+      # query a specific genomic region
+      input_attribution(model, DATA, chrom='chr1', start=start, end=end)
+
+      # query an index of the dataset
+      input_attribution(model, DATA, idx=0)
+
+    """
+
+    if chrom is not None and idx is not None:
+        self.logger.warning('idx will be ignored, because chrom was specified.')
+        UserWarning('idx will be ignored, because chrom was specified.')
+
+    if (chrom, start, end, idx) == (None,) * 4:
+        raise ValueError("Either 'chrom, start, end' or 'idx' must be specified.")
+
+    if not isinstance(inputs, list):
+        inputs = [inputs]
+
+    gindexers_save = [ip.gindexer for ip in inputs]
+
+    if chrom is not None:
+        subgindexers = [gi.filter_by_region(include=chrom,
+                                            start=start,
+                                            end=end) for gi in gindexers_save]
+    else:
+        # Make new gindexers that contain only the the coordinates for idx
+        # The difficulty with using an index is that chrs, starts and ends
+        # are not globally the same across a list of inputs. They might
+        # differ, for example, if different flanking windows are used.
+        subgindexers = [copy.copy(gi) for gi in gindexers_save]
+        for subgi in subgindexers:
+            subgi.chrs = [subgi.chrs[idx]]
+            subgi.starts = [subgi.starts[idx]]
+            subgi.ends = [subgi.ends[idx]]
+            subgi.strand = [subgi.strand[idx]]
+
+    for ip, _ in enumerate(inputs):
+        inputs[ip].gindexer = subgindexers[ip]
+
+    # check if dimensions match with  keras model
+    # what to do with ambiguous signal (from overlapping windows)
+    try:
+
+        #allocate arrays
+        output = [np.zeros((1, ip.gindexer[0].length if start is None else end-start, ip.shape[-2], ip.shape[-1])) for ip in inputs]
+        resols = [ip.garray.resolution for ip in inputs]
+        mask = [np.zeros(o.shape) + 1e-4 for o in output]
+
+        for igi in range(len(inputs[0])):
+
+            # skip partially overlapping regions
+            starts = [gi[igi].start for gi in subgindexers]
+            ends = [gi[igi].end for gi in subgindexers]
+            if np.any([start_ < start for start_ in starts if start is not None]):
+                continue
+            if np.any([end_ > end for end_ in ends if end is not None]):
+                continue
+
+            influence = [np.zeros((1,) + ip.shape[1:]) for ip in inputs]
+
+            # get influence for current window igi
+            x_in = [ip[igi] for ip in inputs]
+            for step in range(1, 51):
+                grad = model._influence([x*step/50 for x in x_in])
+                for iinp, inp in enumerate(x_in):
+
+                    for idim, inpval in np.ndenumerate(inp):
+                        influence[iinp][idim] += (x_in[iinp][idim]/50)*grad[iinp][idim]
+
+            # scale up by resolution
+            influence = [np.repeat(influence[i], resols[i], axis=1) for i, _ in enumerate(inputs)]
+
+            for o in range(len(output)):
+                # incremetally add the influence results into the output
+                # array for all subwindows in the genomic indexer
+                if idx is not None:
+                    # if an index has been supplied, translate it to genomic regions
+                    start = subgindexers[idx][0].start
+                    end = subgindexers[idx][0].end
+                    chrom = subgindexers[idx][0].chrom
+                m = np.zeros((2,) + influence[o].shape, dtype=influence[o].dtype)
+
+                m[0] = output[o][:, (starts[o]-start):(starts[o] - start + influence[o].shape[1]), :, :]
+                m[1] = influence[o]
+                output[o][:, (starts[o]-start):(starts[o] - start + influence[o].shape[1]), :, :] = np.abs(m).max(axis=0)
+
+        for o in range(len(output)):
+            # finally wrap the output up as coverage track
+            if idx is not None:
+                # if an index has been supplied, translate it to genomic regions
+                start = subgindexers[idx][0].start
+                end = subgindexers[idx][0].end
+                chrom = subgindexers[idx][0].chrom
+            output[o] = Cover.create_from_array('attr_'+inputs[o].name,
+                                                output[o],
+                                                GenomicIndexer.create_from_region(
+                                                chrom, start, end, '.',
+                                                binsize=end-start,
+                                                stepsize=1, flank=0),
+                                                conditions=inputs[o].conditions)
+
+        for ip, _ in enumerate(inputs):
+            # restore the initial genomic indexers
+            inputs[ip].gindexer = gindexers_save[ip]
+
+    except Exception:  # pragma: no cover
+        model.logger.exception('_influence failed:')
+        raise
+
+    return output
