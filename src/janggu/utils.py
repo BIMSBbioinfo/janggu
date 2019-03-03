@@ -98,16 +98,17 @@ def sequences_from_fasta(fasta, string='dna'):
     return seqs
 
 
+NOLETTER = -1024
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.unambiguous_dna.letters))}
 NNUC = len(IUPAC.unambiguous_dna.letters)
 
 # mapping of nucleotides to integers
-NMAP = defaultdict(lambda: -1024)
+NMAP = defaultdict(lambda: NOLETTER)
 NMAP.update(LETTERMAP)
 
 # mapping of amino acids to integers
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.protein.letters))}
-PMAP = defaultdict(lambda: -1024)
+PMAP = defaultdict(lambda: NOLETTER)
 PMAP.update(LETTERMAP)
 
 
@@ -301,8 +302,20 @@ def _str_to_iv(givstr, template_extension=0):
         return (sub[0], )
 
     chr_ = sub[0]
-    start = int(sub[1].split('-')[0])
-    end = int(sub[1].split('-')[1])
+
+    second_split = sub[1].split('-')
+    # if the interval contains negative values, they will be zero-padded later
+    if second_split[0] == '':
+        # start is a negative value
+        second_split = second_split[1:]
+        second_split[0] = '-' + second_split[0]
+    if second_split[1] == '':
+        # if end is a negative value it does not make sense.
+        raise ValueError('Start and end appear to be netative: '.format(givstr))
+
+    start = int(second_split[0])
+    end = int(second_split[1])
+
     return (chr_, start - template_extension, end + template_extension)
 
 

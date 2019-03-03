@@ -19,6 +19,7 @@ from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
 from janggu.version import version
+from janggu.utils import NOLETTER
 
 
 class SeqLoader:
@@ -61,6 +62,7 @@ class SeqLoader:
                 indarray = np.convolve(indarray, filter_, mode='valid')
 
             garray[interval, 0] = indarray.reshape(-1, 1)
+
 
 class Bioseq(Dataset):
     """Bioseq class.
@@ -153,6 +155,7 @@ class Bioseq(Dataset):
                                       order=order,
                                       conditions=['idx'],
                                       overwrite=overwrite,
+                                      padding_value=NOLETTER,
                                       typecode=dtype,
                                       loader=seqloader)
 
@@ -248,11 +251,14 @@ class Bioseq(Dataset):
             rgen = {seq.id: seq for seq in seqs}
             subseqs = []
             for giv in gindexer:
-                subseq = rgen[giv.chrom][giv.start:(giv.end)]
+                subseq = rgen[giv.chrom][max(giv.start, 0):min(giv.end, len(rgen[giv.chrom]))]
+                if giv.start < 0:
+                    subseq = 'N' * (-giv.start) + subseq
+                if len(subseq) < giv.length:
+                    subseq = subseq + 'N' * (giv.length - len(subseq))
                 subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end - order + 1)
                 subseq.name = subseq.id
                 subseq.description = subseq.id
-
                 subseqs.append(subseq)
             seqs = subseqs
 
