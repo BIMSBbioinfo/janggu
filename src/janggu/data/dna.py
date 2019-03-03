@@ -17,6 +17,7 @@ from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
+from janggu.utils import NOLETTER
 
 
 class SeqLoader:
@@ -148,6 +149,7 @@ class Bioseq(Dataset):
                                       order=order,
                                       conditions=['idx'],
                                       overwrite=overwrite,
+                                      padding_value=NOLETTER,
                                       typecode=dtype,
                                       loader=seqloader)
 

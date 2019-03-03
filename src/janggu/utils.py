@@ -98,16 +98,17 @@ def sequences_from_fasta(fasta, string='dna'):
     return seqs
 
 
+NOLETTER = -1024
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.unambiguous_dna.letters))}
 NNUC = len(IUPAC.unambiguous_dna.letters)
 
 # mapping of nucleotides to integers
-NMAP = defaultdict(lambda: -1024)
+NMAP = defaultdict(lambda: NOLETTER)
 NMAP.update(LETTERMAP)
 
 # mapping of amino acids to integers
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.protein.letters))}
-PMAP = defaultdict(lambda: -1024)
+PMAP = defaultdict(lambda: NOLETTER)
 PMAP.update(LETTERMAP)
 
 

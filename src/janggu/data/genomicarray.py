@@ -104,6 +104,8 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     resolution : int or None
         Resolution for storing the genomic array. Only relevant for the use
         with Cover Datasets. Default: 1.
+    padding_value : float
+        Padding value. Default: 0.
     order : int
         Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
     collapser : None or callable
@@ -115,13 +117,15 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     _order = None
 
     def __init__(self, stranded=True, conditions=None, typecode='d',
-                 resolution=1, order=1, store_whole_genome=True, collapser=None):
+                 resolution=1, padding_value=0.,
+                 order=1, store_whole_genome=True, collapser=None):
         self.stranded = stranded
         if conditions is None:
             conditions = ['sample']
 
         self.condition = conditions
         self.order = order
+        self.padding_value = padding_value
         if not isinstance(order, int) or order < 1:
             raise Exception('order must be a positive integer')
         if order > 4:
@@ -259,9 +263,14 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             # below is some functionality for zero-padding, in case the region
             # reaches out of the chromosome size
 
-            data = np.zeros((length, 2 if self.stranded else 1,
-                             len(self.condition)),
-                            dtype=self.handle[chrom].dtype)
+            if self.padding_value == 0.0:
+                data = np.zeros((length, 2 if self.stranded else 1,
+                                 len(self.condition)),
+                                dtype=self.handle[chrom].dtype)
+            else:
+                data = np.ones((length, 2 if self.stranded else 1,
+                                 len(self.condition)),
+                                dtype=self.handle[chrom].dtype) * self.padding_value
 
             ref_start, ref_end, array_start, array_end = self._get_indices(interval, data.shape[0])
 
@@ -417,6 +426,8 @@ class HDF5GenomicArray(GenomicArray):
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
+    padding_value : float
+        Padding value. Default: 0.
     cache : str or None
         Hash string of the data and parameters to cache the dataset. If None,
         caching is deactivated. Default: None.
@@ -435,6 +446,7 @@ class HDF5GenomicArray(GenomicArray):
                  datatags=None,
                  resolution=1,
                  order=1,
+                 padding_value=0.,
                  store_whole_genome=True,
                  cache=None,
                  overwrite=False, loader=None,
@@ -442,7 +454,10 @@ class HDF5GenomicArray(GenomicArray):
                  collapser=None):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
                                                resolution,
-                                               order, store_whole_genome, collapser)
+                                               order=order,
+                                               padding_value=padding_value,
+                                               store_whole_genome=store_whole_genome,
+                                               collapser=collapser)
         if cache is None:
             raise ValueError('HDF5 format requires cache=True')
 
@@ -506,6 +521,8 @@ class NPGenomicArray(GenomicArray):
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
+    padding_value : float
+        Padding value. Default: 0.
     cache : str or None
         Hash string of the data and parameters to cache the dataset. If None,
         caching is deactivated. Default: None.
@@ -529,6 +546,7 @@ class NPGenomicArray(GenomicArray):
                  datatags=None,
                  resolution=1,
                  order=1,
+                 padding_value=0.0,
                  store_whole_genome=True,
                  cache=None,
                  overwrite=False, loader=None,
@@ -536,7 +554,10 @@ class NPGenomicArray(GenomicArray):
 
         super(NPGenomicArray, self).__init__(stranded, conditions, typecode,
                                              resolution,
-                                             order, store_whole_genome, collapser)
+                                             order=order,
+                                             padding_value=padding_value,
+                                             store_whole_genome=store_whole_genome,
+                                             collapser=collapser)
 
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
@@ -609,6 +630,8 @@ class SparseGenomicArray(GenomicArray):
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
+    padding_value : float
+        Padding value. Default: 0.
     cache : str or None
         Hash string of the data and parameters to cache the dataset. If None,
         caching is deactivated. Default: None.
@@ -634,13 +657,17 @@ class SparseGenomicArray(GenomicArray):
                  order=1,
                  store_whole_genome=True,
                  cache=None,
+                 padding_value=0.0,
                  overwrite=False,
                  loader=None,
                  collapser=None):
         super(SparseGenomicArray, self).__init__(stranded, conditions,
                                                  typecode,
                                                  resolution,
-                                                 order, store_whole_genome, collapser)
+                                                 order=order,
+                                                 padding_value=padding_value,
+                                                 store_whole_genome=store_whole_genome,
+                                                 collapser=collapser)
 
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
@@ -893,6 +920,7 @@ def get_normalizer(normalizer):
 def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float32',
                          storage='hdf5', resolution=1,
                          order=1,
+                         padding_value=0.0,
                          store_whole_genome=True,
                          datatags=None, cache=None, overwrite=False,
                          loader=None,
@@ -931,6 +959,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
         with Cover Datasets. Default: 1.
     order : int
         Order of the alphabet size. Only relevant for Bioseq Datasets. Default: 1.
+    padding_value : float
+        Padding value. Default: 0.0
     store_whole_genome : boolean
         Whether to store the entire genome or only the regions of interest.
         Default: True
@@ -972,6 +1002,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                 order=order,
                                 store_whole_genome=store_whole_genome,
                                 cache=cache,
+                                padding_value=padding_value,
                                 overwrite=overwrite,
                                 loader=loader,
                                 normalizer=get_normalizer(normalizer),
@@ -985,6 +1016,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               order=order,
                               store_whole_genome=store_whole_genome,
                               cache=cache,
+                              padding_value=padding_value,
                               overwrite=overwrite,
                               loader=loader,
                               normalizer=get_normalizer(normalizer),
@@ -1001,6 +1033,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                   order=order,
                                   store_whole_genome=store_whole_genome,
                                   cache=cache,
+                                  padding_value=padding_value,
                                   overwrite=overwrite,
                                   loader=loader,
                                   collapser=get_collapser(collapser))

@@ -585,3 +585,24 @@ def test_read_protein_sequences():
                     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]], dtype='int8'))
+
+
+def test_dnabed_overreaching_ends_whole_genome():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "bed_test.bed")
+    filename = os.path.join(data_path, 'sample_genome.fa')
+
+    bioseq = Bioseq.create_from_refgenome(
+        'test',
+        refgenome=filename,
+        roi=bed_file,
+        binsize=2,
+        flank=20,
+        store_whole_genome=True,
+        storage='ndarray', cache=False)
+    assert len(bioseq) == 9
+    assert bioseq.shape == (9, 2+2*20, 1, 4)
+    # test if beginning is correctly padded
+    np.testing.assert_equal(bioseq[0].sum(), 22)
+    # test if end is correctly padded
+    np.testing.assert_equal(bioseq['chr1', 29990, 30010].sum(), 10)
