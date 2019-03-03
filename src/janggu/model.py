@@ -328,18 +328,8 @@ class Janggu(object):
 
         """
 
-        print('create model')
-        modelfct = template
-
-        inputs_ = _data_props(inputs) if inputs else None
-        outputs_ = _data_props(outputs) if outputs else None
-
-        input_tensors, output_tensors = modelfct(None, inputs_,
-                                                 outputs_, modelparams)
-
-        jmodel = cls(inputs=input_tensors, outputs=output_tensors, name=name)
-
-        return jmodel
+        model = create_model(template, modelparams, inputs, outputs)
+        return cls(model.inputs, model.outputs, name)
 
     def compile(self, optimizer, loss, metrics=None,
                 loss_weights=None, sample_weight_mode=None,
@@ -848,5 +838,104 @@ def model_from_yaml(yaml_string, custom_objects=None):
     custom_objects.update(JANGGU_LAYERS)
 
     return keras.models.model_from_yaml(yaml_string, custom_objects)
+
+
+def create_model(template, modelparams=None, inputs=None,
+           outputs=None, name=None):
+    """Constructor method.
+
+    This method instantiates a keras model with
+    model template and parameters. It also allows to
+    automatically infer and extend the correct
+    input and output layers for the network.
+
+    Parameters
+    -----------
+    template : function
+        Python function that defines a model template of a neural network.
+        The function signature must adhere to the signature
+        :code:`template(inputs, inputp, outputp, modelparams)`
+        and is expected to return
+        :code:`(input_tensor, output_tensor)` of the neural network.
+    modelparams : list or tuple or None
+        Additional model parameters that are passed along to template
+        upon creation of the neural network. For instance,
+        this could contain number of neurons at each layer.
+        Default: None.
+    inputs : Dataset, list(Dataset) or None
+        Input datasets from which the input layer shapes should be derived.
+        Use this option together with the :code:`inputlayer` decorator (see Example below).
+    outputs : Dataset, list(Dataset) or None
+        Output datasets from which the output layer shapes should be derived.
+        Use this option toghether with :code:`outputdense` or :code:`outputconv`
+        decorators (see Example below).
+    name : str or None
+        Model name. If None, a unique model name is generated
+        based on the model configuration and network architecture.
+
+    Examples
+    --------
+
+    Specify a model using a model template and parameters:
+
+    .. code-block:: python
+
+      def test_manual_model(inputs, inp, oup, params):
+          in_ = Input(shape=(10,), name='ip')
+          layer = Dense(params)(in_)
+          output = Dense(1, activation='sigmoid', name='out')(in_)
+          return in_, output
+
+      # Defines the same model by invoking the definition function
+      # and the create constructor.
+      model = create_model(template=test_manual_model, modelparams=3)
+      model.summary()
+
+    Specify a model using automatic input and output layer determination.
+    That is, only the model body needs to be specified:
+
+    .. code-block:: python
+
+      import numpy as np
+      from janggu import inputlayer, outputdense
+      from janggu.data import Array
+
+      # Some random data which you would like to use as input for the
+      # model.
+      DATA = Array('ip', np.random.random((1000, 10)))
+      LABELS = Array('out', np.random.randint(2, size=(1000, 1)))
+
+      # The decorators inputlayer and outputdense
+      # extract the layer shapes and append the respective layers
+      # to the network
+      # so that only the model body remains to be specified.
+      # Note that the the decorator order matters.
+      # inputlayer must be specified before outputdense.
+      @inputlayer
+      @outputdense(activation='sigmoid')
+      def test_inferred_model(inputs, inp, oup, params):
+          with inputs.use('ip') as in_:
+              # the with block allows for easy
+              # access of a specific named input.
+              output = Dense(params)(in_)
+          return in_, output
+
+      # create a model.
+      model = create_model(template=test_inferred_model, modelparams=3,
+                            name='test_model',
+                            inputp=DATA,
+                            outputp=LABELS)
+
+    """
+
+    inputs_ = _data_props(inputs) if inputs else None
+    outputs_ = _data_props(outputs) if outputs else None
+
+    input_tensors, output_tensors = template(None, inputs_,
+                                             outputs_, modelparams)
+
+    model = Model(inputs=input_tensors, outputs=output_tensors, name=name)
+
+    return model
 
 
