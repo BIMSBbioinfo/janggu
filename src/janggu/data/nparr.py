@@ -132,3 +132,128 @@ class ReduceDim(Dataset):
         obj = ReduceDim(copy.copy(self.data))
         return obj
 
+
+# Wrappers for data augmentation
+class RandomSignalScale(Dataset):
+    """RandomSignalScale class.
+
+    This wrapper performs
+    performs random uniform scaling of the original input.
+    For example, this can be used to randomly change the peak or signal
+    heights during training.
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset object
+    deviance : float
+        The signal is rescaled using (1 + uniform(-deviance, deviance)) x original signal.
+    """
+
+    def __init__(self, array, deviance):
+
+        self.data = copy.copy(array)
+        self.deviance = deviance
+        Dataset.__init__(self, array.name)
+
+    def __repr__(self):  # pragma: no cover
+        return 'RandomSignalScale({})'.format(str(self.data))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        data = self.data[idxs]
+
+        scales = np.random.rand(data.shape[0], data.shape[-1])
+
+        scales = 1 - (scales - self.deviance) / (2*self.deviance)
+
+        data = data * scales[:, None, None, :]
+
+        return data
+
+    @property
+    def gindexer(self):
+        if hasattr(self.data, 'gindexer'):
+             return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def __copy__(self):
+        obj = RandomSignalScale(copy.copy(self.data), copy.copy(self.deviance))
+        return obj
+
+class RandomOrientation(Dataset):
+    """RandomOrientation class.
+
+    This wrapper randomly inverts the directionality of
+    the signal tracks.
+    For example a signal track is randomely presented in 5' to 3' and 3' to 5'
+    orientation. Furthermore, if the dataset is stranded, the strand is switched
+    as well.
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset object must be 4D.
+    """
+
+    def __init__(self, array):
+
+        self.data = copy.copy(array)
+        Dataset.__init__(self, array.name)
+
+    def __repr__(self):  # pragma: no cover
+        return 'RandomOrientation({})'.format(str(self.data))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        data = self.data[idxs]
+
+        for i, _ in enumerate(data):
+            if np.random.randint(2, size=1):
+                data[i] = data[i, ::-1, ::-1, :]
+
+        return data
+
+    @property
+    def gindexer(self):
+        if hasattr(self.data, 'gindexer'):
+             return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def __copy__(self):
+        obj = RandomOrientation(copy.copy(self.data))
+        return obj

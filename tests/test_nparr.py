@@ -2,6 +2,8 @@ import numpy as np
 
 from janggu.data import Array
 from janggu.data import ReduceDim
+from janggu.data import RandomSignalScale
+from janggu.data import RandomOrientation
 
 
 def test_nparr(tmpdir):
@@ -18,9 +20,25 @@ def test_nparr(tmpdir):
 
 def test_reducedim():
     x_orig = np.zeros((3,1,1,2))
-    
+
     x_reduce = ReduceDim(Array('test', x_orig))
     np.testing.assert_equal(len(x_reduce), 3)
     np.testing.assert_equal(x_reduce.shape, (3,2))
 
     assert x_reduce.ndim == 2
+
+
+def test_randomorientation():
+    x_orig = np.zeros((3,1,1,2))
+
+    x_tr = RandomOrientation(Array('test', x_orig))
+    t_tr[0]
+    np.testing.assert_equal(len(x_tr), 3)
+
+
+def test_randomsignalscale():
+    x_orig = np.zeros((3,1,1,2))
+
+    x_tr = RandomSignalScale(Array('test', x_orig), .1)
+    t_tr[0]
+    np.testing.assert_equal(len(x_tr), 3)

@@ -10,6 +10,8 @@ from janggu.data.genomicarray import GenomicArray  # noqa
 from janggu.data.genomicarray import create_genomic_array  # noqa
 from janggu.data.nparr import Array  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
+from janggu.data.nparr import RandomOrientation # noqa
+from janggu.data.nparr import RandomSignalScale # noqa
 
 
 def split_train_test_(dataset, holdout_chroms):
