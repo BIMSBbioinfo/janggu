@@ -6,7 +6,7 @@ env:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
     - SEGFAULT_SIGNALS=all
   matrix:
-    - TOXENV=check
+    #- TOXENV=check
     - TOXENV=docs
 matrix:
   include:
