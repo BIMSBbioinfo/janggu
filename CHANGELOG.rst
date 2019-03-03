@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.8.6 (2019-03-03)
+------------------
+
+- Bugfix for ROIs that reach beyond the chromosome when loading Bioseq datasets. Now, zero-padding is performed for intervals that stretch over the sequence ends.
+
 0.8.5 (2019-01-09)
 ------------------
 
