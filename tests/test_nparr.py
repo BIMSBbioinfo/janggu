@@ -33,6 +33,8 @@ def test_randomorientation():
 
     x_tr = RandomOrientation(Array('test', x_orig))
     x_tr[0]
+    x_tr[:3]
+    x_tr[[0,1]]
     np.testing.assert_equal(len(x_tr), 3)
 
 
@@ -41,4 +43,6 @@ def test_randomsignalscale():
 
     x_tr = RandomSignalScale(Array('test', x_orig), .1)
     x_tr[0]
+    x_tr[:3]
+    x_tr[[0,1]]
     np.testing.assert_equal(len(x_tr), 3)
