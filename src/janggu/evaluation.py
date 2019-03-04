@@ -178,7 +178,7 @@ class Scorer(object):
 
         if self.results:
             # if there are some results, export them
-            self.logger.info('exporting', self.score_name, 'to', output_path)
+            self.logger.info(' '.join(('exporting', self.score_name, 'to', output_path)))
             self._exporter(output_path, self.score_name,
                            self.results)
 
@@ -213,7 +213,7 @@ class Scorer(object):
         if outputs is not None:
             _out = _reshape(outputs, self.percondition)
         _pre = _reshape(predicted, self.percondition)
-        self.logger.info('scoring:', self.score_name)
+        self.logger.info(' '.join(('scoring:', self.score_name)))
         score_fct = self.score_fct
         if score_fct is None and outputs is not None:
             raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')
@@ -252,7 +252,7 @@ class Scorer(object):
                 except TypeError:
                     # if the score is a scalar value, we write it into
                     # the log file.
-                    self.logger.info(self.score_name, model.name, layername[0], condition, ":", score)
+                    self.logger.info(' '.join((self.score_name, model.name, layername[0], condition, ":", str(score))))
 
                 self.results[model.name, layername[0], condition] = \
                     {'date': str(datetime.datetime.utcnow()),
