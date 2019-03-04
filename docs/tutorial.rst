@@ -191,7 +191,7 @@ of a di-nucleotide-based one-hot representation is shown below
                                       stepsize=200,
                                       order=2)
 
-   # is (100, 200, 1, 16)
+   # is (100, 199, 1, 16)
    # that is the last dimension represents di-nucleotides
    dna.shape
 
@@ -380,7 +380,6 @@ Examples of loading data from a BED file are shown below
                                  roi=roi,
                                  binsize=200,
                                  stepsize=200,
-                                 resolution=None,
                                  collapser='max',
                                  resolution=None)
 
@@ -412,6 +411,30 @@ Examples of loading data from a BED file are shown below
 
    cover.shape  # is (100, 1, 1, 6)
    cover[4]  # contains [[[[0., 0., 0., 0., 0., 1.]]]]
+
+Dataset wrappers
+^^^^^^^^^^^^^^^^^
+
+In addition to the core datset :code:`Bioseq` and :code:`Cover`, Janggu offers convenience wrappers
+to transform them in various ways.
+First, :code:`ReduceDim` can be used to convert a 4D coverage dataset into 2D table like object.
+This wrapper aggretates the original 4D object with dimensions representing
+:code:`(region, region_length, strand, condition)` into a 2D array with dimensions :code:`(region, condition)`.
+
+.. code:: python
+
+   from janggu.data import ReduceDim
+
+   data = ReduceDim(cover, aggregator='sum')
+
+
+Furthermore, dataset wrapper can be used in order to perform data augmentation.
+For that matter, Janggu ships
+:code:`RandomSignalScale` and :code:`RandomOrientation` which can be used
+to randomly alter the signal intesity during model fitting and randomly flipping
+the 5' to 3' orientations of the coverage signal.
+
+For more specialized cases, these wrappers might also be a good starting point to derive or adapt from.
 
 Using the Genomic Datasets with keras models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -564,6 +587,17 @@ Notice, that :code:`modelparams=3` gets passed on to :code:`params`
 upon model creation. This allows to parametrize the network
 and reduces code redundancy.
 
+From the model template it is also possible to obtain
+a keras model directly, rather than the Janggu model wrapper if this is perfered
+
+.. code-block:: python
+
+   from janggu import create_model
+
+   # This will construct a keras model directly
+   model = create_model(template=model_template,
+                        modelparams=3)
+
 
 Example 3: Automatic Input and Output layer extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -595,7 +629,7 @@ This means, only the network body remains to be defined.
         return inputs, output
 
     # create the model.
-    model = Janggu.create(template=test_inferred_model,
+    model = Janggu.create(template=model_body_template,
                           modelparams=3,
                           inputs=DATA, outputs=LABELS)
     model.summary()
@@ -616,9 +650,15 @@ the sample sequences are of length 200 bp each. `sample.fa` contains Oct4 CHip-s
 peaks and sample2.fa contains Mafk CHip-seq peaks. We shall use a simple
 convolutional neural network with 30 filters of length 21 bp to learn
 the sequence features that discriminate the two sets of sequences.
-Note that the following example makes use of a special keras layer wrapper,
-:code:`DnaConv2D`, which allows to scan both DNA strands for motif matches
-rather than just scanning the forward strand:
+
+The example makes use of two more janggu utilities: First,
+:code:`DnaConv2D` constitutes a keras layer wrapper that facilitates scanning
+of both DNA strands with the same kernels. That is it simulataneously applies
+a convolution and a cross-correlation and aggregates the resulting activities.
+Second, the example illustrates the dataset wrapper :code:`ReduceDim` which
+allows to collapse 4D the signal contained in the Cover object 
+across the sequence length and strand dimension. The result is yields a 2D
+table-like dataset which is used in the subsequent model fitting example.
 
 .. code:: python
 
@@ -627,6 +667,7 @@ rather than just scanning the forward strand:
    from janggu import inputlayer
    from janggu import outputconv
    from janggu import DnaConv2D
+   from janggu.data import ReduceDim
 
 
    # load the dataset which consists of
@@ -645,19 +686,21 @@ rather than just scanning the forward strand:
    # Classification labels over the same regions are loaded
    # into the Coverage dataset.
    # It is important that both DNA and LABELS load with the same
-   # binsize, stepsize and resolution to ensure
+   # binsize, stepsize to ensure
    # the correct correspondence between both datasets.
-   LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
+   # Finally, the ReduceDim dataset wrapper transforms the 4D Coverage
+   # object into a 2D table like object (regions by conditions)
+   LABELS = ReduceDim(Cover.create_from_bed('peaks', roi=ROI_FILE,
                                   bedfiles=PEAK_FILE,
                                   binsize=200,
-                                  resolution=200)
+                                  resolution=None), aggregator='mean')
 
 
    # 2. define a simple conv net with 30 filters of length 15 bp
    # and relu activation.
    # outputconv as opposed to outputdense will put a conv layer as output
    @inputlayer
-   @outputconv('sigmoid')
+   @outputdense('sigmoid')
    def double_stranded_model(inputs, inp, oup, params):
        with inputs.use('dna') as layer:
            # The DnaConv2D wrapper can be used with Conv2D
@@ -665,10 +708,7 @@ rather than just scanning the forward strand:
            layer = DnaConv2D(Conv2D(params[0], (params[1], 1),
                                     activation=params[2]))(layer)
 
-       # like GlobalAveragePooling2D, but it maintains the dimensionality
-       # and uses a moving window average.
-       output = LocalAveragePooling2D(window_size=layer.shape.as_list()[1],
-                                      name='motif')(layer)
+       output = GlobalAveragePooling2D(name='motif')(layer)
        return inputs, output
 
 
@@ -680,7 +720,7 @@ rather than just scanning the forward strand:
                  metrics=['acc'])
 
    # 4. fit the model
-   model.fit(DNA, LABELS, epochs=100)
+   model.fit(DNA, ReduceDim(LABELS, epochs=100)
 
 
 An illustration of the network architecture is depicted below.
