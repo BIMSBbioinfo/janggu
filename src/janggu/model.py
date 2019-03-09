@@ -954,8 +954,9 @@ def create_model(template, modelparams=None, inputs=None,
     return model
 
 
+
 def input_attribution(model, inputs,  # pylint: disable=too-many-locals
-                      chrom=None, start=None, end=None, idx=None):
+                      chrom=None, start=None, end=None):
 
     """Evaluates the integrated gradients method on the input coverage tracks.
 
@@ -980,8 +981,6 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
         Region start.
     end : int or None
         Region end.
-    idx : int or None
-        Index of the region.
 
     Examples
     --------
@@ -991,96 +990,103 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
       # query a specific genomic region
       input_attribution(model, DATA, chrom='chr1', start=start, end=end)
 
-      # query an index of the dataset
-      input_attribution(model, DATA, idx=0)
-
     """
 
-    if chrom is not None and idx is not None:
-        self.logger.warning('idx will be ignored, because chrom was specified.')
-        UserWarning('idx will be ignored, because chrom was specified.')
-
-    if (chrom, start, end, idx) == (None,) * 4:
-        raise ValueError("Either 'chrom, start, end' or 'idx' must be specified.")
+    output_chrom, output_start, output_end = chrom, start, end
+    print(chrom,start, end)
 
     if not isinstance(inputs, list):
         inputs = [inputs]
 
+    # store original gindexer
     gindexers_save = [ip.gindexer for ip in inputs]
 
-    if chrom is not None:
-        subgindexers = [gi.filter_by_region(include=chrom,
-                                            start=start,
-                                            end=end) for gi in gindexers_save]
-    else:
-        # Make new gindexers that contain only the the coordinates for idx
-        # The difficulty with using an index is that chrs, starts and ends
-        # are not globally the same across a list of inputs. They might
-        # differ, for example, if different flanking windows are used.
-        subgindexers = [copy.copy(gi) for gi in gindexers_save]
-        for subgi in subgindexers:
-            subgi.chrs = [subgi.chrs[idx]]
-            subgi.starts = [subgi.starts[idx]]
-            subgi.ends = [subgi.ends[idx]]
-            subgi.strand = [subgi.strand[idx]]
+    # create new indexers ranging only over the selected region
+    # if chrom, start, end was supplied retrieve the respective indices
+    index_list = [gi.idx_by_region(include=output_chrom,
+                                   start=output_start,
+                                   end=output_end) for gi in gindexers_save]
 
+    # first construct the union of indices
+    index_set = set()
+    for idx_list_el in index_list:
+        index_set = index_set | set(idx_list_el)
+
+    # only keep the indices that remain in the across all inputs
+    # indices that are only present in some of the inputs are discarded.
+    for idx_list_el in index_list:
+        index_set = index_set & set(idx_list_el)
+
+    idxs = list(index_set)
+    idxs.sort()
+
+    subgindexers = [copy.copy(gi) for gi in gindexers_save]
+    for subgi in subgindexers:
+        subgi.chrs = [subgi.chrs[i] for i in idxs]
+        subgi.starts = [subgi.starts[i] for i in idxs]
+        subgi.ends = [subgi.ends[i] for i in idxs]
+        subgi.strand = [subgi.strand[i] for i in idxs]
+
+    # assign it to the input datasets temporarily
     for ip, _ in enumerate(inputs):
         inputs[ip].gindexer = subgindexers[ip]
 
-    # check if dimensions match with  keras model
-    # what to do with ambiguous signal (from overlapping windows)
     try:
-
         #allocate arrays
-        output = [np.zeros((1, ip.gindexer[0].length if start is None else end-start, ip.shape[-2], ip.shape[-1])) for ip in inputs]
+        output = [np.zeros((1, output_end-output_start, ip.shape[-2], ip.shape[-1])) for ip in inputs]
         resols = [ip.garray.resolution for ip in inputs]
-        mask = [np.zeros(o.shape) + 1e-4 for o in output]
 
         for igi in range(len(inputs[0])):
 
-            # skip partially overlapping regions
-            starts = [gi[igi].start for gi in subgindexers]
-            ends = [gi[igi].end for gi in subgindexers]
-            if np.any([start_ < start for start_ in starts if start is not None]):
-                continue
-            if np.any([end_ > end for end_ in ends if end is not None]):
-                continue
-
+            # current influence
             influence = [np.zeros((1,) + ip.shape[1:]) for ip in inputs]
 
-            # get influence for current window igi
+            # get influence for current window with integrated gradient
             x_in = [ip[igi] for ip in inputs]
             for step in range(1, 51):
                 grad = model._influence([x*step/50 for x in x_in])
                 for iinp, inp in enumerate(x_in):
-
                     for idim, inpval in np.ndenumerate(inp):
                         influence[iinp][idim] += (x_in[iinp][idim]/50)*grad[iinp][idim]
 
-            # scale up by resolution
+            # scale length to nucleotide resolution
             influence = [np.repeat(influence[i], resols[i], axis=1) for i, _ in enumerate(inputs)]
 
             for o in range(len(output)):
                 # incremetally add the influence results into the output
                 # array for all subwindows in the genomic indexer
-                if idx is not None:
-                    # if an index has been supplied, translate it to genomic regions
-                    start = subgindexers[idx][0].start
-                    end = subgindexers[idx][0].end
-                    chrom = subgindexers[idx][0].chrom
+
+                #interval 
+                
+                #print('ip', inputs)
+                #print('ip[o]', inputs[o])
+                #print('ip[o][igi]',inputs[o][igi])
+                if output_start < inputs[o].gindexer[igi].start:
+                    ostart = inputs[o].gindexer[igi].start - output_start
+                    lstart = 0
+                else:
+                    ostart = 0
+                    lstart = output_start - inputs[o].gindexer[igi].start
+                
+                if output_end > inputs[0].gindexer[igi].end:
+                    oend = inputs[0].gindexer[igi].end - output_start
+                    lend = inputs[0].gindexer[igi].end - inputs[0].gindexer[igi].start
+                else:
+                    oend = output_end - output_start
+                    lend = output_end - inputs[0].gindexer[igi].start
+
                 m = np.zeros((2,) + influence[o].shape, dtype=influence[o].dtype)
 
-                m[0] = output[o][:, (starts[o]-start):(starts[o] - start + influence[o].shape[1]), :, :]
-                m[1] = influence[o]
-                output[o][:, (starts[o]-start):(starts[o] - start + influence[o].shape[1]), :, :] = np.abs(m).max(axis=0)
+                #print('ostart-end', ostart, oend)
+                #print('lstart-end', lstart, lend)
+                m[0][:, lstart:lend, :, :] = output[o][:, (ostart):(oend), :, :]
+                m[1][:, lstart:lend, :, :] = influence[o][:, lstart:lend, :, :]
+                m = np.abs(m).max(axis=0)
+                m = m[:, lstart:lend, :, :]
+                output[o][:, ostart:oend, :, :] = m
 
         for o in range(len(output)):
             # finally wrap the output up as coverage track
-            if idx is not None:
-                # if an index has been supplied, translate it to genomic regions
-                start = subgindexers[idx][0].start
-                end = subgindexers[idx][0].end
-                chrom = subgindexers[idx][0].chrom
             output[o] = Cover.create_from_array('attr_'+inputs[o].name,
                                                 output[o],
                                                 GenomicIndexer.create_from_region(
