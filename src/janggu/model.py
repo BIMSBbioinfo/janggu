@@ -1053,11 +1053,13 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
             influence = [np.repeat(influence[i], resols[i], axis=1) for i, _ in enumerate(inputs)]
 
             for o in range(len(output)):
+                if influence[o].shape[1] < output[o].shape[1]:
+                    order = output[o].shape[1] - influence[o].shape[1]
                 # incremetally add the influence results into the output
                 # array for all subwindows in the genomic indexer
 
-                #interval 
-                
+                #interval
+
                 #print('ip', inputs)
                 #print('ip[o]', inputs[o])
                 #print('ip[o][igi]',inputs[o][igi])
@@ -1067,7 +1069,7 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
                 else:
                     ostart = 0
                     lstart = output_start - inputs[o].gindexer[igi].start
-                
+
                 if output_end > inputs[0].gindexer[igi].end:
                     oend = inputs[0].gindexer[igi].end - output_start
                     lend = inputs[0].gindexer[igi].end - inputs[0].gindexer[igi].start
@@ -1075,12 +1077,12 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
                     oend = output_end - output_start
                     lend = output_end - inputs[0].gindexer[igi].start
 
-                m = np.zeros((2,) + influence[o].shape, dtype=influence[o].dtype)
+                m = np.zeros((2,) + (1, inputs[o].gindexer[igi].length, ) + influence[o].shape[2:], dtype=influence[o].dtype)
 
                 #print('ostart-end', ostart, oend)
                 #print('lstart-end', lstart, lend)
                 m[0][:, lstart:lend, :, :] = output[o][:, (ostart):(oend), :, :]
-                m[1][:, lstart:lend, :, :] = influence[o][:, lstart:lend, :, :]
+                m[1][:, lstart:(lend - order), :, :] = influence[o][:, lstart:(lend - order), :, :]
                 m = np.abs(m).max(axis=0)
                 m = m[:, lstart:lend, :, :]
                 output[o][:, ostart:oend, :, :] = m
