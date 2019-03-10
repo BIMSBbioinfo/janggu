@@ -267,7 +267,7 @@ class Janggu(object):
         template : function
             Python function that defines a model template of a neural network.
             The function signature must adhere to the signature
-            :code:`template(inputs, inputp, outputp, modelparams)`
+            :code:`template(inputs, inputs, outputs, modelparams)`
             and is expected to return
             :code:`(input_tensor, output_tensor)` of the neural network.
         modelparams : list or tuple or None
@@ -337,8 +337,8 @@ class Janggu(object):
           # create a model.
           model = Janggu.create(template=test_inferred_model, modelparams=3,
                                 name='test_model',
-                                inputp=DATA,
-                                outputp=LABELS)
+                                inputs=DATA,
+                                outputs=LABELS)
 
         """
 
