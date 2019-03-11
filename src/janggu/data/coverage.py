@@ -6,6 +6,7 @@ import warnings
 
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
+import seaborn as sns
 import numpy as np
 from HTSeq import GenomicInterval
 
@@ -1560,7 +1561,7 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
             for letter in MAP:
                 handles.append(ax.bar(x, coverage[:, MAP[letter]],
                                       bottom=y_figure_offset,
-                                      color=cm.rainbow(np.linspace(.0, 1., len(MAP)))[MAP[letter]],
+                                      color=sns.color_palette("hls", len(MAP))[MAP[letter]],
                                       label=letter))
                 y_figure_offset += coverage[:, MAP[letter]]
             ax.legend(handles=handles)
