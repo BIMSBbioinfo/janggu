@@ -1053,8 +1053,10 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
             influence = [np.repeat(influence[i], resols[i], axis=1) for i, _ in enumerate(inputs)]
 
             for o in range(len(output)):
-                if influence[o].shape[1] < output[o].shape[1]:
-                    order = output[o].shape[1] - influence[o].shape[1]
+                if influence[o].shape[1] < inputs[o].gindexer[igi].length:
+                    order = inputs[o].gindexer[igi].length - influence[o].shape[1]
+                else:
+                    order = 0
                 # incremetally add the influence results into the output
                 # array for all subwindows in the genomic indexer
 
@@ -1070,12 +1072,12 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
                     ostart = 0
                     lstart = output_start - inputs[o].gindexer[igi].start
 
-                if output_end > inputs[0].gindexer[igi].end:
-                    oend = inputs[0].gindexer[igi].end - output_start
-                    lend = inputs[0].gindexer[igi].end - inputs[0].gindexer[igi].start
+                if output_end > inputs[o].gindexer[igi].end:
+                    oend = inputs[o].gindexer[igi].end - output_start
+                    lend = inputs[o].gindexer[igi].end - inputs[o].gindexer[igi].start
                 else:
                     oend = output_end - output_start
-                    lend = output_end - inputs[0].gindexer[igi].start
+                    lend = output_end - inputs[o].gindexer[igi].start
 
                 m = np.zeros((2,) + (1, inputs[o].gindexer[igi].length, ) + influence[o].shape[2:], dtype=influence[o].dtype)
 
