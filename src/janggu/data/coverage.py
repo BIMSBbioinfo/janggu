@@ -1499,7 +1499,7 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
         y_offset += 1
         color_ = next(color)
 
-        y_block = (cover.shape[-1] if plottypes[j] == 'lineplot' else 1) * 3
+        y_block = (cover.shape[-1] if plottypes[j] == 'line' else 1) * 3
 
         # side bar indicator for current cover
         ax = fig.add_subplot(grid[(y_offset): (y_offset + y_block), 0])
