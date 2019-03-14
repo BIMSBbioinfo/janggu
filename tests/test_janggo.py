@@ -244,7 +244,6 @@ def test_janggu_influence_genomic(tmpdir):
 
     model.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    influence = input_attribution(model, dna, idx=0)
     iv = dna.gindexer[0]
     chrom, start, end = iv.chrom, iv.start, iv.end
     influence = input_attribution(model, dna, chrom=chrom, start=start, end=end)
