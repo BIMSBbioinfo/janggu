@@ -27,6 +27,7 @@ from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
+from janggu.evaluation import get_scorer
 
 
 JANGGU_LAYERS = {'Reverse': Reverse,
@@ -711,8 +712,12 @@ class Janggu(object):
             the dataset size and the batch_size.
         datatags : list(str) or None
             Tags to annotate the evaluation results. Default: None.
-        callbacks : List(:code:`Scorer`)
-            Scorer instances to be applied on the predictions.
+        callbacks : List(:code:`Scorer` or str)
+            Scorer instances to be applied on the predictions. Furthermore,
+            commonly used scoring metrics can be added by name, including
+            'roc', 'auroc', 'prc', 'auprc' for evaluating binary classification
+            applications and 'cor' (for Pearson's correlation), 'mae', 'mse'
+            and 'var_explained' for regression applications.
         use_multiprocessing : boolean
             Whether to use multiprocessing for the prediction. Default: False.
         workers : int
@@ -725,6 +730,9 @@ class Janggu(object):
         .. code-block:: python
 
           model.evaluate(DATA, LABELS)
+
+          # binary classification evaluation with callbacks
+          model.evaluate(DATA, LABELS, callcacks=['auprc', 'auroc'])
 
         """
 
@@ -780,6 +788,7 @@ class Janggu(object):
         preds = _convert_data(self.kerasmodel, preds, 'output_layers')
 
         for callback in callbacks or []:
+            callback = get_scorer(callback)
             callback.score(self, preds, outputs=outputs_, datatags=datatags)
         return values
 

@@ -40,6 +40,9 @@ PARSER.add_argument('-path', dest='path',
 PARSER.add_argument('-order', dest='order', type=int,
                     default=1,
                     help="One-hot order.")
+PARSER.add_argument('-epochs', dest='epochs', type=int,
+                    default=100,
+                    help="Number of epochs to train.")
 
 args = PARSER.parse_args()
 
@@ -195,13 +198,6 @@ LABELS_TEST = Cover.create_from_bed('peaks',
                                     datatags=['test'])
 
 
-# instantiate various evaluation callback objects
-# score metrics
-auc_eval = Scorer('auROC', roc_auc_score, exporter=ExportTsv())
-prc_eval = Scorer('PRC', wrap_prc, exporter=ExportScorePlot())
-roc_eval = Scorer('ROC', wrap_roc, exporter=ExportScorePlot())
-auprc_eval = Scorer('auPRC', average_precision_score, exporter=ExportTsv())
-
 # clustering plots based on hidden features
 heatmap_eval = Scorer('heatmap', exporter=ExportClustermap(z_score=1.))
 tsne_eval = Scorer('tsne', exporter=ExportTsne())
@@ -217,7 +213,7 @@ pred_plotly = Scorer('pred', exporter=ExportTsv(row_names=DNA_TEST.gindexer.chrs
 
 # do the evaluation on the independent test data
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
-               callbacks=[auc_eval, prc_eval, roc_eval, auprc_eval])
+               callbacks=['auc', 'prc', 'roc', 'auprc'])
 
 pred = model.predict(DNA_TEST)
 cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)

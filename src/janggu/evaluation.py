@@ -9,8 +9,17 @@ import logging
 import os
 
 import numpy
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import explained_variance_score
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 
 from janggu.utils import ExportJson
+from janggu.utils import ExportTsv
+from janggu.utils import ExportScorePlot
 
 
 def _dimension_match(kerasmodel, data, layertype):
@@ -266,3 +275,45 @@ class Scorer(object):
 
             # reset the results
             self.results = {}
+
+
+# some standard evaluations are provided directly
+
+# evaluation metrics from sklearn.metrics
+def wrap_roc(y_true, y_pred):
+    fpr, tpr, _ = roc_curve(y_true, y_pred)
+    aux = str('({:.2%})'.format(roc_auc_score(y_true, y_pred)))
+    return fpr, tpr, aux
+
+
+def wrap_prc(y_true, y_pred):
+    precision, recall, _ = precision_recall_curve(y_true, y_pred)
+    aux = str('({:.2%})'.format(average_precision_score(y_true, y_pred)))
+    return recall, precision, aux
+
+def wrap_cor(y_true, y_pred):
+    return numpy.corrcoef(y_true, y_pred)[0, 1]
+
+
+def get_scorer(scorer):
+    if isinstance(scorer, str):
+        if scorer in ['ROC', 'roc']:
+            return Scorer(scorer, wrap_roc,
+                          exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
+        if scorer in ['PRC', 'prc']:
+            return Scorer(scorer, wrap_prc,
+                          exporter=ExportScorePlot(xlabel='Recall',
+                                                   ylabel='Precision'))
+        if scorer in ['auc', 'AUC', 'auROC', 'auroc']:
+            return Scorer(scorer, roc_auc_score, exporter=ExportTsv())
+        if scorer in ['auprc', 'auPRC', 'ap', 'AP']:
+            return Scorer(scorer, average_precision_score, exporter=ExportTsv())
+        if scorer in ['cor', 'pearson']:
+            return Scorer(scorer, wrap_cor, exporter=ExportTsv())
+        if scorer in ['var_explained']:
+            return Scorer(scorer, explained_variance_score, exporter=ExportTsv())
+        if scorer in ['mse', 'MSE']:
+            return Scorer(scorer, mean_squared_error, exporter=ExportTsv())
+        if scorer in ['mae', 'MAE']:
+            return Scorer(scorer, mean_absolute_error, exporter=ExportTsv())
+    return scorer

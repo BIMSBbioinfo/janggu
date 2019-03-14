@@ -120,6 +120,32 @@ def get_janggu_conv(inputs, outputs):
     return bwm
 
 
+def test_output_score_by_name(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    inputs = Array("x", numpy.random.random((100, 10)))
+    outputs = Array('y', numpy.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
+
+    bwm = get_janggu(inputs, outputs)
+
+    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15)
+
+    bwm.evaluate(inputs, outputs, callbacks=['auc', 'prc', 'auprc', 'auroc',
+                                             'cor', 'mae', 'mse',
+                                             'var_explained'])
+
+    # check correctness of json
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auc.png"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "prc.png"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "cor.tsv"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "mae.tsv"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "mse.tsv"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "var_explained.tsv"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auprc.tsv"))
+    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auroc.tsv"))
+
+
 def test_output_json_score(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 

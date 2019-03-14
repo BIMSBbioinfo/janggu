@@ -656,7 +656,7 @@ The example makes use of two more janggu utilities: First,
 of both DNA strands with the same kernels. That is it simulataneously applies
 a convolution and a cross-correlation and aggregates the resulting activities.
 Second, the example illustrates the dataset wrapper :code:`ReduceDim` which
-allows to collapse 4D the signal contained in the Cover object 
+allows to collapse 4D the signal contained in the Cover object
 across the sequence length and strand dimension. The result is yields a 2D
 table-like dataset which is used in the subsequent model fitting example.
 
@@ -785,15 +785,34 @@ and investigate the predictions. This can be done by invoking
 which resemble the familiar keras methods.
 Janggu additionally offers a simple way to evaluate and export model results,
 for example on independent test data.
-To this end, objects of :code:`Scorer` can be created
-and passed to
+
+For a binary classification task you might just want to supply the names
+of commonly used evaluation metrics as follows, which produces figures
+of the ROC and PRC as well as tsv file containing the areas under the respective
+curves.
+
+.. code-block:: python
+
+   model.evaluate(DNA_TEST, LABELS_TEST, callbacks=['roc', 'prc', 'auprc', 'auroc'])
+
+Furthermore, for a regression setting it is possible to invoke
+
+.. code-block:: python
+
+   model.evaluate(DNA_TEST, LABELS_TEST, callbacks=['cor', 'mae', 'mse', 'var_explained'])
+
+which dumps the Pearson's correlation, the mean absolute error, the mean squared error
+and the explained variance into tsv files.
+
+It is also possible to customize the scoring callbacks by instantiating a
+:code:`Scorer` objects which can be passed to
 :code:`model.evaluate` and :code:`model.predict`.
 This allows you to determine different performance metrics and/or
 export the results in various ways, e.g. as tsv file, as plot or
 as a BIGWIG file.
 
 A :code:`Scorer` maintains a **name**, a **scoring function** and
-an **exporter function**. The latter two dictate which score is evaluated
+an **exporter function**. The latter two dictate the scoring method
 and how the results should be stored.
 
 An example of using :code:`Scorer` to
@@ -813,8 +832,8 @@ and export it as plot and into a tsv file, respectively, is shown below
                         roc_auc_score,
                         exporter=ExportTsv())
    score_roc = Scorer('ROC',
-                        roc_curve,
-                        exporter=ExportScorePlot())
+                      roc_curve,
+                      exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
    # determine the auROC
    model.evaluate(DNA, LABELS, callbacks=[score_auroc, score_roc])
 
