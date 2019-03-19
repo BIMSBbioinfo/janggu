@@ -70,10 +70,12 @@ class ReduceDim(Dataset):
     -----------
     array : Dataset
         Dataset
-    aggregator : str
+    aggregator : str or callable
         Aggregator used for reducing the intermediate dimensions.
         Available aggregators are 'sum', 'mean', 'max' for performing
         summation, averaging or obtaining the maximum value.
+        It is also possible to supply a callable directly that performs the
+        operation.
         Default: 'sum'
     """
 
@@ -84,6 +86,8 @@ class ReduceDim(Dataset):
             aggregator = 'sum'
 
         def _get_aggregator(name):
+            if callable(name):
+                return name
             if name == 'sum':
                 return np.sum
             elif name == 'mean':
