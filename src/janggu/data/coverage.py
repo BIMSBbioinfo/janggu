@@ -1585,7 +1585,8 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
             ax.set_yticks(())
             ax.set_xticks(())
             ax.set_xlim([0, len(coverage)])
-            ax.set_ylabel(condition, labelpad=12)
+            if len(cover.conditions) > 1:
+                ax.set_ylabel(condition, labelpad=12)
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             y_offset += 3
