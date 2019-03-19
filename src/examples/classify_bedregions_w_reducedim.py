@@ -4,8 +4,8 @@ import os
 import numpy as np
 from keras import backend as K
 from keras.layers import Conv2D
-from keras.layers import Maximum
 from keras.layers import GlobalAveragePooling2D
+from keras.layers import Maximum
 from pkg_resources import resource_filename
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve

@@ -1,24 +1,25 @@
 """Coverage dataset"""
 
-from itertools import product
 import os
 import warnings
+from itertools import product
 
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import cm
-import seaborn as sns
 import numpy as np
+import seaborn as sns
 from HTSeq import GenomicInterval
+from matplotlib.pyplot import cm
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
+from janggu.utils import NMAP
+from janggu.utils import PMAP
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
-from janggu.utils import NMAP, PMAP
 
 from janggu.version import version
 

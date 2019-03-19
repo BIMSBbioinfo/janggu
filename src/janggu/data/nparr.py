@@ -1,5 +1,6 @@
 """Array dataset"""
 import copy
+
 import numpy as np
 
 from janggu.data.data import Dataset

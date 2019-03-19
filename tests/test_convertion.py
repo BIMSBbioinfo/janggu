@@ -4,10 +4,10 @@ import matplotlib
 matplotlib.use('AGG')
 
 import numpy as np
+import pytest
 from keras import backend as K
 from keras.layers import Conv2D
 from pkg_resources import resource_filename
-import pytest
 
 from janggu import Janggu
 from janggu import inputlayer

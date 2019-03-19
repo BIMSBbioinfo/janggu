@@ -1,9 +1,9 @@
 """Bioseq dataset"""
 
 import warnings
+from itertools import product
 
 import Bio
-from itertools import product
 import numpy as np
 from HTSeq import GenomicInterval
 
@@ -11,6 +11,7 @@ from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
+from janggu.utils import NOLETTER
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
@@ -19,7 +20,6 @@ from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
 from janggu.version import version
-from janggu.utils import NOLETTER
 
 
 class SeqLoader:

@@ -15,12 +15,12 @@ from keras.layers import Maximum
 from keras.layers import MaxPooling2D
 
 from janggu import Janggu
+from janggu import input_attribution
 from janggu import inputlayer
-from janggu import outputconv
-from janggu import outputdense
 from janggu import model_from_json
 from janggu import model_from_yaml
-from janggu import input_attribution
+from janggu import outputconv
+from janggu import outputdense
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover

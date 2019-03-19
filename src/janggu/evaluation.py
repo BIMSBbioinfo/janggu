@@ -11,15 +11,15 @@ import os
 import numpy
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import explained_variance_score
-from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 
 from janggu.utils import ExportJson
-from janggu.utils import ExportTsv
 from janggu.utils import ExportScorePlot
+from janggu.utils import ExportTsv
 
 
 def _dimension_match(kerasmodel, data, layertype):

@@ -7,28 +7,27 @@ import os
 import time
 
 import h5py
-import numpy as np
 import keras
 import keras.backend as K
-from keras.callbacks import LambdaCallback
+import numpy as np
 from keras.callbacks import CSVLogger
+from keras.callbacks import LambdaCallback
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import Sequence
 from keras.utils import plot_model
 
 from janggu.data import split_train_test
+from janggu.data.coverage import Cover
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
-from janggu.data.coverage import Cover
 from janggu.data.genomic_indexer import GenomicIndexer
+from janggu.evaluation import get_scorer
 from janggu.layers import Complement
 from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
-from janggu.evaluation import get_scorer
-
 
 JANGGU_LAYERS = {'Reverse': Reverse,
           'Complement': Complement,

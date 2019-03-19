@@ -1,9 +1,9 @@
 import numpy as np
 
 from janggu.data import Array
-from janggu.data import ReduceDim
 from janggu.data import RandomSignalScale
 from janggu.data import RandomOrientation
+from janggu.data import ReduceDim
 
 
 def test_nparr(tmpdir):
