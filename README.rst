@@ -5,7 +5,7 @@ Janggu - Deep learning for Genomics
 .. start-badges
 
 .. image:: https://readthedocs.org/projects/janggu/badge/?style=flat
-    :target: https://readthedocs.org/projects/janggu
+    :target: https://janggu.readthedocs.io/en/latest
     :alt: Documentation Status
 
 .. image:: https://travis-ci.org/BIMSBbioinfo/janggu.svg?branch=master
