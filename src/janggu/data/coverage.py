@@ -20,7 +20,6 @@ from janggu.utils import _get_genomic_reader
 from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
-
 from janggu.version import version
 
 try:
@@ -537,12 +536,13 @@ class Cover(Dataset):
         if resolution is not None and resolution > 1 and store_whole_genome:
             for iv_ in gindexer or []:
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
-                    raise ValueError('Please prepare all ROI starts and ends to be '
-                                     'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.'
-                                     'Consider using '
-                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                                     .format(input=roi, output=roi, resolution=resolution))
+                    raise ValueError(
+                        'Please prepare all ROI starts and ends to be '
+                        'divisible by resolution={} to '.format(resolution) + \
+                        'avoid undesired rounding effects.'
+                        'Consider using '
+                        '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                        .format(input=roi, output=roi, resolution=resolution))
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -1519,7 +1519,7 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
             im = ax.pcolor(coverage.reshape(coverage.shape[0], -1).T)
             #im = ax.pcolor(np.random.rand(200, 60).T)
             if coverage.shape[-2] == 2:
-                ticks = [':'.join([x,y]) for y,x in product(['+','-'], cover.conditions)]
+                ticks = [':'.join([x, y]) for y, x in product(['+', '-'], cover.conditions)]
             else:
                 ticks = cover.conditions
             #    ax.set_yticklabels(cover.conditions)
@@ -1552,7 +1552,8 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
                                      "Condition names must represent the alphabet letters.")
 
             coverage = coverage.reshape(coverage.shape[0], -1)
-            coverage = coverage.reshape(coverage.shape[:-1] + (alphabetsize, int(coverage.shape[-1]/alphabetsize)))
+            coverage = coverage.reshape(coverage.shape[:-1] + (alphabetsize,
+                                                               int(coverage.shape[-1]/alphabetsize)))
             coverage = coverage.sum(-1)
 
             ax = fig.add_subplot(grid[(y_offset): (y_offset + 3), 1:])

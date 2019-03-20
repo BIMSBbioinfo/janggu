@@ -24,6 +24,9 @@ class LocalAveragePooling2D(Layer):
     This layer performs window averaging along the lead
     axis of an input tensor using a given window_size.
     At the moment, it assumes data_format='channels_last'.
+    This is similar to applying GlobalAveragePooling2D,
+    but where the average is determined in a window of length
+    'window_size', rather than along the entire sequence length.
 
     Parameters
     ----------
@@ -117,10 +120,12 @@ class Complement(Layer):
     with the original input dataset in order to evaluate
     the complementary sequence's one hot representation.
 
-    Parameters
-    ----------
-    order : int
-        Order of the one-hot representation.
+    .. code-block:: python
+
+      forwardstrand_dna = Input((200, 1, 4))
+      reversestrand_dna = Complement()(forwardstrand_dna)
+      # this also works for higher-order one-hot encoding.
+
     """
     rcmatrix = None
 
@@ -147,7 +152,7 @@ class Complement(Layer):
 class DnaConv2D(Wrapper):
     """DnaConv2D layer.
 
-    This layer wraps a normal Conv2D layer for scanning DNA
+    This layer wraps a normal keras Conv2D layer for scanning DNA
     sequences on both strands using the same weight matrices.
 
     Parameters
@@ -175,7 +180,7 @@ class DnaConv2D(Wrapper):
                              'Merge mode should be one of '
                              '{"max", "ave", "concat", None}')
         # instantiate the forward and reverse layer
-        print("init_wrapper")
+
         self.forward_layer = copy(layer)
         config = layer.get_config()
         self.revcomp_layer = layer.__class__.from_config(config)
@@ -183,7 +188,7 @@ class DnaConv2D(Wrapper):
         self.revcomp_layer.name = 'revcomp_' + self.revcomp_layer.name
         self.merge_mode = merge_mode
         self._trainable = True
-        print("layers initialized")
+
         super(DnaConv2D, self).__init__(layer, **kwargs)
         self.input_spec = layer.input_spec
 
@@ -221,7 +226,6 @@ class DnaConv2D(Wrapper):
         return output_shape
 
     def build(self, input_shape):
-        print('Build wrapper')
         with K.name_scope(self.forward_layer.name):
             self.forward_layer.build(input_shape)
 

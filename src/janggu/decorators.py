@@ -75,7 +75,7 @@ def inputlayer(func):
             # e.g. if the nested functions are invoked.
             # Then just pass through the inputs to the function.
             inputs = InputList([Input(inshapes[name]['shape'], name=name)
-                            for name in inshapes])
+                                for name in inshapes])
         inputs, outputs = func(inputs, inshapes, outshapes, params)
         return inputs(), outputs
     return _add

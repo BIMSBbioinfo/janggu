@@ -95,7 +95,9 @@ class Bioseq(Dataset):
         self.garray = garray
         self.gindexer = gindexer
         self._alphabet = alphabet
-        self.conditions = [''.join(item) for item in product(sorted(self._alphabet), repeat=self.garray.order)]
+        self.conditions = [''.join(item) for item in
+                           product(sorted(self._alphabet),
+                                   repeat=self.garray.order)]
         self._alphabetsize = len(self._alphabet)
         self._rcindex = [_complement_index(idx, garray.order)
                          for idx in range(pow(self._alphabetsize, garray.order))]
@@ -427,7 +429,7 @@ class Bioseq(Dataset):
         if interval.strand in ['.', '+']:
             return np.asarray(self.garray[interval][:, 0, 0])
 
-        return np.asarray([self._rcindex[val] if val >=0 else val for val
+        return np.asarray([self._rcindex[val] if val>=0 else val for val
                            in self.garray[interval][:, 0, 0]])[::-1]
 
 

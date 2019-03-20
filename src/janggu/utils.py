@@ -311,7 +311,7 @@ def _str_to_iv(givstr, template_extension=0):
         second_split[0] = '-' + second_split[0]
     if second_split[1] == '':
         # if end is a negative value it does not make sense.
-        raise ValueError('Start and end appear to be netative: '.format(givstr))
+        raise ValueError('Start and end appear to be netative: {}'.format(givstr))
 
     start = int(second_split[0])
     end = int(second_split[1])
@@ -462,18 +462,16 @@ class ExportScorePlot(object):
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.fform = fform
+        if self.fform is None:
+            self.fform = 'png'
 
     def __call__(self, output_dir, name, results):
-        figsize = self.figsize
-        xlabel = self.xlabel
-        ylabel = self.ylabel
-        fform = self.fform
 
         if plt is None:  # pragma: no cover
             raise Exception('matplotlib not available. Please install matplotlib.')
 
-        if figsize is not None:
-            fig = plt.figure(figsize=figsize)
+        if self.figsize is not None:
+            fig = plt.figure(figsize=self.figsize)
         else:
             fig = plt.figure()
 
@@ -490,16 +488,13 @@ class ExportScorePlot(object):
 
         lgd = ax_.legend(bbox_to_anchor=(1.05, 1),
                          loc=2, prop={'size': 10}, ncol=1)
-        if xlabel is not None:
-            ax_.set_xlabel(xlabel, size=14)
-        if ylabel is not None:
-            ax_.set_ylabel(ylabel, size=14)
-        if fform is not None:
-            fform = fform
-        else:
-            fform = 'png'
-        filename = os.path.join(output_dir, name + '.' + fform)
-        fig.savefig(filename, format=fform,
+        if self.xlabel is not None:
+            ax_.set_xlabel(self.xlabel, size=14)
+        if self.ylabel is not None:
+            ax_.set_ylabel(self.ylabel, size=14)
+
+        filename = os.path.join(output_dir, name + '.' + self.fform)
+        fig.savefig(filename, format=self.fform,
                     dpi=1000,
                     bbox_extra_artists=(lgd,), bbox_inches="tight")
 
@@ -522,8 +517,6 @@ class ExportBigwig(object):
 
     def __call__(self, output_dir, name, results):
 
-        gindexer = self.gindexer
-
         if pyBigWig is None:  # pragma: no cover
             raise Exception('pyBigWig not available. '
                             '`export_bigwig` requires pyBigWig to be installed.')
@@ -532,7 +525,7 @@ class ExportBigwig(object):
 
         # extract genome size from gindexer
         # check also if sorted and non-overlapping
-        for region in gindexer:
+        for region in self.gindexer:
             if region.chrom not in genomesize:
                 genomesize[region.chrom] = region.end
             if genomesize[region.chrom] < region.end:
@@ -552,10 +545,10 @@ class ExportBigwig(object):
             bw_file.addHeader(bw_header)
             pred = results[modelname, layername, condition]['value']
             # compute the ratio between binsize and stepsize
-            bsss = float(gindexer.binsize) / float(gindexer.stepsize)
+            bsss = float(self.gindexer.binsize) / float(self.gindexer.stepsize)
             if bsss < 1.:
                 bsss = 1.
-            ppi = int(np.rint(len(pred)/(len(gindexer) - 1. + bsss)))
+            ppi = int(np.rint(len(pred)/(len(self.gindexer) - 1. + bsss)))
 
             # case 1) stepsize >= binsize
             # then bsss = 1; ppi = len(pred)/len(gindexer)
@@ -563,7 +556,7 @@ class ExportBigwig(object):
             # case 2) stepsize < binsize
             # then bsss > 1; ppi = len(pred)/ (len(gindexer) -1 + bsss)
             resolution = int(region.length / bsss) // ppi
-            for idx, region in enumerate(gindexer):
+            for idx, region in enumerate(self.gindexer):
 
                 val = [float(p) for p in pred[(idx*ppi):((idx+1)*ppi)]]
 

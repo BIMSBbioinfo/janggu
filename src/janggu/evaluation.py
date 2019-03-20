@@ -45,7 +45,6 @@ def _dimension_match(kerasmodel, data, layertype):
     if data is None and layertype == 'output_layers':
         return True
 
-    # print("output_dimension_match")
     if not isinstance(data, list):
         tmpdata = [data]
     else:
@@ -261,7 +260,11 @@ class Scorer(object):
                 except TypeError:
                     # if the score is a scalar value, we write it into
                     # the log file.
-                    self.logger.info(' '.join((self.score_name, model.name, layername[0], condition, ":", str(score))))
+                    self.logger.info(' '.join((self.score_name,
+                                               model.name,
+                                               layername[0],
+                                               condition,
+                                               ":", str(score))))
 
                 self.results[model.name, layername[0], condition] = \
                     {'date': str(datetime.datetime.utcnow()),
@@ -280,40 +283,49 @@ class Scorer(object):
 # some standard evaluations are provided directly
 
 # evaluation metrics from sklearn.metrics
-def wrap_roc(y_true, y_pred):
+def wrap_roc_(y_true, y_pred):
+    """Helper function to determine the ROC.
+    """
     fpr, tpr, _ = roc_curve(y_true, y_pred)
     aux = str('({:.2%})'.format(roc_auc_score(y_true, y_pred)))
     return fpr, tpr, aux
 
 
-def wrap_prc(y_true, y_pred):
+def wrap_prc_(y_true, y_pred):
+    """Helper function to determine the PRC"""
     precision, recall, _ = precision_recall_curve(y_true, y_pred)
     aux = str('({:.2%})'.format(average_precision_score(y_true, y_pred)))
     return recall, precision, aux
 
-def wrap_cor(y_true, y_pred):
+def wrap_cor_(y_true, y_pred):
+    """Helper function to determine the Pearson's correlation coeff."""
     return numpy.corrcoef(y_true, y_pred)[0, 1]
 
 
 def get_scorer(scorer):
+    """Function maps string names to the Scorer objects.
+
+    This function takes a scorer by name or a Scorer object
+    and returns an instantiation of a Scorer object.
+    """
     if isinstance(scorer, str):
         if scorer in ['ROC', 'roc']:
-            return Scorer(scorer, wrap_roc,
-                          exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
-        if scorer in ['PRC', 'prc']:
-            return Scorer(scorer, wrap_prc,
-                          exporter=ExportScorePlot(xlabel='Recall',
-                                                   ylabel='Precision'))
-        if scorer in ['auc', 'AUC', 'auROC', 'auroc']:
-            return Scorer(scorer, roc_auc_score, exporter=ExportTsv())
-        if scorer in ['auprc', 'auPRC', 'ap', 'AP']:
-            return Scorer(scorer, average_precision_score, exporter=ExportTsv())
-        if scorer in ['cor', 'pearson']:
-            return Scorer(scorer, wrap_cor, exporter=ExportTsv())
-        if scorer in ['var_explained']:
-            return Scorer(scorer, explained_variance_score, exporter=ExportTsv())
-        if scorer in ['mse', 'MSE']:
-            return Scorer(scorer, mean_squared_error, exporter=ExportTsv())
-        if scorer in ['mae', 'MAE']:
-            return Scorer(scorer, mean_absolute_error, exporter=ExportTsv())
+            scorer = Scorer(scorer, wrap_roc_,
+                            exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
+        elif scorer in ['PRC', 'prc']:
+            scorer = Scorer(scorer, wrap_prc_,
+                            exporter=ExportScorePlot(xlabel='Recall',
+                                                     ylabel='Precision'))
+        elif scorer in ['auc', 'AUC', 'auROC', 'auroc']:
+            scorer = Scorer(scorer, roc_auc_score, exporter=ExportTsv())
+        elif scorer in ['auprc', 'auPRC', 'ap', 'AP']:
+            scorer = Scorer(scorer, average_precision_score, exporter=ExportTsv())
+        elif scorer in ['cor', 'pearson']:
+            scorer = Scorer(scorer, wrap_cor_, exporter=ExportTsv())
+        elif scorer in ['var_explained']:
+            scorer = Scorer(scorer, explained_variance_score, exporter=ExportTsv())
+        elif scorer in ['mse', 'MSE']:
+            scorer = Scorer(scorer, mean_squared_error, exporter=ExportTsv())
+        elif scorer in ['mae', 'MAE']:
+            scorer = Scorer(scorer, mean_absolute_error, exporter=ExportTsv())
     return scorer

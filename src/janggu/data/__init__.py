@@ -15,8 +15,9 @@ from janggu.data.genomicarray import ZScoreLog  # noqa
 from janggu.data.genomicarray import create_genomic_array  # noqa
 from janggu.data.genomicarray import normalize_garray_tpm  # noqa
 from janggu.data.nparr import Array  # noqa
-from janggu.data.nparr import RandomOrientation # noqa
-from janggu.data.nparr import RandomSignalScale # noqa
+from janggu.data.nparr import NanToNumConverter  # noqa
+from janggu.data.nparr import RandomOrientation  # noqa
+from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 
 
@@ -78,16 +79,16 @@ def split_train_test(datasets, holdout_chroms):
         train = []
         test = []
         for data in datasets:
-            d1, d2 = split_train_test_(data, holdout_chroms)
-            test.append(d2)
-            train.append(d1)
+            traindata, testdata = split_train_test_(data, holdout_chroms)
+            test.append(testdata)
+            train.append(traindata)
     elif isinstance(datasets, dict):
         train = []
         test = []
         for key in datasets:
-            d1, d2 = split_train_test_(datasets[key], holdout_chroms)
-            test.append(d2)
-            train.append(d1)
+            traindata, testdata = split_train_test_(datasets[key], holdout_chroms)
+            test.append(testdata)
+            train.append(traindata)
     else:
         train, test = split_train_test_(datasets, holdout_chroms)
 

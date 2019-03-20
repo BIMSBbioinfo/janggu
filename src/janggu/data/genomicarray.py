@@ -269,8 +269,8 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                                 dtype=self.handle[chrom].dtype)
             else:
                 data = np.ones((length, 2 if self.stranded else 1,
-                                 len(self.condition)),
-                                dtype=self.handle[chrom].dtype) * self.padding_value
+                                len(self.condition)),
+                               dtype=self.handle[chrom].dtype) * self.padding_value
 
             ref_start, ref_end, array_start, array_end = self._get_indices(interval, data.shape[0])
 
@@ -308,6 +308,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         return data
 
     def interval_length(self, chrom):
+        """Method returns the interval lengths."""
         # extract the length by the interval length
         # or by the array shape
         locus = _str_to_iv(chrom)
@@ -791,21 +792,21 @@ class PercentileTrimming(object):
 
     def __call__(self, garray):
 
-        quants = np.percentile(np.asarray([garray.handle[chrom] for \
-                                      chrom in garray.handle]),
-                          self.percentile, axis=(0,1,2))
+        quants = np.percentile(np.concatenate(np.asarray([garray.handle[chrom] for \
+                                      chrom in garray.handle]), axis=0),
+                               self.percentile, axis=(0, 1))
 
         for icond, quant in enumerate(quants):
             for chrom in garray.handle:
-                arr = garray.handle[chrom][:,:,icond]
+                arr = garray.handle[chrom][:, :, icond]
                 arr[arr > quant] = quant
-                garray.handle[chrom][:,:,icond] = arr
+                garray.handle[chrom][:, :, icond] = arr
         return garray
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return 'PercentileTrimming({})'.format(self.percentile)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return str(self)
 
 
@@ -835,10 +836,10 @@ class RegionLengthNormalization(object):
 
         return garray
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return 'RegionLengthNormalization({})'.format(self.regionmask)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return str(self)
 
 
@@ -883,10 +884,10 @@ class ZScore(object):
 
         return garray
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return 'ZScore({},{})'.format(self.mean, self.std)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return str(self)
 
 
@@ -906,10 +907,10 @@ class LogTransform(object):
             garray.handle[chrom][:] = np.log(garray.handle[chrom][:] + 1.)
         return garray
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return 'Log'
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return str(self)
 
 
@@ -940,10 +941,10 @@ class ZScoreLog(object):
     def __call__(self, garray):
         return self.zscore(self.logtr(garray))
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return str(self.zscore) + str(self.logtr)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return str(self)
 
 

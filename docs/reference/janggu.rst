@@ -1,5 +1,5 @@
-janggu - Deep learning for Genomics data
-===============================================
+janggu - Utilities for creating, fitting and evaluating models
+==============================================================
 
 This section describes the interface and utilities to build
 build and evaluate deep learning applications with janggu.
@@ -16,13 +16,19 @@ Janggu Model
    Janggu.fit
    Janggu.predict
    Janggu.evaluate
+   input_attribution
 
 .. autoclass:: Janggu
    :members:
 
+Input feature attribution
+---------------------------
 
-Evaluator
----------
+.. autofunction:: input_attribution
+
+
+Performance evaluation
+----------------------
 
 .. autosummary::
    Scorer.score
@@ -31,8 +37,8 @@ Evaluator
 .. autoclass:: Scorer
    :members:
 
-Utilities
-=========
+Performance score utilities
+============================
 
 .. autoclass:: ExportJson
 .. autoclass:: ExportTsv
@@ -40,18 +46,18 @@ Utilities
 .. autoclass:: ExportBigwig
 .. autoclass:: ExportScorePlot
 
-Decorators
-^^^^^^^^^^^
+Decorators for network construction
+====================================
 
 .. autofunction:: inputlayer
 .. autofunction:: outputdense
 .. autofunction:: outputconv
 
 
-Special Network layers
-^^^^^^^^^^^^^^^^^^^^^^^
+Genomics-specific keras layers
+======================
 
+.. autoclass:: DnaConv2D
 .. autoclass:: Complement
 .. autoclass:: Reverse
 .. autoclass:: LocalAveragePooling2D
-.. autoclass:: DnaConv2D

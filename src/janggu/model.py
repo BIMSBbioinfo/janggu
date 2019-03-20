@@ -30,9 +30,9 @@ from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
 
 JANGGU_LAYERS = {'Reverse': Reverse,
-          'Complement': Complement,
-          'LocalAveragePooling2D': LocalAveragePooling2D,
-          'DnaConv2D': DnaConv2D}
+                 'Complement': Complement,
+                 'LocalAveragePooling2D': LocalAveragePooling2D,
+                 'DnaConv2D': DnaConv2D}
 
 
 def _convert_data(kerasmodel, data, layer):
@@ -142,7 +142,7 @@ class Janggu(object):
 
         if not isinstance(kinp, list):
             kinp = [kinp]
-        self._influence =  K.function(kinp, grad)
+        self._influence = K.function(kinp, grad)
 
         self.name = name
 
@@ -483,7 +483,10 @@ class Janggu(object):
         if not os.path.exists(os.path.join(self.outputdir, 'evaluation', self.name)):
             os.mkdir(os.path.join(self.outputdir, 'evaluation', self.name))
 
-        callbacks.append(CSVLogger(os.path.join(self.outputdir, 'evaluation', self.name, 'training.log')))
+        callbacks.append(CSVLogger(os.path.join(self.outputdir,
+                                                'evaluation',
+                                                self.name,
+                                                'training.log')))
 
         if not batch_size:
             batch_size = 32
@@ -864,7 +867,7 @@ def model_from_yaml(yaml_string, custom_objects=None):
 
 
 def create_model(template, modelparams=None, inputs=None,
-           outputs=None, name=None):
+                 outputs=None, name=None):
     """Constructor method.
 
     This method instantiates a keras model with
@@ -962,7 +965,6 @@ def create_model(template, modelparams=None, inputs=None,
     return model
 
 
-
 def input_attribution(model, inputs,  # pylint: disable=too-many-locals
                       chrom=None, start=None, end=None):
 
@@ -995,13 +997,14 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
 
     .. code-block:: python
 
-      # query a specific genomic region
+      # Suppose DATA is a Bioseq or Cover object
+      # To query the input feature importance of a specific genomic region
+      # use
       input_attribution(model, DATA, chrom='chr1', start=start, end=end)
 
     """
 
     output_chrom, output_start, output_end = chrom, start, end
-    print(chrom,start, end)
 
     if not isinstance(inputs, list):
         inputs = [inputs]
@@ -1036,80 +1039,80 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
         subgi.strand = [subgi.strand[i] for i in idxs]
 
     # assign it to the input datasets temporarily
-    for ip, _ in enumerate(inputs):
-        inputs[ip].gindexer = subgindexers[ip]
+    for inp, _ in enumerate(inputs):
+        inputs[inp].gindexer = subgindexers[inp]
 
     try:
         #allocate arrays
-        output = [np.zeros((1, output_end-output_start, ip.shape[-2], ip.shape[-1])) for ip in inputs]
-        resols = [ip.garray.resolution for ip in inputs]
+        output = [np.zeros((1, output_end-output_start,
+                            inp.shape[-2], inp.shape[-1])) for inp in inputs]
+        resols = [inp.garray.resolution for inp in inputs]
 
         for igi in range(len(inputs[0])):
 
             # current influence
-            influence = [np.zeros((1,) + ip.shape[1:]) for ip in inputs]
+            influence = [np.zeros((1,) + inp.shape[1:]) for inp in inputs]
 
             # get influence for current window with integrated gradient
-            x_in = [ip[igi] for ip in inputs]
+            x_in = [inp[igi] for inp in inputs]
             for step in range(1, 51):
                 grad = model._influence([x*step/50 for x in x_in])
                 for iinp, inp in enumerate(x_in):
-                    for idim, inpval in np.ndenumerate(inp):
+                    for idim, _ in np.ndenumerate(inp):
                         influence[iinp][idim] += (x_in[iinp][idim]/50)*grad[iinp][idim]
 
             # scale length to nucleotide resolution
-            influence = [np.repeat(influence[i], resols[i], axis=1) for i, _ in enumerate(inputs)]
+            influence = [np.repeat(influence[i], resols[i],
+                                   axis=1) for i, _ in enumerate(inputs)]
 
-            for o in range(len(output)):
-                if influence[o].shape[1] < inputs[o].gindexer[igi].length:
-                    order = inputs[o].gindexer[igi].length - influence[o].shape[1]
+            for iout in range(len(output)):
+                if influence[iout].shape[1] < inputs[iout].gindexer[igi].length:
+                    order = inputs[iout].gindexer[igi].length - influence[iout].shape[1]
                 else:
                     order = 0
                 # incremetally add the influence results into the output
                 # array for all subwindows in the genomic indexer
 
-                #interval
-
-                #print('ip', inputs)
-                #print('ip[o]', inputs[o])
-                #print('ip[o][igi]',inputs[o][igi])
-                if output_start < inputs[o].gindexer[igi].start:
-                    ostart = inputs[o].gindexer[igi].start - output_start
+                if output_start < inputs[iout].gindexer[igi].start:
+                    ostart = inputs[iout].gindexer[igi].start - output_start
                     lstart = 0
                 else:
                     ostart = 0
-                    lstart = output_start - inputs[o].gindexer[igi].start
+                    lstart = output_start - inputs[iout].gindexer[igi].start
 
-                if output_end > inputs[o].gindexer[igi].end:
-                    oend = inputs[o].gindexer[igi].end - output_start
-                    lend = inputs[o].gindexer[igi].end - inputs[o].gindexer[igi].start
+                if output_end > inputs[iout].gindexer[igi].end:
+                    oend = inputs[iout].gindexer[igi].end - output_start
+                    lend = inputs[iout].gindexer[igi].end - inputs[iout].gindexer[igi].start
                 else:
                     oend = output_end - output_start
-                    lend = output_end - inputs[o].gindexer[igi].start
+                    lend = output_end - inputs[iout].gindexer[igi].start
 
-                m = np.zeros((2,) + (1, inputs[o].gindexer[igi].length, ) + influence[o].shape[2:], dtype=influence[o].dtype)
+                # for mutually overlapping positions, we employ a heuristic
+                # that keeps the maximum influence over the overlapping intervals
+                # spanning the position
+                m = np.zeros((2,) + (1, inputs[iout].gindexer[igi].length, ) \
+                             + influence[iout].shape[2:], dtype=influence[iout].dtype)
 
-                #print('ostart-end', ostart, oend)
-                #print('lstart-end', lstart, lend)
-                m[0][:, lstart:lend, :, :] = output[o][:, (ostart):(oend), :, :]
-                m[1][:, lstart:(lend - order), :, :] = influence[o][:, lstart:(lend - order), :, :]
+                m[0][:, lstart:lend, :, :] = output[iout][:, (ostart):(oend), :, :]
+                m[1][:, lstart:(lend - order), :, :] = \
+                    influence[iout][:, lstart:(lend - order), :, :]
                 m = np.abs(m).max(axis=0)
                 m = m[:, lstart:lend, :, :]
-                output[o][:, ostart:oend, :, :] = m
+                output[iout][:, ostart:oend, :, :] = m
 
-        for o in range(len(output)):
+        for iout in range(len(output)):
             # finally wrap the output up as coverage track
-            output[o] = Cover.create_from_array('attr_'+inputs[o].name,
-                                                output[o],
-                                                GenomicIndexer.create_from_region(
-                                                chrom, start, end, '.',
-                                                binsize=end-start,
-                                                stepsize=1, flank=0),
-                                                conditions=inputs[o].conditions)
+            output[iout] = Cover.create_from_array('attr_'+inputs[iout].name,
+                                                   output[iout],
+                                                   GenomicIndexer.create_from_region(
+                                                       chrom, start, end, '.',
+                                                       binsize=end-start,
+                                                       stepsize=1, flank=0),
+                                                   conditions=inputs[iout].conditions)
 
-        for ip, _ in enumerate(inputs):
+        for inp, _ in enumerate(inputs):
             # restore the initial genomic indexers
-            inputs[ip].gindexer = gindexers_save[ip]
+            inputs[inp].gindexer = gindexers_save[inp]
 
     except Exception:  # pragma: no cover
         model.logger.exception('_influence failed:')

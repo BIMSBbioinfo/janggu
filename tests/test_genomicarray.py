@@ -207,6 +207,21 @@ def test_logzscore_normalization(tmpdir):
                                    rtol=1e-5, atol=1e-5)
 
 
+def test_perctrim(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    def loading(garray):
+        garray[GenomicInterval('chr1', 0, 150), 0] = np.random.normal(loc=10, size=150).reshape(-1, 1)
+        garray[GenomicInterval('chr2', 0, 300), 0] = np.random.normal(loc=100, size=300).reshape(-1, 1)
+        return garray
+
+    for store in ['ndarray', 'hdf5']:
+        ga = create_genomic_array({'chr1': 150, 'chr2': 300},
+                              stranded=False, typecode='float32',
+                              storage=store, cache="cache_file", loader=loading,
+                              normalizer=['perctrim'])
+
+
 def test_tmp_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
@@ -217,7 +232,7 @@ def test_tmp_normalization(tmpdir):
 
     for store in ['ndarray', 'hdf5']:
         ga = create_genomic_array({'chr1': 150, 'chr2': 300}, stranded=False, typecode='float32',
-                                  storage=store, cache=True, resolution=50, loader=loading,
+                                  storage=store, cache="cache_file", resolution=50, loader=loading,
                                   collapser='sum',
                                   normalizer=['tpm'])
         np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[10 * 1000/50 * 1e6/(720.)]]]))

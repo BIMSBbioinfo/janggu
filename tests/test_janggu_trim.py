@@ -3,8 +3,8 @@ import os
 
 from pkg_resources import resource_filename
 
-from janggu.janggutrim import trim_bed
 from janggu.data import GenomicIndexer
+from janggu.janggutrim import trim_bed
 
 
 def test_create_from_array(tmpdir):

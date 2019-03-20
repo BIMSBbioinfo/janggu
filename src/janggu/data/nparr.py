@@ -67,6 +67,19 @@ class ReduceDim(Dataset):
     the middle two dimensions by applying the aggregate function.
     Therefore, it transforms the 4D object into a table-like 2D representation
 
+    Example
+    -------
+    .. code-block:: python
+
+      # given some dataset, e.g. a Cover object
+      # originally, the cover object is a 4D-object.
+      cover.shape
+      cover = ReduceDim(cover, aggregator='mean')
+      cover.shape
+      # Afterwards, the cover object is 2D, where the second and
+      # third dimension have been averaged out.
+
+
     Parameters
     -----------
     array : Dataset
@@ -96,7 +109,8 @@ class ReduceDim(Dataset):
             elif name == 'max':
                 return np.max
             else:
-                raise ValueError('ReduceDim aggregator="{}" not known. Must be "sum", "mean" or "max".'.format(name))
+                raise ValueError('ReduceDim aggregator="{}" not known.'.format(name) +
+                                 'Must be "sum", "mean" or "max" or a callable.')
         self.aggregator = _get_aggregator(aggregator)
         Dataset.__init__(self, array.name)
 
@@ -107,6 +121,8 @@ class ReduceDim(Dataset):
         return len(self.data)
 
     def __getitem__(self, idxs):
+        if isinstance(idxs, int):
+            idxs = slice(idxs, idxs + 1)
         data = self.aggregator(self.data[idxs], axis=(1, 2))
         return data
 
@@ -117,13 +133,13 @@ class ReduceDim(Dataset):
         return shape
 
     @property
-    def gindexer(self):
+    def gindexer(self):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
-             return self.data.gindexer
+            return self.data.gindexer
         raise ValueError('No gindexer available.')
 
     @gindexer.setter
-    def gindexer(self, gindexer):
+    def gindexer(self, gindexer):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
             self.data.gindexer = gindexer
             return
@@ -135,6 +151,72 @@ class ReduceDim(Dataset):
 
     def __copy__(self):
         obj = ReduceDim(copy.copy(self.data))
+        return obj
+
+
+class NanToNumConverter(Dataset):
+    """NanToNumConverter class.
+
+    This wrapper dataset converts NAN's in the dataset to
+    zeros.
+
+    Example
+    -------
+    .. code-block:: python
+
+      # given some dataset, e.g. a Cover object
+      cover
+      cover = NanToNumConverter(cover)
+
+      # now all remaining NaNs will be converted to zeros.
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset
+    """
+
+    def __init__(self, array):
+
+        self.data = copy.copy(array)
+        Dataset.__init__(self, array.name)
+
+    def __repr__(self):  # pragma: no cover
+        return 'NanToNumConverter({})'.format(str(self.data))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        if isinstance(idxs, int):
+            idxs = slice(idxs, idxs + 1)
+        data = np.nan_to_num(self.data[idxs])
+        return data
+
+    @property
+    def shape(self):
+        """Shape of the dataset"""
+        return self.data.shape
+
+    @property
+    def gindexer(self):  # pragma: no cover
+        if hasattr(self.data, 'gindexer'):
+            return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):  # pragma: no cover
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def __copy__(self):
+        obj = NanToNumConverter(copy.copy(self.data))
         return obj
 
 
@@ -168,6 +250,8 @@ class RandomSignalScale(Dataset):
         return len(self.data)
 
     def __getitem__(self, idxs):
+        if isinstance(idxs, int):
+            idxs = slice(idxs, idxs + 1)
         data = self.data[idxs]
 
         scales = np.random.rand(data.shape[0], data.shape[-1])
@@ -179,13 +263,13 @@ class RandomSignalScale(Dataset):
         return data
 
     @property
-    def gindexer(self):
+    def gindexer(self):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
-             return self.data.gindexer
+            return self.data.gindexer
         raise ValueError('No gindexer available.')
 
     @gindexer.setter
-    def gindexer(self, gindexer):
+    def gindexer(self, gindexer):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
             self.data.gindexer = gindexer
             return
@@ -242,13 +326,13 @@ class RandomOrientation(Dataset):
         return data
 
     @property
-    def gindexer(self):
+    def gindexer(self):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
-             return self.data.gindexer
+            return self.data.gindexer
         raise ValueError('No gindexer available.')
 
     @gindexer.setter
-    def gindexer(self, gindexer):
+    def gindexer(self, gindexer):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
             self.data.gindexer = gindexer
             return

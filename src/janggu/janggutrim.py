@@ -19,10 +19,10 @@ def main():
                         help="Input BED-file")
     parser.add_argument('outputbed', type=str,
                         help="Output trimmed BED-file.")
-    
+
     parser.add_argument('-divby', dest='divby', type=int,
                         default=1,
                         help="Divisibility of region starts and ends by the given factor.")
-    
+
     args = parser.parse_args()
     trim_bed(args.inputbed, args.outputbed, args.divby)
