@@ -35,7 +35,7 @@ extensions = [
 #for mod_name in MOCK_MODULES:
 #    sys.modules[mod_name] = mock.Mock()
 
-autodoc_mock_imports = ["keras", "tensorflow", "matplotlib",
+autodoc_mock_imports = ["keras", "tensorflow", "matplotlib", "sklearn", "seaborn", "HTSeq", "Bio",
                         "pandas", "compat", "scipy", "scipy.sparse"]
 
 if os.getenv('SPELLCHECK'):
@@ -46,7 +46,7 @@ if os.getenv('SPELLCHECK'):
 source_suffix = '.rst'
 master_doc = 'index'
 project = u'Janggu'
-year = u'2017-2018'
+year = u'2017-2019'
 author = u'Wolfgang Kopp'
 copyright = '{0}, {1}'.format(year, author)
 version = release = '0.8.6'
