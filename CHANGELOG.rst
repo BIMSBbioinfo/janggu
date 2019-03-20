@@ -2,6 +2,41 @@
 Changelog
 =========
 
+0.9.0 (2019-03-20)
+------------------
+
+Added various features and bug fixes:
+
+Changes in janggu.data
+- Added new dataset wrapper to remove NaNs: NanToNumConverter
+- Added new dataset wrappers for data augmentation: RandomOrientation, RandomSignalScale
+- Adapted ReduceDim wrapper: added aggregator argument
+- plotGenomeTrack added figsize option
+- plotGenomeTrack added other plot types, including heatmap and seqplot.
+- plotGenomeTrack refactoring of internal code
+- Bioseq bugfix: Fixed issue for reverse complementing N's in the sequence.
+- GenomicArray: condition, order, resolution are not read from the cache anymore, but from the arguments to avoid inconsistencies
+- Normalization of Cover can handle a list of normalizer callables which are applied in turn
+- Normaliation and Transformation: Added PercentileTrimming, RegionLengthNormalization, LogTransform
+- ZScore and ZScoreLog do not apply RegionLengthNormalization by default anymore.
+- janggu.data version-aware caching of datasets included
+- Added copy method for janggu datasets.
+- split_train_test refactored
+- removed obsolete transformations attribute from the datasets
+- Adapted the documentation
+- Refactoring according to suggestions from isort and pylint
+
+Changes in janggu
+- Added input_attribution via integrated gradients for feature importance assignment
+- Performance scoring by name for Janggu.evaluate for a number common metrices, including ROC, PRC, correlation, variance explained, etc.
+- training.log is stored by default for each model
+- Added model_from_json, model_from_yaml wrappers
+- inputlayer decorator only instantiates Input layers if inputs == None, which makes the use of inputlayer less restrictive when using nested functions
+- Added create_model method to create a keras model directly
+- Adapted the documentation
+- Refactoring according to suggestions from isort and pylint
+
+
 0.8.6 (2019-03-03)
 ------------------
 
