@@ -37,7 +37,7 @@ which should be traversed during training/evaluation.
 The GenomicIndexer can be accessed by an integer-valued
 index which returns the associated genomic coordinates.
 
-When querying the `i`th region from :code:`Cover` or :code:`Bioseq`, the index is passed
+When querying the 'i'-th region from :code:`Cover` or :code:`Bioseq`, the index is passed
 to the  :code:`GenomicIndexer` which yields a genomic coordinates
 that is passed on to the :code:`GenomicArray`.
 The result is returned in numpy format.
@@ -52,19 +52,56 @@ Upon creation of a :code:`Cover` object, normalization of the raw data might be 
 For instance, to make coverage tracks comparable across replicates or experiments.
 To this end, :code:`create_from_bam`, :code:`create_from_bigwig`
 and :code:`create_from_bed` expose a :code:`normalizer` option.
-Janggu already implements various normalization methods,
-including zscore-, zscore on log-transformed data and TPM (transcript per million)
-normalization. These can be used via the argument names: 'zscore', 'zscorelog'
-and 'tpm'.
+Janggu already implements various normalization methods which can be called by name,
+TPM (transcript per million) normalization. For instance, using
 
-Apart from using 'zscore' and 'zscorelog' by name, you may alternatively
-want to use :code:`ZScore` or :code:`ZScoreLog` objects. These allow you
-to retrieve the obtained means and standard deviations on one dataset and
-apply the same ones to another dataset.
+.. code-block:: python
 
-Furthermore, it is possible to provide a custom
-normalization procedure in terms of a python function.
-To this end, a function with the following signature should be used:
+   Cover.create_from_bam('track', bamfiles=samplefile, roi=roi, normalizer='tpm')
+
+Other preprocessing and normalization options are:  :code:`zscore`, :code:`zscorelog`, :code:`binsizenorm` and :code:`perctrim`.
+The latter two apply normalization for read depth and trimming the signal intensities at the 99%-ile.
+
+Normalizers can also be applied via callables and/or in combination with other transformations.
+For instance, suppose we want to trim the outliers at the 95%-tile instead and
+subsequently apply the z-score transformation then we could use
+
+.. code-block:: python
+
+   from janggu.data import PercentileTrimming
+   from janggu.data import ZScore
+
+   Cover.create_from_bam('track', bamfiles=samplefile, roi=roi,
+                         normalizer=[PercentileTrimming(95), ZScore()])
+
+
+It might be necessary to evaluate the normalization parameter on one dataset and apply the same
+transformation on other datasets. For instance, in the case of the ZScore, we might want to keep
+the mean and standard deviation that was obtained from, say the training set, and reuse the
+to normalize the test set.
+This is possible by just creating a zscore object that is used multiple times.
+At the first invokation the mean and standard deviation are determine and the transformation
+is applied. Subsequently, the zscore is determined using the predetermined mean and standard deviation.
+For example:
+
+.. code-block:: python
+
+   from janggu.data import ZScore
+
+   zscore = ZScore()
+
+   # First, mean and std will be determined.
+   # Then zscore transformation is applied.
+   Cover.create_from_bam('track_train', bamfiles=samplefile, roi=roitrain,
+                         normalizer=[zscore])
+
+   # Subsequently, zscore transformation is applied with
+   # the same mean and std determined from the training set.
+   Cover.create_from_bam('track_test', bamfiles=samplefile, roi=roitest,
+                         normalizer=[zscore])
+
+In case a different normalization procedure is required that is not contained in janggu,
+it is possible to define a custom_normalizer as follows:
 
 .. code-block:: python
 
@@ -74,61 +111,100 @@ To this end, a function with the following signature should be used:
 
       return genomicarray
 
-Note that concrete implementation of the normalization procedure may depend on
-how the data is stored in genomicarray (e.g. numpy arrays or hdf5 format).
+The currently implemented normalizers may be a good starting point
+for this purpose.
 
 
-Collapse across a region
-------------------------
+Granularity of the coverage
+----------------------------
 
-For different applications, one might demand different granularity of the
-coverage information. For instance, one might be interested in reading out
-nucleotide-resolution coverage or coverage in equally sized 50 base-pair bins
-or one might want to collapse variable size bins to be represented by a single
-summarizing value like a TPM value describing the gene expression level
-of a gene.
+Depending on the applications, different granularity of the
+coverage data might be required. For instance, one might be interested in reading out
+nucleotide-resolution coverage for one purpose or 50 base-pair resolution bins for another.
+Furthermore, in some cases the signal of variable size regions might be of interest. For
+example, the read counts across the gene bodies, to measure gene expression levels.
 
-In order to control the granularity, the :code:`resolution` parameter is used
-for :code:`create_from_bam`, :code:`create_from_bigwig` and :code:`create_from_bed`.
-The resolution parameter may be integer valued or None.
-In case it is integer valued, it describes the coverage granularity
-in equally sized bins across the region of interest.
-For example, `resolution=1` would create
-nucleotide resolution coverage profiles, while `resolution=50`
-amounts to a 50 base-pair resolution.
-The latter option also has the side effect
-of reducing the required memory by roughly a factor of 50.
-
-On the other hand, if resolution=None the coverage signal
-will be collapsed across the entire interval
-where the interval size may be determined by the option :code:`binsize`
-or, in case variable size intervals shall be used, by setting :code:`binsize=None`.
-
-In conjunction with the resolution parameter, it is necessary to specify
-the collapse methods that should be performed (except for resolution=1).
-This method might depend on the particular application.
+These adjustments can be made when invoking :code:`create_from_bam`,
 :code:`create_from_bigwig` and :code:`create_from_bed`
-support commonly used methods by
-name via the :code:`collapser` argument, including 'sum', 'mean', 'max'.
+using an appropriate region of interest ROI file in conjunction
+with specifying the :code:`resolution` and  :code:`collapser` parameter.
 
-Moreover, for more specific applications, it is possible to supply
-a custom collapser function defined by a python function.
-In this case, the function should adhere to the following signature:
+First, we the resolution parameter allows to the coverage granularity.
+For example, base-pair and 50-base-pair resolution would be possible using
+
+.. code-block:: python
+
+   Cover.create_from_bam('track', bamfiles=samplefile, roi=roi,
+                         resolution=1)
+
+   Cover.create_from_bam('track', bamfiles=samplefile, roi=roi,
+                         resolution=50)
+
+.. sidebar:: janggu-trim
+
+  When using N-based pair resolution with :code:`n>1` in conjunction with the
+  option :code:`store_whole_genome=True`, then the region of interest starts
+  and ends must be divisible by the resolution. Otherwise, undesired rounding
+  effect might occur. This can be achieved by using :code:`janggu-trim`.
+  See Section command line tools.
+
+In case the signal intensity should be summarized across the entire interval,
+specify :code:`resolution=None`.
+For instance, if the region of interest contains a set of variable length
+gene bodies, the total read count per gene can be obtained using
+
+.. code-block:: python
+
+   Cover.create_from_bam('genes',
+                         bamfiles=samplefile,
+                         roi=geneannot,
+                         resolution=None)
+
+It is also possible to use :code:`resolution=None` in conjunction with e.g. :code:`binsize=200`
+which would have the same effect as chosing :code:`binsize=resolution=200`.
+
+Whenever we deal with :code:`resolution>1`, an aggregation operation needs to be performed
+to summarize the signal intensity across the region. For instance, for
+:code:`create_from_bam` the reads are summed within each interval.
+
+For :code:`create_from_bigwig` and :code:`create_from_bed`,
+it is possible to adjust the collapser. For example, 'mean' or 'sum' aggregation
+can be applied by name or by handing over a callable according to
+
+.. code-block:: python
+
+   import numpy as np
+
+   Cover.create_from_bigwig('bwtrack',
+                            bigwigfiles=samplefile,
+                            roi=roi,
+                            resolution=50,
+                            collapser='mean')
+
+   Cover.create_from_bigwig('bwtrack',
+                            bigwigfiles=samplefile,
+                            roi=roi,
+                            resolution=50,
+                            collapser=np.sum)
+
+
+Moreover, more specialized aggregations may
+require a custom collaper function. In that case,
+it is important to note that the function expects a 3D numpy array and
+the aggragation should be performed across the second dimension.
+For example
 
 .. code-block:: python
 
    def custom_collapser(numpyarray):
 
-      # custom collapser expects a 3D numpy array
-      # The first dimension corresponds to the bin
-      # and the second to the nucleotide resolution signal
-      # within the bin.
-      # The second dimension is expected to be collapsed across
-      # The third dimension denotes strandedness and is expected
-      # to be kept unchanged.
+      # Initially, the dimensions of numpyarray correspond to
+      # (intervallength // resolution, resolution, strand)
 
-      # Example: collapsing by summation
-      # numpyarray = numpyarray.sum(axis=1)
+      numpyarray = numpyarray.sum(axis=1)
+
+      # Subsequently, we return the array of shape
+      # (intervallength // resolution, strand)
 
       return numpyarray
 

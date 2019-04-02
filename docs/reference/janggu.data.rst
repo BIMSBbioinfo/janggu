@@ -1,10 +1,10 @@
 janggu.data - Genomics datasets for deep learning
 =========================================================
 
-
 .. currentmodule:: janggu.data
 
 .. autosummary::
+
    Bioseq.create_from_seq
    Bioseq.create_from_refgenome
    Cover.create_from_bam
@@ -13,7 +13,7 @@ janggu.data - Genomics datasets for deep learning
    Cover.create_from_array
    plotGenomeTrack
 
-.. currentmodule:: janggu.data
+
 
 Interface
 ---------

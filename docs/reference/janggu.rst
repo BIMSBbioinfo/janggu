@@ -4,12 +4,14 @@ janggu - Utilities for creating, fitting and evaluating models
 This section describes the interface and utilities to build
 build and evaluate deep learning applications with janggu.
 
+
 .. currentmodule:: janggu
 
-Janggu Model
----------------
+.. automodule:: janggu
+   :no-undoc-members:
 
 .. autosummary::
+
    Janggu
    Janggu.create
    Janggu.create_by_name
@@ -17,6 +19,12 @@ Janggu Model
    Janggu.predict
    Janggu.evaluate
    input_attribution
+
+
+Janggu Model
+---------------
+
+.. currentmodule:: janggu
 
 .. autoclass:: Janggu
    :members:
@@ -31,6 +39,7 @@ Performance evaluation
 ----------------------
 
 .. autosummary::
+
    Scorer.score
    Scorer.export
 
@@ -55,7 +64,7 @@ Decorators for network construction
 
 
 Genomics-specific keras layers
-======================
+==============================
 
 .. autoclass:: DnaConv2D
 .. autoclass:: Complement

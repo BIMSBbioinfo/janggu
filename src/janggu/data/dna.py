@@ -184,8 +184,9 @@ class Bioseq(Dataset):
         -----------
         name : str
             Name of the dataset
-        refgenome : str
-            Fasta file.
+        refgenome : str or Bio.SeqRecord.SeqRecord
+            Reference genome location pointing to a fasta file
+            or a SeqRecord object from Biopython that contains the sequences.
         roi : str or None
             Bed-file defining the region of interest.
             If set to None, the sequence will be
