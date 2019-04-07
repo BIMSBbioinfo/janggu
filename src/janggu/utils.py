@@ -11,10 +11,8 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from HTSeq import BED_Reader
-from HTSeq import GenomicFeature
-from HTSeq import GenomicInterval
-from HTSeq import GFF_Reader
+from pybedtools import BedTool
+from pybedtools import Interval
 
 try:
     import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -277,15 +275,9 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
 
 
 def _get_genomic_reader(filename):
-    """regions from a BED_Reader or GFF_Reader.
+    """regions from a BedTool
     """
-    if isinstance(filename, str) and filename.endswith('.bed'):
-        regions_ = BED_Reader(filename)
-    elif isinstance(filename, str) and (filename.endswith('.gff') or
-                                        filename.endswith('.gtf')):
-        regions_ = GFF_Reader(filename)
-    else:
-        raise Exception('Regions must be a bed, gff or gtf-file.')
+    regions_ = BedTool(filename)
 
     return regions_
 
@@ -345,9 +337,7 @@ def get_genome_size_from_regions(regions):
 
     gsize = {}
     for region in regions_:
-        if isinstance(region, GenomicFeature):
-            interval = region.iv
-        elif isinstance(region, GenomicInterval):
+        if isinstance(region, Interval):
             interval = region
         if interval.chrom not in gsize:
             gsize[interval.chrom] = interval.end
@@ -531,7 +521,7 @@ class ExportBigwig(object):
             if genomesize[region.chrom] < region.end:
                 genomesize[region.chrom] = region.end
 
-        bw_header = [(chrom, genomesize[chrom])
+        bw_header = [(str(chrom), genomesize[chrom])
                      for chrom in genomesize]
 
         # the last dimension holds the conditions. Each condition
@@ -832,12 +822,12 @@ def trim_bed(inputbed, outputbed, divby):
     with open(outputbed, 'w') as bed:
         regions = _get_genomic_reader(inputbed)
         for region in regions:
-            start = int(np.ceil(region.iv.start / divby)) * divby
-            end = (region.iv.end // divby) * divby
+            start = int(np.ceil(region.start / divby)) * divby
+            end = (region.end // divby) * divby
             bed.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'
-                      .format(chrom=region.iv.chrom,
+                      .format(chrom=region.chrom,
                               start=start,
                               end=end,
                               name=region.name,
                               score=region.score if region.score is not None else 0,
-                              strand=region.iv.strand))
+                              strand=region.strand))

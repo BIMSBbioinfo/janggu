@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import pytest
-from HTSeq import GenomicInterval
+from pybedtools import Interval
 
 from janggu.data import create_genomic_array
 from janggu.data.genomicarray import get_collapser
@@ -67,7 +67,7 @@ def test_invalid_access():
 
 def test_bwga_instance_unstranded_taged(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
-    iv = GenomicInterval('chr10', 100, 120, '.')
+    iv = Interval('chr10', 100, 120, strand='.')
     ga = create_genomic_array({'chr10': 300}, stranded=False, typecode='int8',
                               storage='ndarray', datatags='test_bwga_instance_unstranded')
 
@@ -85,12 +85,12 @@ def test_bwga_instance_unstranded_taged(tmpdir):
     ga[iv, 0] = np.ones((20,1))
     np.testing.assert_equal(ga[iv], np.ones((20, 1, 1)))
     np.testing.assert_equal(ga[iv].sum(), 20)
-    iv = GenomicInterval('chr10', 0, 300, '.')
+    iv = Interval('chr10', 0, 300, strand='.')
     np.testing.assert_equal(ga[iv].sum(), 20)
 
 
 def test_bwga_instance_unstranded(tmpdir):
-    iv = GenomicInterval('chr10', 100, 120, '.')
+    iv = Interval('chr10', 100, 120, strand='.')
     ga = create_genomic_array({'chr10': 300}, stranded=False, typecode='int8',
                               storage='ndarray', cache=False)
     np.testing.assert_equal(ga[iv].shape, (20, 1, 1))
@@ -99,13 +99,13 @@ def test_bwga_instance_unstranded(tmpdir):
     ga[iv, 0] = np.ones((20,1))
     np.testing.assert_equal(ga[iv], np.ones((20, 1, 1)))
     np.testing.assert_equal(ga[iv].sum(), 20)
-    iv = GenomicInterval('chr10', 0, 300, '.')
+    iv = Interval('chr10', 0, 300, strand='.')
     np.testing.assert_equal(ga[iv].sum(), 20)
 
 
 def test_bwga_instance_stranded(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
-    iv = GenomicInterval('chr10', 100, 120, '+')
+    iv = Interval('chr10', 100, 120, strand='+')
     ga = create_genomic_array({'chr10': 300}, stranded=True, typecode='int8',
                               storage='ndarray')
     np.testing.assert_equal(ga[iv].shape, (20, 2, 1))
@@ -116,13 +116,13 @@ def test_bwga_instance_stranded(tmpdir):
     ga[iv, 0] = x[:,:,0]
     np.testing.assert_equal(ga[iv], x)
     np.testing.assert_equal(ga[iv].sum(), 20)
-    iv = GenomicInterval('chr10', 0, 300)
+    iv = Interval('chr10', 0, 300)
     np.testing.assert_equal(ga[iv].sum(), 20)
 
 
 def test_bwga_instance_stranded_notcached(tmpdir):
 
-    iv = GenomicInterval('chr10', 100, 120, '+')
+    iv = Interval('chr10', 100, 120, strand='+')
     ga = create_genomic_array({'chr10': 300}, stranded=True, typecode='int8',
                               storage='ndarray', cache=False)
     np.testing.assert_equal(ga[iv].shape, (20, 2, 1))
@@ -133,7 +133,7 @@ def test_bwga_instance_stranded_notcached(tmpdir):
     ga[iv, 0] = x[:,:,0]
     np.testing.assert_equal(ga[iv], x)
     np.testing.assert_equal(ga[iv].sum(), 20)
-    iv = GenomicInterval('chr10', 0, 300)
+    iv = Interval('chr10', 0, 300)
     np.testing.assert_equal(ga[iv].sum(), 20)
 
 
@@ -141,8 +141,8 @@ def test_zscore_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = np.repeat(1, 150).reshape(-1,1)
-        garray[GenomicInterval('chr2', 0, 300), 0] = np.repeat(-1, 300).reshape(-1,1)
+        garray[Interval('chr1', 0, 150), 0] = np.repeat(1, 150).reshape(-1,1)
+        garray[Interval('chr2', 0, 300), 0] = np.repeat(-1, 300).reshape(-1,1)
         return garray
 
     for store in ['ndarray', 'hdf5']:
@@ -154,10 +154,10 @@ def test_zscore_normalization(tmpdir):
                                    rtol=1e-5, atol=1e-5)
         np.testing.assert_allclose(ga.weighted_sd(), np.asarray([1.]),
                                    rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)],
+        np.testing.assert_allclose(ga[Interval('chr1', 100, 101)],
                                    np.asarray([[[1.412641340027806]]]),
                                    rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)],
+        np.testing.assert_allclose(ga[Interval('chr2', 100, 101)],
                                    np.asarray([[[-0.706320670013903]]]),
                                    rtol=1e-5, atol=1e-5)
 
@@ -166,8 +166,8 @@ def test_logzscore_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
-        garray[GenomicInterval('chr2', 0, 300), 0] = np.repeat(100, 300).reshape(-1,1)
+        garray[Interval('chr1', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
+        garray[Interval('chr2', 0, 300), 0] = np.repeat(100, 300).reshape(-1,1)
         return garray
 
     from janggu.data.genomicarray import LogTransform, ZScore
@@ -199,10 +199,10 @@ def test_logzscore_normalization(tmpdir):
                                    rtol=1e-5, atol=1e-5)
         np.testing.assert_allclose(ga.weighted_sd(), np.asarray([1.]),
                                    rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)],
+        np.testing.assert_allclose(ga[Interval('chr1', 100, 101)],
                                    np.asarray([[[-1.412641340027806]]]),
                                    rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)],
+        np.testing.assert_allclose(ga[Interval('chr2', 100, 101)],
                                    np.asarray([[[0.706320670013903]]]),
                                    rtol=1e-5, atol=1e-5)
 
@@ -211,8 +211,8 @@ def test_perctrim(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = np.random.normal(loc=10, size=150).reshape(-1, 1)
-        garray[GenomicInterval('chr2', 0, 300), 0] = np.random.normal(loc=100, size=300).reshape(-1, 1)
+        garray[Interval('chr1', 0, 150), 0] = np.random.normal(loc=10, size=150).reshape(-1, 1)
+        garray[Interval('chr2', 0, 300), 0] = np.random.normal(loc=100, size=300).reshape(-1, 1)
         return garray
 
     for store in ['ndarray', 'hdf5']:
@@ -226,8 +226,8 @@ def test_tmp_normalization(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
     def loading(garray):
-        garray[GenomicInterval('chr1', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
-        garray[GenomicInterval('chr2', 0, 300), 0] = np.repeat(1, 300).reshape(-1, 1)
+        garray[Interval('chr1', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
+        garray[Interval('chr2', 0, 300), 0] = np.repeat(1, 300).reshape(-1, 1)
         return garray
 
     for store in ['ndarray', 'hdf5']:
@@ -235,15 +235,15 @@ def test_tmp_normalization(tmpdir):
                                   storage=store, cache="cache_file", resolution=50, loader=loading,
                                   collapser='sum',
                                   normalizer=['tpm'])
-        np.testing.assert_allclose(ga[GenomicInterval('chr1', 100, 101)], np.asarray([[[10 * 1000/50 * 1e6/(720.)]]]))
-        np.testing.assert_allclose(ga[GenomicInterval('chr2', 100, 101)], np.asarray([[[1 * 1000/50 * 1e6/(720.)]]]))
+        np.testing.assert_allclose(ga[Interval('chr1', 100, 101)], np.asarray([[[10 * 1000/50 * 1e6/(720.)]]]))
+        np.testing.assert_allclose(ga[Interval('chr2', 100, 101)], np.asarray([[[1 * 1000/50 * 1e6/(720.)]]]))
 
 
 def test_check_resolution_collapse_compatibility():
 
     def loading(garray):
-        garray[GenomicInterval('chr1:0-150', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
-        garray[GenomicInterval('chr2:0-300', 0, 300), 0] = np.repeat(1, 300).reshape(-1, 1)
+        garray[Interval('chr1:0-150', 0, 150), 0] = np.repeat(10, 150).reshape(-1, 1)
+        garray[Interval('chr2:0-300', 0, 300), 0] = np.repeat(1, 300).reshape(-1, 1)
         return garray
 
     with pytest.raises(Exception):

@@ -1,7 +1,7 @@
 """Genomic Indexer"""
 
 import numpy as np
-from HTSeq import GenomicInterval
+from pybedtools import Interval
 
 from janggu.utils import _get_genomic_reader
 
@@ -65,8 +65,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             # binsize will be inferred from bed file
             for reg in regions_:
                 if binsize_ is None:
-                    binsize_ = reg.iv.length
-                if reg.iv.length != binsize_:
+                    binsize_ = reg.length
+                if reg.length != binsize_:
                     raise ValueError('An interval length must be specified if collapse=False.')
             binsize = binsize_
 
@@ -86,8 +86,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         for reg in regions_:
 
             tmp_gidx = cls.create_from_region(
-                reg.iv.chrom,
-                reg.iv.start, reg.iv.end, reg.iv.strand,
+                str(reg.chrom),
+                int(reg.start), int(reg.end), str(reg.strand),
                 binsize, stepsize, flank, zero_padding)
 
             gind.chrs += tmp_gidx.chrs
@@ -185,8 +185,9 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             end = self.ends[index]
             if end == start:
                 end += 1
-            return GenomicInterval(self.chrs[index], start - self.flank,
-                                   end + self.flank, self.strand[index])
+            return Interval(self.chrs[index], max(0, start - self.flank),
+                            end + self.flank, 
+                            strand=self.strand[index])
 
         raise IndexError('Index support only for "int". Given {}'.format(
             type(index)))
@@ -323,3 +324,22 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         new_gindexer.ends = [self.ends[i] for i in idxs]
 
         return new_gindexer
+
+    def export_to_bed(self, filename):
+        """Export the intervals to bed format.
+
+        Parameters
+        ----------
+        filename : str
+            Bed file name
+        """
+
+        with open(filename, 'w') as handle:
+           for i in range(len(self)):
+               handle.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'.format(
+                  chrom=self.chrs[i],
+                  start=max(0, self.starts[i] - self.flank),
+                  end=self.ends[i] + self.flank,
+                  name='-',
+                  score='-',
+                  strand=self.strand[i]))

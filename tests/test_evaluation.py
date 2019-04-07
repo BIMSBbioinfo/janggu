@@ -1,7 +1,6 @@
 import json
 import os
 
-import HTSeq
 import numpy
 import pandas
 import pkg_resources
@@ -11,6 +10,7 @@ from keras import Input
 from keras import Model
 from keras.layers import Dense
 from keras.layers import Flatten
+from pybedtools import BedTool
 
 from janggu import Janggu
 from janggu import inputlayer
@@ -327,11 +327,11 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
 
-    bed = iter(HTSeq.BED_Reader(file_.format('c1')))
+    bed = BedTool(file_.format('c1'))
 
     nreg = 0
     for reg in bed:
-        numpy.testing.assert_equal(reg.score, 0.1)
+        numpy.testing.assert_equal(float(reg.score), 0.1)
         nreg += 1
 #        numpy.testing.assert_equal(breg.score, value)
 
@@ -368,11 +368,11 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
 
-    bed = iter(HTSeq.BED_Reader(file_.format('c1')))
+    bed = BedTool(file_.format('c1'))
 
     nreg = 0
     for reg in bed:
-        numpy.testing.assert_equal(reg.score, 0.1)
+        numpy.testing.assert_equal(float(reg.score), 0.1)
         nreg += 1
 
     assert nreg == 28, 'There should be 28 regions in the bed file.'
@@ -407,11 +407,11 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
 
-    bed = iter(HTSeq.BED_Reader(file_.format('c1')))
+    bed = BedTool(file_.format('c1'))
 
     nreg = 0
     for reg in bed:
-        numpy.testing.assert_equal(reg.score, 0.1)
+        numpy.testing.assert_equal(float(reg.score), 0.1)
         nreg += 1
 
     assert nreg == 7, 'There should be 7 regions in the bed file.'
@@ -446,11 +446,11 @@ def test_output_bed_predict_denseout(tmpdir):
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
 
-    bed = iter(HTSeq.BED_Reader(file_.format('c1')))
+    bed = BedTool(file_.format('c1'))
 
     nreg = 0
     for reg in bed:
-        numpy.testing.assert_equal(reg.score, 0.1)
+        numpy.testing.assert_equal(float(reg.score), 0.1)
         nreg += 1
 
     assert nreg == 7, 'There should be 7 regions in the bed file.'
@@ -485,11 +485,11 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
 
-    bed = iter(HTSeq.BED_Reader(file_.format('c1')))
+    bed = BedTool(file_.format('c1'))
 
     nreg = 0
     for reg in bed:
-        numpy.testing.assert_equal(reg.score, 0.1)
+        numpy.testing.assert_equal(float(reg.score), 0.1)
         nreg += 1
 
     assert nreg == 28, 'There should be 28 regions in the bed file.'

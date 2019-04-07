@@ -5,7 +5,7 @@ import os
 
 import h5py
 import numpy as np
-from HTSeq import GenomicInterval
+from pybedtools import Interval
 from scipy import sparse
 
 from janggu.utils import _get_output_data_location
@@ -142,8 +142,8 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
         Parameters
         ----------
-        interval : GenomicInterval
-            GenomicInterval containing (chr, start, end)
+        interval : Interval
+            Interval containing (chr, start, end)
         arraylen : int
             Length of the numpy target array.
 
@@ -186,7 +186,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         if not self.stranded and value.shape[-1] != 1:
             value = value.sum(axis=1).reshape(-1, 1)
 
-        if isinstance(interval, GenomicInterval) and isinstance(condition, int):
+        if isinstance(interval, Interval) and isinstance(condition, int):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
@@ -233,12 +233,12 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                 # check if the first or the second is the case here.
                 pass
         else:
-            raise IndexError("Index must be a GenomicInterval and a condition index")
+            raise IndexError("Index must be a Interval and a condition index")
 
 
     def __getitem__(self, index):
         # for now lets ignore everything except for chrom, start and end.
-        if isinstance(index, GenomicInterval):
+        if isinstance(index, Interval):
             interval = index
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
@@ -280,7 +280,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                                                                len(self.condition)))
             return data
 
-        raise IndexError("Index must be a GenomicInterval")
+        raise IndexError("Index must be a Interval")
 
     @property
     def condition(self):
@@ -704,7 +704,7 @@ class SparseGenomicArray(GenomicArray):
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
-        if isinstance(interval, GenomicInterval) and isinstance(condition, int):
+        if isinstance(interval, Interval) and isinstance(condition, int):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
@@ -768,7 +768,7 @@ class SparseGenomicArray(GenomicArray):
 
                 pass
             return
-        raise IndexError("Index must be a GenomicInterval and a condition index")
+        raise IndexError("Index must be a Interval and a condition index")
 
     def _reshape(self, data, shape):
         return data.toarray().reshape(shape)

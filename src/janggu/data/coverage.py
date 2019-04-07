@@ -1,5 +1,6 @@
 """Coverage dataset"""
 
+from progress.bar import Bar
 import os
 import warnings
 from itertools import product
@@ -7,7 +8,8 @@ from itertools import product
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from HTSeq import GenomicInterval
+from pybedtools import Interval
+from pybedtools import BedTool
 from matplotlib.pyplot import cm
 
 from janggu.data.data import Dataset
@@ -21,6 +23,7 @@ from janggu.utils import _iv_to_str
 from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
 from janggu.version import version
+import tempfile
 
 try:
     import pyBigWig
@@ -72,9 +75,8 @@ class BamLoader:
         min_mapq = self.min_mapq
         pairedend = self.pairedend
 
-        print("load from bam")
+        bar = Bar('Loading bam files'.format(len(files)), max=len(files))
         for i, sample_file in enumerate(files):
-            print('Counting from {}'.format(sample_file))
             aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
             for chrom in gsize:
 
@@ -162,8 +164,9 @@ class BamLoader:
                     else:
                         array[pos, 0] += 1
 
-                garray[GenomicInterval(*locus), i] = array
-
+                garray[Interval(*locus), i] = array
+            bar.next()
+        bar.finish()
         return garray
 
 
@@ -195,7 +198,7 @@ class BigWigLoader:
         dtype = garray.typecode
         nan_to_num = self.nan_to_num
 
-        print("load from bigwig")
+        bar = Bar('Loading bigwig files'.format(len(files)), max=len(files))
         for i, sample_file in enumerate(files):
             bwfile = pyBigWig.open(sample_file)
 
@@ -220,7 +223,9 @@ class BigWigLoader:
 
                 array[:len(values), 0] = values
 
-                garray[GenomicInterval(*locus), i] = array
+                garray[Interval(*locus), i] = array
+            bar.next() 
+        bar.finish()
         return garray
 
 
@@ -238,12 +243,15 @@ class BedLoader:
         GenomicIndexer object.
     mode : str
         Mode might be 'binary', 'score' or 'categorical'.
+    minoverlap : float or None
+        Minimum fraction of overlap of a given feature with a roi bin.
+        Default: None (already a single base-pair overlap is considered)
     """
-    def __init__(self, files, gindexer, mode):
+    def __init__(self, files, gindexer, mode, minoverlap):
         self.files = files
         self.gindexer = gindexer
         self.mode = mode
-
+        self.minoverlap = minoverlap
 
     def __call__(self, garray):
         files = self.files
@@ -251,58 +259,71 @@ class BedLoader:
         gindexer = self.gindexer
         mode = self.mode
 
-        print("load from bed")
+        # temporarily dump 
+        
+        tmpdir = tempfile.mkdtemp()
+        predictable_filename = 'gindexerdump'
+        tmpfilename = os.path.join(tmpdir, predictable_filename)
+        
+        gindexer.export_to_bed(tmpfilename)
+
+        roifile = BedTool(tmpfilename)
+        nfields_a = len(roifile[0].fields)
+
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
+            if regions_[0].score == '.' and mode in ['score',
+                                                 'categorical']:
+                raise ValueError(
+                    'No Score available. Score field must '
+                    'present in {}'.format(sample_file) + \
+                    'for mode="{}"'.format(mode))
 
-            prev_chrom = ""
-            for region in regions_:
+            nfields_b = len(regions_[0].fields)
 
-                # prefilter by chromosome
-                if region.iv.chrom != prev_chrom:
-                    # assuming that the bed-file is sorted,
-                    # prefiltering should give a performance improvement.
-                    gidx_chrom = gindexer.filter_by_region(
-                        include=region.iv.chrom)
-                    prev_chrom = region.iv.chrom
+            if self.minoverlap is not None:
+                overlapping_regions = roifile.intersect(regions_,
+                                                        wa=True, wb=True, f=self.minoverlap) 
+            else:
+                overlapping_regions = roifile.intersect(regions_, wa=True, wb=True) 
 
-                gidx = gidx_chrom.filter_by_region(
-                    include=region.iv.chrom,
-                    start=region.iv.start,
-                    end=region.iv.end)
-                for greg in gidx:
-                    if region.score is None and mode in ['score',
-                                                         'categorical']:
-                        raise ValueError(
-                            'No Score available. Score field must '
-                            'present in {}'.format(sample_file) + \
-                            'for mode="{}"'.format(mode))
-                    # if region score is not defined, take the mere
-                    # presence of a range as positive label.
+            bar = Bar('[{}/{}] Loading {}'.format(i+1, len(files), sample_file), max=len(overlapping_regions))
+            for region in overlapping_regions:
+                #region = overlapping_regions[ireg]
+                
+                # if region score is not defined, take the mere
+                # presence of a range as positive label.
 
-                    score = region.score if mode == 'score' else 1
-                    array = np.repeat(
-                        np.dtype(dtype).type(score).reshape((1, 1)),
-                        greg.length, axis=0)
+                score = int(region.fields[nfields_a + 4]) if mode == 'score' else 1
+                array = np.repeat(np.dtype(dtype).type(score).reshape((1, 1)),
+                                  region.length, axis=0)
 
-                    if greg.start < region.iv.start:
-                        # set the beginning of array to zero
-                        array[:(region.iv.start - greg.start), 0] = 0
-                    if greg.end > region.iv.end:
-                        # set the end of the array to zero
-                        array[-(greg.end - region.iv.end):, 0] = 0
+                actual_start = int(region.fields[nfields_a + 1])
+                actual_end = int(region.fields[nfields_a + 2])
+                if region.start < actual_start:
+                    # set the beginning of array to zero
+                    array[:(actual_start - region.start), 0] = 0
+                if region.end > actual_end:
+                    # set the end of the array to zero
+                    array[-(region.end - actual_end):, 0] = 0
 
-                    array = np.maximum(array,
-                                       np.repeat(garray[greg][:, :, i],
-                                                 greg.length if garray.resolution is None \
-                                                 else garray.resolution, axis=0))
+               # array = np.maximum(array,
+               #                    np.repeat(garray[region][:, :, i],
+               #                              region.length if garray.resolution is None \
+               #                              else garray.resolution, axis=0))
 
-                    if mode == 'score':
-                        garray[greg, i] = array
-                    elif mode == 'categorical':
-                        garray[greg, int(region.score)] = array
-                    elif mode == 'binary':
-                        garray[greg, i] = array
+                if mode == 'score':
+                    garray[region, i] = array
+                elif mode == 'categorical':
+                    garray[region, score] = array
+                elif mode == 'binary':
+                    garray[region, i] = array
+                bar.next()
+
+        bar.finish()
+        os.remove(tmpfilename)
+        os.rmdir(tmpdir)
+
         return garray
 
 
@@ -842,6 +863,7 @@ class Cover(Dataset):
                         zero_padding=True,
                         normalizer=None,
                         collapser=None,
+                        minoverlap=None,
                         datatags=None, cache=False):
         """Create a Cover class from a bed-file (or files).
 
@@ -937,6 +959,9 @@ class Cover(Dataset):
             that defines a custom aggregation method. If collapser is None,
             'max' aggregation will be used.
             Default: None.
+        minoverlap : float or None
+            Minimum fraction of overlap of a given feature with a ROI bin.
+            Default: None (already a single base-pair overlap is considered)
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         """
@@ -1000,15 +1025,15 @@ class Cover(Dataset):
 
             max_class = 0
             for reg in regions_:
-                if reg.score > max_class:
-                    max_class = reg.score
+                if int(reg.score) > max_class:
+                    max_class = int(reg.score)
             if conditions is None:
                 conditions = [str(i) for i in range(int(max_class + 1))]
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0]
                           for f in bedfiles]
 
-        bedloader = BedLoader(bedfiles, gindexer, mode)
+        bedloader = BedLoader(bedfiles, gindexer, mode, minoverlap)
         # At the moment, we treat the information contained
         # in each bed-file as unstranded
 
@@ -1022,7 +1047,7 @@ class Cover(Dataset):
                           resolution, storage, dtype,
                           zero_padding, mode,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome, version]
+                          store_whole_genome, version, minoverlap]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -1212,7 +1237,10 @@ class Cover(Dataset):
 
     def __getitem__(self, idxs):
         if isinstance(idxs, tuple):
-            idxs = GenomicInterval(*idxs)
+            if len(idxs) == 3:
+                idxs = Interval(*idxs)
+            else:
+                idxs = Interval(*idxs[:-1], strand=idxs[-1])
 
         if isinstance(idxs, int):
             idxs = [idxs]
@@ -1220,17 +1248,17 @@ class Cover(Dataset):
             idxs = range(idxs.start if idxs.start else 0,
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
-        elif isinstance(idxs, GenomicInterval):
+        elif isinstance(idxs, Interval):
             if self.garray._full_genome_stored:
                 # accept a genomic interval directly
                 data = self._getsingleitem(idxs)
                 data = data.reshape((1,) + data.shape)
 
             else:
-                chrom = idxs.chrom
+                chrom = str(idxs.chrom)
                 start = idxs.start
                 end = idxs.end
-                strand = idxs.strand
+                strand = str(idxs.strand)
                 gindexer_new = self.gindexer.filter_by_region(include=chrom,
                                                               start=start,
                                                               end=end)
@@ -1390,7 +1418,7 @@ class Cover(Dataset):
         else:
             gsize = get_genome_size_from_regions(self.gindexer)
 
-        bw_header = [(chrom, gsize[chrom])
+        bw_header = [(str(chrom), gsize[chrom])
                      for chrom in gsize]
 
         for idx, condition in enumerate(self.conditions):

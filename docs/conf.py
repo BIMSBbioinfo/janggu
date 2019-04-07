@@ -35,7 +35,7 @@ extensions = [
 #for mod_name in MOCK_MODULES:
 #    sys.modules[mod_name] = mock.Mock()
 
-autodoc_mock_imports = ["keras", "tensorflow", "matplotlib", "sklearn", "seaborn", "HTSeq", "Bio",
+autodoc_mock_imports = ["keras", "tensorflow", "matplotlib", "sklearn", "seaborn", "Bio",
                         "pandas", "compat", "scipy", "scipy.sparse"]
 
 if os.getenv('SPELLCHECK'):

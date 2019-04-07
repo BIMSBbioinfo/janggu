@@ -407,7 +407,7 @@ def test_bed_unsync_roi_targets():
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 1, 1, 1)
-    assert cover[:].sum() == 25
+    assert cover[:].sum() == 1
 
     cover = Cover.create_from_bed(
         'test',
@@ -417,7 +417,7 @@ def test_bed_unsync_roi_targets():
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 4, 1, 1)
-    assert cover[:].sum() == 25 * 4
+    assert cover[:].sum() == 1
 
 
     cover = Cover.create_from_bed(
@@ -429,7 +429,7 @@ def test_bed_unsync_roi_targets():
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 4, 1, 1)
-    assert cover[:].sum() == 25 * 4
+    assert cover[:].sum() == 1
 
     cover = Cover.create_from_bed(
         'test',
@@ -440,7 +440,7 @@ def test_bed_unsync_roi_targets():
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
-    assert cover[:].sum() == 25 * 200 - 2
+    assert cover[0].sum() == 49
 
     cover = Cover.create_from_bed(
         'test',
@@ -451,8 +451,18 @@ def test_bed_unsync_roi_targets():
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
-    assert cover[:].sum() == 25 * 200 - 2
+    assert cover[:].sum() == 49
 
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=bed_file,
+        resolution=1,
+        store_whole_genome=True,
+        storage='ndarray', minoverlap=.5)
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 1, 1)
+    assert cover[:].sum() == 0
 
 def test_bed_inferred_binsize():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -521,14 +531,14 @@ def test_bed_overreaching_ends_part_genome():
             bedfiles=bed_file,
             roi=bed_file,
             binsize=2,
-            flank=20,
+            flank=2,
             resolution=1,
             store_whole_genome=False,
             storage=store)
         assert len(cover) == 9
-        assert cover.shape == (9, 2+2*20, 1, 1)
-        np.testing.assert_equal(cover[0].sum(), 18)
-        np.testing.assert_equal(cover[:].sum(), 9*18)
+        assert cover.shape == (9, 2+2*2, 1, 1)
+        np.testing.assert_equal(cover[0].sum(), 4)
+        np.testing.assert_equal(cover[:].sum(), 6*7 + 8)
 
 
 #def test_bed_overreaching_ends_part_genome():
@@ -552,7 +562,7 @@ def test_bed_overreaching_ends_part_genome():
 
 def test_bed_store_whole_genome_option():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "positive.bed")
+    bed_file = os.path.join(data_path, "positive_shift.bed")
 
     cover1 = Cover.create_from_bed(
         'test',
@@ -567,9 +577,9 @@ def test_bed_store_whole_genome_option():
         store_whole_genome=False,
         storage='ndarray')
 
-    assert len(cover1) == 25
+    assert len(cover1) == 1
     assert len(cover2) == len(cover1)
-    assert cover1.shape == (25, 200, 1, 1)
+    assert cover1.shape == (1, 49, 1, 1)
     assert cover1.shape == cover2.shape
     np.testing.assert_equal(cover1[:], np.ones(cover1.shape))
     np.testing.assert_equal(cover2[:], np.ones(cover1.shape))
@@ -1410,83 +1420,42 @@ def test_filter_by_region():
     roi_file = pkg_resources.resource_filename('janggu',
                                  'resources/bed_test.bed')
 
-    f1 = GenomicIndexer.create_from_file(regions=roi_file, binsize=2, stepsize=2)
-    np.testing.assert_equal(len(f1), 9)
+    roi = GenomicIndexer.create_from_file(regions=roi_file, binsize=2, stepsize=2)
+    np.testing.assert_equal(len(roi), 9)
 
+    np.testing.assert_equal((roi[0].chrom, roi[0].start, roi[0].end), ('chr1', 0, 2))
+    np.testing.assert_equal((roi[-1].chrom, roi[-1].start, roi[-1].end), ('chr1', 16, 18))
 
-    j = ""
-    for i in f1:
-        j += str(i) + "\n"
+    test1 = roi.filter_by_region(include='chr1', start=0, end=18)
 
-    prv = "chr1:[0,2)/+\n" \
-          "chr1:[2,4)/+\n" \
-          "chr1:[4,6)/+\n" \
-          "chr1:[6,8)/+\n" \
-          "chr1:[8,10)/+\n" \
-          "chr1:[10,12)/+\n" \
-          "chr1:[12,14)/+\n" \
-          "chr1:[14,16)/+\n" \
-          "chr1:[16,18)/+\n"
-    np.testing.assert_equal(j,prv)
+    for i in range(len(test1)):
+        np.testing.assert_equal(test1[i], roi[i])
 
+    test2 = roi.filter_by_region(include='chr1', start=5, end=10)
+    np.testing.assert_equal(len(test2), 3)
+    np.testing.assert_equal((test2[0].chrom, test2[0].start, test2[0].end), ('chr1', 4, 6))
+    np.testing.assert_equal((test2[1].chrom, test2[1].start, test2[1].end), ('chr1', 6, 8))
+    np.testing.assert_equal((test2[2].chrom, test2[2].start, test2[2].end), ('chr1', 8, 10))
 
+    test3 = roi.filter_by_region(include='chr1', start=5, end=11)
+    np.testing.assert_equal(len(test3), 4)
+    np.testing.assert_equal((test3[0].chrom, test3[0].start, test3[0].end), ('chr1', 4, 6))
+    np.testing.assert_equal((test3[1].chrom, test3[1].start, test3[1].end), ('chr1', 6, 8))
+    np.testing.assert_equal((test3[2].chrom, test3[2].start, test3[2].end), ('chr1', 8, 10))
+    np.testing.assert_equal((test3[3].chrom, test3[3].start, test3[3].end), ('chr1', 10, 12))
 
-    test1 = f1.filter_by_region(include='chr1', start=0, end=18)
-    k = ""
-    for i in test1:
-        k += str(i) + "\n"
-    np.testing.assert_equal(j,k)
+    test4 = roi.filter_by_region(include='chr1', start=6, end=10)
+    np.testing.assert_equal(len(test4), 2)
+    np.testing.assert_equal((test4[0].chrom, test4[0].start, test4[0].end), ('chr1', 6, 8))
+    np.testing.assert_equal((test4[1].chrom, test4[1].start, test4[1].end), ('chr1', 8, 10))
 
+    test5 = roi.filter_by_region(include='chr1', start=6, end=11)
+    np.testing.assert_equal(len(test5), 3)
+    np.testing.assert_equal((test5[0].chrom, test5[0].start, test5[0].end), ('chr1', 6, 8))
+    np.testing.assert_equal((test5[1].chrom, test5[1].start, test5[1].end), ('chr1', 8, 10))
+    np.testing.assert_equal((test5[2].chrom, test5[2].start, test5[2].end), ('chr1', 10, 12))
 
-
-
-    test2 = f1.filter_by_region(include='chr1', start=5, end=10)
-    z = ""
-    for i in test2:
-        z += str(i) + "\n"
-    prv2 = "chr1:[4,6)/+\n" \
-           "chr1:[6,8)/+\n" \
-           "chr1:[8,10)/+\n"
-    np.testing.assert_equal(z,prv2)
-
-
-
-
-    test3 = f1.filter_by_region(include='chr1', start=5, end=11)
-    q = ""
-    for i in test3:
-        q += str(i) + "\n"
-    prv3 = "chr1:[4,6)/+\n" \
-           "chr1:[6,8)/+\n" \
-           "chr1:[8,10)/+\n" \
-           "chr1:[10,12)/+\n"
-    np.testing.assert_equal(q,prv3)
-
-
-
-    test4 = f1.filter_by_region(include='chr1', start=6, end=10)
-    z1 = ""
-    for i in test4:
-        z1 += str(i) + "\n"
-    prv4 = "chr1:[6,8)/+\n" \
-           "chr1:[8,10)/+\n"
-    np.testing.assert_equal(z1,prv4)
-
-
-
-
-    test5 = f1.filter_by_region(include='chr1', start=6, end=11)
-    q1 = ""
-    for i in test5:
-        q1 += str(i) + "\n"
-    prv5 = "chr1:[6,8)/+\n" \
-           "chr1:[8,10)/+\n" \
-           "chr1:[10,12)/+\n"
-    np.testing.assert_equal(q1,prv5)
-
-
-
-    test6 = f1.filter_by_region(include='chr1', start=20, end=30)
+    test6 = roi.filter_by_region(include='chr1', start=20, end=30)
     np.testing.assert_equal(len(test6), 0)
 
 

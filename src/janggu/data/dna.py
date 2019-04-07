@@ -5,7 +5,7 @@ from itertools import product
 
 import Bio
 import numpy as np
-from HTSeq import GenomicInterval
+from pybedtools import Interval
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
@@ -47,11 +47,11 @@ class SeqLoader:
         print('Convert sequences to index array')
         for seq in seqs:
             if garray._full_genome_stored:
-                interval = GenomicInterval(seq.id, 0,
-                                           len(seq) - order + 1, '.')
+                interval = Interval(seq.id, 0,
+                                    len(seq) - order + 1, '.')
             else:
-                interval = GenomicInterval(*_str_to_iv(seq.id,
-                                                       template_extension=0))
+                interval = Interval(*_str_to_iv(seq.id,
+                                                template_extension=0))
 
             indarray = np.asarray(seq2ind(seq), dtype=dtype)
 
@@ -419,6 +419,8 @@ class Bioseq(Dataset):
             dat = self._getsingleitem(interval)
 
             iseq[i, :len(dat)] = dat
+            if len(dat) < iseq.shape[1]:
+                iseq[i, len(dat):] = NOLETTER
 
         return iseq
 
@@ -438,7 +440,7 @@ class Bioseq(Dataset):
         if isinstance(idxs, tuple):
             if len(idxs) == 3 or len(idxs) == 4:
                 # interpret idxs as genomic interval
-                idxs = GenomicInterval(*idxs)
+                idxs = Interval(*idxs)
             else:
                 raise ValueError('idxs cannot be interpreted as genomic interval.'
                                  ' use (chr, start, end) or (chr, start, end, strand)')
@@ -449,9 +451,9 @@ class Bioseq(Dataset):
             idxs = range(idxs.start if idxs.start else 0,
                          idxs.stop if idxs.stop else len(self),
                          idxs.step if idxs.step else 1)
-        elif isinstance(idxs, GenomicInterval):
+        elif isinstance(idxs, Interval):
             if not self.garray._full_genome_stored:
-                raise ValueError('Indexing with GenomicInterval only possible '
+                raise ValueError('Indexing with Interval only possible '
                                  'when the whole genome (or chromosome) was loaded')
 
             data = np.zeros((1, idxs.length  - self.garray.order + 1))

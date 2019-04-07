@@ -5,10 +5,10 @@ import matplotlib
 import numpy as np
 import pkg_resources
 import pytest
-from HTSeq import BED_Reader
+
 from keras.layers import Input
 from keras.models import Model
-
+from pybedtools import BedTool
 from janggu.data import Bioseq
 from janggu.data import GenomicIndexer
 from janggu.layers import Complement
@@ -25,7 +25,7 @@ stepsize = 50
 
 def datalen(bed_file):
     binsizes = 0
-    reader = BED_Reader(bed_file)
+    reader = BedTool(bed_file)
     for reg in reader:
         binsizes += (reg.iv.end - reg.iv.start - binsize + stepsize)//stepsize
     return binsizes
