@@ -961,7 +961,9 @@ class Cover(Dataset):
             Default: None.
         minoverlap : float or None
             Minimum fraction of overlap of a given feature with a ROI bin.
-            Default: None (already a single base-pair overlap is considered)
+            If None, any overlap (e.g. a single base-pair overlap) is 
+            considered as overlap.
+            Default: None
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
         """
