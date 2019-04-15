@@ -137,4 +137,4 @@ def test_create_from_array_whole_genome_false(tmpdir):
     np.testing.assert_equal(pred, cov_out[:])
 
     assert len(cov_out.gindexer) == len(pred)
-    assert len(cov_out.garray.handle) == len(pred)
+    assert len(cov_out.garray.handle['data']) == len(pred)

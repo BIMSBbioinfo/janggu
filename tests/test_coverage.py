@@ -1,4 +1,5 @@
 import os
+from itertools import product
 
 import matplotlib
 matplotlib.use('AGG')  # pylint: disable=
@@ -81,7 +82,6 @@ def test_cover_export_bigwig(tmpdir):
 
             assert cover.shape == (100, 200 // resolution, 1, 1)
             assert cover.shape == cov2.shape
-            k = list(cover.garray.handle.keys())[0]
             np.testing.assert_allclose(cover[:].sum(), 1044.0 / resolution)
             np.testing.assert_allclose(cov2[:].sum(), 1044.0 / resolution)
 
@@ -665,8 +665,8 @@ def test_cover_from_bam_sanity():
            storage='ndarray',
            store_whole_genome=True)
 
-    assert len(cover.gindexer) == len(cover.garray.handle)
-    assert len(cov2.garray.handle) != len(cover.garray.handle)
+    assert len(cover.gindexer) == len(cover.garray.handle['data'])
+    assert len(cov2.garray.handle) != len(cover.garray.handle['data'])
 
     with pytest.raises(Exception):
         # name must be a string
@@ -736,7 +736,7 @@ def test_cover_from_bigwig_sanity():
         storage='ndarray')
     cover[0]
     assert len(cover.gindexer) == 394
-    assert len(cover.garray.handle) == 394
+    assert len(cover.garray.handle['data']) == 394
 
     cover = Cover.create_from_bigwig(
         'test',
@@ -1062,7 +1062,7 @@ def test_load_bam_resolution10(tmpdir):
 
     bed_file = os.path.join(data_path, "sample.bed")
 
-    for store in ['ndarray', 'hdf5', 'sparse']:
+    for store, store_genome in product(['ndarray', 'hdf5', 'sparse'], [True, False]):
         # base pair binsize
         # print(store)
         cover = Cover.create_from_bam(
@@ -1072,6 +1072,7 @@ def test_load_bam_resolution10(tmpdir):
             binsize=200, stepsize=200,
             genomesize=gsize,
             resolution=10,
+            store_whole_genome=store_genome,
             storage=store, cache=True)
 
         np.testing.assert_equal(len(cover), 100)

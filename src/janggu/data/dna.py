@@ -3,6 +3,8 @@
 import warnings
 from itertools import product
 
+from collections import OrderedDict
+
 import Bio
 import numpy as np
 from pybedtools import Interval
@@ -35,23 +37,19 @@ class SeqLoader:
     order : int
         Order of the one-hot representation.
     """
-    def __init__(self, seqs, order):
+    def __init__(self, gsize, seqs, order):
         self.seqs = seqs
         self.order = order
+        self.gsize = gsize
 
     def __call__(self, garray):
+        gsize = self.gsize
         seqs = self.seqs
         order = self.order
         dtype = garray.typecode
 
         print('Convert sequences to index array')
-        for seq in seqs:
-            if garray._full_genome_stored:
-                interval = Interval(seq.id, 0,
-                                    len(seq) - order + 1, '.')
-            else:
-                interval = Interval(*_str_to_iv(seq.id,
-                                                template_extension=0))
+        for region, seq in zip(gsize, seqs):
 
             indarray = np.asarray(seq2ind(seq), dtype=dtype)
 
@@ -61,7 +59,8 @@ class SeqLoader:
                                           i) for i in range(order)])
                 indarray = np.convolve(indarray, filter_, mode='valid')
 
-            garray[interval, 0] = indarray.reshape(-1, 1)
+            print(region, indarray.shape)
+            garray[region, 0] = indarray.reshape(-1, 1)
 
 
 class Bioseq(Dataset):
@@ -106,7 +105,7 @@ class Bioseq(Dataset):
         Dataset.__init__(self, '{}'.format(name))
 
     @staticmethod
-    def _make_genomic_array(name, seqs, order, storage,
+    def _make_genomic_array(name, gsize, seqs, order, storage,
                             cache=None, datatags=None,
                             overwrite=False, store_whole_genome=True):
 
@@ -129,12 +128,7 @@ class Bioseq(Dataset):
         dtype = 'int16'
 
         # Extract chromosome lengths
-        chromlens = {}
-
-        for seq in seqs:
-            chromlens[seq.id] = len(seq) - order + 1
-
-        seqloader = SeqLoader(seqs, order)
+        seqloader = SeqLoader(gsize, seqs, order)
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
@@ -142,14 +136,14 @@ class Bioseq(Dataset):
 
         if cache:
             files = seqs
-            parameters = [chromlens,
+            parameters = [gsize.tostr(),
                           storage, dtype,
                           store_whole_genome, version]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
 
-        garray = create_genomic_array(chromlens, stranded=False,
+        garray = create_genomic_array(gsize, stranded=False,
                                       storage=storage,
                                       datatags=datatags,
                                       cache=cache_hash,
@@ -251,7 +245,7 @@ class Bioseq(Dataset):
             # only the specific subset is loaded
             # to keep the memory overhead low.
             # Otherwise the entire reference genome is loaded.
-            rgen = {seq.id: seq for seq in seqs}
+            rgen = OrderedDict(((seq.id, seq) for seq in seqs))
             subseqs = []
             for giv in gindexer:
                 subseq = rgen[giv.chrom][max(giv.start, 0):min(giv.end, len(rgen[giv.chrom]))]
@@ -259,13 +253,20 @@ class Bioseq(Dataset):
                     subseq = 'N' * (-giv.start) + subseq
                 if len(subseq) < giv.length:
                     subseq = subseq + 'N' * (giv.length - len(subseq))
-                subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end - order + 1)
+                subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end)
                 subseq.name = subseq.id
                 subseq.description = subseq.id
                 subseqs.append(subseq)
             seqs = subseqs
 
-        garray = cls._make_genomic_array(name, seqs, order, storage,
+            gsize = gindexer
+
+
+        if store_whole_genome:
+            gsize = OrderedDict(((seq.id, len(seq)) for seq in seqs))
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
+
+        garray = cls._make_genomic_array(name, gsize, seqs, order, storage,
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite,
@@ -349,22 +350,24 @@ class Bioseq(Dataset):
         assert len(set(chroms)) == len(seqs), "Sequence IDs must be unique."
         # now mimic a dataframe representing a bed file
 
-        garray = cls._make_genomic_array(name, seqs, order, storage,
-                                         cache=cache, datatags=datatags,
-                                         overwrite=overwrite,
-                                         store_whole_genome=True)
-
         reglen = lens[0]
         flank = 0
         stepsize = 1
 
-        # this is a special case. Here a GenomicIndexer will be created
-        # with pseudo genomic coordinates
         gindexer = GenomicIndexer(reglen, stepsize, flank)
         gindexer.chrs = chroms
         gindexer.starts = [0]*len(lens)
         gindexer.strand = ['.']*len(lens)
-        gindexer.ends = [reglen + 2*flank]*len(lens)
+        gindexer.ends = [reglen]*len(lens)
+
+        garray = cls._make_genomic_array(name, gindexer, seqs, order, storage,
+                                         cache=cache, datatags=datatags,
+                                         overwrite=overwrite,
+                                         store_whole_genome=False)
+
+        # this is a special case. Here a GenomicIndexer will be created
+        # with pseudo genomic coordinates
+        #gindexer.ends = [reglen]*len(lens)
 
         return cls(name, garray, gindexer,
                    alphabet=seqs[0].seq.alphabet.letters,
@@ -425,7 +428,6 @@ class Bioseq(Dataset):
         return iseq
 
     def _getsingleitem(self, interval):
-        interval.end += - self.garray.order + 1
 
         # Computing the forward or reverse complement of the
         # sequence, depending on the strand flag.

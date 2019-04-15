@@ -44,8 +44,8 @@ class BamLoader:
     ----------
     files : str or list(str)
         Bam file locations.
-    gsize : dict
-        Dictionary of genome sizes.
+    gsize : GenomicIndexer
+        GenomicIndexer representing the genomic region that should be loaded.
     template_extension : int
         Extension of intervals by template_extension for counting
         paired-end midpoints correctly.
@@ -78,26 +78,21 @@ class BamLoader:
         bar = Bar('Loading bam files'.format(len(files)), max=len(files))
         for i, sample_file in enumerate(files):
             aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
-            for chrom in gsize:
-
-                locus = _str_to_iv(chrom,
-                                   template_extension=template_extension)
-                if len(locus) == 1:
-                    locus = (locus[0], 0, gsize[chrom])
+            for interval in gsize:
 
                 if resolution is None:
-                    length = locus[2] - locus[1]
+                    length = interval.length
                 else:
-                    length = garray.get_iv_end(locus[2] -
-                                               locus[1]) * resolution
+                    length = garray.get_iv_end(interval.end -
+                                               interval.start) * resolution
 
                 array = np.zeros((length, 2), dtype=dtype)
 
-                # locus = (chr, start, end)
-                start = locus[1]
-                # or locus = (chr, )
+                start = interval.start
 
-                for aln in aln_file.fetch(*locus):
+                for aln in aln_file.fetch(str(interval.chrom),
+                                          int(interval.start - template_extension),
+                                          int(interval.end + template_extension)):
 
                     if aln.is_unmapped:
                         continue
@@ -155,16 +150,13 @@ class BamLoader:
                             # of the region of interest, the read is discarded
                             continue
 
-                    # compute divide by the resolution
-                    #pos = garray.get_iv_start(pos)
-
                     # fill up the read strand specifically
                     if aln.is_reverse:
                         array[pos, 1] += 1
                     else:
                         array[pos, 0] += 1
 
-                garray[Interval(*locus), i] = array
+                garray[interval, i] = array
             bar.next()
         bar.finish()
         return garray
@@ -181,8 +173,8 @@ class BigWigLoader:
     ----------
     files : str or list(str)
         Bigwig file locations.
-    gsize : dict
-        Dictionary of genome sizes.
+    gsize : GenomicIndexer
+        GenomicIndexer representing the genomic region that should be loaded.
     nan_to_num : bool
         Whether to convert NAN's to zeros or not. Default: True.
     """
@@ -202,29 +194,26 @@ class BigWigLoader:
         for i, sample_file in enumerate(files):
             bwfile = pyBigWig.open(sample_file)
 
-            for chrom in gsize:
-
-                locus = _str_to_iv(chrom)
-                if len(locus) == 1:
-                    locus = (locus[0], 0, gsize[chrom])
+            for interval in gsize:
 
                 if resolution is None:
-                    length = locus[2] - locus[1]
+                    length = interval.length
                 else:
-                    length = garray.get_iv_end(locus[2]-locus[1]) * resolution
+                    length = garray.get_iv_end(interval.end -
+                                               interval.start) * resolution
 
                 array = np.zeros((length, 1), dtype=dtype)
 
-                values = np.asarray(bwfile.values(locus[0],
-                                                  int(locus[1]),
-                                                  int(locus[2])))
+                values = np.asarray(bwfile.values(str(interval.chrom),
+                                                  int(interval.start),
+                                                  int(interval.end)))
                 if nan_to_num:
                     values = np.nan_to_num(values, copy=False)
 
                 array[:len(values), 0] = values
 
-                garray[Interval(*locus), i] = array
-            bar.next() 
+                garray[interval, i] = array
+            bar.next()
         bar.finish()
         return garray
 
@@ -259,12 +248,10 @@ class BedLoader:
         gindexer = self.gindexer
         mode = self.mode
 
-        # temporarily dump 
-        
         tmpdir = tempfile.mkdtemp()
         predictable_filename = 'gindexerdump'
         tmpfilename = os.path.join(tmpdir, predictable_filename)
-        
+
         gindexer.export_to_bed(tmpfilename)
 
         roifile = BedTool(tmpfilename)
@@ -283,14 +270,14 @@ class BedLoader:
 
             if self.minoverlap is not None:
                 overlapping_regions = roifile.intersect(regions_,
-                                                        wa=True, wb=True, f=self.minoverlap) 
+                                                        wa=True, wb=True, f=self.minoverlap)
             else:
-                overlapping_regions = roifile.intersect(regions_, wa=True, wb=True) 
+                overlapping_regions = roifile.intersect(regions_, wa=True, wb=True)
 
             bar = Bar('[{}/{}] Loading {}'.format(i+1, len(files), sample_file), max=len(overlapping_regions))
             for region in overlapping_regions:
                 #region = overlapping_regions[ireg]
-                
+
                 # if region score is not defined, take the mere
                 # presence of a range as positive label.
 
@@ -581,9 +568,7 @@ class Cover(Dataset):
 
         if not full_genome_index:
             # if whole genome should not be loaded
-            gsize = {_iv_to_str(iv.chrom, iv.start,
-                                iv.end): iv.end-iv.start for iv in gindexer}
-
+            gsize = gindexer
         else:
             # otherwise the whole genome will be fetched, or at least
             # a set of full length chromosomes
@@ -595,7 +580,7 @@ class Cover(Dataset):
                 gsize = {}
                 for chrom, length in zip(header.references, header.lengths):
                     gsize[chrom] = length
-
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
 
         bamloader = BamLoader(bamfiles, gsize, template_extension,
                               min_mapq, pairedend)
@@ -794,9 +779,7 @@ class Cover(Dataset):
 
         if not store_whole_genome:
             # if whole genome should not be loaded
-            gsize = {_iv_to_str(iv.chrom, iv.start,
-                                iv.end): iv.end-iv.start for iv in gindexer}
-
+            gsize = gindexer
         else:
             # otherwise the whole genome will be fetched, or at least
             # a set of full length chromosomes
@@ -806,6 +789,7 @@ class Cover(Dataset):
             else:
                 bwfile = pyBigWig.open(bigwigfiles[0], 'r')
                 gsize = bwfile.chroms()
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
 
         if conditions is None:
             conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
@@ -961,7 +945,7 @@ class Cover(Dataset):
             Default: None.
         minoverlap : float or None
             Minimum fraction of overlap of a given feature with a ROI bin.
-            If None, any overlap (e.g. a single base-pair overlap) is 
+            If None, any overlap (e.g. a single base-pair overlap) is
             considered as overlap.
             Default: None
         cache : boolean
@@ -1003,9 +987,7 @@ class Cover(Dataset):
 
         if not store_whole_genome:
             # if whole genome should not be loaded
-            gsize = {_iv_to_str(iv.chrom, iv.start,
-                                iv.end): iv.end-iv.start for iv in gindexer}
-
+            gsize = gindexer
         else:
             # otherwise the whole genome will be fetched, or at least
             # a set of full length chromosomes
@@ -1014,6 +996,7 @@ class Cover(Dataset):
                 gsize = genomesize.copy()
             else:
                 gsize = get_genome_size_from_regions(roi)
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
 
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
@@ -1144,14 +1127,15 @@ class Cover(Dataset):
 
         if not store_whole_genome:
             # if whole genome should not be loaded
-            gsize = {_iv_to_str(iv.chrom, iv.start,
-                                iv.end): iv.end-iv.start for iv in gindexer}
+            gsize = gindexer
         elif genomesize:
             gsize = genomesize.copy()
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
         else:
             # if not supplied, determine the genome size automatically
             # based on the gindexer intervals.
             gsize = get_genome_size_from_regions(gindexer)
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
 
         if not channel_last:
             array = np.transpose(array, (0, 3, 1, 2))

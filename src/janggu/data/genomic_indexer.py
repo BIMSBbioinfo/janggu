@@ -33,7 +33,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         Parameters
         ----------
-        regions : str
+        regions : str or list(Interval)
             Path to a BED or GFF file.
         binsize : int or None
             Binsize in base pairs. If None, the binsize is obtained from
@@ -89,6 +89,41 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                 str(reg.chrom),
                 int(reg.start), int(reg.end), str(reg.strand),
                 binsize, stepsize, flank, zero_padding)
+
+            gind.chrs += tmp_gidx.chrs
+            gind.starts += tmp_gidx.starts
+            gind.strand += tmp_gidx.strand
+            gind.ends += tmp_gidx.ends
+
+        return gind
+
+    @classmethod
+    def create_from_genomesize(cls, gsize):
+        """Creates a GenomicIndexer object.
+
+        This method constructs a GenomicIndexer from
+        a given BED or GFF file.
+
+        Parameters
+        ----------
+        gsize : dict
+            Dictionary with keys and values representing chromosome names
+            and lengths, respectively.
+        """
+
+        gind = cls(None, None, 0)
+
+        gind.chrs = []
+        gind.starts = []
+        gind.strand = []
+        gind.ends = []
+
+        for chrom in gsize:
+
+            tmp_gidx = cls.create_from_region(
+                chrom,
+                0, gsize[chrom], '.',
+                None, None, 0, False)
 
             gind.chrs += tmp_gidx.chrs
             gind.starts += tmp_gidx.starts
@@ -186,7 +221,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             if end == start:
                 end += 1
             return Interval(self.chrs[index], max(0, start - self.flank),
-                            end + self.flank, 
+                            end + self.flank,
                             strand=self.strand[index])
 
         raise IndexError('Index support only for "int". Given {}'.format(

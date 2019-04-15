@@ -91,9 +91,6 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
     Parameters
     ----------
-    chroms : dict
-        Dictionary with chromosome names as keys and chromosome lengths
-        as values.
     stranded : bool
         Consider stranded profiles. Default: True.
     conditions : list(str) or None
@@ -115,6 +112,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     _condition = None
     _resolution = None
     _order = None
+    region2index = None
 
     def __init__(self, stranded=True, conditions=None, typecode='d',
                  resolution=1, padding_value=0.,
@@ -158,7 +156,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         """
         chrom = interval.chrom
         start = self.get_iv_start(interval.start)
-        end = self.get_iv_end(interval.end)
+        end = self.get_iv_end(interval.end) - self.order + 1
 
         if start < 0:
             array_start = -start
@@ -207,12 +205,13 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
 
             try:
                 if not self._full_genome_stored:
-                    length = end-start
+                    length = end-start - self.order + 1
+                    idx = self.region2index[_iv_to_str(chrom, interval.start,
+                                            interval.end)]
+
                     # correcting for the overshooting starts and ends is not necessary
                     # for partially loaded data
-
-                    self.handle[_iv_to_str(chrom, interval.start,
-                                           interval.end)][:(length), :, condition] = value
+                    self.handle['data'][idx, :length, :, condition] = value
 
                 else:
                     ref_start, ref_end, array_start, \
@@ -245,16 +244,18 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             end = self.get_iv_end(interval.end)
 
             # original length
-            length = end-start
+            length = end-start - self.order + 1
 
             if not self._full_genome_stored:
+                idx = self.region2index[_iv_to_str(chrom, interval.start, interval.end)]
                 # correcting for the overshooting starts and ends is not necessary
                 # for partially loaded data
-                return self._reshape(self.handle[_iv_to_str(chrom, interval.start,
-                                                            interval.end)][:(length)],
-                                     (length, 2 if self.stranded else 1, len(self.condition)))
+                return self._reshape(self.handle['data'][idx],
+                                     (length, 2 if self.stranded else 1,
+                                      len(self.condition)))
 
             if start >= 0 and end <= self.handle[chrom].shape[0]:
+                end = end - self.order + 1
                 # this is a short-cut, which does not require zero-padding
                 return self._reshape(self.handle[chrom][start:end],
                                      (end-start, 2 if self.stranded else 1,
@@ -320,7 +321,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     def scale_by_region_length(self):
         """ This method scales the regions by the region length ."""
         for chrom in self.handle:
-            self.handle[chrom][:] /= self.interval_length(chrom)
+            if self._full_genome_stored:
+                self.handle[chrom][:] /= self.interval_length(chrom)
+            else:
+                for rstr, idx in self.region2index.items():
+                    self.handle[chrom][idx] /= self.interval_length(rstr)
 
     def weighted_mean(self):
         """ Base pair resolution mean weighted by interval length
@@ -395,6 +400,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             return 0
         return start // self.resolution
 
+def init_with_padding_value(padding_value, shape, dtype):
+    if padding_value==0.0:
+        return np.zeros(shape, dtype)
+    else:
+        return np.ones(shape, dtype) * padding_value
 
 class HDF5GenomicArray(GenomicArray):
     """HDF5GenomicArray stores multi-dimensional genomic information.
@@ -403,7 +413,7 @@ class HDF5GenomicArray(GenomicArray):
 
     Parameters
     ----------
-    chroms : dict
+    gsize : GenomicIndexer
         Dictionary with chromosome names as keys and chromosome lengths
         as values.
     stranded : bool
@@ -436,7 +446,7 @@ class HDF5GenomicArray(GenomicArray):
         Method to aggregate values along a given interval.
     """
 
-    def __init__(self, chroms,  # pylint: disable=too-many-locals
+    def __init__(self, gsize,  # pylint: disable=too-many-locals
                  stranded=True,
                  conditions=None,
                  typecode='d',
@@ -461,27 +471,39 @@ class HDF5GenomicArray(GenomicArray):
         cachefile = _get_cachefile(cache, datatags, '.h5')
         load_from_file = _load_data(cache, datatags, '.h5')
 
+        if not store_whole_genome:
+            self.region2index = {_iv_to_str(region.chrom, region.start, region.end): i for i, region in enumerate(gsize)}
         if load_from_file:
-            self.handle = h5py.File(cachefile, 'w')
+            h5file = h5py.File(cachefile, 'w')
 
-            for chrom in chroms:
-                shape = (_get_iv_length(chroms[chrom], self.resolution),
+            if store_whole_genome:
+                for region in gsize:
+                    shape = (_get_iv_length(region.length - self.order + 1, self.resolution),
+                             2 if stranded else 1, len(self.condition))
+                    h5file.create_dataset(str(region.chrom), shape,
+                                               dtype=self.typecode, compression='gzip',
+                                               chunks=(1,) + shape[1:],
+                                               data=init_with_padding_value(padding_value, shape, self.typecode))
+                    self.handle = h5file
+            else:
+                shape = (len(gsize), _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                                                    self.resolution),
                          2 if stranded else 1, len(self.condition))
-                self.handle.create_dataset(chrom, shape,
+                h5file.create_dataset('data', shape,
                                            dtype=self.typecode, compression='gzip',
-                                           data=np.zeros(shape, dtype=self.typecode))
-
-            self.handle.attrs['conditions'] = [np.string_(x) for x in self.condition]
-            self.handle.attrs['order'] = order
-            self.handle.attrs['resolution'] = resolution if resolution is not None else 0
-
+                                           chunks=(1,) + shape[1:],
+                                           data=init_with_padding_value(padding_value, shape, self.typecode))
+                self.handle = h5file
             # invoke the loader
             if loader:
                 loader(self)
 
-            self.handle.close()
+            h5file.close()
         print('reload {}'.format(cachefile))
-        self.handle = h5py.File(cachefile, 'a', driver='stdio')
+        h5file = h5py.File(cachefile, 'a', driver='stdio')
+
+        self.handle = h5file
+
         for norm in normalizer or []:
             get_normalizer(norm)(self)
 
@@ -492,7 +514,7 @@ class NPGenomicArray(GenomicArray):
     Implements GenomicArray.
     Parameters
     ----------
-    chroms : dict
+    gsize : GenomicIndexer
         Dictionary with chromosome names as keys and chromosome lengths
         as values.
     stranded : bool
@@ -530,7 +552,7 @@ class NPGenomicArray(GenomicArray):
         Method to aggregate values along a given interval.
     """
 
-    def __init__(self, chroms,  # pylint: disable=too-many-locals
+    def __init__(self, gsize,  # pylint: disable=too-many-locals
                  stranded=True,
                  conditions=None,
                  typecode='d',
@@ -552,23 +574,31 @@ class NPGenomicArray(GenomicArray):
 
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
+        if not store_whole_genome:
+            self.region2index = {_iv_to_str(region.chrom, region.start, region.end): i for i, region in enumerate(gsize)}
 
         if load_from_file:
-            data = {chrom: np.zeros(shape=(_get_iv_length(chroms[chrom],
-                                                          self.resolution),
-                                           2 if stranded else 1,
-                                           len(self.condition)),
-                                    dtype=self.typecode) for chrom in chroms}
-            self.handle = data
+            if store_whole_genome:
+                data = {str(region.chrom): init_with_padding_value(padding_value, shape=(_get_iv_length(region.length - self.order + 1,
+                                                              self.resolution),
+                                               2 if stranded else 1,
+                                               len(self.condition)),
+                                        dtype=self.typecode) for region in gsize}
+                names = [str(region.chrom) for region in gsize]
+                self.handle = data
+            else:
+                data = {'data': init_with_padding_value(padding_value, shape=(len(gsize), _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                                                                  self.resolution) if self.resolution is not None else 1,
+                                               2 if stranded else 1,
+                                               len(self.condition)),
+                                        dtype=self.typecode)}
+                names = ['data']
+                self.handle = data
 
             # invoke the loader
             if loader:
                 loader(self)
 
-            names = [x for x in data]
-            data['conditions'] = [np.string_(x) for x in self.condition]
-            data['order'] = order
-            data['resolution'] = resolution if resolution is not None else 0
 
             if cachefile is not None:
                 np.savez(cachefile, **data)
@@ -576,7 +606,7 @@ class NPGenomicArray(GenomicArray):
         if cachefile is not None:
             print('reload {}'.format(cachefile))
             data = np.load(cachefile)
-            names = [x for x in data.files if x not in ['conditions', 'order', 'resolution']]
+            names = [x for x in data]
 
         # here we get either the freshly loaded data or the reloaded
         # data from np.load.
@@ -593,9 +623,9 @@ class SparseGenomicArray(GenomicArray):
 
     Parameters
     ----------
-    chroms : dict
+    gsize : GenomicIndexer
         Dictionary with chromosome names as keys and chromosome lengths
-        as values.
+        as values
     stranded : bool
         Consider stranded profiles. Default: True.
     conditions : list(str) or None
@@ -631,7 +661,7 @@ class SparseGenomicArray(GenomicArray):
         Method to aggregate values along a given interval.
     """
 
-    def __init__(self, chroms,  # pylint: disable=too-many-locals
+    def __init__(self, gsize,  # pylint: disable=too-many-locals
                  stranded=True,
                  conditions=None,
                  typecode='d',
@@ -652,16 +682,27 @@ class SparseGenomicArray(GenomicArray):
                                                  store_whole_genome=store_whole_genome,
                                                  collapser=collapser)
 
+        if not store_whole_genome:
+            self.region2index = {_iv_to_str(region.chrom, region.start,
+                                            region.end): i for i, region in enumerate(gsize)}
+
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
 
         if load_from_file:
-            data = {chrom: sparse.dok_matrix((_get_iv_length(chroms[chrom],
-                                                             resolution),
-                                              (2 if stranded else 1) *
-                                              len(self.condition)),
-                                             dtype=self.typecode)
-                    for chrom in chroms}
+            if store_whole_genome:
+                data = {str(region.chrom): sparse.dok_matrix((_get_iv_length(region.length - self.order + 1,
+                                                              resolution),
+                                                  (2 if stranded else 1) *
+                                                  len(self.condition)),
+                                                 dtype=self.typecode)
+                        for region in gsize}
+            else:
+                data = {'data': sparse.dok_matrix((len(gsize), (_get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                                                                  self.resolution) if self.resolution is not None else 1) *
+                                                  (2 if stranded else 1) *
+                                                  len(self.condition)),
+                                                 dtype=self.typecode)}
             self.handle = data
 
             # invoke the loader
@@ -672,17 +713,12 @@ class SparseGenomicArray(GenomicArray):
 
             data = {chrom: data[chrom].tocoo() for chrom in data}
 
-            names = [x for x in data]
-
             storage = {chrom: np.column_stack([data[chrom].data,
                                                data[chrom].row,
                                                data[chrom].col]) \
                                                for chrom in data}
-            storage.update({'shape.'+chrom: \
-                np.asarray(data[chrom].shape) for chrom in data})
-            storage['conditions'] = self.condition
-            storage['order'] = order
-            storage['resolution'] = resolution if resolution is not None else 0
+
+            names = [name for name in storage]
 
             if cachefile is not None:
                 np.savez(cachefile, **storage)
@@ -690,24 +726,36 @@ class SparseGenomicArray(GenomicArray):
         if cachefile is not None:
             print('reload {}'.format(cachefile))
             storage = np.load(cachefile)
+            names = [name for name in storage]
 
-            names = [x for x in storage.files if
-                     x not in ['conditions', 'order', 'resolution'] and x[:6] != 'shape.']
+        if store_whole_genome:
+            self.handle = {str(region.chrom): sparse.coo_matrix((storage[str(region.chrom)][:, 0],
+                                                   (storage[str(region.chrom)][:, 1].astype('int'),
+                                                    storage[str(region.chrom)][:, 2].astype('int'))),
+                                                  shape=(_get_iv_length(region.length, resolution),
+                                                  (2 if stranded else 1) *
+                                                  len(self.condition))).tocsr()
+                           for region in gsize}
+        else:
+            self.handle = {name: sparse.coo_matrix((storage[name][:, 0],
+                                            (storage[name][:, 1].astype('int'),
+                                            storage[name][:, 2].astype('int'))),
+                                                  shape=(len(gsize), (_get_iv_length(gsize.binsize + 2*gsize.flank, resolution)
+                                                                   if self.resolution is not None else 1) *
+                                                  (2 if stranded else 1) *
+                                                  len(self.condition))).tocsr()
+                           for name in names}
 
-        self.handle = {key: sparse.coo_matrix((storage[key][:, 0],
-                                               (storage[key][:, 1].astype('int'),
-                                                storage[key][:, 2].astype('int'))),
-                                              shape=tuple(storage['shape.' +
-                                                                  key])).tocsr()
-                       for key in names}
 
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
+        print(index, value.shape, value.sum())
         if isinstance(interval, Interval) and isinstance(condition, int):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
+
             #strand = interval.strand
             #sind = 1 if self.stranded and strand == '-' else 0
 
@@ -731,29 +779,32 @@ class SparseGenomicArray(GenomicArray):
 
                 value = self.collapser(value)
 
+
             try:
-                for sind in range(value.shape[-1]):
-                    if not self._full_genome_stored:
+                if not self._full_genome_stored:
+                    regidx = self.region2index[_iv_to_str(chrom, interval.start, interval.end)]
+                    nconditions = len(self.condition)
+                    ncondstrand = len(self.condition) * value.shape[-1]
+                    end = end - self.order + 1
+                    for sind in range(value.shape[-1]):
                         for idx, iarray in enumerate(range(start, end)):
                             val = value[idx, sind]
 
                             if val > 0:
-
-                                self.handle[
-                                    _iv_to_str(chrom, interval.start,
-                                               interval.end)][
-                                                   idx, sind * len(self.condition)
-                                                   + condition] = val
-                    else:
-                        ref_start, ref_end, array_start, \
-                            array_end = self._get_indices(interval, value.shape[0])
-
+                                self.handle['data'][regidx,
+                                            idx*ncondstrand + sind * nconditions
+                                            + condition] = val
+                else:
+                    ref_start, ref_end, array_start, \
+                        array_end = self._get_indices(interval, value.shape[0])
+                    for sind in range(value.shape[-1]):
                         for idx, iarray in enumerate(range(ref_start, ref_end)):
                             val = value[idx + array_start, sind]
                             if val > 0:
                                 self.handle[chrom][iarray,
                                                    sind * len(self.condition)
                                                    + condition] = val
+
 
             except KeyError:
                 # we end up here if the peak regions are not a subset of
@@ -771,7 +822,15 @@ class SparseGenomicArray(GenomicArray):
         raise IndexError("Index must be a Interval and a condition index")
 
     def _reshape(self, data, shape):
-        return data.toarray().reshape(shape)
+        # what to do with zero padding
+        data = data.toarray()
+
+        if self._full_genome_stored:
+            return data.reshape(data.shape[0], data.shape[1]//(shape[-1]), shape[-1])
+        else:
+            return data.reshape(data.shape[1]//(shape[-2]*shape[-1]), shape[-2], shape[-1])
+#        return data.toarray().reshape(data.shape[0], data.shape[1]//(shape[-1]),
+#                                      shape[-1])
 
 
 class PercentileTrimming(object):
@@ -1097,7 +1156,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               collapser=get_collapser(collapser))
     elif storage == 'sparse':
         if normalizer is not None:
-            print("Dataset normalization is not supported "
+            print("{}: Dataset normalization is not supported ".format(normalizer) +
                   "for sparse genomic data yet. Argument ignored.")
         return SparseGenomicArray(chroms, stranded=stranded,
                                   conditions=conditions,

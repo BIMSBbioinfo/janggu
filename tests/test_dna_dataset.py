@@ -129,7 +129,7 @@ def test_dna_dims_order_1_from_subset(tmpdir):
                                      storage='ndarray',
                                      order=order)
 
-    assert len(data.garray.handle) == 100
+    assert len(data.garray.handle['data']) == 100
 
     # for order 1
     assert len(data) == 100
@@ -471,6 +471,9 @@ def test_dna_dataset_sanity(tmpdir):
     file_ = glob.glob(os.path.join(tmpdir.strpath, 'datasets', 'train', '*.h5'))
     assert len(file_) == 0
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
+        storage='ndarray',
+        roi=bed_file, order=1, cache=True)
+    Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='hdf5',
                               roi=bed_file, order=1, cache=True)
     # a cache file must exist now
@@ -540,23 +543,24 @@ def test_read_dna_from_fasta_order_2():
 
     order = 2
     filename = os.path.join(data_path, 'sample.fa')
-    data = Bioseq.create_from_seq('train', fastafile=filename,
-                                 order=order, cache=False)
+    for store_genome in [True, False]:
+        data = Bioseq.create_from_seq('train', fastafile=filename,
+                                      order=order, cache=False)
 
-    np.testing.assert_equal(len(data), 3897)
-    np.testing.assert_equal(data.shape, (3897, 199, 1, 16))
-    np.testing.assert_equal(
-        data[0][0, :10, 0, :],
-        np.asarray([[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], dtype='int8'))
+        np.testing.assert_equal(len(data), 3897)
+        np.testing.assert_equal(data.shape, (3897, 199, 1, 16))
+        np.testing.assert_equal(
+            data[0][0, :10, 0, :],
+            np.asarray([[0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]], dtype='int8'))
 
 def test_read_protein_sequences():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
