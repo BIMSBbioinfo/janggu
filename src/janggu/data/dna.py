@@ -205,8 +205,8 @@ class Bioseq(Dataset):
         order : int
             Order for the one-hot representation. Default: 1.
         storage : str
-            Storage mode for storing the sequence may be 'ndarray', 'hdf5' or
-            'sparse'. Default: 'hdf5'.
+            Storage mode for storing the sequence may be 'ndarray' or 'hdf5'.
+            Default: 'ndarray'.
         datatags : list(str) or None
             List of datatags. Together with the dataset name,
             the datatags are used to construct a cache file.
@@ -224,6 +224,8 @@ class Bioseq(Dataset):
         # fill up int8 rep of DNA
         # load bioseq, region index, and within region index
 
+        if storage not in ['ndarray', 'hdf5']:
+            raise ValueError('Available storage options for Bioseq are: ndarray or hdf5')
 
         if roi is not None:
             gindexer = GenomicIndexer.create_from_file(roi, binsize,
@@ -312,8 +314,8 @@ class Bioseq(Dataset):
             are already of equal length. An exception is raised if this is
             not the case. Default: None.
         storage : str
-            Storage mode for storing the sequence may be 'ndarray', 'hdf5' or
-            'sparse'. Default: 'ndarray'.
+            Storage mode for storing the sequence may be 'ndarray' or 'hdf5'.
+            Default: 'ndarray'.
         datatags : list(str) or None
             List of datatags. Together with the dataset name,
             the datatags are used to construct a cache file.
@@ -324,6 +326,9 @@ class Bioseq(Dataset):
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
         """
+        if storage not in ['ndarray', 'hdf5']:
+            raise ValueError('Available storage options for Bioseq are: ndarray or hdf5')
+
         seqs = []
         if isinstance(fastafile, str):
             fastafile = [fastafile]

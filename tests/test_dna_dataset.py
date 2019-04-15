@@ -463,7 +463,11 @@ def test_dna_dataset_sanity(tmpdir):
 
     assert not os.path.exists(os.path.join(tmpdir.strpath, 'train',
                                            'storage.h5'))
-
+    with pytest.raises(ValueError):
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                  storage='sparse',
+                                  roi=None, order=1,
+                                  store_whole_genome=True)
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='ndarray',
                               roi=None, order=1,
@@ -494,6 +498,10 @@ def test_read_dna_from_biostring_order_1():
     order = 1
     filename = os.path.join(data_path, 'sample.fa')
     seqs = sequences_from_fasta(filename)
+    with pytest.raises(ValueError):
+        data = Bioseq.create_from_seq('train', fastafile=seqs, storage='sparse',
+                                     order=order, cache=False)
+    
     data = Bioseq.create_from_seq('train', fastafile=seqs,
                                  order=order, cache=False)
 
