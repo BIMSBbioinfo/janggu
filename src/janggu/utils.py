@@ -469,9 +469,13 @@ class ExportScorePlot(object):
 
         ax_.set_title(name)
         for keys in results:
+            if isinstance(keys, str):
+                k = (keys,)
+            else:
+                k = keys
             # avg might be returned using a custom function
             x_score, y_score, auxstr = results[keys]['value']
-            label = "{}".format('-'.join([keys[0][:8], keys[1], keys[2]]))
+            label = "{}".format('-'.join(k))
             if isinstance(auxstr, str):
                 label += ' ' + auxstr
             ax_.plot(x_score, y_score, label=label)
@@ -526,14 +530,17 @@ class ExportBigwig(object):
 
         # the last dimension holds the conditions. Each condition
         # needs to be stored in a separate file
-        for modelname, layername, condition in results:
+        for keys in results:
+            if isinstance(keys, str):
+                k = (keys,)
+            else:
+                k = keys
             bw_file = pyBigWig.open(os.path.join(
                 output_dir,
-                '{prefix}.{model}.{output}.{condition}.bigwig'.format(
-                    prefix=name, model=modelname,
-                    output=layername, condition=condition)), 'w')
+                '{prefix}.{key}.bigwig'.format(
+                    prefix=name, key='.'.join(k))), 'w')
             bw_file.addHeader(bw_header)
-            pred = results[modelname, layername, condition]['value']
+            pred = results[keys]['value']
             # compute the ratio between binsize and stepsize
             bsss = float(self.gindexer.binsize) / float(self.gindexer.stepsize)
             if bsss < 1.:
@@ -584,11 +591,15 @@ class ExportBed(object):
         # the last dimension holds the conditions. Each condition
         # needs to be stored in a separate file
 
-        for modelname, layername, condition in results:
+        for keys in results:
+            if isinstance(keys, str):
+                k = (keys,)
+            else:
+                k = keys
             bed_content = pd.DataFrame(columns=['chr', 'start',
                                                 'end', 'name', 'score'])
             for ridx, region in enumerate(gindexer):
-                pred = results[modelname, layername, condition]['value']
+                pred = results[keys]['value']
 
                 nsplit = (region.end-region.start)//resolution
 
@@ -609,9 +620,8 @@ class ExportBed(object):
 
             bed_content.to_csv(os.path.join(
                 output_dir,
-                '{prefix}.{model}.{output}.{condition}.bed'.format(
-                    prefix=name, model=modelname,
-                    output=layername, condition=condition)),
+                '{prefix}.{key}.bed'.format(
+                    prefix=name, key='.'.join(k))),
                                sep='\t', header=False, index=False,
                                columns=['chr', 'start', 'end', 'name', 'score'])
 

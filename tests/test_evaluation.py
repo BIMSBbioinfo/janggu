@@ -164,7 +164,7 @@ def test_output_json_score(tmpdir):
                            "score.json"), 'r') as f:
         content = json.load(f)
         # now nptest was evaluated
-        assert 'nptest-y-random' in content
+        assert 'random' in content
 
 
 def test_output_tsv_score(tmpdir):
@@ -322,7 +322,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'loss.nptest.y.{}.bed')
+                         'loss.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -363,7 +363,7 @@ def test_output_bed_loss_resolution_unequal_stepsize(tmpdir):
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'loss.nptest.y.{}.bed')
+                         'loss.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -402,7 +402,7 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'pred.nptest.y.{}.bed')
+                         'pred.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -441,7 +441,7 @@ def test_output_bed_predict_denseout(tmpdir):
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'pred.nptest.y.{}.bed')
+                         'pred.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -480,7 +480,7 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'pred.nptest.y.{}.bed')
+                         'pred.{}.bed')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -519,7 +519,7 @@ def test_output_bigwig_predict_denseout(tmpdir):
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'pred.nptest.y.{}.bigwig')
+                         'pred.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -555,7 +555,7 @@ def test_output_bigwig_predict_convout(tmpdir):
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'pred.nptest.y.{}.bigwig')
+                         'pred.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -590,7 +590,7 @@ def test_output_bigwig_loss_resolution_equal_stepsize(tmpdir):
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'loss.nptest.y.{}.bigwig')
+                         'loss.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -625,7 +625,7 @@ def test_output_bigwig_loss_resolution_unequal_stepsize(tmpdir):
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
-                         'loss.nptest.y.{}.bigwig')
+                         'loss.{}.bigwig')
 
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
@@ -662,5 +662,5 @@ def test_output_tsv_score_across_conditions(tmpdir):
     val = pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
                                        "scoreacross.tsv"),
                           sep='\t', header=[0])
-    assert val['nptest-y-across'][0] == .15
+    assert val['across'][0] == .15
     assert val.shape == (1, 1)

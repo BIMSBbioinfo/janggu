@@ -266,7 +266,12 @@ class Scorer(object):
                                                condition,
                                                ":", str(score))))
 
-                self.results[model.name, layername[0], condition] = \
+                key = (condition,)
+                if len(model.get_config()['output_layers']) > 1:
+                    key = (layername[0],) + key
+                if not self.immediate_export:
+                    key = (model.name,) + key
+                self.results[key] = \
                     {'date': str(datetime.datetime.utcnow()),
                      'value': score}
 
