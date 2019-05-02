@@ -519,20 +519,20 @@ class Janggu(object):
                                  " which is required for this options.")
 
             # then split the original dataset into training and validation set.
-            train, test = split_train_test((jseq.inputs, jseq.outputs), validation_data)
+            train, val = split_train_test((jseq.inputs, jseq.outputs), validation_data)
 
             traininp, trainoup = train
-            testinp, testoup = test
+            valinp, valoup = val
 
             self.logger.info("Split in training and validation set:")
             self.logger.info("Training-Input:")
             self.__dim_logging(traininp)
             self.logger.info("Training-Output:")
             self.__dim_logging(trainoup)
-            self.logger.info("Test-Input:")
-            self.__dim_logging(testinp)
-            self.logger.info("Test-Output:")
-            self.__dim_logging(testoup)
+            self.logger.info("Validation-Input:")
+            self.__dim_logging(valinp)
+            self.logger.info("Validation-Output:")
+            self.__dim_logging(valoup)
             jseq = JangguSequence(jseq.batch_size,
                                   _convert_data(self.kerasmodel, traininp,
                                                 'input_layers'),
@@ -540,9 +540,9 @@ class Janggu(object):
                                                 'output_layers'),
                                   sample_weights=None, shuffle=jseq.shuffle)
             valjseq = JangguSequence(jseq.batch_size,
-                                     _convert_data(self.kerasmodel, testinp,
+                                     _convert_data(self.kerasmodel, valinp,
                                                    'input_layers'),
-                                     _convert_data(self.kerasmodel, testoup,
+                                     _convert_data(self.kerasmodel, valoup,
                                                    'output_layers'),
                                      sample_weights=None, shuffle=False)
 
