@@ -26,6 +26,9 @@ class Array(Dataset):
 
     def __init__(self, name, array, conditions=None):
 
+        if conditions is not None:
+            assert array.shape[-1] == len(conditions), "array shape and condition number does not agree: {} != {}".format(array.shape[-1], len(conditions))
+
         self.data = copy.copy(array)
         self.conditions = conditions
 
@@ -127,6 +130,12 @@ class ReduceDim(Dataset):
         return data
 
     @property
+    def conditions(self):
+        if hasattr(self.data, "conditions"):
+            return self.data.conditions
+        return None
+
+    @property
     def shape(self):
         """Shape of the dataset"""
         shape = (self.data.shape[0], self.data.shape[-1])
@@ -192,6 +201,12 @@ class NanToNumConverter(Dataset):
             idxs = slice(idxs, idxs + 1)
         data = np.nan_to_num(self.data[idxs])
         return data
+
+    @property
+    def conditions(self):
+        if hasattr(self.data, "conditions"):
+            return self.data.conditions
+        return None
 
     @property
     def shape(self):
@@ -263,6 +278,12 @@ class RandomSignalScale(Dataset):
         return data
 
     @property
+    def conditions(self):
+        if hasattr(self.data, "conditions"):
+            return self.data.conditions
+        return None
+
+    @property
     def gindexer(self):  # pragma: no cover
         if hasattr(self.data, 'gindexer'):
             return self.data.gindexer
@@ -324,6 +345,12 @@ class RandomOrientation(Dataset):
                 data[i] = data[i, ::-1, ::-1, :]
 
         return data
+
+    @property
+    def conditions(self):
+        if hasattr(self.data, "conditions"):
+            return self.data.conditions
+        return None
 
     @property
     def gindexer(self):  # pragma: no cover

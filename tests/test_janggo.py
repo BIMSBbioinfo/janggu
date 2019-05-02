@@ -24,6 +24,7 @@ from janggu import outputdense
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover
+from janggu.data import ReduceDim
 from janggu.data.data import JangguSequence
 from janggu.layers import Complement
 from janggu.layers import DnaConv2D
@@ -106,7 +107,7 @@ def test_janggu_instance_dense(tmpdir):
                                     roi=bed_file, order=1)
 
     df = pd.read_csv(csvfile, header=None)
-    ctcf = Array('ctcf', df.values, conditions='peaks')
+    ctcf = Array('ctcf', df.values, conditions=['peaks'])
 
     @inputlayer
     @outputdense('sigmoid')
@@ -228,7 +229,7 @@ def test_janggu_influence_genomic(tmpdir):
                                        roi=bed_file, order=1)
 
     df = pd.read_csv(csvfile, header=None)
-    ctcf = Array('ctcf', df.values, conditions='peaks')
+    ctcf = Array('ctcf', df.values, conditions=['peaks'])
 
     @inputlayer
     @outputdense('sigmoid')
@@ -597,6 +598,50 @@ def test_janggu_chr2_validation(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore:inspect")
+def test_janggu_train_predict_option0(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Train, predict and evaluate on dummy data.
+
+    create: by_shape
+    Input args: Dataset
+    """
+
+    inputs = Array("X", np.random.random((100, 10)))
+    outputs = ReduceDim(Array('y', np.random.randint(2, size=(100, 1))[:,None],
+                    conditions=['random']))
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def test_model(inputs, inp, oup, params):
+        return inputs, inputs[0]
+
+    bwm = Janggu.create(test_model,
+                        inputs=inputs,
+                        outputs=outputs,
+                        name='nptest')
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(inputs)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
+    np.testing.assert_equal(pred.shape, outputs.shape)
+
+    # test if the condition name is correctly used in the output table
+    bwm.evaluate(inputs, outputs, callbacks=['auc'])
+
+    outputauc = os.path.join(tmpdir.strpath, 'evaluation', 'nptest', 'auc.tsv')
+    assert os.path.exists(outputauc)
+    assert pd.read_csv(outputauc).columns[0] == 'random'
+
+
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option1(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Train, predict and evaluate on dummy data.
@@ -631,7 +676,13 @@ def test_janggu_train_predict_option1(tmpdir):
     pred = bwm.predict(inputs)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate(inputs, outputs)
+
+    # test if the condition name is correctly used in the output table
+    bwm.evaluate(inputs, outputs, callbacks=['auc'])
+
+    outputauc = os.path.join(tmpdir.strpath, 'evaluation', 'nptest', 'auc.tsv')
+    assert os.path.exists(outputauc)
+    assert pd.read_csv(outputauc).columns[0] == 'random'
 
 
 @pytest.mark.filterwarnings("ignore:inspect")

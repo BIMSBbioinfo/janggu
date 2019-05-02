@@ -25,10 +25,10 @@ def test_reducedim():
     x_orig = np.zeros((3,1,1,2))
 
     np.testing.assert_equal(x_orig.ndim, 4)
-    x_reduce = ReduceDim(Array('test', x_orig))
-    x_reduce = ReduceDim(Array('test', x_orig), aggregator='mean')
-    x_reduce = ReduceDim(Array('test', x_orig), aggregator='max')
-    x_reduce = ReduceDim(Array('test', x_orig), aggregator=np.mean)
+    x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]))
+    x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator='mean')
+    x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator='max')
+    x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator=np.mean)
     np.testing.assert_equal(len(x_reduce), 3)
     np.testing.assert_equal(len(x_reduce), 3)
     np.testing.assert_equal(len(x_reduce), 3)
@@ -40,14 +40,15 @@ def test_reducedim():
     assert x_reduce.ndim == 2
     new_x = copy(x_reduce)
     assert x_reduce[0].shape == new_x[0].shape
+    assert x_reduce.conditions == ["A", "B"]
 
 def test_nantonumconverter():
     x_orig = np.zeros((3,1,1,2))
     x_orig[0,0,0,0] = np.nan
-    arr = Array('test', x_orig)
+    arr = Array('test', x_orig, conditions=["A", "B"])
     assert np.isnan(arr[0].mean())
 
-    x_tr = NanToNumConverter(Array('test', x_orig))
+    x_tr = NanToNumConverter(Array('test', x_orig, conditions=["A", "B"]))
     assert x_tr[0].shape == (1, 1, 1, 2)
     assert x_tr[:3].shape == (3, 1, 1, 2)
     assert x_tr[[0,1]].shape == (2, 1, 1, 2)
@@ -58,12 +59,12 @@ def test_nantonumconverter():
     np.testing.assert_equal(x_tr[0], [[[[0,0]]]])
     new_x = copy(x_tr)
     assert x_tr[0].shape == new_x[0].shape
-
+    assert x_tr.conditions == ["A", "B"]
 
 def test_randomorientation():
     x_orig = np.zeros((3,1,1,2))
 
-    x_tr = RandomOrientation(Array('test', x_orig))
+    x_tr = RandomOrientation(Array('test', x_orig, conditions=["A", "B"]))
     assert x_tr[0].shape == (1, 1, 1, 2)
     assert x_tr[:3].shape == (3, 1, 1, 2)
     assert x_tr[[0,1]].shape == (2, 1, 1, 2)
@@ -74,6 +75,7 @@ def test_randomorientation():
     np.testing.assert_equal(x_tr[0], [[[[0,0]]]])
     new_x = copy(x_tr)
     assert x_tr[0].shape == new_x[0].shape
+    assert x_tr.conditions == ["A", "B"]
 
 
 def test_randomsignalscale():
@@ -89,3 +91,4 @@ def test_randomsignalscale():
     assert x_tr.ndim == 4
     new_x = copy(x_tr)
     assert x_tr[0].shape == new_x[0].shape
+    assert x_tr.conditions == None
