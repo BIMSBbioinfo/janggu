@@ -2,12 +2,20 @@
 Changelog
 =========
 
+0.9.1 (2019-05-03)
+------------------
+
+- Removed HTSeq dependence in favour of pybedtools for parsing BED, GFF, etc. This also introduces the requirement to have bedtools installed on the system, but it allows to parse BED-like files faster and more conveniently.
+- Internal rearrangements for GenomicArray store_whole_genome=False. Now the data is stored as one array in a dict-like handle with the dummy key 'data' rather than storing the data in a fragmented fashion using as key-values the genomic interval and the respective coverages associated with them. This makes storage and processing more efficient.
+- Bugfix: added conditions property to wrapper datasets.
+
 0.9.0 (2019-03-20)
 ------------------
 
 Added various features and bug fixes:
 
 Changes in janggu.data
+
 - Added new dataset wrapper to remove NaNs: NanToNumConverter
 - Added new dataset wrappers for data augmentation: RandomOrientation, RandomSignalScale
 - Adapted ReduceDim wrapper: added aggregator argument
@@ -27,6 +35,7 @@ Changes in janggu.data
 - Refactoring according to suggestions from isort and pylint
 
 Changes in janggu
+
 - Added input_attribution via integrated gradients for feature importance assignment
 - Performance scoring by name for Janggu.evaluate for a number common metrices, including ROC, PRC, correlation, variance explained, etc.
 - training.log is stored by default for each model
