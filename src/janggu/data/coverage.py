@@ -1421,7 +1421,7 @@ class Cover(Dataset):
 
                 for ridx in idxs:
                     region = self.gindexer[int(ridx)]
-                    cov = self[int(ridx)][0, :, :, idx].sum(axis=1)
+                    cov = self[int(ridx)][0, :, :, idx].sum(axis=1).tolist()
 
                     bw_file.addEntries(str(region.chrom),
                                        int(region.start),
