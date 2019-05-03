@@ -27,7 +27,9 @@ class Array(Dataset):
     def __init__(self, name, array, conditions=None):
 
         if conditions is not None:
-            assert array.shape[-1] == len(conditions), "array shape and condition number does not agree: {} != {}".format(array.shape[-1], len(conditions))
+            assert array.shape[-1] == len(conditions), \
+                "array shape and condition number does not agree: {} != {}" \
+                .format(array.shape[-1], len(conditions))
 
         self.data = copy.copy(array)
         self.conditions = conditions
@@ -131,6 +133,7 @@ class ReduceDim(Dataset):
 
     @property
     def conditions(self):
+        """conditions"""
         if hasattr(self.data, "conditions"):
             return self.data.conditions
         return None
@@ -204,6 +207,7 @@ class NanToNumConverter(Dataset):
 
     @property
     def conditions(self):
+        """conditions"""
         if hasattr(self.data, "conditions"):
             return self.data.conditions
         return None
@@ -279,6 +283,7 @@ class RandomSignalScale(Dataset):
 
     @property
     def conditions(self):
+        """conditions"""
         if hasattr(self.data, "conditions"):
             return self.data.conditions
         return None
@@ -348,6 +353,7 @@ class RandomOrientation(Dataset):
 
     @property
     def conditions(self):
+        """conditions"""
         if hasattr(self.data, "conditions"):
             return self.data.conditions
         return None

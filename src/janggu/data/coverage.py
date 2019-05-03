@@ -1,16 +1,17 @@
 """Coverage dataset"""
 
-from progress.bar import Bar
 import os
+import tempfile
 import warnings
 from itertools import product
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from pybedtools import Interval
-from pybedtools import BedTool
 from matplotlib.pyplot import cm
+from progress.bar import Bar
+from pybedtools import BedTool
+from pybedtools import Interval
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
@@ -19,11 +20,8 @@ from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NMAP
 from janggu.utils import PMAP
 from janggu.utils import _get_genomic_reader
-from janggu.utils import _iv_to_str
-from janggu.utils import _str_to_iv
 from janggu.utils import get_genome_size_from_regions
 from janggu.version import version
-import tempfile
 
 try:
     import pyBigWig
@@ -260,7 +258,7 @@ class BedLoader:
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
             if regions_[0].score == '.' and mode in ['score',
-                                                 'categorical']:
+                                                     'categorical']:
                 raise ValueError(
                     'No Score available. Score field must '
                     'present in {}'.format(sample_file) + \
@@ -274,7 +272,9 @@ class BedLoader:
             else:
                 overlapping_regions = roifile.intersect(regions_, wa=True, wb=True)
 
-            bar = Bar('[{}/{}] Loading {}'.format(i+1, len(files), sample_file), max=len(overlapping_regions))
+            bar = Bar('[{}/{}] Loading {}'.format(i+1, len(files),
+                                                  sample_file),
+                      max=len(overlapping_regions))
             for region in overlapping_regions:
                 #region = overlapping_regions[ireg]
 
@@ -293,11 +293,6 @@ class BedLoader:
                 if region.end > actual_end:
                     # set the end of the array to zero
                     array[-(region.end - actual_end):, 0] = 0
-
-               # array = np.maximum(array,
-               #                    np.repeat(garray[region][:, :, i],
-               #                              region.length if garray.resolution is None \
-               #                              else garray.resolution, axis=0))
 
                 if mode == 'score':
                     garray[region, i] = array
@@ -764,12 +759,13 @@ class Cover(Dataset):
         if resolution is not None and resolution > 1 and store_whole_genome:
             for iv_ in gindexer or []:
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
-                    raise ValueError('Please prepare all ROI starts and ends to be '
-                                     'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.'
-                                     'Consider using '
-                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                                     .format(input=roi, output=roi, resolution=resolution))
+                    raise ValueError(
+                        'Please prepare all ROI starts and ends to be '
+                        'divisible by resolution={} to '.format(resolution) + \
+                        'avoid undesired rounding effects.'
+                        'Consider using '
+                        '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                        .format(input=roi, output=roi, resolution=resolution))
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -978,12 +974,13 @@ class Cover(Dataset):
         if resolution is not None and resolution > 1 and store_whole_genome:
             for iv_ in gindexer or []:
                 if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
-                    raise ValueError('Please prepare all ROI starts and ends to be '
-                                     'divisible by resolution={} to '.format(resolution) + \
-                                     'avoid undesired rounding effects.'
-                                     'Consider using '
-                                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                                     .format(input=roi, output=roi, resolution=resolution))
+                    raise ValueError(
+                        'Please prepare all ROI starts and ends to be '
+                        'divisible by resolution={} to '.format(resolution) + \
+                        'avoid undesired rounding effects.'
+                        'Consider using '
+                        '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                        .format(input=roi, output=roi, resolution=resolution))
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -1566,8 +1563,8 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
                                      "Condition names must represent the alphabet letters.")
 
             coverage = coverage.reshape(coverage.shape[0], -1)
-            coverage = coverage.reshape(coverage.shape[:-1] + (alphabetsize,
-                                                               int(coverage.shape[-1]/alphabetsize)))
+            coverage = coverage.reshape(coverage.shape[:-1] +
+                                        (alphabetsize, int(coverage.shape[-1]/alphabetsize)))
             coverage = coverage.sum(-1)
 
             ax = fig.add_subplot(grid[(y_offset): (y_offset + 3), 1:])

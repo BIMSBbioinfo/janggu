@@ -207,7 +207,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                 if not self._full_genome_stored:
                     length = end-start - self.order + 1
                     idx = self.region2index[_iv_to_str(chrom, interval.start,
-                                            interval.end)]
+                                                       interval.end)]
 
                     # correcting for the overshooting starts and ends is not necessary
                     # for partially loaded data
@@ -401,7 +401,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         return start // self.resolution
 
 def init_with_padding_value(padding_value, shape, dtype):
-    if padding_value==0.0:
+    if padding_value == 0.0:
         return np.zeros(shape, dtype)
     else:
         return np.ones(shape, dtype) * padding_value
@@ -472,7 +472,10 @@ class HDF5GenomicArray(GenomicArray):
         load_from_file = _load_data(cache, datatags, '.h5')
 
         if not store_whole_genome:
-            self.region2index = {_iv_to_str(region.chrom, region.start, region.end): i for i, region in enumerate(gsize)}
+            self.region2index = {_iv_to_str(region.chrom,
+                                            region.start,
+                                            region.end): i \
+                                                for i, region in enumerate(gsize)}
         if load_from_file:
             h5file = h5py.File(cachefile, 'w')
 
@@ -481,18 +484,20 @@ class HDF5GenomicArray(GenomicArray):
                     shape = (_get_iv_length(region.length - self.order + 1, self.resolution),
                              2 if stranded else 1, len(self.condition))
                     h5file.create_dataset(str(region.chrom), shape,
-                                               dtype=self.typecode, compression='gzip',
-                                               chunks=(1,) + shape[1:],
-                                               data=init_with_padding_value(padding_value, shape, self.typecode))
+                                          dtype=self.typecode, compression='gzip',
+                                          data=init_with_padding_value(padding_value,
+                                                                       shape,
+                                                                       self.typecode))
                     self.handle = h5file
             else:
                 shape = (len(gsize), _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
                                                     self.resolution),
                          2 if stranded else 1, len(self.condition))
                 h5file.create_dataset('data', shape,
-                                           dtype=self.typecode, compression='gzip',
-                                           chunks=(1,) + shape[1:],
-                                           data=init_with_padding_value(padding_value, shape, self.typecode))
+                                      dtype=self.typecode, compression='gzip',
+                                      data=init_with_padding_value(padding_value,
+                                                                   shape,
+                                                                   self.typecode))
                 self.handle = h5file
             # invoke the loader
             if loader:
@@ -575,23 +580,30 @@ class NPGenomicArray(GenomicArray):
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
         if not store_whole_genome:
-            self.region2index = {_iv_to_str(region.chrom, region.start, region.end): i for i, region in enumerate(gsize)}
+            self.region2index = {_iv_to_str(region.chrom,
+                                            region.start,
+                                            region.end): i for i, region in enumerate(gsize)}
 
         if load_from_file:
             if store_whole_genome:
-                data = {str(region.chrom): init_with_padding_value(padding_value, shape=(_get_iv_length(region.length - self.order + 1,
-                                                              self.resolution),
-                                               2 if stranded else 1,
-                                               len(self.condition)),
-                                        dtype=self.typecode) for region in gsize}
+                data = {str(region.chrom): init_with_padding_value(
+                    padding_value,
+                    shape=(_get_iv_length(region.length - self.order + 1,
+                                          self.resolution),
+                           2 if stranded else 1,
+                           len(self.condition)),
+                    dtype=self.typecode) for region in gsize}
                 names = [str(region.chrom) for region in gsize]
                 self.handle = data
             else:
-                data = {'data': init_with_padding_value(padding_value, shape=(len(gsize), _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
-                                                                  self.resolution) if self.resolution is not None else 1,
-                                               2 if stranded else 1,
-                                               len(self.condition)),
-                                        dtype=self.typecode)}
+                data = {'data': init_with_padding_value(
+                    padding_value,
+                    shape=(len(gsize),
+                           _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                                          self.resolution) if self.resolution is not None else 1,
+                           2 if stranded else 1,
+                           len(self.condition)),
+                    dtype=self.typecode)}
                 names = ['data']
                 self.handle = data
 
@@ -691,18 +703,19 @@ class SparseGenomicArray(GenomicArray):
 
         if load_from_file:
             if store_whole_genome:
-                data = {str(region.chrom): sparse.dok_matrix((_get_iv_length(region.length - self.order + 1,
-                                                              resolution),
-                                                  (2 if stranded else 1) *
-                                                  len(self.condition)),
-                                                 dtype=self.typecode)
+                data = {str(region.chrom): sparse.dok_matrix(
+                    (_get_iv_length(region.length - self.order + 1,
+                                    resolution),
+                     (2 if stranded else 1) * len(self.condition)),
+                    dtype=self.typecode)
                         for region in gsize}
             else:
-                data = {'data': sparse.dok_matrix((len(gsize), (_get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
-                                                                  self.resolution) if self.resolution is not None else 1) *
-                                                  (2 if stranded else 1) *
-                                                  len(self.condition)),
-                                                 dtype=self.typecode)}
+                data = {'data': sparse.dok_matrix(
+                    (len(gsize),
+                     (_get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                                     self.resolution) if self.resolution is not None else 1) *
+                     (2 if stranded else 1) * len(self.condition)),
+                    dtype=self.typecode)}
             self.handle = data
 
             # invoke the loader
@@ -729,28 +742,28 @@ class SparseGenomicArray(GenomicArray):
             names = [name for name in storage]
 
         if store_whole_genome:
-            self.handle = {str(region.chrom): sparse.coo_matrix((storage[str(region.chrom)][:, 0],
-                                                   (storage[str(region.chrom)][:, 1].astype('int'),
-                                                    storage[str(region.chrom)][:, 2].astype('int'))),
-                                                  shape=(_get_iv_length(region.length, resolution),
-                                                  (2 if stranded else 1) *
-                                                  len(self.condition))).tocsr()
+            self.handle = {str(region.chrom): sparse.coo_matrix(
+                (storage[str(region.chrom)][:, 0],
+                 (storage[str(region.chrom)][:, 1].astype('int'),
+                  storage[str(region.chrom)][:, 2].astype('int'))),
+                shape=(_get_iv_length(region.length, resolution),
+                       (2 if stranded else 1) * len(self.condition))).tocsr()
                            for region in gsize}
         else:
-            self.handle = {name: sparse.coo_matrix((storage[name][:, 0],
-                                            (storage[name][:, 1].astype('int'),
-                                            storage[name][:, 2].astype('int'))),
-                                                  shape=(len(gsize), (_get_iv_length(gsize.binsize + 2*gsize.flank, resolution)
-                                                                   if self.resolution is not None else 1) *
-                                                  (2 if stranded else 1) *
-                                                  len(self.condition))).tocsr()
+            self.handle = {name: sparse.coo_matrix(
+                (storage[name][:, 0],
+                 (storage[name][:, 1].astype('int'),
+                  storage[name][:, 2].astype('int'))),
+                shape=(len(gsize),
+                       (_get_iv_length(gsize.binsize + 2*gsize.flank, resolution)
+                        if self.resolution is not None else 1) *
+                       (2 if stranded else 1) * len(self.condition))).tocsr()
                            for name in names}
 
 
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
-        print(index, value.shape, value.sum())
         if isinstance(interval, Interval) and isinstance(condition, int):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
@@ -792,8 +805,8 @@ class SparseGenomicArray(GenomicArray):
 
                             if val > 0:
                                 self.handle['data'][regidx,
-                                            idx*ncondstrand + sind * nconditions
-                                            + condition] = val
+                                                    idx*ncondstrand + sind * nconditions
+                                                    + condition] = val
                 else:
                     ref_start, ref_end, array_start, \
                         array_end = self._get_indices(interval, value.shape[0])

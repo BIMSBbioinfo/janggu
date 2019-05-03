@@ -1,4 +1,5 @@
 from copy import copy
+
 import numpy as np
 
 from janggu.data import Array

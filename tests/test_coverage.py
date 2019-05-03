@@ -107,7 +107,6 @@ def test_bam_genomic_interval_access_whole_genome():
 
             for i in range(len(cover)):
                 print('resolution :',reso,'/ shift :',shift)
-                print(i, cover.gindexer[i])
 
                 np.testing.assert_equal(cover[i],cover[cover.gindexer[i]])
 
@@ -151,8 +150,6 @@ def test_bam_genomic_interval_access_part_genome():
 
             for i in range(len(cover)):
                 print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-                print(i, cover.gindexer[i])
-
 
                 np.testing.assert_equal(np.repeat(cover[i],
                                     cover.garray.resolution,
@@ -201,7 +198,6 @@ def test_bigwig_genomic_interval_access_whole_genome():
 
             for i in range(len(cover)):
                 print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-                print(i, cover.gindexer[i])
 
                 np.testing.assert_equal(cover[i],cover[cover.gindexer[i]])
 
@@ -242,8 +238,6 @@ def test_bigwig_genomic_interval_access_part_genome():
 
             for i in range(len(cover)):
                 print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-                print(i, cover.gindexer[i])
-
 
                 np.testing.assert_equal(np.repeat(cover[i],
                                     cover.garray.resolution,
@@ -292,7 +286,6 @@ def test_bed_genomic_interval_access_whole_genome():
 
             for i in range(len(cover)):
                 print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-                print(i, cover.gindexer[i])
 
                 np.testing.assert_equal(cover[i],cover[cover.gindexer[i]])
 
@@ -333,8 +326,6 @@ def test_bed_genomic_interval_access_part_genome():
 
             for i in range(len(cover)):
                 print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-                print(i, cover.gindexer[i])
-
 
                 np.testing.assert_equal(np.repeat(cover[i],
                                     cover.garray.resolution,
@@ -499,26 +490,6 @@ def test_bed_overreaching_ends_whole_genome():
         np.testing.assert_equal(cover[0].sum(), 18)
         np.testing.assert_equal(cover[:].sum(), 9*18)
 
-#def test_bed_overreaching_ends_whole_genome():
-#    data_path = pkg_resources.resource_filename('janggu', 'resources/')
-#    bed_file = os.path.join(data_path, "positive.bed")
-#
-#    for store in ['ndarray', 'sparse']:
-#        print(store)
-#        cover = Cover.create_from_bed(
-#            'test',
-#            bedfiles=bed_file,
-#            roi=bed_file,
-#            flank=2000,
-#            resolution=1,
-#            store_whole_genome=True,
-#            storage=store)
-#        assert len(cover) == 25
-#        assert cover.shape == (25, 200+2*2000, 1, 1)
-#        np.testing.assert_equal(cover[0][0, :550, 0, 0].sum(), 0)
-#        np.testing.assert_equal(cover[0].sum(), 1400)
-#        np.testing.assert_equal(cover[:].sum(), 25*1400)
-
 
 def test_bed_overreaching_ends_part_genome():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -539,25 +510,6 @@ def test_bed_overreaching_ends_part_genome():
         assert cover.shape == (9, 2+2*2, 1, 1)
         np.testing.assert_equal(cover[0].sum(), 4)
         np.testing.assert_equal(cover[:].sum(), 6*7 + 8)
-
-
-#def test_bed_overreaching_ends_part_genome():
-#    data_path = pkg_resources.resource_filename('janggu', 'resources/')
-#    bed_file = os.path.join(data_path, "positive.bed")
-#    for store in ['ndarray', 'sparse']:
-#        print(store)
-#        cover = Cover.create_from_bed(
-#            'test',
-#            bedfiles=bed_file,
-#            roi=bed_file,
-#            flank=2000,
-#            resolution=1,
-#            store_whole_genome=False,
-#            storage=store)
-#        assert len(cover) == 25
-#        assert cover.shape == (25, 200+2*2000, 1, 1)
-#        np.testing.assert_equal(cover[0].sum(), 1400)
-#        np.testing.assert_equal(cover[:].sum(), 25*1400)
 
 
 def test_bed_store_whole_genome_option():
@@ -1009,7 +961,6 @@ def test_cover_bam(tmpdir):
 
     for store in ['ndarray', 'hdf5', 'sparse']:
         # base pair binsize
-        # print(store)
         cover = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
@@ -1064,7 +1015,6 @@ def test_load_bam_resolution10(tmpdir):
 
     for store, store_genome in product(['ndarray', 'hdf5', 'sparse'], [True, False]):
         # base pair binsize
-        # print(store)
         cover = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,
@@ -1121,7 +1071,6 @@ def test_load_bam_resolutionNone(tmpdir):
 
     for store in ['ndarray', 'hdf5', 'sparse']:
         # base pair binsize
-        # print(store)
         cover1 = Cover.create_from_bam(
             "yeast_I_II_III.bam",
             bamfiles=bamfile_,

@@ -1,9 +1,8 @@
 """Bioseq dataset"""
 
 import warnings
-from itertools import product
-
 from collections import OrderedDict
+from itertools import product
 
 import Bio
 import numpy as np
@@ -16,7 +15,6 @@ from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NOLETTER
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
-from janggu.utils import _str_to_iv
 from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
@@ -59,7 +57,6 @@ class SeqLoader:
                                           i) for i in range(order)])
                 indarray = np.convolve(indarray, filter_, mode='valid')
 
-            print(region, indarray.shape)
             garray[region, 0] = indarray.reshape(-1, 1)
 
 
@@ -439,7 +436,7 @@ class Bioseq(Dataset):
         if interval.strand in ['.', '+']:
             return np.asarray(self.garray[interval][:, 0, 0])
 
-        return np.asarray([self._rcindex[val] if val>=0 else val for val
+        return np.asarray([self._rcindex[val] if val >= 0 else val for val
                            in self.garray[interval][:, 0, 0]])[::-1]
 
 

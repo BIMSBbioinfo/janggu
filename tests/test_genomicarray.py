@@ -4,10 +4,11 @@ import numpy as np
 import pytest
 from pybedtools import Interval
 
+from janggu.data import GenomicIndexer
 from janggu.data import create_genomic_array
 from janggu.data.genomicarray import get_collapser
 from janggu.data.genomicarray import get_normalizer
-from janggu.data import GenomicIndexer
+
 
 def test_get_collapser():
     with pytest.raises(Exception):

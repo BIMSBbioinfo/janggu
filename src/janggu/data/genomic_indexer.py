@@ -370,11 +370,11 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         """
 
         with open(filename, 'w') as handle:
-           for i in range(len(self)):
-               handle.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'.format(
-                  chrom=self.chrs[i],
-                  start=max(0, self.starts[i] - self.flank),
-                  end=self.ends[i] + self.flank,
-                  name='-',
-                  score='-',
-                  strand=self.strand[i]))
+            for i in range(len(self)):
+                handle.write('{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}\n'.format(
+                    chrom=self.chrs[i],
+                    start=max(0, self.starts[i] - self.flank),
+                    end=self.ends[i] + self.flank,
+                    name='-',
+                    score='-',
+                    strand=self.strand[i]))

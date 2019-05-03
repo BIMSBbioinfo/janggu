@@ -5,9 +5,9 @@ import matplotlib
 import numpy as np
 import pkg_resources
 import pytest
-
 from keras.layers import Input
 from keras.models import Model
+
 from pybedtools import BedTool
 from janggu.data import Bioseq
 from janggu.data import GenomicIndexer
@@ -501,7 +501,7 @@ def test_read_dna_from_biostring_order_1():
     with pytest.raises(ValueError):
         data = Bioseq.create_from_seq('train', fastafile=seqs, storage='sparse',
                                      order=order, cache=False)
-    
+
     data = Bioseq.create_from_seq('train', fastafile=seqs,
                                  order=order, cache=False)
 
