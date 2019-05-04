@@ -26,7 +26,7 @@ def _read(*names, **kwargs):
 
 setup(
     name='janggu',
-    version='0.9.1',
+    version='0.9.2',
     license='GPL-3.0',
     description='Utilities and datasets for deep learning in genomics',
     long_description='%s\n%s' % (

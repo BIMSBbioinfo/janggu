@@ -64,7 +64,7 @@ DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                    roi=ROI_FILE,
                                    binsize=200,
                                    order=args.order,
-                                   datatags=['ref'])
+                                   datatags=['ref'], cache=True)
 
 LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                bedfiles=PEAK_FILE,
