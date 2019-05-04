@@ -134,7 +134,7 @@ class Bioseq(Dataset):
         if cache:
             files = seqs
             parameters = [gsize.tostr(),
-                          storage, dtype,
+                          storage, dtype, order,
                           store_whole_genome, version]
             cache_hash = create_sha256_cache(files, parameters)
         else:
