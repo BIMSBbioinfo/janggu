@@ -7,12 +7,16 @@ from itertools import product
 import Bio
 import numpy as np
 from pybedtools import Interval
+from pybedtools import BedTool
+from pysam import VariantFile
+from progress.counter import Counter
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NOLETTER
+from janggu.utils import NMAP
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
 from janggu.utils import as_onehot
@@ -505,3 +509,121 @@ class Bioseq(Dataset):
     def ndim(self):
         """ndim"""
         return len(self.shape)
+
+
+class VariantStreamer:
+    """VariantStreamer class.
+
+    This class takes a :class:`Bioseq` object and variants from
+    a VCF file.
+    It parses the VCF file entries and returns the sequence context
+    for the reference and the alternative allele, respectively.
+
+    Parameters
+    -----------
+    bioseq : :class:`Bioseq`
+        Bioseq container containing a reference genome.
+        Make sure that the reference genome was loaded with store_whole_genome=True.
+    variants : str
+        VCF file name. Contains the variants
+    binsize : int
+        Context region size must be compatible with the network architecture.
+    batch_size : int
+        Batch size for parsing the VCF file.
+    filter_region : None or str
+        BED file name. If None, all VCF file entries are considered.
+    min_allele_frequency : float or None
+        Minimum allele frequency to be considered. If None, a minimum
+        frequency of 0.0 will be used.
+    window_size : int or None
+        Window size by which the filter region should be extended.
+        If None, the extended window size is 0.
+    """
+    def __init__(self, bioseq, variants, binsize, batch_size,
+                 filter_region=None,
+                 min_allele_frequency=None, window_size=None):
+        self.bioseq = bioseq
+        self.variants = variants
+        self.binsize = binsize
+        self.batch_size = batch_size
+        self.filter_region = filter_region
+        self.maf = min_allele_frequency if min_allele_frequency is not None else 0.0
+        self.window_size = window_size if window_size is not None else 0
+
+
+    def flow(self):
+        """Data flow generator."""
+
+        refs = np.zeros((self.batch_size,  self.binsize - self.bioseq.garray.order + 1, 1,
+                         pow(self.bioseq._alphabetsize, self.bioseq.garray.order)))
+        alts = np.zeros_like(refs)
+
+        if self.filter_region is not None:
+            vcf_origin = BedTool(self.variants)
+            filter = BedTool(self.filter_region)
+            vcf_filter = vcf_origin.window(filter, u=True,
+                                           header=True,
+                                           w=self.window_size)
+            vcf = VariantFile(vcf_filter.TEMPFILES[-1]).fetch()
+        else:
+            vcf = VariantFile(self.variants).fetch()
+
+        #for ibatch in range(self.batch_size):
+        try:
+            while True:
+                # construct genomic region
+                names = []
+                chroms = []
+                poss = []
+                rallele = []
+                aallele = []
+
+                ibatch = 0
+
+                while ibatch < self.batch_size:
+                    rec = next(vcf)
+
+                    if 'VT' in rec.info and rec.info['VT'][0] != 'SNP':
+                        continue
+                    if rec.alts is None or len(rec.alts) != 1 or len(rec.alts[0]) != 1:
+                        continue
+                    if not (rec.alts[0].upper() in NMAP and rec.ref.upper() in NMAP):
+                        continue
+                    #if self.min_quality is not None and rec.qual < self.min_quality:
+                    #    continue
+                    if self.maf is not None and 'AF' in rec.info and rec.info['AF'][0] < self.maf:
+                        continue
+
+                    names.append(rec.id if rec.id is not None else '')
+                    chroms.append(rec.chrom)
+                    poss.append(rec.pos)
+                    rallele.append(rec.ref.upper())
+                    aallele.append(rec.alts[0].upper())
+
+                    start = rec.pos-self.binsize//2
+                    end = rec.pos+self.binsize//2 + self.binsize%2
+
+                    iref = self.bioseq._getsingleitem(Interval(rec.chrom, start, end)).copy()
+
+                    ref = as_onehot(iref[None, :], self.bioseq.garray.order, self.bioseq._alphabetsize)
+                    refs[ibatch] = ref
+                    #mutate the position with the variant
+
+                    # only support single nucleotide variants at the moment
+                    for o in range(self.bioseq.garray.order):
+                        replacement = (NMAP[rec.alts[0].upper()] - NMAP[rec.ref.upper()]) * pow(self.bioseq._alphabetsize, o)
+
+                        iref[self.binsize//2 + o - self.bioseq.garray.order + 1] += replacement
+
+                    alt = as_onehot(iref[None, :], self.bioseq.garray.order, self.bioseq._alphabetsize)
+                    alts[ibatch] = alt
+
+                    ibatch += 1
+                yield names, chroms, poss, rallele, aallele, refs, alts
+
+        except StopIteration:
+            refs = refs[:ibatch]
+            alts = alts[:ibatch]
+
+            yield names, chroms, poss, rallele, aallele, refs, alts
+            raise StopIteration()

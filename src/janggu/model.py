@@ -6,7 +6,10 @@ import logging
 import os
 import time
 
+import re
+from progress.counter import Counter
 import h5py
+import gzip
 import keras
 import keras.backend as K
 import numpy as np
@@ -19,6 +22,7 @@ from keras.utils import plot_model
 
 from janggu.data import split_train_test
 from janggu.data.coverage import Cover
+from janggu.data.dna import VariantStreamer
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
 from janggu.data.genomic_indexer import GenomicIndexer
@@ -793,6 +797,140 @@ class Janggu(object):
             callback = get_scorer(callback)
             callback.score(self, preds, outputs=outputs_, datatags=datatags)
         return values
+
+    def predict_variant_effect(self, bioseq, variants,  # pylint: disable=too-many-locals
+                               conditions,
+                               output_file,
+                               condition_filter=None,
+                               region_filter=None,
+                               window_extension=None,
+                               min_allele_frequency=None,
+                               batch_size=None):
+        """Evaluates the performance.
+
+        Parameters
+        ----------
+        bioseq : :code:`Bioseq`
+            Input sequence containing the reference genome.
+        variants :  str
+            File name of a VCF file containg the variants under study.
+        conditions : list(str)
+            Condition labels for each output prediction.
+        output_file : str or None
+            Output hdf5 file in which the results should be stored.
+        condition_filter : str or None
+            Regular expression filter on which conditions should be evaluated.
+            If None, all output conditions will be returned.
+        region_filter : str or None
+            BED file that constraining the regions in which the variants should
+            be evaluated. If None, all variants will be evaluated.
+        window_extension : None or int
+            Window by which the region_filter regions should be extended.
+            This allows to approximately retrieve SNPs that are in linkage
+            disequilibrium. This option is only relevant if a region_filter
+            was specified. If None, the region_filter is not extended.
+        min_allele_frequency : None or float
+            Filter for minimum allele frequency. If None, no filter is applied.
+        batch_size : int, None.
+            Batch size. If None, a batch_size of 128 is used.
+
+
+
+        Examples
+        --------
+
+        .. code-block:: python
+
+          # Evaluate all variants and all conditions (outputs)
+          model.predict_variant_effect(DATA, VARIANTS, CONDITIONS,
+                                       'output.h5')
+
+          # Evaluate all variants and a subset of conditions (Ctcf output labels)
+          model.predict_variant_effect(DATA, LABELS, CONDITIONS,
+                                       'output_subset.h5',
+                                       contition_filter='Cfcf')
+
+        """
+        if batch_size is None:
+            batch_size = 128
+
+        if len(self.kerasmodel.inputs) > 1:
+            raise ValueError('Only one input layer supported for this operation.')
+        binsize = self.kerasmodel.layers[0].input_shape[1] + bioseq.garray.order - 1
+
+        # the network might output arbitrarily many
+        # output.
+        # With the filter option it is possible to
+        # restrict the analysis to certain features.
+        if condition_filter is None:
+            conditions = [(idx, cond) for idx, cond in enumerate(conditions)]
+        else:
+            conditions = [(idx, cond) for idx, cond in enumerate(conditions) \
+                          if hasattr(re.search(condition_filter, cond), 'start')]
+        icond = [el[0] for el in conditions]
+
+        h5file = h5py.File(output_file, 'w')
+        buffersize = 1000000
+        labels = h5file.create_dataset('labels', (len(conditions),),
+                                       dtype=h5py.special_dtype(vlen=str),
+                                       data=np.array([c[-1] for c in conditions], dtype=h5py.special_dtype(vlen=str)))
+        chromds = h5file.create_dataset('chrom', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
+        posds = h5file.create_dataset('pos', (buffersize,), compression='gzip', dtype='int', maxshape=(None,))
+        vnameds = h5file.create_dataset('id', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
+        refs = h5file.create_dataset('ref', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
+        alts = h5file.create_dataset('alt', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
+        refscore = h5file.create_dataset('refscore', (buffersize, len(conditions)), dtype='float16', maxshape=(None, len(conditions)))
+        altscore = h5file.create_dataset('altscore', (buffersize, len(conditions)), dtype='float16', maxshape=(None, len(conditions)))
+
+        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
+                                         filter_region=region_filter,
+                                         min_allele_frequency=min_allele_frequency)
+
+        ibatch = 0
+        counter = Counter('Parsing {}: '.format(variants))
+        # read variants file
+        for names, chroms, poss, ra, aa, reference, alternative in variantsstream.flow():
+            counter.next()
+
+            if reference.shape[0] <= 0:
+                # reached the end of the file
+                break
+
+            ref_score = self.kerasmodel.predict_on_batch(reference)
+            alt_score = self.kerasmodel.predict_on_batch(alternative)
+
+            if ibatch + ref_score.shape[0] > chromds.shape[0]:
+                chromds.resize(chromds.shape[0] + buffersize, axis=0)
+                posds.resize(posds.shape[0] + buffersize, axis=0)
+                vnameds.resize(vnameds.shape[0] + buffersize, axis=0)
+                refs.resize(refs.shape[0] + buffersize, axis=0)
+                alts.resize(alts.shape[0] + buffersize, axis=0)
+                refscore.resize(refscore.shape[0] + buffersize, axis=0)
+                altscore.resize(altscore.shape[0] + buffersize, axis=0)
+
+            x = np.array(vnameds, dtype=h5py.special_dtype(vlen=str))
+            chromds[ibatch:(ibatch + ref_score.shape[0])] = np.array(chroms, dtype=h5py.special_dtype(vlen=str))
+            posds[ibatch:(ibatch + ref_score.shape[0])] = np.array(poss, dtype='int')
+            vnameds[ibatch:(ibatch + ref_score.shape[0])] = np.array(names, dtype=h5py.special_dtype(vlen=str))
+            refs[ibatch:(ibatch + ref_score.shape[0])] = np.array(ra, dtype=h5py.special_dtype(vlen=str))
+            alts[ibatch:(ibatch + ref_score.shape[0])] = np.array(aa, dtype=h5py.special_dtype(vlen=str))
+            refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:,icond].astype('float16')
+            altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:,icond].astype('float16')
+            ibatch += ref_score.shape[0]
+
+        if ibatch < chromds.shape[0]:
+            chromds.resize(ibatch, axis=0)
+            posds.resize(ibatch, axis=0)
+            vnameds.resize(ibatch, axis=0)
+            refs.resize(ibatch, axis=0)
+            alts.resize(ibatch, axis=0)
+            refscore.resize(ibatch, axis=0)
+            altscore.resize(ibatch, axis=0)
+
+        h5file.close()
+
+
+        counter.finish()
 
     def __dim_logging(self, data):
         if isinstance(data, dict):

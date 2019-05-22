@@ -15,6 +15,7 @@ from janggu.layers import Complement
 from janggu.layers import Reverse
 from janggu.utils import complement_permmatrix
 from janggu.utils import sequences_from_fasta
+from janggu.data import VariantStreamer
 
 matplotlib.use('AGG')
 
@@ -637,3 +638,107 @@ def test_dnabed_overreaching_ends_partial_genome():
     assert bioseq.shape == (9, 2+2*20, 1, 4)
     np.testing.assert_equal(bioseq[0].sum(), 22)
     np.testing.assert_equal(bioseq[-1].sum(), 42 - 4)
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_1(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       binsize=50,
+                                       store_whole_genome=True,
+                                       order=order)
+
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
+    it_vcf = iter(vcf.flow())
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    # G to A
+    np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,1,0]))
+    np.testing.assert_equal(alternative[0,5,0,:], np.array([1,0,0,0]))
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    np.testing.assert_equal(reference[0,5,0,:], np.array([0,1,0,0]))
+    np.testing.assert_equal(alternative[0,5,0,:], np.array([0,0,0,1]))
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,0,1]))
+    np.testing.assert_equal(alternative[0,5,0,:], np.array([0,1,0,0]))
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    np.testing.assert_equal(reference[0,5,0,:], np.array([1,0,0,0]))
+    np.testing.assert_equal(alternative[0,5,0,:], np.array([0,0,1,0]))
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,1,0]))
+    np.testing.assert_equal(alternative[0,5,0,:], np.array([1,0,0,0]))
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_2(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+    #   for order in [1, 2, 3]:
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+    order = 2
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       binsize=50,
+                                       store_whole_genome=True,
+                                       order=order)
+
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
+    it_vcf = iter(vcf.flow())
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    # AG to AA
+    # GC to AC
+    np.testing.assert_equal(reference[0,4,0,2], 1)
+    np.testing.assert_equal(reference[0,5,0,9], 1)
+    np.testing.assert_equal(alternative[0,4,0,0], 1)
+    np.testing.assert_equal(alternative[0,5,0,1], 1)
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    np.testing.assert_equal(reference[0,4,0,1], 1)
+    np.testing.assert_equal(reference[0,5,0,7], 1)
+    np.testing.assert_equal(alternative[0,4,0,3], 1)
+    np.testing.assert_equal(alternative[0,5,0,15], 1)
+
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    # CTC -> CCC
+    np.testing.assert_equal(reference[0,4,0,7], 1)
+    np.testing.assert_equal(reference[0,5,0,13], 1)
+    np.testing.assert_equal(alternative[0,4,0,5], 1)
+    np.testing.assert_equal(alternative[0,5,0,5], 1)
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    # GAC -> GGC
+    np.testing.assert_equal(reference[0,4,0,8], 1)
+    np.testing.assert_equal(reference[0,5,0,1], 1)
+    np.testing.assert_equal(alternative[0,4,0,10], 1)
+    np.testing.assert_equal(alternative[0,5,0,9], 1)
+
+    names, chroms, poss, reference, alternative = next(it_vcf)
+    # CGG -> CAG
+    np.testing.assert_equal(reference[0,4,0,6], 1)
+    np.testing.assert_equal(reference[0,5,0,10], 1)
+    np.testing.assert_equal(alternative[0,4,0,4], 1)
+    np.testing.assert_equal(alternative[0,5,0,2], 1)

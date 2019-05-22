@@ -251,6 +251,37 @@ def test_janggu_influence_genomic(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_prediction(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    for order in [1, 2, 3]:
+        refgenome = os.path.join(data_path, 'sample_genome.fa')
+        vcffile = os.path.join(data_path, 'sample.vcf')
+
+        dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                           storage='ndarray',
+                                           binsize=50,
+                                           store_whole_genome=True,
+                                           order=order)
+
+        def _cnn_model(inputs, inp, oup, params):
+            inputs = Input((50 - params['order'] + 1, 1, pow(4, params['order'])))
+            layer = Flatten()(inputs)
+            layer = Dense(params['hiddenunits'])(layer)
+            output = Dense(4, activation='sigmoid')(layer)
+            return inputs, output
+
+        model = Janggu.create(_cnn_model, modelparams={'hiddenunits':2, 'order':order},
+                              name='dna_ctcf_HepG2-cnn')
+
+        model.predict_variant_effect(dna, vcffile, conditions=['m'+str(i) for i in range(4)],
+                                     output_file=os.path.join(os.environ['JANGGU_OUTPUT'], 'pve{}.tsv.gz'.format(order)))
+        assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'pve{}.tsv.gz'.format(order)))
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_instance_conv(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """
