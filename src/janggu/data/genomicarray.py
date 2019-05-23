@@ -413,9 +413,9 @@ class HDF5GenomicArray(GenomicArray):
 
     Parameters
     ----------
-    gsize : GenomicIndexer
-        Dictionary with chromosome names as keys and chromosome lengths
-        as values.
+    gsize : GenomicIndexer or callable
+        GenomicIndexer containing the genome sizes or a callable that
+        returns a GenomicIndexer to enable lazy loading.
     stranded : bool
         Consider stranded profiles. Default: True.
     conditions : list(str) or None
@@ -465,22 +465,31 @@ class HDF5GenomicArray(GenomicArray):
                                                padding_value=padding_value,
                                                store_whole_genome=store_whole_genome,
                                                collapser=collapser)
+
         if cache is None:
             raise ValueError('HDF5 format requires cache=True')
+
+        gsize_ = None
+
+        if not store_whole_genome:
+            if gsize_ is None:
+                gsize_ = gsize() if callable(gsize) else gsize
+            self.region2index = {_iv_to_str(region.chrom,
+                                            region.start,
+                                            region.end): i \
+                                                for i, region in enumerate(gsize_)}
 
         cachefile = _get_cachefile(cache, datatags, '.h5')
         load_from_file = _load_data(cache, datatags, '.h5')
 
-        if not store_whole_genome:
-            self.region2index = {_iv_to_str(region.chrom,
-                                            region.start,
-                                            region.end): i \
-                                                for i, region in enumerate(gsize)}
         if load_from_file:
+            if gsize_ is None:
+                gsize_ = gsize() if callable(gsize) else gsize
+
             h5file = h5py.File(cachefile, 'w')
 
             if store_whole_genome:
-                for region in gsize:
+                for region in gsize_:
                     shape = (_get_iv_length(region.length - self.order + 1, self.resolution),
                              2 if stranded else 1, len(self.condition))
                     h5file.create_dataset(str(region.chrom), shape,
@@ -490,7 +499,7 @@ class HDF5GenomicArray(GenomicArray):
                                                                        self.typecode))
                     self.handle = h5file
             else:
-                shape = (len(gsize), _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                shape = (len(gsize_), _get_iv_length(gsize_.binsize + 2*gsize_.flank - self.order + 1,
                                                     self.resolution),
                          2 if stranded else 1, len(self.condition))
                 h5file.create_dataset('data', shape,
@@ -519,9 +528,9 @@ class NPGenomicArray(GenomicArray):
     Implements GenomicArray.
     Parameters
     ----------
-    gsize : GenomicIndexer
-        Dictionary with chromosome names as keys and chromosome lengths
-        as values.
+    gsize : GenomicIndexer or callable
+        GenomicIndexer containing the genome sizes or a callable that
+        returns a GenomicIndexer to enable lazy loading.
     stranded : bool
         Consider stranded profiles. Default: True.
     conditions : list(str) or None
@@ -577,14 +586,24 @@ class NPGenomicArray(GenomicArray):
                                              store_whole_genome=store_whole_genome,
                                              collapser=collapser)
 
-        cachefile = _get_cachefile(cache, datatags, '.npz')
-        load_from_file = _load_data(cache, datatags, '.npz')
+        gsize_ = None
+
         if not store_whole_genome:
+            if gsize_ is None:
+                gsize_ = gsize() if callable(gsize) else gsize
+
             self.region2index = {_iv_to_str(region.chrom,
                                             region.start,
-                                            region.end): i for i, region in enumerate(gsize)}
+                                            region.end): i \
+                                                for i, region in enumerate(gsize_)}
+
+        cachefile = _get_cachefile(cache, datatags, '.npz')
+        load_from_file = _load_data(cache, datatags, '.npz')
 
         if load_from_file:
+            if gsize_ is None:
+                gsize_ = gsize() if callable(gsize) else gsize
+
             if store_whole_genome:
                 data = {str(region.chrom): init_with_padding_value(
                     padding_value,
@@ -592,14 +611,14 @@ class NPGenomicArray(GenomicArray):
                                           self.resolution),
                            2 if stranded else 1,
                            len(self.condition)),
-                    dtype=self.typecode) for region in gsize}
-                names = [str(region.chrom) for region in gsize]
+                    dtype=self.typecode) for region in gsize_}
+                names = [str(region.chrom) for region in gsize_]
                 self.handle = data
             else:
                 data = {'data': init_with_padding_value(
                     padding_value,
-                    shape=(len(gsize),
-                           _get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                    shape=(len(gsize_),
+                           _get_iv_length(gsize_.binsize + 2*gsize_.flank - self.order + 1,
                                           self.resolution) if self.resolution is not None else 1,
                            2 if stranded else 1,
                            len(self.condition)),
@@ -614,6 +633,7 @@ class NPGenomicArray(GenomicArray):
 
             if cachefile is not None:
                 np.savez(cachefile, **data)
+
 
         if cachefile is not None:
             print('reload {}'.format(cachefile))
@@ -635,9 +655,9 @@ class SparseGenomicArray(GenomicArray):
 
     Parameters
     ----------
-    gsize : GenomicIndexer
-        Dictionary with chromosome names as keys and chromosome lengths
-        as values
+    gsize : GenomicIndexer or callable
+        GenomicIndexer containing the genome sizes or a callable that
+        returns a GenomicIndexer to enable lazy loading.
     stranded : bool
         Consider stranded profiles. Default: True.
     conditions : list(str) or None
@@ -694,25 +714,31 @@ class SparseGenomicArray(GenomicArray):
                                                  store_whole_genome=store_whole_genome,
                                                  collapser=collapser)
 
-        if not store_whole_genome:
-            self.region2index = {_iv_to_str(region.chrom, region.start,
-                                            region.end): i for i, region in enumerate(gsize)}
-
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
 
+        # lazy loading is not supported for sparse arrays at the moment.
+        gsize_ = gsize() if callable(gsize) else gsize
+        if not store_whole_genome:
+
+            self.region2index = {_iv_to_str(region.chrom,
+                                            region.start,
+                                            region.end): i \
+                                                for i, region in enumerate(gsize_)}
+
         if load_from_file:
+
             if store_whole_genome:
                 data = {str(region.chrom): sparse.dok_matrix(
                     (_get_iv_length(region.length - self.order + 1,
                                     resolution),
                      (2 if stranded else 1) * len(self.condition)),
                     dtype=self.typecode)
-                        for region in gsize}
+                        for region in gsize_}
             else:
                 data = {'data': sparse.dok_matrix(
-                    (len(gsize),
-                     (_get_iv_length(gsize.binsize + 2*gsize.flank - self.order + 1,
+                    (len(gsize_),
+                     (_get_iv_length(gsize_.binsize + 2*gsize_.flank - self.order + 1,
                                      self.resolution) if self.resolution is not None else 1) *
                      (2 if stranded else 1) * len(self.condition)),
                     dtype=self.typecode)}
@@ -748,14 +774,14 @@ class SparseGenomicArray(GenomicArray):
                   storage[str(region.chrom)][:, 2].astype('int'))),
                 shape=(_get_iv_length(region.length, resolution),
                        (2 if stranded else 1) * len(self.condition))).tocsr()
-                           for region in gsize}
+                           for region in gsize_}
         else:
             self.handle = {name: sparse.coo_matrix(
                 (storage[name][:, 0],
                  (storage[name][:, 1].astype('int'),
                   storage[name][:, 2].astype('int'))),
-                shape=(len(gsize),
-                       (_get_iv_length(gsize.binsize + 2*gsize.flank, resolution)
+                shape=(len(gsize_),
+                       (_get_iv_length(gsize_.binsize + 2*gsize_.flank, resolution)
                         if self.resolution is not None else 1) *
                        (2 if stranded else 1) * len(self.condition))).tocsr()
                            for name in names}

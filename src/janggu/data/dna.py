@@ -25,6 +25,71 @@ from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
 from janggu.version import version
 
+class GenomicSizeLazyLoader:
+    def __init__(self, fastafile, seqtype, store_whole_genome, gindexer):
+        self.fastafile = fastafile
+        self.seqtype = seqtype
+        self.store_whole_genome = store_whole_genome
+        self.gindexer = gindexer
+        self.seqs_ = None
+        self.gsize_ = None
+
+    def load_sequence(self):
+        print('loading from lazy loader')
+        store_whole_genome = self.store_whole_genome
+        gindexer = self.gindexer
+
+        if isinstance(self.fastafile, str):
+            seqs = sequences_from_fasta(self.fastafile, self.seqtype)
+        else:
+            # This is already a list of SeqRecords
+            seqs = self.fastafile
+
+        if not store_whole_genome and gindexer is not None:
+            # the genome is loaded with a bed file,
+            # only the specific subset is loaded
+            # to keep the memory overhead low.
+            # Otherwise the entire reference genome is loaded.
+            rgen = OrderedDict(((seq.id, seq) for seq in seqs))
+            subseqs = []
+            for giv in gindexer:
+                subseq = rgen[giv.chrom][max(giv.start, 0):min(giv.end, len(rgen[giv.chrom]))]
+                if giv.start < 0:
+                    subseq = 'N' * (-giv.start) + subseq
+                if len(subseq) < giv.length:
+                    subseq = subseq + 'N' * (giv.length - len(subseq))
+                subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end)
+                subseq.name = subseq.id
+                subseq.description = subseq.id
+                subseqs.append(subseq)
+            seqs = subseqs
+            gsize = gindexer
+
+        if store_whole_genome:
+            gsize = OrderedDict(((seq.id, len(seq)) for seq in seqs))
+            gsize = GenomicIndexer.create_from_genomesize(gsize)
+
+        self.gsize_ = gsize
+        self.seqs_ = seqs
+
+    @property
+    def gsize(self):
+        if self.gsize_ is None:
+            self.load_sequence()
+        return self.gsize_
+
+    @property
+    def seqs(self):
+        if self.seqs_ is None:
+            self.load_sequence()
+        return self.seqs_
+
+    def __call__(self):
+        return self.gsize
+
+    def tostr(self):
+        return "full_genome_lazy_loading"
+
 
 class SeqLoader:
     """SeqLoader class.
@@ -34,8 +99,12 @@ class SeqLoader:
 
     Parameters
     -----------
-    seqs : list(Bio.SeqRecord)
-        List of sequences contained in Biopython SeqRecords.
+    gsize : GenomicIndexer or callable
+        GenomicIndexer indicating the genome size or callable
+        that returns a genomic indexer for lazy loading.
+    seqs : list(Bio.SeqRecord) or str
+        List of sequences contained in Biopython SeqRecords or
+        fasta file name
     order : int
         Order of the one-hot representation.
     """
@@ -44,9 +113,15 @@ class SeqLoader:
         self.order = order
         self.gsize = gsize
 
+
+
     def __call__(self, garray):
-        gsize = self.gsize
-        seqs = self.seqs
+        if callable(self.gsize):
+            gsize = self.gsize()
+            seqs = self.gsize.seqs
+        else:
+            gsize = self.gsize
+            seqs = self.seqs
         order = self.order
         dtype = garray.typecode
 
@@ -237,46 +312,16 @@ class Bioseq(Dataset):
         if not store_whole_genome and gindexer is None:
             raise ValueError('Either roi must be supplied or store_whole_genome must be True')
 
-        if isinstance(refgenome, str):
-            seqs = sequences_from_fasta(refgenome, 'dna')
-        else:
-            # This is already a list of SeqRecords
-            seqs = refgenome
+        gsize = GenomicSizeLazyLoader(refgenome, 'dna', store_whole_genome, gindexer)
 
-        if not store_whole_genome and gindexer is not None:
-            # the genome is loaded with a bed file,
-            # only the specific subset is loaded
-            # to keep the memory overhead low.
-            # Otherwise the entire reference genome is loaded.
-            rgen = OrderedDict(((seq.id, seq) for seq in seqs))
-            subseqs = []
-            for giv in gindexer:
-                subseq = rgen[giv.chrom][max(giv.start, 0):min(giv.end, len(rgen[giv.chrom]))]
-                if giv.start < 0:
-                    subseq = 'N' * (-giv.start) + subseq
-                if len(subseq) < giv.length:
-                    subseq = subseq + 'N' * (giv.length - len(subseq))
-                subseq.id = _iv_to_str(giv.chrom, giv.start, giv.end)
-                subseq.name = subseq.id
-                subseq.description = subseq.id
-                subseqs.append(subseq)
-            seqs = subseqs
-
-            gsize = gindexer
-
-
-        if store_whole_genome:
-            gsize = OrderedDict(((seq.id, len(seq)) for seq in seqs))
-            gsize = GenomicIndexer.create_from_genomesize(gsize)
-
-        garray = cls._make_genomic_array(name, gsize, seqs, order, storage,
+        garray = cls._make_genomic_array(name, gsize, [refgenome], order, storage,
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite,
                                          store_whole_genome=store_whole_genome)
 
         return cls(name, garray, gindexer,
-                   alphabet=seqs[0].seq.alphabet.letters,
+                   alphabet='ACGT',
                    channel_last=channel_last)
 
     @classmethod
@@ -616,6 +661,7 @@ class VariantStreamer:
                         iref[self.binsize//2 + o - self.bioseq.garray.order + 1] += replacement
 
                     alt = as_onehot(iref[None, :], self.bioseq.garray.order, self.bioseq._alphabetsize)
+
                     alts[ibatch] = alt
 
                     ibatch += 1
