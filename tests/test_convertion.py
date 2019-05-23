@@ -19,7 +19,7 @@ from janggu.layers import LocalAveragePooling2D
 
 @pytest.mark.filterwarnings("ignore:inspect")
 @pytest.mark.filterwarnings("ignore:The binary")
-def test_create_from_array(tmpdir):
+def test_create_from_array_whole_genome_true(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # load the dataset
     # The pseudo genome represents just a concatenation of all sequences
