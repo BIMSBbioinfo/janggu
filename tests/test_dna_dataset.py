@@ -475,6 +475,8 @@ def test_dna_dataset_sanity(tmpdir):
                               store_whole_genome=True)
     file_ = glob.glob(os.path.join(tmpdir.strpath, 'datasets', 'train', '*.h5'))
     assert len(file_) == 0
+    print(refgenome)
+    print(bed_file)
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
         storage='ndarray',
         roi=bed_file, order=1, cache=True)
@@ -657,27 +659,32 @@ def test_janggu_variant_streamer_order_1(tmpdir):
                                        store_whole_genome=True,
                                        order=order)
 
-    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
+                          min_allele_frequency=0.02)
     it_vcf = iter(vcf.flow())
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
     # G to A
+    print(names, chroms, poss, ra, aa)
     np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,1,0]))
     np.testing.assert_equal(alternative[0,5,0,:], np.array([1,0,0,0]))
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
     np.testing.assert_equal(reference[0,5,0,:], np.array([0,1,0,0]))
     np.testing.assert_equal(alternative[0,5,0,:], np.array([0,0,0,1]))
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
     np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,0,1]))
     np.testing.assert_equal(alternative[0,5,0,:], np.array([0,1,0,0]))
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
     np.testing.assert_equal(reference[0,5,0,:], np.array([1,0,0,0]))
     np.testing.assert_equal(alternative[0,5,0,:], np.array([0,0,1,0]))
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
     np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,1,0]))
     np.testing.assert_equal(alternative[0,5,0,:], np.array([1,0,0,0]))
 
@@ -703,10 +710,11 @@ def test_janggu_variant_streamer_order_2(tmpdir):
                                        store_whole_genome=True,
                                        order=order)
 
-    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
+                          min_allele_frequency=0.02)
     it_vcf = iter(vcf.flow())
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
     # AG to AA
     # GC to AC
     np.testing.assert_equal(reference[0,4,0,2], 1)
@@ -714,7 +722,7 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     np.testing.assert_equal(alternative[0,4,0,0], 1)
     np.testing.assert_equal(alternative[0,5,0,1], 1)
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
     # ACT -> ATT
     np.testing.assert_equal(reference[0,4,0,1], 1)
     np.testing.assert_equal(reference[0,5,0,7], 1)
@@ -722,21 +730,21 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     np.testing.assert_equal(alternative[0,5,0,15], 1)
 
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
     # CTC -> CCC
     np.testing.assert_equal(reference[0,4,0,7], 1)
     np.testing.assert_equal(reference[0,5,0,13], 1)
     np.testing.assert_equal(alternative[0,4,0,5], 1)
     np.testing.assert_equal(alternative[0,5,0,5], 1)
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
     # GAC -> GGC
     np.testing.assert_equal(reference[0,4,0,8], 1)
     np.testing.assert_equal(reference[0,5,0,1], 1)
     np.testing.assert_equal(alternative[0,4,0,10], 1)
     np.testing.assert_equal(alternative[0,5,0,9], 1)
 
-    names, chroms, poss, reference, alternative = next(it_vcf)
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
     # CGG -> CAG
     np.testing.assert_equal(reference[0,4,0,6], 1)
     np.testing.assert_equal(reference[0,5,0,10], 1)
