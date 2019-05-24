@@ -648,6 +648,9 @@ class VariantStreamer:
                     start = rec.pos-self.binsize//2
                     end = rec.pos+self.binsize//2 + self.binsize%2
 
+                    if start < 0:
+                        continue
+
                     iref = self.bioseq._getsingleitem(Interval(rec.chrom, start, end)).copy()
 
                     ref = as_onehot(iref[None, :], self.bioseq.garray.order, self.bioseq._alphabetsize)
