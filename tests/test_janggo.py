@@ -629,6 +629,47 @@ def test_janggu_chr2_validation(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore:inspect")
+def test_janggu_bedfile_validation(tmpdir):
+    os.environ['JANGGU_OUTPUT']=tmpdir.strpath
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+    posfile = os.path.join(data_path, 'scored_sample.bed')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       binsize=200, stepsize=50,
+                                       roi=bed_file, order=1)
+
+    ctcf = Cover.create_from_bed(
+        "positives",
+        bedfiles=posfile,
+        roi=bed_file,
+        binsize=200, stepsize=50,
+        resolution=None,
+        flank=0,
+        collapser='max',
+        storage='ndarray')
+
+    @inputlayer
+    @outputconv('sigmoid')
+    def _cnn_model1(inputs, inp, oup, params):
+        with inputs.use('dna') as inlayer:
+            layer = inlayer
+            layer = DnaConv2D(Conv2D(5, (3, 1), name='fconv1'),
+                              merge_mode='max', name='bothstrands')(layer)
+            layer = MaxPooling2D((198, 1))(layer)
+        return inputs, layer
+
+    bwm1 = Janggu.create(_cnn_model1, modelparams=(2,),
+                        inputs=dna, outputs=ctcf,
+                        name='dna_ctcf_HepG2-cnn1')
+
+    bwm1.compile(optimizer='adadelta', loss='binary_crossentropy')
+    p1 = bwm1.fit(dna, ctcf, validation_data=posfile)
+
+
+@pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_option0(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Train, predict and evaluate on dummy data.

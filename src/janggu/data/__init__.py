@@ -22,6 +22,36 @@ from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 
 
+def subset(dataset, include_regions=None, exclude_regions=None):
+    """Splits dataset into training and test set.
+
+    A Cover or Bioseq dataset will be split into
+    training and test set according to a list of
+    heldout_chroms. That is the training datset
+    exludes the heldout_chroms and the test set
+    only includes the heldout_chroms.
+
+    Parameters
+    ----------
+    dataset : Cover or Bioseq object
+        Original Dataset containing a union of training and test set.
+    include_regions: None, str or list(str)
+        List of chromosome names or BED file defining the regions to keep.
+    exclude_regions: None, str or list(str)
+        List of chromosome names or BED file defining the regions to remove.
+    """
+    if include_regions is None and exclude_regions is None:
+        raise ValueError("No filter specified.")
+    if not hasattr(dataset, 'gindexer'):
+        raise ValueError("Unknown dataset type: {}".format(type(dataset)))
+
+    gind = dataset.gindexer
+    subdata = copy(dataset)
+    subdata.gindexer = gind.filter_by_region(include_regions, exclude_regions)
+
+    return subdata
+
+
 def split_train_test_(dataset, holdout_chroms):
     """Splits dataset into training and test set.
 
@@ -41,15 +71,8 @@ def split_train_test_(dataset, holdout_chroms):
     if not hasattr(dataset, 'gindexer'):
         raise ValueError("Unknown dataset type: {}".format(type(dataset)))
 
-    gind = dataset.gindexer
-    gind_train = gind.filter_by_region(exclude=holdout_chroms)
-    gind_test = gind.filter_by_region(include=holdout_chroms)
-
-    traindata = copy(dataset)
-    traindata.gindexer = gind_train
-
-    testdata = copy(dataset)
-    testdata.gindexer = gind_test
+    traindata = subset(dataset, exclude_regions=holdout_chroms)
+    testdata = subset(dataset, include_regions=holdout_chroms)
 
     return traindata, testdata
 

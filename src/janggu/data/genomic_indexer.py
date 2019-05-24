@@ -1,6 +1,9 @@
 """Genomic Indexer"""
+import os
+import tempfile
 
 import numpy as np
+from pybedtools import BedTool
 from pybedtools import Interval
 
 from janggu.utils import _get_genomic_reader
@@ -17,6 +20,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     _stepsize = None
     _binsize = None
     _flank = None
+    _collapse = None
     chrs = None
     starts = None
     strand = None
@@ -78,6 +82,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         gind = cls(binsize, stepsize, flank)
 
+        gind._collapse = collapse
         gind.chrs = []
         gind.starts = []
         gind.strand = []
@@ -335,10 +340,10 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
         Parameters
         ----------
-        include : list(str)
+        include : list(str) or str
             List of chromosome names to be included. Default: [] means
             all chromosomes are included.
-        exclude : list(str)
+        exclude : list(str) or str
             List of chromosome names to be excluded. Default: [].
         start : int
             The start of the required interval.
@@ -350,13 +355,52 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         GenomicIndexer
             Containing the filtered regions.
         """
-        idxs = self.idx_by_region(include=include, exclude=exclude, start=start, end=end)
-        #  construct the filtered gindexer
-        new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
-        new_gindexer.chrs = [self.chrs[i] for i in idxs]
-        new_gindexer.starts = [self.starts[i] for i in idxs]
-        new_gindexer.strand = [self.strand[i] for i in idxs]
-        new_gindexer.ends = [self.ends[i] for i in idxs]
+
+        roifile = None
+
+        if isinstance(include, str) and os.path.exists(include) or \
+            isinstance(exclude, str) and os.path.exists(exclude):
+            tmpdir = tempfile.mkdtemp()
+            predictable_filename = 'gindexerdump'
+            tmpfilename = os.path.join(tmpdir, predictable_filename)
+
+            self.export_to_bed(tmpfilename)
+
+            roifile = BedTool(tmpfilename)
+
+            if isinstance(include, str) and os.path.exists(include):
+                # intersect with bed file
+                keepregs = BedTool(include)
+                roifile = roifile.intersect(keepregs, u=True, wa=True)
+                include = None
+
+
+            if isinstance(exclude, str) and os.path.exists(exclude):
+                # intersect with bed file
+                removeregs = BedTool(exclude)
+                roifile = roifile.intersect(removeregs, v=True, wa=True)
+                exclude = None
+
+        new_gindexer = None
+        if roifile is not None:
+            new_gindexer = GenomicIndexer.create_from_file(roifile.TEMPFILES[-1],
+                                                           self.binsize,
+                                                           self.stepsize,
+                                                           self.flank,
+                                                           True,
+                                                           self._collapse)
+
+        gind = self if new_gindexer is None else new_gindexer
+
+        if include is not None or exclude is not None:
+            idxs = gind.idx_by_region(include=include, exclude=exclude,
+                                      start=start, end=end)
+            #  construct the filtered gindexer
+            new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
+            new_gindexer.chrs = [self.chrs[i] for i in idxs]
+            new_gindexer.starts = [self.starts[i] for i in idxs]
+            new_gindexer.strand = [self.strand[i] for i in idxs]
+            new_gindexer.ends = [self.ends[i] for i in idxs]
 
         return new_gindexer
 

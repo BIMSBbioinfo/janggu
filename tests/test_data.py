@@ -6,6 +6,7 @@ import pytest
 
 from janggu.data import Bioseq
 from janggu.data import split_train_test
+from janggu.data import subset
 from janggu.data.data import _data_props
 
 matplotlib.use('AGG')
@@ -49,3 +50,73 @@ def test_split_train_test():
     assert len(traindna) == 50
     assert len(testdna) == 50
     assert len(dna) == len(traindna) + len(testdna)
+
+
+def test_subset_include_chrname_test():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       roi=bed_file,
+                                       binsize=200, stepsize=200,
+                                       order=1, store_whole_genome=True)
+
+    subdna = subset(dna, include_regions='chr2')
+
+    assert len(subdna) == 50
+
+
+def test_subset_exclude_chrname_test():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       roi=bed_file,
+                                       binsize=200, stepsize=200,
+                                       order=1, store_whole_genome=True)
+
+    subdna = subset(dna, exclude_regions='chr2')
+
+    assert len(subdna) == 50
+
+
+def test_subset_include_bed_test():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+    bedsub_file = os.path.join(data_path, 'scored_sample.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       roi=bed_file,
+                                       binsize=200, stepsize=200,
+                                       order=1, store_whole_genome=True)
+
+    subdna = subset(dna, include_regions=bedsub_file)
+
+    assert len(subdna) == 4
+
+
+def test_subset_exclude_bed_test():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+    bedsub_file = os.path.join(data_path, 'scored_sample.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       roi=bed_file,
+                                       binsize=200, stepsize=200,
+                                       order=1, store_whole_genome=True)
+
+    subdna = subset(dna, exclude_regions=bedsub_file)
+
+    assert len(subdna) == 96
