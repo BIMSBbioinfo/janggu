@@ -495,7 +495,7 @@ class HDF5GenomicArray(GenomicArray):
                     shape = (_get_iv_length(region.length - self.order + 1, self.resolution),
                              2 if stranded else 1, len(self.condition))
                     h5file.create_dataset(str(region.chrom), shape,
-                                          dtype=self.typecode, compression='gzip',
+                                          dtype=self.typecode,
                                           data=init_with_padding_value(padding_value,
                                                                        shape,
                                                                        self.typecode))
@@ -505,7 +505,7 @@ class HDF5GenomicArray(GenomicArray):
                                                     self.resolution),
                          2 if stranded else 1, len(self.condition))
                 h5file.create_dataset('data', shape,
-                                      dtype=self.typecode, compression='gzip',
+                                      dtype=self.typecode,
                                       data=init_with_padding_value(padding_value,
                                                                    shape,
                                                                    self.typecode))
