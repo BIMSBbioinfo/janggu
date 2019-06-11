@@ -1,7 +1,6 @@
 """Janggu - deep learning for genomics"""
 
 import copy
-import gzip
 import hashlib
 import logging
 import os
