@@ -648,12 +648,18 @@ class Cover(Dataset):
             normalizer = [normalizer]
 
         if cache:
-            files = bamfiles + [roi]
+            files = copy.copy(bamfiles)
 
-            parameters = [genomesize, min_mapq, binsize, stepsize, flank,
+            parameters = [gsize.tostr(), min_mapq,
                           resolution, storage, dtype, stranded,
-                          pairedend, template_extension, zero_padding,
+                          pairedend, zero_padding,
                           store_whole_genome, version]
+            if not store_whole_genome:
+                files += [roi]
+                parameters += [binsize, stepsize, flank,
+                              template_extension]
+            if storage == 'hdf5':
+                parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -823,10 +829,13 @@ class Cover(Dataset):
                     raise ValueError(
                         'Please prepare all ROI starts and ends to be '
                         'divisible by resolution={} to '.format(resolution) + \
-                        'avoid undesired rounding effects.'
+                        'avoid undesired rounding effects. '
                         'Consider using '
                         '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                        .format(input=roi, output=roi, resolution=resolution))
+                        .format(input=roi,
+                                output=os.path.join(os.path.dirname(roi),
+                                                    'trun_' + os.path.basename(roi)),
+                                resolution=resolution))
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -862,12 +871,17 @@ class Cover(Dataset):
             normalizer = [normalizer]
 
         if cache:
-            files = bigwigfiles + [roi]
-            parameters = [genomesize, binsize, stepsize, flank,
+            files = copy.copy(bigwigfiles)
+            parameters = [gsize.tostr(),
                           resolution, storage, dtype,
                           zero_padding,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
                           store_whole_genome, nan_to_num, version]
+            if not store_whole_genome:
+                files += [roi]
+                parameters += [binsize, stepsize, flank]
+            if storage == 'hdf5':
+                parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -1075,13 +1089,23 @@ class Cover(Dataset):
 
         collapser_ = collapser if collapser is not None else 'max'
 
+        if normalizer is None:
+            normalizer = []
+        if not isinstance(normalizer, list):
+            normalizer = [normalizer]
+
         if cache:
-            files = bedfiles + [roi]
-            parameters = [genomesize, binsize, stepsize, flank,
+            files = copy.copy(bedfiles)
+            parameters = [gsize.tostr(),
                           resolution, storage, dtype,
                           zero_padding, mode,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
                           store_whole_genome, version, minoverlap]
+            if not store_whole_genome:
+                files += [roi]
+                parameters += [binsize, stepsize, flank]
+            if storage == 'hdf5':
+                parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None

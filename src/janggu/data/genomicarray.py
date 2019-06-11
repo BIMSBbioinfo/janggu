@@ -514,14 +514,13 @@ class HDF5GenomicArray(GenomicArray):
             if loader:
                 loader(self)
 
+            for norm in normalizer or []:
+                get_normalizer(norm)(self)
             h5file.close()
         print('reload {}'.format(cachefile))
         h5file = h5py.File(cachefile, 'a', driver='stdio')
 
         self.handle = h5file
-
-        for norm in normalizer or []:
-            get_normalizer(norm)(self)
 
 
 class NPGenomicArray(GenomicArray):
