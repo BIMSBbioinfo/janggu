@@ -1,8 +1,10 @@
 """Coverage dataset"""
 
+import copy
 import os
 import tempfile
 import warnings
+from collections import OrderedDict
 from itertools import product
 
 import matplotlib.pyplot as plt
@@ -31,6 +33,65 @@ try:
     import pysam
 except ImportError:  # pragma: no cover
     pysam = None
+
+class BedGenomicSizeLazyLoader:
+    """BedGenomicSizeLazyLoader class
+
+    This class facilitates lazy loading of BED files.
+    It reads all BED files and determines the chromosome lengths
+    as the maximum length observed.
+
+    The call method is invoked for constructing a new genomic array
+    with the correct shape.
+    """
+    def __init__(self, bedfiles, store_whole_genome, gindexer, genomesize):
+        self.bedfiles = bedfiles
+        self.store_whole_genome = store_whole_genome
+        self.gindexer = gindexer
+        self.genomesize = genomesize
+        self.gsize_ = None
+
+    def load_gsize(self):
+        print('loading from lazy loader')
+        store_whole_genome = self.store_whole_genome
+        gindexer = self.gindexer
+        genomesize = self.genomesize
+
+        if not store_whole_genome:
+            if genomesize is not None:
+                gsize = GenomicIndexer.create_from_genomesize(genomesize.copy())
+            else:
+                gsize = gindexer
+            self.gsize_ = gsize
+            return
+
+        gsize = OrderedDict()
+
+        for bedfile in self.bedfiles:
+            bed = BedTool(bedfile).sort().merge()
+            for region in bed:
+                if region.chrom not in gsize:
+                    gsize[region.chrom] = region.end
+                    continue
+                if gsize[region.chrom] < region.end:
+                    gsize[region.chrom] = region.end
+
+        gsize_ = GenomicIndexer.create_from_genomesize(gsize)
+
+        self.gsize_ = gsize_
+
+    @property
+    def gsize(self):
+        if self.gsize_ is None:
+            self.load_gsize()
+        return self.gsize_
+
+    def __call__(self):
+        return self.gsize
+
+    def tostr(self):
+        return "full_genome_lazy_loading"
+
 
 class BamLoader:
     """BamLoader class.
@@ -982,21 +1043,12 @@ class Cover(Dataset):
                         '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
                         .format(input=roi, output=roi, resolution=resolution))
 
-        if not store_whole_genome:
-            # if whole genome should not be loaded
-            gsize = gindexer
-        else:
-            # otherwise the whole genome will be fetched, or at least
-            # a set of full length chromosomes
-            if genomesize is not None:
-                # if a genome size has specifically been given, use it.
-                gsize = genomesize.copy()
-            else:
-                gsize = get_genome_size_from_regions(roi)
-            gsize = GenomicIndexer.create_from_genomesize(gsize)
-
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
+
+        gsize = BedGenomicSizeLazyLoader(bedfiles,
+                                         store_whole_genome,
+                                         gindexer, genomesize)
 
         if mode == 'categorical':
             if len(bedfiles) > 1:
