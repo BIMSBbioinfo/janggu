@@ -163,7 +163,7 @@ class Janggu(object):
 
         logfile = os.path.join(self.outputdir, 'logs', 'janggu.log')
 
-        self.logger = logging.getLogger(self.name[:8])
+        self.logger = logging.getLogger(self.name)
 
         logging.basicConfig(filename=logfile,
                             level=logging.DEBUG,
