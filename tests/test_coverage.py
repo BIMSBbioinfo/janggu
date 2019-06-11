@@ -369,6 +369,7 @@ def test_bam_inferred_binsize():
     assert len(cover) == 25
     assert cover.shape == (25, 200, 2, 1)
 
+
 def test_bigwig_inferred_binsize():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")

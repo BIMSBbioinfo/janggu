@@ -1,22 +1,23 @@
 """Bioseq dataset"""
 
+import logging
 import warnings
 from collections import OrderedDict
 from itertools import product
 
 import Bio
 import numpy as np
-from pybedtools import Interval
-from pybedtools import BedTool
-from pysam import VariantFile
 from progress.counter import Counter
+from pybedtools import BedTool
+from pybedtools import Interval
+from pysam import VariantFile
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
-from janggu.utils import NOLETTER
 from janggu.utils import NMAP
+from janggu.utils import NOLETTER
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
 from janggu.utils import as_onehot
@@ -25,7 +26,16 @@ from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
 from janggu.version import version
 
+
 class GenomicSizeLazyLoader:
+    """GenomicSizeLazyLoader class
+
+    This class facilitates lazy loading of the DNA sequence.
+    The DNA sequence is loaded to determine the length of the reference genome
+    to allocate the required memory and to fetch the sequences.
+
+    The call method is invoked for constructing a new genomic array.
+    """
     def __init__(self, fastafile, seqtype, store_whole_genome, gindexer):
         self.fastafile = fastafile
         self.seqtype = seqtype
