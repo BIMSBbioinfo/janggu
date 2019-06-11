@@ -469,6 +469,10 @@ def test_dna_dataset_sanity(tmpdir):
                                   storage='sparse',
                                   roi=None, order=1,
                                   store_whole_genome=True)
+    with pytest.raises(ValueError):
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     roi=None, store_whole_genome=False)
+
     Bioseq.create_from_refgenome('train', refgenome=refgenome,
                               storage='ndarray',
                               roi=None, order=1,
@@ -662,6 +666,14 @@ def test_janggu_variant_streamer_order_1(tmpdir):
     # even binsize
     vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
     it_vcf = iter(vcf.flow())
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
 
     names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
     # C to T
@@ -704,6 +716,15 @@ def test_janggu_variant_streamer_order_1(tmpdir):
     print(names, chroms, poss, ra, aa)
     print(reference)
     print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+    np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
     np.testing.assert_equal(reference[0,1,0,:], np.array([0,1,0,0]))
     np.testing.assert_equal(alternative[0,1,0,:], np.array([0,0,0,1]))
 
@@ -736,19 +757,13 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
     it_vcf = iter(vcf.flow())
 
-#    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
-#    # AG to AA
-#    # GC to AC
-#    print(names, chroms, poss, ra, aa)
-#    print(reference)
-#    print(alternative)
-#    np.testing.assert_equal(reference[0,4,0,3], 1)
-#    np.testing.assert_equal(reference[0,5,0,9], 1)
-#    np.testing.assert_equal(alternative[0,4,0,0], 1)
-#    np.testing.assert_equal(alternative[0,5,0,1], 1)
-#
-    # skip this entry, because it wasn't used before
-    #next(it_vcf)
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
 
     names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
     # ACT -> ATT
@@ -799,6 +814,14 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     print(names, chroms, poss, ra, aa)
     print(reference)
     print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
     np.testing.assert_equal(reference[0,1,0,1], 1)
     np.testing.assert_equal(reference[0,2,0,7], 1)
     np.testing.assert_equal(alternative[0,1,0,3], 1)
@@ -814,4 +837,3 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     np.testing.assert_equal(reference[0,2,0,13], 1)
     np.testing.assert_equal(alternative[0,1,0,5], 1)
     np.testing.assert_equal(alternative[0,2,0,5], 1)
-

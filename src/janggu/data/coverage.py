@@ -1429,7 +1429,7 @@ class Cover(Dataset):
         return (len(self),) + seqdims + stranded + (len(self.garray.condition),)
 
     @property
-    def ndim(self):
+    def ndim(self):  # pragma: no cover
         """ndim"""
         return len(self.shape)
 

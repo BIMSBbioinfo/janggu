@@ -89,7 +89,7 @@ class GenomicSizeLazyLoader:
         return self.gsize_
 
     @property
-    def seqs(self):
+    def seqs(self):  # pragma: no cover
         if self.seqs_ is None:
             self.load_sequence()
         return self.seqs_
@@ -561,7 +561,7 @@ class Bioseq(Dataset):
                 2*self.gindexer.flank - self.garray.order + 1, 1)
 
     @property
-    def ndim(self):
+    def ndim(self):  # pragma: no cover
         """ndim"""
         return len(self.shape)
 
@@ -588,13 +588,11 @@ class VariantStreamer:
     filter_region : None or str
         BED file name. If None, all VCF file entries are considered.
     """
-    def __init__(self, bioseq, variants, binsize, batch_size,
-                 filter_region=None):
+    def __init__(self, bioseq, variants, binsize, batch_size):
         self.bioseq = bioseq
         self.variants = variants
         self.binsize = binsize
         self.batch_size = batch_size
-        self.filter_region = filter_region
         self.logger = logging.getLogger('variantstreamer')
 
 
@@ -605,14 +603,7 @@ class VariantStreamer:
                          pow(self.bioseq._alphabetsize, self.bioseq.garray.order)))
         alts = np.zeros_like(refs)
 
-        if self.filter_region is not None:
-            vcf_origin = BedTool(self.variants)
-            filter_reg = BedTool(self.filter_region)
-            vcf_filter = vcf_origin.intersect(filter_reg, u=True,
-                                              header=True)
-            vcf = VariantFile(vcf_filter.TEMPFILES[-1]).fetch()
-        else:
-            vcf = VariantFile(self.variants).fetch()
+        vcf = VariantFile(self.variants).fetch()
 
         try:
             while True:
@@ -637,7 +628,6 @@ class VariantStreamer:
                     start = rec.pos-self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
                     end = rec.pos+self.binsize//2
 
-                    print(rec.chrom, start, end)
                     if start < 0:
                         continue
 
@@ -661,7 +651,6 @@ class VariantStreamer:
                                         (0 if self.binsize%2 == 0 else 1)]
                         irefbase = irefbase // pow(self.bioseq._alphabetsize, o)
                         irefbase = irefbase % self.bioseq._alphabetsize
-                        print(irefbase, rec.ref.upper())
 
                         if NMAP[rec.ref.upper()] != irefbase:
                             self.logger.info('VCF reference and reference genome not compatible.'

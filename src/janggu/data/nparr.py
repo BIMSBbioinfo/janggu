@@ -55,7 +55,7 @@ class Array(Dataset):
         return self.data.shape
 
     @property
-    def ndim(self):
+    def ndim(self):  # pragma: no cover 
         "ndim"
         return len(self.shape)
 

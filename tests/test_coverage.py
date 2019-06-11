@@ -460,7 +460,6 @@ def test_bed_inferred_binsize():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "positive.bed")
 
-    #file_ = os.path.join(data_path, "sample.bw")
 
     cover = Cover.create_from_bed(
         'test',
@@ -470,6 +469,17 @@ def test_bed_inferred_binsize():
         storage='ndarray')
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
+
+    bed_file = os.path.join(data_path, "positive_gap.bed")
+    cover = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        roi=bed_file,
+        resolution=1,
+        store_whole_genome=True,
+        storage='ndarray')
+    assert len(cover) == 2
+    assert cover.shape == (2, 50, 1, 1)
 
 def test_bed_overreaching_ends_whole_genome():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -557,6 +567,14 @@ def test_bigwig_store_whole_genome_option():
         store_whole_genome=False,
         binsize=200, stepsize=200,
         storage='ndarray')
+    cover3 = Cover.create_from_bigwig(
+        'test3',
+        bigwigfiles=bwfile_,
+        roi=bed_file,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        nan_to_num=False,
+        storage='ndarray')
 
     assert len(cover1) == 100
     assert len(cover2) == len(cover1)
@@ -564,6 +582,7 @@ def test_bigwig_store_whole_genome_option():
     assert cover1.shape == cover2.shape
     np.testing.assert_equal(cover1[:], cover2[:])
     assert cover1[:].sum() == 1044.0
+    assert cover3[:].sum() == 1044.0
 
 
 def test_bam_store_whole_genome_option():

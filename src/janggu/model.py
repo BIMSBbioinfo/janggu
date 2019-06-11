@@ -802,8 +802,6 @@ class Janggu(object):
                                conditions,
                                output_file,
                                condition_filter=None,
-                               region_filter=None,
-                               window_extension=None,
                                batch_size=None):
         """Evaluates the performance.
 
@@ -820,14 +818,6 @@ class Janggu(object):
         condition_filter : str or None
             Regular expression filter on which conditions should be evaluated.
             If None, all output conditions will be returned.
-        region_filter : str or None
-            BED file that constraining the regions in which the variants should
-            be evaluated. If None, all variants will be evaluated.
-        window_extension : None or int
-            Window by which the region_filter regions should be extended.
-            This allows to approximately retrieve SNPs that are in linkage
-            disequilibrium. This option is only relevant if a region_filter
-            was specified. If None, the region_filter is not extended.
         batch_size : int, None.
             Batch size. If None, a batch_size of 128 is used.
 
@@ -884,8 +874,7 @@ class Janggu(object):
                                          dtype='float16',
                                          maxshape=(None, len(conditions)))
 
-        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
-                                         filter_region=region_filter)
+        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size)
 
         ibatch = 0
         counter = Counter('Parsing {}: '.format(variants))

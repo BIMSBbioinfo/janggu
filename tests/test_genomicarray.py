@@ -22,6 +22,12 @@ def test_get_normalizer():
         get_normalizer('blabla')
 
 
+def test_invalid_storage():
+    with pytest.raises(Exception):
+        ga = create_genomic_array(GenomicIndexer.create_from_genomesize({'chr10': 300}), stranded=True,
+                                  typecode='int8',
+                                  storage='storgae', resolution=1, cache=False)
+
 def test_resolution_negative():
     with pytest.raises(Exception):
         ga = create_genomic_array(GenomicIndexer.create_from_genomesize({'chr10': 300}), stranded=True,
@@ -220,7 +226,7 @@ def test_perctrim(tmpdir):
         ga = create_genomic_array(GenomicIndexer.create_from_genomesize({'chr1': 150, 'chr2': 300}),
                               stranded=False, typecode='float32',
                               storage=store, cache="cache_file", loader=loading,
-                              normalizer=['perctrim'])
+                              normalizer=['binsizenorm', 'perctrim'])
 
 
 def test_tmp_normalization(tmpdir):

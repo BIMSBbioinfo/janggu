@@ -158,10 +158,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         start = self.get_iv_start(interval.start)
         end = self.get_iv_end(interval.end) - self.order + 1
 
-        if start < 0:
-            array_start = -start
-            ref_start = 0
-        elif start >= self.handle[chrom].shape[0]:
+        if start >= self.handle[chrom].shape[0]:
             return 0, 0, 0, 0
         else:
             array_start = 0
