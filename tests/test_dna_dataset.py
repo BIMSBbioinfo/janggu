@@ -7,15 +7,15 @@ import pkg_resources
 import pytest
 from keras.layers import Input
 from keras.models import Model
-
 from pybedtools import BedTool
+
 from janggu.data import Bioseq
 from janggu.data import GenomicIndexer
+from janggu.data import VariantStreamer
 from janggu.layers import Complement
 from janggu.layers import Reverse
 from janggu.utils import complement_permmatrix
 from janggu.utils import sequences_from_fasta
-from janggu.data import VariantStreamer
 
 matplotlib.use('AGG')
 
@@ -659,34 +659,61 @@ def test_janggu_variant_streamer_order_1(tmpdir):
                                        store_whole_genome=True,
                                        order=order)
 
-    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
-                          min_allele_frequency=0.02)
+    # even binsize
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
     it_vcf = iter(vcf.flow())
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([0,1,0,0]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,0,0,1]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([0,0,0,1]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # A to G
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([1,0,0,0]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,0,1,0]))
 
     names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
     # G to A
     print(names, chroms, poss, ra, aa)
-    np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,1,0]))
-    np.testing.assert_equal(alternative[0,5,0,:], np.array([1,0,0,0]))
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([0,0,1,0]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([1,0,0,0]))
+
+    # odd binsize
+    vcf = VariantStreamer(dna, vcffile, binsize=3, batch_size=1)
+    it_vcf = iter(vcf.flow())
 
     names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
     print(names, chroms, poss, ra, aa)
-    np.testing.assert_equal(reference[0,5,0,:], np.array([0,1,0,0]))
-    np.testing.assert_equal(alternative[0,5,0,:], np.array([0,0,0,1]))
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,1,0,:], np.array([0,1,0,0]))
+    np.testing.assert_equal(alternative[0,1,0,:], np.array([0,0,0,1]))
 
     names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # T to C
     print(names, chroms, poss, ra, aa)
-    np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,0,1]))
-    np.testing.assert_equal(alternative[0,5,0,:], np.array([0,1,0,0]))
-
-    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
-    print(names, chroms, poss, ra, aa)
-    np.testing.assert_equal(reference[0,5,0,:], np.array([1,0,0,0]))
-    np.testing.assert_equal(alternative[0,5,0,:], np.array([0,0,1,0]))
-
-    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
-    np.testing.assert_equal(reference[0,5,0,:], np.array([0,0,1,0]))
-    np.testing.assert_equal(alternative[0,5,0,:], np.array([1,0,0,0]))
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,1,0,:], np.array([0,0,0,1]))
+    np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")
@@ -695,10 +722,6 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     """Test Janggu creation by shape and name. """
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
 
-    order = 1
-    #   for order in [1, 2, 3]:
-    refgenome = os.path.join(data_path, 'sample_genome.fa')
-    vcffile = os.path.join(data_path, 'sample.vcf')
     order = 2
 
     refgenome = os.path.join(data_path, 'sample_genome.fa')
@@ -710,43 +733,85 @@ def test_janggu_variant_streamer_order_2(tmpdir):
                                        store_whole_genome=True,
                                        order=order)
 
-    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
-                          min_allele_frequency=0.02)
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
     it_vcf = iter(vcf.flow())
 
-    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
-    # AG to AA
-    # GC to AC
-    np.testing.assert_equal(reference[0,4,0,2], 1)
-    np.testing.assert_equal(reference[0,5,0,9], 1)
-    np.testing.assert_equal(alternative[0,4,0,0], 1)
-    np.testing.assert_equal(alternative[0,5,0,1], 1)
+#    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+#    # AG to AA
+#    # GC to AC
+#    print(names, chroms, poss, ra, aa)
+#    print(reference)
+#    print(alternative)
+#    np.testing.assert_equal(reference[0,4,0,3], 1)
+#    np.testing.assert_equal(reference[0,5,0,9], 1)
+#    np.testing.assert_equal(alternative[0,4,0,0], 1)
+#    np.testing.assert_equal(alternative[0,5,0,1], 1)
+#
+    # skip this entry, because it wasn't used before
+    #next(it_vcf)
 
     names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
     # ACT -> ATT
-    np.testing.assert_equal(reference[0,4,0,1], 1)
-    np.testing.assert_equal(reference[0,5,0,7], 1)
-    np.testing.assert_equal(alternative[0,4,0,3], 1)
-    np.testing.assert_equal(alternative[0,5,0,15], 1)
-
-
-    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
-    # CTC -> CCC
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,3,0,1], 1)
     np.testing.assert_equal(reference[0,4,0,7], 1)
-    np.testing.assert_equal(reference[0,5,0,13], 1)
+    np.testing.assert_equal(alternative[0,3,0,3], 1)
+    np.testing.assert_equal(alternative[0,4,0,15], 1)
+
+
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    # CTC -> CCC
+    np.testing.assert_equal(reference[0,3,0,7], 1)
+    np.testing.assert_equal(reference[0,4,0,13], 1)
+    np.testing.assert_equal(alternative[0,3,0,5], 1)
     np.testing.assert_equal(alternative[0,4,0,5], 1)
-    np.testing.assert_equal(alternative[0,5,0,5], 1)
 
     names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
     # GAC -> GGC
-    np.testing.assert_equal(reference[0,4,0,8], 1)
-    np.testing.assert_equal(reference[0,5,0,1], 1)
-    np.testing.assert_equal(alternative[0,4,0,10], 1)
-    np.testing.assert_equal(alternative[0,5,0,9], 1)
+    np.testing.assert_equal(reference[0,3,0,8], 1)
+    np.testing.assert_equal(reference[0,4,0,1], 1)
+    np.testing.assert_equal(alternative[0,3,0,10], 1)
+    np.testing.assert_equal(alternative[0,4,0,9], 1)
 
     names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
     # CGG -> CAG
-    np.testing.assert_equal(reference[0,4,0,6], 1)
-    np.testing.assert_equal(reference[0,5,0,10], 1)
-    np.testing.assert_equal(alternative[0,4,0,4], 1)
-    np.testing.assert_equal(alternative[0,5,0,2], 1)
+    np.testing.assert_equal(reference[0,3,0,6], 1)
+    np.testing.assert_equal(reference[0,4,0,10], 1)
+    np.testing.assert_equal(alternative[0,3,0,4], 1)
+    np.testing.assert_equal(alternative[0,4,0,2], 1)
+
+    vcf = VariantStreamer(dna, vcffile, binsize=5, batch_size=1)
+    it_vcf = iter(vcf.flow())
+
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,1,0,1], 1)
+    np.testing.assert_equal(reference[0,2,0,7], 1)
+    np.testing.assert_equal(alternative[0,1,0,3], 1)
+    np.testing.assert_equal(alternative[0,2,0,15], 1)
+
+
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    # CTC -> CCC
+    np.testing.assert_equal(reference[0,1,0,7], 1)
+    np.testing.assert_equal(reference[0,2,0,13], 1)
+    np.testing.assert_equal(alternative[0,1,0,5], 1)
+    np.testing.assert_equal(alternative[0,2,0,5], 1)
+

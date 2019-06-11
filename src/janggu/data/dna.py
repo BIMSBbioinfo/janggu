@@ -577,43 +577,33 @@ class VariantStreamer:
         Batch size for parsing the VCF file.
     filter_region : None or str
         BED file name. If None, all VCF file entries are considered.
-    min_allele_frequency : float or None
-        Minimum allele frequency to be considered. If None, a minimum
-        frequency of 0.0 will be used.
-    window_size : int or None
-        Window size by which the filter region should be extended.
-        If None, the extended window size is 0.
     """
     def __init__(self, bioseq, variants, binsize, batch_size,
-                 filter_region=None,
-                 min_allele_frequency=None, window_size=None):
+                 filter_region=None):
         self.bioseq = bioseq
         self.variants = variants
         self.binsize = binsize
         self.batch_size = batch_size
         self.filter_region = filter_region
-        self.maf = min_allele_frequency if min_allele_frequency is not None else 0.0
-        self.window_size = window_size if window_size is not None else 0
+        self.logger = logging.getLogger('variantstreamer')
 
 
     def flow(self):
         """Data flow generator."""
 
-        refs = np.zeros((self.batch_size,  self.binsize - self.bioseq.garray.order + 1, 1,
+        refs = np.zeros((self.batch_size, self.binsize - self.bioseq.garray.order + 1, 1,
                          pow(self.bioseq._alphabetsize, self.bioseq.garray.order)))
         alts = np.zeros_like(refs)
 
         if self.filter_region is not None:
             vcf_origin = BedTool(self.variants)
-            filter = BedTool(self.filter_region)
-            vcf_filter = vcf_origin.window(filter, u=True,
-                                           header=True,
-                                           w=self.window_size)
+            filter_reg = BedTool(self.filter_region)
+            vcf_filter = vcf_origin.intersect(filter_reg, u=True,
+                                              header=True)
             vcf = VariantFile(vcf_filter.TEMPFILES[-1]).fetch()
         else:
             vcf = VariantFile(self.variants).fetch()
 
-        #for ibatch in range(self.batch_size):
         try:
             while True:
                 # construct genomic region
@@ -628,15 +618,17 @@ class VariantStreamer:
                 while ibatch < self.batch_size:
                     rec = next(vcf)
 
-                    if 'VT' in rec.info and rec.info['VT'][0] != 'SNP':
-                        continue
                     if rec.alts is None or len(rec.alts) != 1 or len(rec.alts[0]) != 1:
                         continue
+
                     if not (rec.alts[0].upper() in NMAP and rec.ref.upper() in NMAP):
                         continue
-                    #if self.min_quality is not None and rec.qual < self.min_quality:
-                    #    continue
-                    if self.maf is not None and 'AF' in rec.info and rec.info['AF'][0] < self.maf:
+
+                    start = rec.pos-self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
+                    end = rec.pos+self.binsize//2
+
+                    print(rec.chrom, start, end)
+                    if start < 0:
                         continue
 
                     names.append(rec.id if rec.id is not None else '')
@@ -645,25 +637,40 @@ class VariantStreamer:
                     rallele.append(rec.ref.upper())
                     aallele.append(rec.alts[0].upper())
 
-                    start = rec.pos-self.binsize//2
-                    end = rec.pos+self.binsize//2 + self.binsize%2
-
-                    if start < 0:
-                        continue
-
                     iref = self.bioseq._getsingleitem(Interval(rec.chrom, start, end)).copy()
 
-                    ref = as_onehot(iref[None, :], self.bioseq.garray.order, self.bioseq._alphabetsize)
+                    ref = as_onehot(iref[None, :], self.bioseq.garray.order,
+                                    self.bioseq._alphabetsize)
                     refs[ibatch] = ref
                     #mutate the position with the variant
 
                     # only support single nucleotide variants at the moment
                     for o in range(self.bioseq.garray.order):
-                        replacement = (NMAP[rec.alts[0].upper()] - NMAP[rec.ref.upper()]) * pow(self.bioseq._alphabetsize, o)
 
-                        iref[self.binsize//2 + o - self.bioseq.garray.order + 1] += replacement
+                        irefbase = iref[self.binsize//2 + o - self.bioseq.garray.order +
+                                        (0 if self.binsize%2 == 0 else 1)]
+                        irefbase = irefbase // pow(self.bioseq._alphabetsize, o)
+                        irefbase = irefbase % self.bioseq._alphabetsize
+                        print(irefbase, rec.ref.upper())
 
-                    alt = as_onehot(iref[None, :], self.bioseq.garray.order, self.bioseq._alphabetsize)
+                        if NMAP[rec.ref.upper()] != irefbase:
+                            self.logger.info('VCF reference and reference genome not compatible.'
+                                             'Expected reference {}, but VCF indicates {}.'.format(
+                                             irefbase, NMAP[rec.ref.upper()]) +
+                                             'VCF-Record: {}:{}-{}>{};{}. Skipped.'.format(
+                                             rec.chrom, rec.pos, rec.ref,
+                                             rec.alts[0], rec.id))
+                        else:
+
+                            replacement = (NMAP[rec.alts[0].upper()] -
+                                           NMAP[rec.ref.upper()]) * \
+                                          pow(self.bioseq._alphabetsize, o)
+
+                            iref[self.binsize//2 + o - self.bioseq.garray.order +
+                                 (0 if self.binsize%2 == 0 else 1)] += replacement
+
+                    alt = as_onehot(iref[None, :], self.bioseq.garray.order,
+                                    self.bioseq._alphabetsize)
 
                     alts[ibatch] = alt
 

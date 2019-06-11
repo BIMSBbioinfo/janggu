@@ -1,30 +1,31 @@
 """Janggu - deep learning for genomics"""
 
 import copy
+import gzip
 import hashlib
 import logging
 import os
+import re
 import time
 
-import re
-from progress.counter import Counter
 import h5py
-import gzip
 import keras
 import keras.backend as K
 import numpy as np
 from keras.callbacks import CSVLogger
 from keras.callbacks import LambdaCallback
+from keras.layers import Lambda
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import Sequence
 from keras.utils import plot_model
+from progress.counter import Counter
 
 from janggu.data import split_train_test
 from janggu.data.coverage import Cover
-from janggu.data.dna import VariantStreamer
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
+from janggu.data.dna import VariantStreamer
 from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.evaluation import get_scorer
 from janggu.layers import Complement
@@ -804,7 +805,6 @@ class Janggu(object):
                                condition_filter=None,
                                region_filter=None,
                                window_extension=None,
-                               min_allele_frequency=None,
                                batch_size=None):
         """Evaluates the performance.
 
@@ -829,8 +829,6 @@ class Janggu(object):
             This allows to approximately retrieve SNPs that are in linkage
             disequilibrium. This option is only relevant if a region_filter
             was specified. If None, the region_filter is not extended.
-        min_allele_frequency : None or float
-            Filter for minimum allele frequency. If None, no filter is applied.
         batch_size : int, None.
             Batch size. If None, a batch_size of 128 is used.
 
@@ -858,6 +856,7 @@ class Janggu(object):
             raise ValueError('Only one input layer supported for this operation.')
         binsize = self.kerasmodel.layers[0].input_shape[1] + bioseq.garray.order - 1
 
+
         # the network might output arbitrarily many
         # output.
         # With the filter option it is possible to
@@ -869,25 +868,34 @@ class Janggu(object):
                           if hasattr(re.search(condition_filter, cond), 'start')]
         icond = [el[0] for el in conditions]
 
+        local_model = self.kerasmodel
+
         h5file = h5py.File(output_file, 'w')
-        buffersize = 1000000
+        buffersize = 1000 * batch_size
+
         labels = h5file.create_dataset('labels', (len(conditions),),
                                        dtype=h5py.special_dtype(vlen=str),
-                                       data=np.array([c[-1] for c in conditions], dtype=h5py.special_dtype(vlen=str)))
-        chromds = h5file.create_dataset('chrom', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
-        posds = h5file.create_dataset('pos', (buffersize,), compression='gzip', dtype='int', maxshape=(None,))
-        vnameds = h5file.create_dataset('id', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
-        refs = h5file.create_dataset('ref', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
-        alts = h5file.create_dataset('alt', (buffersize,), compression='gzip', dtype=h5py.special_dtype(vlen=str), maxshape=(None,))
-        refscore = h5file.create_dataset('refscore', (buffersize, len(conditions)), dtype='float16', maxshape=(None, len(conditions)))
-        altscore = h5file.create_dataset('altscore', (buffersize, len(conditions)), dtype='float16', maxshape=(None, len(conditions)))
+                                       data=np.array([c[-1] for c in conditions],
+                                                     dtype=h5py.special_dtype(vlen=str)))
+
+        refscore = h5file.create_dataset('refscore', (buffersize, len(conditions)),
+                                         dtype='float16',
+                                         maxshape=(None, len(conditions)))
+        altscore = h5file.create_dataset('altscore', (buffersize, len(conditions)),
+                                         dtype='float16',
+                                         maxshape=(None, len(conditions)))
 
         variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
-                                         filter_region=region_filter,
-                                         min_allele_frequency=min_allele_frequency)
+                                         filter_region=region_filter)
 
         ibatch = 0
         counter = Counter('Parsing {}: '.format(variants))
+
+        chromlist = []
+        poslist = []
+        vnamelist = []
+        reflist = []
+        altlist = []
         # read variants file
         for names, chroms, poss, ra, aa, reference, alternative in variantsstream.flow():
             counter.next()
@@ -896,40 +904,46 @@ class Janggu(object):
                 # reached the end of the file
                 break
 
-            ref_score = self.kerasmodel.predict_on_batch(reference)
-            alt_score = self.kerasmodel.predict_on_batch(alternative)
+            ref_score = local_model.predict_on_batch(reference)
+            alt_score = local_model.predict_on_batch(alternative)
 
-            if ibatch + ref_score.shape[0] > chromds.shape[0]:
-                chromds.resize(chromds.shape[0] + buffersize, axis=0)
-                posds.resize(posds.shape[0] + buffersize, axis=0)
-                vnameds.resize(vnameds.shape[0] + buffersize, axis=0)
-                refs.resize(refs.shape[0] + buffersize, axis=0)
-                alts.resize(alts.shape[0] + buffersize, axis=0)
+            if ibatch + ref_score.shape[0] > refscore.shape[0]:
                 refscore.resize(refscore.shape[0] + buffersize, axis=0)
                 altscore.resize(altscore.shape[0] + buffersize, axis=0)
 
-            x = np.array(vnameds, dtype=h5py.special_dtype(vlen=str))
-            chromds[ibatch:(ibatch + ref_score.shape[0])] = np.array(chroms, dtype=h5py.special_dtype(vlen=str))
-            posds[ibatch:(ibatch + ref_score.shape[0])] = np.array(poss, dtype='int')
-            vnameds[ibatch:(ibatch + ref_score.shape[0])] = np.array(names, dtype=h5py.special_dtype(vlen=str))
-            refs[ibatch:(ibatch + ref_score.shape[0])] = np.array(ra, dtype=h5py.special_dtype(vlen=str))
-            alts[ibatch:(ibatch + ref_score.shape[0])] = np.array(aa, dtype=h5py.special_dtype(vlen=str))
-            refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:,icond].astype('float16')
-            altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:,icond].astype('float16')
+            chromlist += chroms
+            poslist += poss
+            vnamelist += names
+            reflist += ra
+            altlist += aa
+            refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:, icond].astype('float16')
+            altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16')
             ibatch += ref_score.shape[0]
 
-        if ibatch < chromds.shape[0]:
-            chromds.resize(ibatch, axis=0)
-            posds.resize(ibatch, axis=0)
-            vnameds.resize(ibatch, axis=0)
-            refs.resize(ibatch, axis=0)
-            alts.resize(ibatch, axis=0)
+        if ibatch < refscore.shape[0]:
             refscore.resize(ibatch, axis=0)
             altscore.resize(ibatch, axis=0)
 
+        h5file.create_dataset('chrom',
+                              compression='gzip',
+                              dtype=h5py.special_dtype(vlen=str),
+                              data=np.array(chromlist, dtype=h5py.special_dtype(vlen=str)))
+        h5file.create_dataset('pos',
+                              compression='gzip',
+                              dtype='int', data=np.array(poslist, dtype='int'))
+        h5file.create_dataset('id',
+                              compression='gzip',
+                              dtype=h5py.special_dtype(vlen=str),
+                              data=np.array(vnamelist, dtype=h5py.special_dtype(vlen=str)))
+        h5file.create_dataset('ref',
+                              compression='gzip',
+                              dtype=h5py.special_dtype(vlen=str),
+                              data=np.array(reflist, dtype=h5py.special_dtype(vlen=str)))
+        h5file.create_dataset('alt',
+                              compression='gzip',
+                              dtype=h5py.special_dtype(vlen=str),
+                              data=np.array(altlist, dtype=h5py.special_dtype(vlen=str)))
         h5file.close()
-
-
         counter.finish()
 
     def __dim_logging(self, data):
