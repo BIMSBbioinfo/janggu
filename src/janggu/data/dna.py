@@ -7,7 +7,7 @@ from itertools import product
 
 import Bio
 import numpy as np
-from progress.counter import Counter
+from progress.bar import Bar
 from pybedtools import BedTool
 from pybedtools import Interval
 from pysam import VariantFile
@@ -123,8 +123,6 @@ class SeqLoader:
         self.order = order
         self.gsize = gsize
 
-
-
     def __call__(self, garray):
         if callable(self.gsize):
             gsize = self.gsize()
@@ -135,7 +133,7 @@ class SeqLoader:
         order = self.order
         dtype = garray.typecode
 
-        print('Convert sequences to index array')
+        bar = Bar('Loading sequences', max=len(gsize))
         for region, seq in zip(gsize, seqs):
 
             indarray = np.asarray(seq2ind(seq), dtype=dtype)
@@ -147,6 +145,8 @@ class SeqLoader:
                 indarray = np.convolve(indarray, filter_, mode='valid')
 
             garray[region, 0] = indarray.reshape(-1, 1)
+            bar.next()
+        bar.finish()
 
 
 class Bioseq(Dataset):
@@ -193,7 +193,8 @@ class Bioseq(Dataset):
     @staticmethod
     def _make_genomic_array(name, gsize, seqs, order, storage,
                             cache=None, datatags=None,
-                            overwrite=False, store_whole_genome=True):
+                            overwrite=False, store_whole_genome=True,
+                            random_state=None):
 
         if overwrite:
             warnings.warn('overwrite=True is without effect '
@@ -224,7 +225,7 @@ class Bioseq(Dataset):
             files = seqs
             parameters = [gsize.tostr(),
                           storage, dtype, order,
-                          store_whole_genome, version]
+                          store_whole_genome, version, random_state]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
@@ -253,6 +254,7 @@ class Bioseq(Dataset):
                               cache=False,
                               overwrite=False,
                               channel_last=True,
+                              random_state=None,
                               store_whole_genome=False):
         """Create a Bioseq class from a reference genome.
 
@@ -306,6 +308,17 @@ class Bioseq(Dataset):
             Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
+        random_state : None or int
+            random_state used to internally randomize the dataset.
+            This option is best used when consuming data for training
+            from an HDF5 file. Since random data access from HDF5
+            may be probibitively slow, this option allows to randomize
+            the dataset during loading.
+            In case an integer-valued random_state seed is supplied,
+            make sure that all training datasets
+            (e.g. input and output datasets) use the same random_state
+            value so that the datasets are synchronized.
+            Default: None means that no randomization is used.
         """
         # fill up int8 rep of DNA
         # load bioseq, region index, and within region index
@@ -315,7 +328,8 @@ class Bioseq(Dataset):
 
         if roi is not None:
             gindexer = GenomicIndexer.create_from_file(roi, binsize,
-                                                       stepsize, flank)
+                                                       stepsize, flank,
+                                                       random_state=random_state)
         else:
             gindexer = None
 
@@ -328,7 +342,8 @@ class Bioseq(Dataset):
                                          datatags=datatags,
                                          cache=cache,
                                          overwrite=overwrite,
-                                         store_whole_genome=store_whole_genome)
+                                         store_whole_genome=store_whole_genome,
+                                         random_state=random_state)
 
         return cls(name, garray, gindexer,
                    alphabet='ACGT',

@@ -393,8 +393,7 @@ class ArrayLoader:
         gindexer = self.gindexer
         resolution = garray.resolution
 
-        print("load from array")
-
+        bar = Bar('Loading from array', max=len(gindexer))
         for i, region in enumerate(gindexer):
             interval = region
             for cond in range(array.shape[-1]):
@@ -404,6 +403,8 @@ class ArrayLoader:
                 else:
                     garray[interval, cond] = np.repeat(array[i, :, :, cond],
                                                        resolution, axis=0)
+            bar.next()
+        bar.finish()
 
         return garray
 
@@ -460,6 +461,7 @@ class Cover(Dataset):
                         channel_last=True,
                         normalizer=None,
                         zero_padding=True,
+                        random_state=None,
                         store_whole_genome=False):
         """Create a Cover class from a bam-file (or files).
 
@@ -567,6 +569,17 @@ class Cover(Dataset):
             If callable, a function with signature `norm(garray)` should be
             provided that performs the normalization on the genomic array.
             Default: None.
+        random_state : None or int
+            random_state used to internally randomize the dataset.
+            This option is best used when consuming data for training
+            from an HDF5 file. Since random data access from HDF5
+            may be probibitively slow, this option allows to randomize
+            the dataset during loading.
+            In case an integer-valued random_state seed is supplied,
+            make sure that all training datasets
+            (e.g. input and output datasets) use the same random_state
+            value so that the datasets are synchronized.
+            Default: None means that no randomization is used.
         store_whole_genome : boolean
             Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
@@ -593,7 +606,9 @@ class Cover(Dataset):
         if roi is not None:
             gindexer = GenomicIndexer.create_from_file(roi, binsize,
                                                        stepsize, flank,
-                                                       zero_padding, collapse)
+                                                       zero_padding,
+                                                       collapse,
+                                                       random_state=random_state)
         else:
             gindexer = None
 
@@ -653,7 +668,7 @@ class Cover(Dataset):
             parameters = [gsize.tostr(), min_mapq,
                           resolution, storage, dtype, stranded,
                           pairedend, zero_padding,
-                          store_whole_genome, version]
+                          store_whole_genome, version, random_state]
             if not store_whole_genome:
                 files += [roi]
                 parameters += [binsize, stepsize, flank,
@@ -697,6 +712,7 @@ class Cover(Dataset):
                            zero_padding=True,
                            normalizer=None,
                            collapser=None,
+                           random_state=None,
                            nan_to_num=True):
         """Create a Cover class from a bigwig-file (or files).
 
@@ -798,6 +814,17 @@ class Cover(Dataset):
         nan_to_num : boolean
             Indicates whether NaN values contained in the bigwig files should
             be interpreted as zeros. Default: True
+        random_state : None or int
+            random_state used to internally randomize the dataset.
+            This option is best used when consuming data for training
+            from an HDF5 file. Since random data access from HDF5
+            may be probibitively slow, this option allows to randomize
+            the dataset during loading.
+            In case an integer-valued random_state seed is supplied,
+            make sure that all training datasets
+            (e.g. input and output datasets) use the same random_state
+            value so that the datasets are synchronized.
+            Default: None means that no randomization is used.
         """
 
         if overwrite:
@@ -819,7 +846,10 @@ class Cover(Dataset):
 
         if roi is not None:
             gindexer = GenomicIndexer.create_from_file(roi, binsize,
-                                                       stepsize, flank, zero_padding, collapse)
+                                                       stepsize, flank,
+                                                       zero_padding,
+                                                       collapse,
+                                                       random_state=random_state)
         else:
             gindexer = None
 
@@ -858,7 +888,8 @@ class Cover(Dataset):
             gsize = GenomicIndexer.create_from_genomesize(gsize)
 
         if conditions is None:
-            conditions = [os.path.splitext(os.path.basename(f))[0] for f in bigwigfiles]
+            conditions = [os.path.splitext(os.path.basename(f))[0] \
+                          for f in bigwigfiles]
 
 
         bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num)
@@ -876,7 +907,7 @@ class Cover(Dataset):
                           resolution, storage, dtype,
                           zero_padding,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome, nan_to_num, version]
+                          store_whole_genome, nan_to_num, version, random_state]
             if not store_whole_genome:
                 files += [roi]
                 parameters += [binsize, stepsize, flank]
@@ -919,6 +950,7 @@ class Cover(Dataset):
                         normalizer=None,
                         collapser=None,
                         minoverlap=None,
+                        random_state=None,
                         datatags=None, cache=False):
         """Create a Cover class from a bed-file (or files).
 
@@ -1021,6 +1053,17 @@ class Cover(Dataset):
             Default: None
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
+        random_state : None or int
+            random_state used to internally randomize the dataset.
+            This option is best used when consuming data for training
+            from an HDF5 file. Since random data access from HDF5
+            may be probibitively slow, this option allows to randomize
+            the dataset during loading.
+            In case an integer-valued random_state seed is supplied,
+            make sure that all training datasets
+            (e.g. input and output datasets) use the same random_state
+            value so that the datasets are synchronized.
+            Default: None means that no randomization is used.
         """
 
         if overwrite:
@@ -1041,7 +1084,10 @@ class Cover(Dataset):
 
         if roi is not None:
             gindexer = GenomicIndexer.create_from_file(roi, binsize,
-                                                       stepsize, flank, zero_padding, collapse)
+                                                       stepsize, flank,
+                                                       zero_padding,
+                                                       collapse,
+                                                       random_state=random_state)
             binsize = gindexer.binsize
         else:
             gindexer = None
@@ -1100,7 +1146,8 @@ class Cover(Dataset):
                           resolution, storage, dtype,
                           zero_padding, mode,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome, version, minoverlap]
+                          store_whole_genome, version, minoverlap,
+                          random_state]
             if not store_whole_genome:
                 files += [roi]
                 parameters += [binsize, stepsize, flank]

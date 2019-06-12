@@ -5,6 +5,7 @@ import tempfile
 import numpy as np
 from pybedtools import BedTool
 from pybedtools import Interval
+from sklearn.utils import check_random_state
 
 from janggu.utils import _get_genomic_reader
 
@@ -21,15 +22,24 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     _binsize = None
     _flank = None
     _collapse = None
+    _randomidx = None
     chrs = None
     starts = None
     strand = None
     ends = None
+    _random_state = None
+
+    @property
+    def randomidx(self):
+        if self._random_state is not None and self._randomidx is None:
+            self._randomidx = check_random_state(self._random_state).permutation(len(self))
+        return self._randomidx
 
     @classmethod
     def create_from_file(cls, regions,  # pylint: disable=too-many-locals
                          binsize, stepsize, flank=0,
-                         zero_padding=True, collapse=False):
+                         zero_padding=True, collapse=False, 
+                         random_state=None):
         """Creates a GenomicIndexer object.
 
         This method constructs a GenomicIndexer from
@@ -60,6 +70,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             In this case, zero_padding does not have an effect. Intervals
             may be of fixed or variable lengths.
             Default: False.
+        random_state : None or int
+            random_state for shuffling intervals. Default: None
         """
 
         regions_ = _get_genomic_reader(regions)
@@ -87,6 +99,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         gind.starts = []
         gind.strand = []
         gind.ends = []
+        gind._random_state = random_state
 
         for reg in regions_:
 
@@ -219,8 +232,12 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                                                           self.stepsize,
                                                           self.flank)
 
-    def __getitem__(self, index):
-        if isinstance(index, int):
+    def __getitem__(self, index_):
+        if isinstance(index_, int):
+            if self.randomidx is not None:
+                index = self.randomidx[index_]
+            else:
+                index = index_
             start = self.starts[index]
             end = self.ends[index]
             if end == start:
@@ -388,7 +405,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                                                            self.stepsize,
                                                            self.flank,
                                                            True,
-                                                           self._collapse)
+                                                           self._collapse,
+                                                           random_state=self._random_state)
 
         gind = self if new_gindexer is None else new_gindexer
 
@@ -396,7 +414,10 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             idxs = gind.idx_by_region(include=include, exclude=exclude,
                                       start=start, end=end)
             #  construct the filtered gindexer
-            new_gindexer = GenomicIndexer(self.binsize, self.stepsize, self.flank)
+            new_gindexer = GenomicIndexer(self.binsize,
+                                          self.stepsize,
+                                          self.flank)
+            new_gindexer._random_state = self._random_state
             new_gindexer.chrs = [self.chrs[i] for i in idxs]
             new_gindexer.starts = [self.starts[i] for i in idxs]
             new_gindexer.strand = [self.strand[i] for i in idxs]
