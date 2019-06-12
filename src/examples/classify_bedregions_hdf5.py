@@ -5,7 +5,12 @@ import numpy as np
 from keras import backend as K
 from keras.layers import Conv2D
 from keras.layers import GlobalAveragePooling2D
+from keras.layers import Maximum
 from pkg_resources import resource_filename
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve
 
 from janggu import Janggu
 from janggu import Scorer
@@ -14,9 +19,14 @@ from janggu import outputdense
 from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.data import ReduceDim
+from janggu.layers import Complement
 from janggu.layers import DnaConv2D
+from janggu.layers import Reverse
 from janggu.utils import ExportClustermap
+from janggu.utils import ExportJson
+from janggu.utils import ExportScorePlot
 from janggu.utils import ExportTsne
+from janggu.utils import ExportTsv
 
 np.random.seed(1234)
 
@@ -47,16 +57,28 @@ ROI_TEST_FILE = resource_filename('janggu', 'resources/roi_test.bed')
 PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 # Training input and labels are purely defined genomic coordinates
+# applying a random state internally randomizes the dataset
+# in this case, shuffling of the mini-batches during training
+# becomes obsolete.
+# Importantly, the same state needs to be used for all datasets
+# to enforce synchronized datasets.
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                    roi=ROI_TRAIN_FILE,
                                    binsize=200,
-                                   order=args.order)
+                                   order=args.order,
+                                   storage='hdf5',
+                                   cache=True,
+                                   store_whole_genome=False,
+                                   random_state=43)
 
 LABELS = Cover.create_from_bed('peaks', roi=ROI_TRAIN_FILE,
                                bedfiles=PEAK_FILE,
                                binsize=200,
-                               resolution=200)
-
+                               resolution=200,
+                               storage='sparse',
+                               cache=True,
+                               store_whole_genome=True,
+                               random_state=43)
 
 DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                         roi=ROI_TEST_FILE,
@@ -100,12 +122,13 @@ model = Janggu.create(template=modeltemplate,
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
 
-hist = model.fit(DNA, ReduceDim(LABELS), epochs=100)
+hist = model.fit(DNA, ReduceDim(LABELS), epochs=100, shuffle=False)
 
 print('#' * 40)
 print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
+
 
 
 

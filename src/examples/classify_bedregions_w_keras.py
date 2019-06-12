@@ -3,24 +3,17 @@ import os
 
 import numpy as np
 from keras import Model
-from keras import backend as K
+
 from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import GlobalAveragePooling2D
 from keras.layers import Input
-from keras.layers import Maximum
 from keras.layers import Reshape
 from pkg_resources import resource_filename
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import roc_curve
 
 from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.layers import DnaConv2D
-from janggu.layers import LocalAveragePooling2D
-from janggu.layers import Reverse
 
 np.random.seed(1234)
 
@@ -51,27 +44,23 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                         roi=ROI_TEST,
                                         binsize=200,
-                                        order=1,
-                                        datatags=['ref'])
+                                        order=1)
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
                                     roi=ROI_TEST,
                                     binsize=200,
-                                    resolution=None,
-                                    datatags=['test'])
+                                    resolution=None)
 
 # Training input and labels are purely defined genomic coordinates
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                    roi=ROI_TRAIN,
-                                   binsize=200,
-                                   datatags=['ref'])
+                                   binsize=200)
 
 LABELS = Cover.create_from_bed('peaks', roi=ROI_TRAIN,
                                bedfiles=PEAK_FILE,
                                binsize=200,
-                               resolution=None,
-                               datatags=['train'])
+                               resolution=None)
 
 
 # define a keras model here
@@ -83,7 +72,9 @@ layer = GlobalAveragePooling2D()(layer)
 layer = Dense(1, activation='sigmoid')(layer)
 
 # the last one is used to make the dimensionality compatible with
-# the coverage dataset dimension
+# the coverage dataset dimensions.
+# Alternatively, the ReduceDim dataset wrapper may be used to transform
+# the output to a 2D dataset object.
 output = Reshape((1, 1, 1))(layer)
 
 model = Model(xin, output)

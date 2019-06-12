@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from pkg_resources import resource_filename
 
 from janggu.data import Cover
@@ -25,7 +24,9 @@ cover2 = Cover.create_from_bigwig('coverage2',
                                   stepsize=200,
                                   resolution=50)
 
-a = plotGenomeTrack([cover, cover2],'chr1',16000,18000)
+plotGenomeTrack([cover, cover2],
+                'chr1', 16000, 18000).savefig('coverage.png')
 
-a.savefig('coverage.png')
-#plt.show(a)
+plotGenomeTrack([cover, cover2],
+                'chr1', 16000, 18000,
+                plottypes=['heatmap', 'lineplot']).savefig('coverage2.png')

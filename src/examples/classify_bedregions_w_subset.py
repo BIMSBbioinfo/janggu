@@ -8,15 +8,13 @@ from keras.layers import GlobalAveragePooling2D
 from pkg_resources import resource_filename
 
 from janggu import Janggu
-from janggu import Scorer
 from janggu import inputlayer
 from janggu import outputdense
 from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.data import ReduceDim
+from janggu.data import subset
 from janggu.layers import DnaConv2D
-from janggu.utils import ExportClustermap
-from janggu.utils import ExportTsne
 
 np.random.seed(1234)
 
@@ -40,34 +38,35 @@ os.environ['JANGGU_OUTPUT'] = args.path
 # identically to the models obtained from classify_fasta.py.
 REFGENOME = resource_filename('janggu', 'resources/pseudo_genome.fa')
 # ROI contains regions spanning positive and negative examples
+ROI_FILE = resource_filename('janggu', 'resources/roi.bed')
 ROI_TRAIN_FILE = resource_filename('janggu', 'resources/roi_train.bed')
 ROI_TEST_FILE = resource_filename('janggu', 'resources/roi_test.bed')
-
 # PEAK_FILE only contains positive examples
 PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
+whole_genome = False
+
 # Training input and labels are purely defined genomic coordinates
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                   roi=ROI_TRAIN_FILE,
+                                   roi=ROI_FILE,
                                    binsize=200,
-                                   order=args.order)
+                                   order=args.order,
+                                   storage='ndarray',
+                                   store_whole_genome=whole_genome)
 
-LABELS = Cover.create_from_bed('peaks', roi=ROI_TRAIN_FILE,
+LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                bedfiles=PEAK_FILE,
                                binsize=200,
-                               resolution=200)
+                               resolution=200,
+                               storage='sparse',
+                               store_whole_genome=whole_genome)
 
+# in case the dataset has been loaded with store_whole_genome=True,
+# it is possible to reuse the same dataset by subsetting on different
+# regions of the genome.
+DNA_TEST = subset(DNA, ROI_TEST_FILE)
+LABELS_TEST = subset(LABELS, ROI_TEST_FILE)
 
-DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                        roi=ROI_TEST_FILE,
-                                        binsize=200,
-                                        order=args.order)
-
-LABELS_TEST = Cover.create_from_bed('peaks',
-                                    bedfiles=PEAK_FILE,
-                                    roi=ROI_TEST_FILE,
-                                    binsize=200,
-                                    resolution=200)
 # Define the model templates
 
 @inputlayer
@@ -87,12 +86,10 @@ def double_stranded_model_dnaconv(inputs, inp, oup, params):
     output = GlobalAveragePooling2D(name='motif')(layer)
     return inputs, output
 
-modeltemplate = double_stranded_model_dnaconv
-
 K.clear_session()
 
 # create a new model object
-model = Janggu.create(template=modeltemplate,
+model = Janggu.create(template=double_stranded_model_dnaconv,
                       modelparams=(30, 21, 'relu'),
                       inputs=DNA,
                       outputs=ReduceDim(LABELS))
@@ -100,28 +97,8 @@ model = Janggu.create(template=modeltemplate,
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
 
-hist = model.fit(DNA, ReduceDim(LABELS), epochs=100)
-
-print('#' * 40)
-print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
-                                 hist.history['acc'][-1]))
-print('#' * 40)
-
-
-
-
-# clustering plots based on hidden features
-heatmap_eval = Scorer('heatmap', exporter=ExportClustermap(z_score=1.))
-tsne_eval = Scorer('tsne', exporter=ExportTsne())
+model.fit(DNA, ReduceDim(LABELS), epochs=100, validation_data=['pseudo2'])
 
 # do the evaluation on the independent test data
 model.evaluate(DNA_TEST, ReduceDim(LABELS_TEST), datatags=['test'],
                callbacks=['auc', 'auprc', 'roc', 'prc'])
-
-pred = model.predict(DNA_TEST)
-pred = pred[:, None, None, :]
-cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
-
-model.predict(DNA_TEST, datatags=['test'],
-              callbacks=[heatmap_eval, tsne_eval],
-              layername='motif')
