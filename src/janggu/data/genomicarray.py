@@ -1192,7 +1192,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               normalizer=normalizer,
                               collapser=get_collapser(collapser))
     elif storage == 'sparse':
-        if normalizer is not None:
+        if not (normalizer is None or normalizer == []):
             print("{}: Dataset normalization is not supported ".format(normalizer) +
                   "for sparse genomic data yet. Argument ignored.")
         return SparseGenomicArray(chroms, stranded=stranded,
