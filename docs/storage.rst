@@ -356,3 +356,74 @@ or inside your model script using
 
 If  :code:`JANGGU_OUTPUT` is not set, root directory will be set
 to :code:`/home/user/janggu_results`.
+
+
+====================================
+Different views datasets
+====================================
+
+Suppose you already have loaded DNA sequence from a reference genome
+and you want to use a different parts of it
+for training and validating the model performance.
+This is achieved by the view mechanism, which allows to
+reuse the same dataset by instantiating views that reading out different subsets.
+
+For example, a view constituting the training and test set, respectively.
+
+.. code-block:: python
+
+    # union ROI for training and test set.
+    ROI_FILE = resource_filename('janggu', 'resources/roi.bed')
+    ROI_TRAIN_FILE = resource_filename('janggu', 'resources/roi_train.bed')
+    ROI_TEST_FILE = resource_filename('janggu', 'resources/roi_test.bed')
+
+    DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
+                                       roi=ROI_FILE,
+                                       binsize=200,
+                                       store_whole_genome=True)
+
+    DNA_TRAIN = view(DNA, ROI_TRAIN_FILE)
+    DNA_TEST = view(DNA, ROI_TEST_FILE)
+
+
+Since underneath the actual dataset is just referenced rather than copied,
+the memory footprint won't increase. It just allows to read out different parts
+of the genome.
+
+A full example is illustrated in `Example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_w_view.py>`_.
+
+====================================
+Randomized dataset
+====================================
+
+In order to achieve good predictive performances,
+it is recommended to randomize the mini-batches  during model fitting.
+This is usually achieved by specifying `shuffle=True` in the fit method.
+
+However, when using HDF5 dataset, this approach may be prohibitively slow due
+to the limitations that data from HDF5 files need to be accessed in chunks
+rather than in random access fashion.
+
+In order to overcome this issue, it is possible to randomize the dataset
+already during loading time such that the data can be consumed later
+by reading coherent chunks by setting  `shuffle=False`.
+
+For example, randomization is induced by specifying an integer-valued
+:code:`random_state` as in the example below
+
+.. code-block:: python
+
+    DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
+                                       roi=ROI_TRAIN_FILE,
+                                       binsize=200,
+                                       storage='hdf5',
+                                       cache=True,
+                                       store_whole_genome=False,
+                                       random_state=43)
+
+For this option to be effective and correct, all datasets consumed during
+e.g. training need to be provided with the same :code:`random_state` value.
+Furthermore, the HDF5 file needs to be stored with :code:`store_whole_genome=False`,
+since data storage is not affected by the random_state when the entire genome
+is stored.
+A full example is illustrated in `Example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_hdf5.py>`_.

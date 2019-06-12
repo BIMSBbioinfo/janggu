@@ -22,7 +22,7 @@ from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 
 
-def subset(dataset, include_regions=None, exclude_regions=None):
+def view(dataset, include_regions=None, exclude_regions=None):
     """Splits dataset into training and test set.
 
     A Cover or Bioseq dataset will be split into
@@ -71,8 +71,8 @@ def split_train_test_(dataset, holdout_chroms):
     if not hasattr(dataset, 'gindexer'):
         raise ValueError("Unknown dataset type: {}".format(type(dataset)))
 
-    traindata = subset(dataset, exclude_regions=holdout_chroms)
-    testdata = subset(dataset, include_regions=holdout_chroms)
+    traindata = view(dataset, exclude_regions=holdout_chroms)
+    testdata = view(dataset, include_regions=holdout_chroms)
 
     return traindata, testdata
 
