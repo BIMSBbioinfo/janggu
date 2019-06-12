@@ -396,13 +396,12 @@ class ArrayLoader:
         bar = Bar('Loading from array', max=len(gindexer))
         for i, region in enumerate(gindexer):
             interval = region
-            for cond in range(array.shape[-1]):
-                if resolution is None:
-                    garray[interval, cond] = np.repeat(array[i, :, :, cond],
-                                                       interval.length, axis=0)
-                else:
-                    garray[interval, cond] = np.repeat(array[i, :, :, cond],
-                                                       resolution, axis=0)
+            if resolution is None:
+                garray[interval, :] = np.repeat(array[i, :, :, :],
+                                                   interval.length, axis=0)
+            else:
+                garray[interval, :] = np.repeat(array[i, :, :, :],
+                                                   resolution, axis=0)
             bar.next()
         bar.finish()
 

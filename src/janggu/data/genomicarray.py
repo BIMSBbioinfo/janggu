@@ -176,14 +176,18 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
+        if isinstance(condition, slice) and value.ndim != 3:
+            raise ValueError('Expected 3D array with condition slice.')
+        if isinstance(condition, slice):
+            condition = slice(None, value.shape[-1], None)
 
-        if self.stranded and value.shape[-1] != 2:
+        if self.stranded and value.shape[1] != 2:
             raise ValueError('If genomic array is in stranded mode, shape[-1] == 2 is expected')
 
-        if not self.stranded and value.shape[-1] != 1:
-            value = value.sum(axis=1).reshape(-1, 1)
+        if not self.stranded and value.shape[1] != 1:
+            value = value.sum(axis=1, keepdims=True)
 
-        if isinstance(interval, Interval) and isinstance(condition, int):
+        if isinstance(interval, Interval) and isinstance(condition, (int,slice)):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
@@ -194,11 +198,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             if self.collapser is not None:
                 if self.resolution is None:
                     # collapse along the entire interval
-                    value = value.reshape((1, len(value), value.shape[-1]))
+                    value = value.reshape((1,) + value.shape)
                 else:
                     # collapse in bins of size resolution
-                    value = value.reshape((len(value)//self.resolution,
-                                           self.resolution, value.shape[-1]))
+                    value = value.reshape((value.shape[0]//self.resolution,
+                                           self.resolution,) + value.shape[1:])
 
                 value = self.collapser(value)
 
@@ -217,7 +221,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                         array_end = self._get_indices(interval, value.shape[0])
 
                     self.handle[chrom][ref_start:ref_end, :, condition] = \
-                                       value[array_start:array_end, :]
+                                       value[array_start:array_end]
 
             except KeyError:
                 # we end up here if the peak regions are not a subset of
@@ -788,19 +792,21 @@ class SparseGenomicArray(GenomicArray):
     def __setitem__(self, index, value):
         interval = index[0]
         condition = index[1]
-        if isinstance(interval, Interval) and isinstance(condition, int):
+        if isinstance(condition, slice) and value.ndim != 3:
+            raise ValueError('Expected 3D array with condition slice.')
+        if isinstance(condition, slice):
+            condition = slice(None, value.shape[-1], None)
+
+        if self.stranded and value.shape[1] != 2:
+            raise ValueError('If genomic array is in stranded mode, shape[-1] == 2 is expected')
+
+        if not self.stranded and value.shape[1] != 1:
+            value = value.sum(axis=1, keepdims=True)
+
+        if isinstance(interval, Interval) and isinstance(condition, (int, slice)):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
-
-            #strand = interval.strand
-            #sind = 1 if self.stranded and strand == '-' else 0
-
-            if self.stranded and value.shape[-1] != 2:
-                raise ValueError('If genomic array is in stranded mode, shape[-1] == 2 is expected')
-
-            if not self.stranded and value.shape[-1] != 1:
-                value = value.sum(axis=1).reshape(-1, 1)
 
             # value should be a 2 dimensional array
             # it will be reshaped to a 2D array where the collapse operation is performed
@@ -808,11 +814,11 @@ class SparseGenomicArray(GenomicArray):
             if self.collapser is not None:
                 if self.resolution is None:
                     # collapse along the entire interval
-                    value = value.reshape((1, len(value), value.shape[-1]))
+                    value = value.reshape((1,) + value.shape)
                 else:
                     # collapse in bins of size resolution
-                    value = value.reshape((len(value)//self.resolution,
-                                           self.resolution, value.shape[-1]))
+                    value = value.reshape((value.shape[0]//self.resolution,
+                                           self.resolution,) + value.shape[1:])
 
                 value = self.collapser(value)
 
@@ -823,25 +829,23 @@ class SparseGenomicArray(GenomicArray):
                     nconditions = len(self.condition)
                     ncondstrand = len(self.condition) * value.shape[-1]
                     end = end - self.order + 1
-                    for sind in range(value.shape[-1]):
-                        for idx, iarray in enumerate(range(start, end)):
-                            val = value[idx, sind]
-
-                            if val > 0:
-                                self.handle['data'][regidx,
-                                                    idx*ncondstrand + sind * nconditions
-                                                    + condition] = val
+                    idxs = np.where(value > 0)
+                    for idx in zip(*idxs):
+                        basepos = idx[0] * ncondstrand
+                        strand = idx[1] * nconditions
+                        cond = condition if isinstance(condition, int) else idx[2]
+                        self.handle['data'][regidx,
+                                            basepos + strand + cond] = value[idx]
                 else:
                     ref_start, ref_end, array_start, \
                         array_end = self._get_indices(interval, value.shape[0])
-                    for sind in range(value.shape[-1]):
-                        for idx, iarray in enumerate(range(ref_start, ref_end)):
-                            val = value[idx + array_start, sind]
-                            if val > 0:
-                                self.handle[chrom][iarray,
-                                                   sind * len(self.condition)
-                                                   + condition] = val
-
+                    idxs = np.where(value > 0)
+                    iarray = np.arange(ref_start, ref_end)
+                    for idx in zip(*idxs):
+                        cond = condition if isinstance(condition, int) else idx[2]
+                        self.handle[chrom][iarray[idx[0]],
+                                           idx[1] * len(self.condition)
+                                           + cond] = value[idx[0] + array_start][idx[1:]]
 
             except KeyError:
                 # we end up here if the peak regions are not a subset of
