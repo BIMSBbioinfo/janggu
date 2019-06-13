@@ -391,17 +391,11 @@ class ArrayLoader:
     def __call__(self, garray):
         array = self.array
         gindexer = self.gindexer
-        resolution = garray.resolution
 
         bar = Bar('Loading from array', max=len(gindexer))
         for i, region in enumerate(gindexer):
             interval = region
-            if resolution is None:
-                garray[interval, :] = np.repeat(array[i, :, :, :],
-                                                   interval.length, axis=0)
-            else:
-                garray[interval, :] = np.repeat(array[i, :, :, :],
-                                                   resolution, axis=0)
+            garray[interval, :] = array[i, :, :, :]
             bar.next()
         bar.finish()
 

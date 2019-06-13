@@ -192,23 +192,31 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
 
+            length = end - start - self.order + 1
             # value should be a 2 dimensional array
             # it will be reshaped to a 2D array where the collapse operation is performed
+
             # along the second dimension.
             if self.collapser is not None:
-                if self.resolution is None:
-                    # collapse along the entire interval
-                    value = value.reshape((1,) + value.shape)
+                if self.resolution is None and value.shape[0] == 1 or \
+                    self.resolution is not None and value.shape[0] == interval.length//self.resolution:
+                    # collapsing becomes obsolete, because the data has already
+                    # the expected shape (after collapsing)
+                    pass
                 else:
-                    # collapse in bins of size resolution
-                    value = value.reshape((value.shape[0]//self.resolution,
-                                           self.resolution,) + value.shape[1:])
+                    # if value.shape[0] is already of the right shape
+                    if self.resolution is None:
+                        # collapse along the entire interval
+                        value = value.reshape((1,) + value.shape)
+                    else:
+                        # collapse in bins of size resolution
+                        value = value.reshape((value.shape[0]//self.resolution,
+                                               self.resolution,) + value.shape[1:])
 
-                value = self.collapser(value)
+                    value = self.collapser(value)
 
             try:
                 if not self._full_genome_stored:
-                    length = end-start - self.order + 1
                     idx = self.region2index[_iv_to_str(chrom, interval.start,
                                                        interval.end)]
 
@@ -812,15 +820,21 @@ class SparseGenomicArray(GenomicArray):
             # it will be reshaped to a 2D array where the collapse operation is performed
             # along the second dimension.
             if self.collapser is not None:
-                if self.resolution is None:
-                    # collapse along the entire interval
-                    value = value.reshape((1,) + value.shape)
+                if self.resolution is None and value.shape[0] == 1 or \
+                    self.resolution is not None and value.shape[0] == interval.length//self.resolution:
+                    # collapsing becomes obsolete, because the data has already
+                    # the expected shape (after collapsing)
+                    pass
                 else:
-                    # collapse in bins of size resolution
-                    value = value.reshape((value.shape[0]//self.resolution,
-                                           self.resolution,) + value.shape[1:])
+                    if self.resolution is None:
+                        # collapse along the entire interval
+                        value = value.reshape((1,) + value.shape)
+                    else:
+                        # collapse in bins of size resolution
+                        value = value.reshape((value.shape[0]//self.resolution,
+                                               self.resolution,) + value.shape[1:])
 
-                value = self.collapser(value)
+                    value = self.collapser(value)
 
 
             try:
@@ -870,8 +884,6 @@ class SparseGenomicArray(GenomicArray):
             return data.reshape(data.shape[0], data.shape[1]//(shape[-1]), shape[-1])
         else:
             return data.reshape(data.shape[1]//(shape[-2]*shape[-1]), shape[-2], shape[-1])
-#        return data.toarray().reshape(data.shape[0], data.shape[1]//(shape[-1]),
-#                                      shape[-1])
 
 
 class PercentileTrimming(object):

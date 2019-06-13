@@ -19,7 +19,7 @@ from janggu.layers import LocalAveragePooling2D
 
 @pytest.mark.filterwarnings("ignore:inspect")
 @pytest.mark.filterwarnings("ignore:The binary")
-def test_create_from_array_whole_genome_true(tmpdir):
+def test_create_from_array_whole_genome_true_from_pred(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # load the dataset
     # The pseudo genome represents just a concatenation of all sequences
@@ -79,8 +79,41 @@ def test_create_from_array_whole_genome_true(tmpdir):
     assert len(cov_out.garray.handle) == 1
 
 
+@pytest.mark.filterwarnings("ignore:inspect")
 @pytest.mark.filterwarnings("ignore:The binary")
-def test_create_from_array_whole_genome_false(tmpdir):
+def test_create_from_array_whole_genome_true(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    
+    # load the dataset
+    # The pseudo genome represents just a concatenation of all sequences
+    # in sample.fa and sample2.fa. Therefore, the results should be almost
+    # identically to the models obtained from classify_fasta.py.
+    # ROI contains regions spanning positive and negative examples
+    ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
+    # PEAK_FILE only contains positive examples
+    PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
+
+    LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
+                                   bedfiles=[PEAK_FILE]*5,
+                                   binsize=200, stepsize=200,
+                                   resolution=200,
+                                   store_whole_genome=True)
+
+    pred = LABELS[:]
+
+    for storage in ['ndarray', 'sparse', 'hdf5']:
+        print(storage)
+        cov_out = Cover.create_from_array('BindingProba', pred,
+                                          LABELS.gindexer,
+                                          cache=True,
+                                          storage=storage,
+                                          store_whole_genome=True)
+
+        np.testing.assert_equal(cov_out[:], LABELS[:])
+        np.testing.assert_equal(cov_out.shape, LABELS.shape)
+
+@pytest.mark.filterwarnings("ignore:The binary")
+def test_create_from_array_whole_genome_false_pred(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     # load the dataset
     # The pseudo genome represents just a concatenation of all sequences
@@ -138,3 +171,36 @@ def test_create_from_array_whole_genome_false(tmpdir):
 
     assert len(cov_out.gindexer) == len(pred)
     assert len(cov_out.garray.handle['data']) == len(pred)
+
+@pytest.mark.filterwarnings("ignore:inspect")
+@pytest.mark.filterwarnings("ignore:The binary")
+def test_create_from_array_whole_genome_false(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    # load the dataset
+    # The pseudo genome represents just a concatenation of all sequences
+    # in sample.fa and sample2.fa. Therefore, the results should be almost
+    # identically to the models obtained from classify_fasta.py.
+    # ROI contains regions spanning positive and negative examples
+    ROI_FILE = resource_filename('janggu', 'resources/roi_train.bed')
+    # PEAK_FILE only contains positive examples
+    PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
+
+    LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
+                                   bedfiles=[PEAK_FILE]*5,
+                                   binsize=200, stepsize=200,
+                                   resolution=200,
+                                   store_whole_genome=False)
+
+    pred = LABELS[:]
+
+    for storage in ['ndarray', 'sparse', 'hdf5']:
+        print(storage)
+        cov_out = Cover.create_from_array('BindingProba', pred,
+                                          LABELS.gindexer,
+                                          cache=True,
+                                          storage=storage,
+                                          store_whole_genome=False)
+
+        np.testing.assert_equal(cov_out[:], LABELS[:])
+        np.testing.assert_equal(cov_out.shape, LABELS.shape)
+
