@@ -13,7 +13,7 @@ from janggu import outputdense
 from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.data import ReduceDim
-from janggu.data import subset
+from janggu.data import view
 from janggu.layers import DnaConv2D
 
 np.random.seed(1234)
@@ -44,28 +44,26 @@ ROI_TEST_FILE = resource_filename('janggu', 'resources/roi_test.bed')
 # PEAK_FILE only contains positive examples
 PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
-whole_genome = False
-
-# Training input and labels are purely defined genomic coordinates
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                    roi=ROI_FILE,
-                                   binsize=200,
                                    order=args.order,
-                                   storage='ndarray',
-                                   store_whole_genome=whole_genome)
+                                   binsize=200,
+                                   store_whole_genome=True)
 
 LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
                                bedfiles=PEAK_FILE,
                                binsize=200,
                                resolution=200,
                                storage='sparse',
-                               store_whole_genome=whole_genome)
+                               store_whole_genome=True)
 
 # in case the dataset has been loaded with store_whole_genome=True,
 # it is possible to reuse the same dataset by subsetting on different
 # regions of the genome.
-DNA_TEST = subset(DNA, ROI_TEST_FILE)
-LABELS_TEST = subset(LABELS, ROI_TEST_FILE)
+DNA_TRAIN = view(DNA, ROI_TRAIN_FILE)
+LABELS_TRAIN = view(LABELS, ROI_TRAIN_FILE)
+DNA_TEST = view(DNA, ROI_TEST_FILE)
+LABELS_TEST = view(LABELS, ROI_TEST_FILE)
 
 # Define the model templates
 
