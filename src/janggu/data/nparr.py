@@ -96,9 +96,12 @@ class ReduceDim(Dataset):
         It is also possible to supply a callable directly that performs the
         operation.
         Default: 'sum'
+    axis : None or tuple(ints)
+        Dimensions over which to perform aggregation. Default: None
+        aggregates with :code:`axis=(1, 2)`
     """
 
-    def __init__(self, array, aggregator=None):
+    def __init__(self, array, aggregator=None, axis=None):
 
         self.data = copy.copy(array)
         if aggregator is None:
@@ -117,6 +120,7 @@ class ReduceDim(Dataset):
                 raise ValueError('ReduceDim aggregator="{}" not known.'.format(name) +
                                  'Must be "sum", "mean" or "max" or a callable.')
         self.aggregator = _get_aggregator(aggregator)
+        self.axis = axis if axis is not None else (1, 2)
         Dataset.__init__(self, array.name)
 
     def __repr__(self):  # pragma: no cover
@@ -128,7 +132,7 @@ class ReduceDim(Dataset):
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = slice(idxs, idxs + 1)
-        data = self.aggregator(self.data[idxs], axis=(1, 2))
+        data = self.aggregator(self.data[idxs], axis=self.axis)
         return data
 
     @property
@@ -141,7 +145,11 @@ class ReduceDim(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        shape = (self.data.shape[0], self.data.shape[-1])
+        shape = (self.data.shape[0],)
+        for idx in range(1, self.data.ndim):
+            if idx in self.axis:
+                continue
+            shape += (self.data.shape[idx],)
         return shape
 
     @property

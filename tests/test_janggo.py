@@ -680,7 +680,7 @@ def test_janggu_train_predict_option0(tmpdir):
 
     inputs = Array("X", np.random.random((100, 10)))
     outputs = ReduceDim(Array('y', np.random.randint(2, size=(100, 1))[:,None],
-                    conditions=['random']))
+                    conditions=['random']), axis=(1,))
 
     @inputlayer
     @outputdense('sigmoid')
