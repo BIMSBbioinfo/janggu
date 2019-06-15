@@ -29,7 +29,7 @@ def outputdense(activation):
                 act = {name: activation for name in outshapes}
             else:
                 act = activation
-            outputs = [Dense(outshapes[name]['shape'][0],
+            outputs = [Dense(outshapes[name]['shape'][-1],
                              activation=act[name],
                              name=name)(outputs) for name in outshapes]
             return inputs, outputs
@@ -54,7 +54,7 @@ def outputconv(activation):
             else:
                 act = activation
 
-            outputs = [Conv2D(outshapes[name]['shape'][2], (1, 1),
+            outputs = [Conv2D(outshapes[name]['shape'][-1], (1, 1),
                               activation=act[name],
                               name=name)(outputs) for name in outshapes]
             return inputs, outputs
