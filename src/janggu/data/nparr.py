@@ -170,7 +170,8 @@ class ReduceDim(Dataset):
         return len(self.shape)
 
     def __copy__(self):
-        obj = ReduceDim(copy.copy(self.data))
+        obj = ReduceDim(copy.copy(self.data), self.aggregator,
+                        self.axis)
         return obj
 
 
