@@ -395,7 +395,11 @@ class ArrayLoader:
         bar = Bar('Loading from array', max=len(gindexer))
         for i, region in enumerate(gindexer):
             interval = region
-            garray[interval, :] = array[i, :, :, :]
+            new_item = array[i]
+            if new_item.ndim < 3:
+                garray[interval, :] = new_item[None, None, :]
+            else:
+                garray[interval, :] = new_item[:]
             bar.next()
         bar.finish()
 
@@ -1221,12 +1225,6 @@ class Cover(Dataset):
             last position. Default: True.
         """
 
-        if array.ndim == 2:
-            array = array[:, None, None, :]
-
-        if array.ndim != 4:
-            raise ValueError('array must be two or four dimensional.')
-
         if overwrite:
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
@@ -1261,7 +1259,8 @@ class Cover(Dataset):
             raise ValueError("Data incompatible: "
                              "The number intervals in gindexer"
                              " must match the number of datapoints in "
-                             "the array (len(gindexer) != array.shape[0])")
+                             "the array (len(gindexer)={} != array.shape[0]={})".
+                             format(len(gindexer),array.shape[0]))
 
         if store_whole_genome:
             # in this case the intervals must be non-overlapping
@@ -1277,11 +1276,10 @@ class Cover(Dataset):
             # binsize will not be set if gindexer was loaded in collapse mode
             resolution = None
         else:
-            resolution = gindexer.binsize // array.shape[1]
+            resolution = max(1, gindexer.binsize // array.shape[1])
 
         # determine strandedness
-        stranded = True if array.shape[2] == 2 else False
-
+        stranded = True if array.ndim == 3 and array.shape[2] == 2 else False
 
         arrayloader = ArrayLoader(array, gindexer)
         # At the moment, we treat the information contained
