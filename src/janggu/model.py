@@ -18,7 +18,8 @@ from keras.models import Model
 from keras.models import load_model
 from keras.utils import Sequence
 from keras.utils import plot_model
-from progress.counter import Counter
+from progress.bar import Bar
+from pybedtools import BedTool
 
 from janggu.data import split_train_test
 from janggu.data.coverage import Cover
@@ -800,7 +801,7 @@ class Janggu(object):
 
     def predict_variant_effect(self, bioseq, variants,  # pylint: disable=too-many-locals
                                conditions,
-                               output_file,
+                               output_folder,
                                condition_filter=None,
                                batch_size=None):
         """Evaluates the performance.
@@ -813,8 +814,11 @@ class Janggu(object):
             File name of a VCF file containg the variants under study.
         conditions : list(str)
             Condition labels for each output prediction.
-        output_file : str or None
-            Output hdf5 file in which the results should be stored.
+        output_folder : str
+            The method produces an hdf5 and a bed file as output.
+            The bed-file contains the variant positions while the
+            hdf5 file contains the reference and alternative variant scores
+            for each output feature.
         condition_filter : str or None
             Regular expression filter on which conditions should be evaluated.
             If None, all output conditions will be returned.
@@ -822,6 +826,10 @@ class Janggu(object):
             Batch size. If None, a batch_size of 128 is used.
 
 
+        Returns
+        -------
+        tuple:
+            Tuple containing the output filenames: an hdf5 and a bed file.
 
         Examples
         --------
@@ -830,11 +838,11 @@ class Janggu(object):
 
           # Evaluate all variants and all conditions (outputs)
           model.predict_variant_effect(DATA, VARIANTS, CONDITIONS,
-                                       'output.h5')
+                                       'vcfoutput')
 
           # Evaluate all variants and a subset of conditions (Ctcf output labels)
           model.predict_variant_effect(DATA, LABELS, CONDITIONS,
-                                       'output_subset.h5',
+                                       'vcfoutput_subset',
                                        contition_filter='Cfcf')
 
         """
@@ -845,7 +853,6 @@ class Janggu(object):
             raise ValueError('Only one input layer supported for this operation.')
         binsize = self.kerasmodel.layers[0].input_shape[1] + bioseq.garray.order - 1
 
-
         # the network might output arbitrarily many
         # output.
         # With the filter option it is possible to
@@ -855,38 +862,50 @@ class Janggu(object):
         else:
             conditions = [(idx, cond) for idx, cond in enumerate(conditions) \
                           if hasattr(re.search(condition_filter, cond), 'start')]
+
+
         icond = [el[0] for el in conditions]
 
         local_model = self.kerasmodel
 
-        h5file = h5py.File(output_file, 'w')
-        buffersize = 1000 * batch_size
+        if len(conditions) != self.kerasmodel.output_shape[-1]:
+            raise ValueError("The number of conditions does not match with the "
+                              "number of network output units.")
+
+        # get number of variants
+        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size)
+
+        nvariants = variantsstream.get_variant_count()
+
+        h5file = h5py.File(os.path.join(output_folder, 'scores.hdf5'), 'w')
 
         labels = h5file.create_dataset('labels', (len(conditions),),
                                        dtype=h5py.special_dtype(vlen=str),
                                        data=np.array([c[-1] for c in conditions],
                                                      dtype=h5py.special_dtype(vlen=str)))
 
-        refscore = h5file.create_dataset('refscore', (buffersize, len(conditions)),
-                                         dtype='float16',
-                                         maxshape=(None, len(conditions)))
-        altscore = h5file.create_dataset('altscore', (buffersize, len(conditions)),
-                                         dtype='float16',
-                                         maxshape=(None, len(conditions)))
+        refscore = h5file.create_dataset('refscore', (nvariants, len(conditions)),
+                                         dtype='float16')
+        altscore = h5file.create_dataset('altscore', (nvariants, len(conditions)),
+                                         dtype='float16')
+        diffscore = h5file.create_dataset('diffscore', (nvariants, len(conditions)),
+                                          dtype='float16')
+        logodds = h5file.create_dataset('logoddsscore', (nvariants, len(conditions)),
+                                          dtype='float16')
 
-        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size)
 
-        ibatch = 0
-        counter = Counter('Parsing {}: '.format(variants))
+        bar = Bar('Parsing {}: '.format(variants), max=int(np.ceil(nvariants/float(batch_size))))
 
         chromlist = []
         poslist = []
         vnamelist = []
         reflist = []
         altlist = []
+        ibatch = 0
+
         # read variants file
         for names, chroms, poss, ra, aa, reference, alternative in variantsstream.flow():
-            counter.next()
+            bar.next()
 
             if reference.shape[0] <= 0:
                 # reached the end of the file
@@ -895,44 +914,30 @@ class Janggu(object):
             ref_score = local_model.predict_on_batch(reference)
             alt_score = local_model.predict_on_batch(alternative)
 
-            if ibatch + ref_score.shape[0] > refscore.shape[0]:
-                refscore.resize(refscore.shape[0] + buffersize, axis=0)
-                altscore.resize(altscore.shape[0] + buffersize, axis=0)
-
             chromlist += chroms
             poslist += poss
             vnamelist += names
             reflist += ra
             altlist += aa
+
             refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:, icond].astype('float16')
             altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16')
+            diffscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16') - ref_score[:, icond].astype('float16')
+            logodds[ibatch:(ibatch + ref_score.shape[0])] = np.log(alt_score[:, icond].astype('float16')/ref_score[:, icond].astype('float16') + 1e-7)
             ibatch += ref_score.shape[0]
 
-        if ibatch < refscore.shape[0]:
-            refscore.resize(ibatch, axis=0)
-            altscore.resize(ibatch, axis=0)
+        #form large string
+        BedTool('\n'.join(['{} {} {} {}_{}>{}'.format(chrom, start, start+1, name, ref, alt)
+                           for chrom, start, name, ref, alt in zip(chromlist,
+                                                                   poslist,
+                                                                   vnamelist, reflist, altlist)]),
+                from_string=True).saveas(os.path.join(output_folder, 'snps.bed.gzip'))
 
-        h5file.create_dataset('chrom',
-                              compression='gzip',
-                              dtype=h5py.special_dtype(vlen=str),
-                              data=np.array(chromlist, dtype=h5py.special_dtype(vlen=str)))
-        h5file.create_dataset('pos',
-                              compression='gzip',
-                              dtype='int', data=np.array(poslist, dtype='int'))
-        h5file.create_dataset('id',
-                              compression='gzip',
-                              dtype=h5py.special_dtype(vlen=str),
-                              data=np.array(vnamelist, dtype=h5py.special_dtype(vlen=str)))
-        h5file.create_dataset('ref',
-                              compression='gzip',
-                              dtype=h5py.special_dtype(vlen=str),
-                              data=np.array(reflist, dtype=h5py.special_dtype(vlen=str)))
-        h5file.create_dataset('alt',
-                              compression='gzip',
-                              dtype=h5py.special_dtype(vlen=str),
-                              data=np.array(altlist, dtype=h5py.special_dtype(vlen=str)))
+        bar.finish()
         h5file.close()
-        counter.finish()
+
+        return (os.path.join(output_folder, 'scores.hdf5'),
+                os.path.join(output_folder, 'snps.bed.gzip'))
 
     def __dim_logging(self, data):
         if isinstance(data, dict):

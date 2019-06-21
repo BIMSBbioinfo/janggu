@@ -610,6 +610,30 @@ class VariantStreamer:
         self.batch_size = batch_size
         self.logger = logging.getLogger('variantstreamer')
 
+    def is_compatible(self, rec):
+        """ Check compatibility of variant.
+
+        If the variant is not compatible the method returns False,
+        otherwise True.
+        """
+        if rec.alts is None or len(rec.alts) != 1 or len(rec.alts[0]) != 1:
+            return False
+
+        if not (rec.alts[0].upper() in NMAP and rec.ref.upper() in NMAP):
+            return False
+
+        return True
+
+    def get_variant_count(self):
+        """Obtains the number of admissible variants"""
+        ncounts = 0
+        for rec in VariantFile(self.variants).fetch():
+            start = rec.pos-self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
+            if start < 0:
+                continue
+            if self.is_compatible(rec):
+                ncounts += 1
+        return ncounts
 
     def flow(self):
         """Data flow generator."""
@@ -634,10 +658,8 @@ class VariantStreamer:
                 while ibatch < self.batch_size:
                     rec = next(vcf)
 
-                    if rec.alts is None or len(rec.alts) != 1 or len(rec.alts[0]) != 1:
-                        continue
 
-                    if not (rec.alts[0].upper() in NMAP and rec.ref.upper() in NMAP):
+                    if not self.is_compatible(rec):
                         continue
 
                     start = rec.pos-self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1

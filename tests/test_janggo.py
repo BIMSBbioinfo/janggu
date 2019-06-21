@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
+import h5py
 from keras.layers import Average
 from keras.layers import Concatenate
 from keras.layers import Conv2D
@@ -24,6 +25,7 @@ from janggu import outputdense
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover
+from janggu.data import GenomicIndexer
 from janggu.data import ReduceDim
 from janggu.data.data import JangguSequence
 from janggu.layers import Complement
@@ -277,8 +279,25 @@ def test_janggu_variant_prediction(tmpdir):
                               name='dna_ctcf_HepG2-cnn')
 
         model.predict_variant_effect(dna, vcffile, conditions=['m'+str(i) for i in range(4)],
-                                     output_file=os.path.join(os.environ['JANGGU_OUTPUT'], 'pve{}.tsv.gz'.format(order)))
-        assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'pve{}.tsv.gz'.format(order)))
+                                     output_folder=os.path.join(os.environ['JANGGU_OUTPUT']))
+        assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'scores.hdf5'))
+        assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'snps.bed.gzip'))
+
+        f = h5py.File(os.path.join(os.environ['JANGGU_OUTPUT'], 'scores.hdf5'), 'r')
+
+        gindexer = GenomicIndexer.create_from_file(os.path.join(os.environ['JANGGU_OUTPUT'],
+                                                                'snps.bed.gzip'), None, None)
+
+        cov = Cover.create_from_array('snps', f['diffscore'],
+                                      gindexer,
+                                      store_whole_genome=True)
+
+        print(cov['chr2', 55, 65].shape)
+        print(cov['chr2', 55, 65])
+
+        assert np.abs(cov['chr2', 60, 61]).sum() > 0.0
+        assert np.abs(cov['chr2', 55, 56]).sum() == 0.0
+        f.close()
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")
