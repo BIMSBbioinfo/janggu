@@ -1584,28 +1584,48 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
         To depict and save the figure the native matplotlib functions show()
         and savefig() can be used.
     """
+
     if not isinstance(covers, list):
         covers = [covers]
 
+    for cover in covers:
+        if not isinstance(cover, Track):
+            warnings.warn('Convert the Dataset object to proper Track objects.'
+                          ' In the future, only Track objects will be supported.',
+                          FutureWarning)
+            if plottypes is None:
+                plottypes = ['line'] * len(covers)
 
-    if plottypes is None:
-        plottypes = ['line'] * len(covers)
+            assert len(plottypes) == len(covers), \
+                "The number of cover objects must be the same as the number of plottyes."
+            break
 
-    assert len(plottypes) == len(covers), \
-        "The number of cover objects must be the same as the number of plottyes."
-
-    color = iter(cm.rainbow(np.linspace(0, 1, len(covers))))
-
-    nfiles = 0
-    for icov, cover in enumerate(covers):
-        if plottypes[icov] == 'heatmap':
-            nfiles += 1
-        elif plottypes[icov] == 'seqplot':
-            nfiles += 1
+    def _convert_to_track(cover, plottype):
+        if plottype == 'heatmap':
+            track = HeatTrack(cover)
+        elif plottype == 'seqplot':
+            track = SeqTrack(cover)
         else:
-            nfiles += cover.shape[-1]
+            track = LineTrack(cover)
+        return track
 
-    grid = plt.GridSpec(2 + (nfiles * 3) + (len(covers) - 1),
+    tracks = []
+    for icov, cover in enumerate(covers):
+        if isinstance(cover, Track):
+            tracks.append(cover)
+        else:
+            warnings.warn('Convert the Dataset object to proper Track objects.'
+                          ' In the future, only Track objects will be supported.',
+                          FutureWarning)
+            tracks.append(_convert_to_track(cover, plottypes[icov]))
+
+    headertrack = 2
+    trackheights = 0
+    for track in tracks:
+        trackheights += track.height
+    spacer = len(tracks) - 1
+
+    grid = plt.GridSpec(headertrack + trackheights + spacer,
                         10, wspace=0.4, hspace=0.3)
     fig = plt.figure(figsize=figsize)
 
@@ -1621,100 +1641,191 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
     plt.yticks(())
 
     y_offset = 1
-    for j, cover in enumerate(covers):
+    for j, track in enumerate(tracks):
         y_offset += 1
-        color_ = next(color)
+        
+        track.add_side_bar(fig, grid, y_offset)
+        track.plot(fig, grid, y_offset, chrom, start, end)
+        y_offset += track.height
 
-        y_block = (cover.shape[-1] if plottypes[j] == 'line' else 1) * 3
+    return (fig)
 
+
+class Track(object):
+    """General track
+
+    Parameters
+    ----------
+
+    data : Cover object
+        Coverage object
+    height : int
+        Track height.
+    """
+    def __init__(self, data, height):
+        self.height = height
+        self.data = data
+
+    @property
+    def name(self):
+        return self.data.name
+
+    def add_side_bar(self, fig, grid, offset):
         # side bar indicator for current cover
-        ax = fig.add_subplot(grid[(y_offset): (y_offset + y_block), 0])
+        ax = fig.add_subplot(grid[(offset): (offset + self.height), 0])
 
         ax.set_xticks(())
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
         ax.set_yticks([0.5])
-        ax.set_yticklabels([cover.name], color=color_)
+        ax.set_yticklabels([self.name])
 
-        coverage = cover[chrom, start, end][0, :, :, :]
+    def get_track_axis(self, fig, grid, offset, height):
+        return fig.add_subplot(grid[offset:(offset + height), 1:])
+    
 
-        if plottypes[j] == 'heatmap':
-            ax = fig.add_subplot(grid[(y_offset): (y_offset + 3), 1:])
-            im = ax.pcolor(coverage.reshape(coverage.shape[0], -1).T)
-            #im = ax.pcolor(np.random.rand(200, 60).T)
-            if coverage.shape[-2] == 2:
-                ticks = [':'.join([x, y]) for y, x in product(['+', '-'], cover.conditions)]
-            else:
-                ticks = cover.conditions
-            #    ax.set_yticklabels(cover.conditions)
-            ax.set_yticklabels(ticks)
-            ax.set_xticks(())
-            ax.set_yticks(np.arange(0, len(ticks)+1, 1.0))
-            #cbar = ax.figure.colorbar(im, ax=ax)
-            y_offset += 3
-            continue
+class LineTrack(Track):
+    """Line track
 
-        if plottypes[j] == 'seqplot':
-            # check if coverage represents dna
-            alphabetsize = 0
-            if len(cover.conditions) % len(NMAP) == 0:
-                alphabetsize = len(NMAP)
-                MAP = NMAP
-            if len(cover.conditions) % len(PMAP) == 0:
-                alphabetsize = len(PMAP)
-                MAP = PMAP
+    Visualizes genomic data as line plot.
 
-            alphabetsize = int(alphabetsize)
+    Parameters
+    ----------
 
-            if alphabetsize == 0:
-                raise ValueError("Coverage tracks seems not represent biological sequences. "
-                                 "The last dimension must be divisible by the alphabetsize.")
+    data : Cover object
+        Coverage object
+    height : int
+        Track height. Default=3
+    """
+    def __init__(self, data, height=3, linestyle='-', marker='o', color='b'):
+        super(LineTrack, self).__init__(data, height)
+        self.height = height * len(data.conditions)
+        self.linestyle = linestyle
+        self.marker = marker
+        self.color = color
 
-            for cond in cover.conditions:
-                if cond[0] not in MAP:
-                    raise ValueError("Coverage tracks seems not represent biological sequences. "
-                                     "Condition names must represent the alphabet letters.")
-
-            coverage = coverage.reshape(coverage.shape[0], -1)
-            coverage = coverage.reshape(coverage.shape[:-1] +
-                                        (alphabetsize, int(coverage.shape[-1]/alphabetsize)))
-            coverage = coverage.sum(-1)
-
-            ax = fig.add_subplot(grid[(y_offset): (y_offset + 3), 1:])
-            x = np.arange(coverage.shape[0])
-            y_figure_offset = np.zeros(coverage.shape[0])
-            handles = []
-            for letter in MAP:
-                handles.append(ax.bar(x, coverage[:, MAP[letter]],
-                                      bottom=y_figure_offset,
-                                      color=sns.color_palette("hls", len(MAP))[MAP[letter]],
-                                      label=letter))
-                y_figure_offset += coverage[:, MAP[letter]]
-            ax.legend(handles=handles)
-            ax.set_yticklabels(())
-            ax.set_yticks(())
-            ax.set_xticks(())
-            y_offset += 3
-            continue
-
-        for i, condition in enumerate(cover.conditions):
-            ax = fig.add_subplot(grid[(y_offset):(y_offset + 3), 1:])
+    def plot(self, fig, grid, offset, chrom, start, end):
+        coverage = self.data[chrom, start, end][0, :, :, :]
+        offset_ = offset
+        trackheight = self.height//len(self.data.conditions)
+        
+        for i, condition in enumerate(self.data.conditions):
+            ax = self.get_track_axis(fig, grid, offset_, trackheight)
+            offset_ += trackheight
             if coverage.shape[-2] == 2:
                 #both strands are covered separately
                 ax.plot(coverage[:, 0, i],
-                        linewidth=2, color=color_, label="+", marker="+")
+                        linewidth=2,
+                        linestyle=self.linestyle,
+                        color=self.color, label="+", marker=self.marker)
                 ax.plot(coverage[:, 1, i],
-                        linewidth=2, color=color_, label="-", marker=1)
+                        linewidth=2,
+                        linestyle=self.linestyle,
+                        color=self.color, label="-", marker=self.marker)
                 ax.legend()
             else:
-                ax.plot(coverage[:, 0, i], linewidth=2, color=color_)
+                ax.plot(coverage[:, 0, i], linewidth=2, color=color)
             ax.set_yticks(())
             ax.set_xticks(())
             ax.set_xlim([0, len(coverage)])
-            if len(cover.conditions) > 1:
+            if len(self.data.conditions) > 1:
                 ax.set_ylabel(condition, labelpad=12)
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
-            y_offset += 3
-    return (fig)
+
+
+class SeqTrack(Track):
+    """Sequence Track
+
+    Visualizes sequence importance.
+
+    Parameters
+    ----------
+
+    data : Cover object
+        Coverage object
+    height : int
+        Track height. Default=3
+    """
+    def __init__(self, data, height=3):
+        super(SeqTrack, self).__init__(data, height)
+
+    def plot(self, fig, grid, offset, chrom, start, end):
+        # check if coverage represents dna
+        alphabetsize = 0
+        if len(self.data.conditions) % len(NMAP) == 0:
+            alphabetsize = len(NMAP)
+            MAP = NMAP
+        if len(self.data.conditions) % len(PMAP) == 0:
+            alphabetsize = len(PMAP)
+            MAP = PMAP
+
+        alphabetsize = int(alphabetsize)
+
+        if alphabetsize == 0:
+            raise ValueError(
+                "Coverage tracks seems not represent biological sequences. "
+                "The last dimension must be divisible by the alphabetsize.")
+
+        for cond in self.data.conditions:
+            if cond[0] not in MAP:
+                raise ValueError(
+                    "Coverage tracks seems not represent biological sequences. "
+                    "Condition names must represent the alphabet letters.")
+
+        coverage = self.data[chrom, start, end][0, :, :, :]
+        coverage = coverage.reshape(coverage.shape[0], -1)
+        coverage = coverage.reshape(coverage.shape[:-1] +
+                                    (alphabetsize,
+                                     int(coverage.shape[-1]/alphabetsize)))
+        coverage = coverage.sum(-1)
+
+        ax = self.get_track_axis(fig, grid, offset, self.height)
+        x = np.arange(coverage.shape[0])
+        y_figure_offset = np.zeros(coverage.shape[0])
+        handles = []
+        for letter in MAP:
+            handles.append(ax.bar(x, coverage[:, MAP[letter]],
+                                  bottom=y_figure_offset,
+                                  color=sns.color_palette("hls",
+                                                          len(MAP))[MAP[letter]],
+                                  label=letter))
+            y_figure_offset += coverage[:, MAP[letter]]
+        ax.legend(handles=handles)
+        ax.set_yticklabels(())
+        ax.set_yticks(())
+        ax.set_xticks(())
+
+
+class HeatTrack(Track):
+    """Heatmap Track
+
+    Visualizes genomic data as heatmap.
+
+    Parameters
+    ----------
+
+    data : Cover object
+        Coverage object
+    height : int
+        Track height. Default=3
+    """
+    def __init__(self, data, height=3):
+        super(HeatTrack, self).__init__(data, height)
+
+    def plot(self, fig, grid, offset, chrom, start, end):
+        ax = self.get_track_axis(fig, grid, offset, self.height)
+        coverage = self.data[chrom, start, end][0, :, :, :]
+
+        im = ax.pcolor(coverage.reshape(coverage.shape[0], -1).T)
+
+        if coverage.shape[-2] == 2:
+            ticks = [':'.join([x, y]) for y, x \
+                     in product(['+', '-'], self.data.conditions)]
+        else:
+            ticks = self.data.conditions
+
+        ax.set_yticklabels(ticks)
+        ax.set_xticks(())
+        ax.set_yticks(np.arange(0, len(ticks) + 1, 1.0))
