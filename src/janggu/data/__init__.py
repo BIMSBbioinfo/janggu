@@ -3,6 +3,10 @@ from copy import copy
 
 from janggu.data.coverage import Cover  # noqa
 from janggu.data.coverage import plotGenomeTrack  # noqa
+from janggu.data.coverage import LineTrack  # noqa
+from janggu.data.coverage import Track  # noqa
+from janggu.data.coverage import SeqTrack  # noqa
+from janggu.data.coverage import HeatTrack  # noqa
 from janggu.data.data import Dataset  # noqa
 from janggu.data.dna import Bioseq  # noqa
 from janggu.data.dna import VariantStreamer  # noqa
