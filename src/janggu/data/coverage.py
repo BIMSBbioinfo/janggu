@@ -1180,6 +1180,7 @@ class Cover(Dataset):
                           cache=False,
                           datatags=None,
                           channel_last=True,
+                          padding_value=0.0,
                           store_whole_genome=False):
         """Create a Cover class from a numpy.array.
 
@@ -1218,6 +1219,8 @@ class Cover(Dataset):
         store_whole_genome : boolean
             Indicates whether the whole genome or only ROI
             should be loaded. Default: False.
+        padding_value : float
+            Padding value. Default: 0.
         channel_last : boolean
             This tells the constructor how to interpret the array dimensions.
             It indicates whether the condition axis is the last dimension
@@ -1313,6 +1316,7 @@ class Cover(Dataset):
                                      typecode=array.dtype,
                                      store_whole_genome=store_whole_genome,
                                      loader=arrayloader,
+                                     padding_value=padding_value,
                                      collapser=_dummy_collapser)
 
         return cls(name, cover, gindexer,
@@ -1360,7 +1364,10 @@ class Cover(Dataset):
                                                               start=start,
                                                               end=end)
 
-                data = np.zeros((1, (end - start)) + self.shape[2:])
+                if self.garray.padding_value == 0.0:
+                    data = np.zeros((1, (end - start)) + self.shape[2:])
+                else:
+                    data = np.ones((1, (end - start)) + self.shape[2:]) * self.garray.padding_value
 
                 for interval in gindexer_new:
                     tmp_data = np.array(self._getsingleitem(interval))
@@ -1683,7 +1690,10 @@ class Track(object):
 
     def get_track_axis(self, fig, grid, offset, height):
         return fig.add_subplot(grid[offset:(offset + height), 1:])
-    
+
+    def get_data(self, chrom, start, end):
+        return self.data[chrom, start, end][0, :, :, :]
+
 
 class LineTrack(Track):
     """Line track
@@ -1698,10 +1708,12 @@ class LineTrack(Track):
     height : int
         Track height. Default=3
     """
-    def __init__(self, data, height=3, linestyle='-', marker='o', color='b'):
+    def __init__(self, data, height=3, linestyle='-', marker='o', color='b',
+                 linewidth=2):
         super(LineTrack, self).__init__(data, height)
         self.height = height * len(data.conditions)
         self.linestyle = linestyle
+        self.linewidth = linewidth
         self.marker = marker
         self.color = color
 
@@ -1709,26 +1721,38 @@ class LineTrack(Track):
         coverage = self.data[chrom, start, end][0, :, :, :]
         offset_ = offset
         trackheight = self.height//len(self.data.conditions)
-        
+
+        def _get_xy(cov):
+            xvalue = np.where(np.isfinite(cov))[0]
+            yvalue = cov[xvalue]
+            return xvalue, yvalue
+
+
         for i, condition in enumerate(self.data.conditions):
             ax = self.get_track_axis(fig, grid, offset_, trackheight)
             offset_ += trackheight
             if coverage.shape[-2] == 2:
                 #both strands are covered separately
-                ax.plot(coverage[:, 0, i],
-                        linewidth=2,
+                xvalue, yvalue = _get_xy(coverage[:, 0, i])
+                ax.plot(xvalue, yvalue,
+                        linewidth=self.linewidth,
                         linestyle=self.linestyle,
                         color=self.color, label="+", marker=self.marker)
-                ax.plot(coverage[:, 1, i],
-                        linewidth=2,
+                xvalue, yvalue = _get_xy(coverage[:, 1, i])
+                ax.plot(xvalue, yvalue,
+                        linewidth=self.linewidth,
                         linestyle=self.linestyle,
                         color=self.color, label="-", marker=self.marker)
                 ax.legend()
             else:
-                ax.plot(coverage[:, 0, i], linewidth=2, color=color)
+                xvalue, yvalue = _get_xy(coverage[:, 0, i])
+                ax.plot(xvalue, yvalue, linewidth=self.linewidth,
+                        color=self.color,
+                        linestyle=self.linestyle,
+                        marker=self.marker)
             ax.set_yticks(())
             ax.set_xticks(())
-            ax.set_xlim([0, len(coverage)])
+            ax.set_xlim([0, end-start])
             if len(self.data.conditions) > 1:
                 ax.set_ylabel(condition, labelpad=12)
             ax.spines['right'].set_visible(False)
@@ -1796,6 +1820,7 @@ class SeqTrack(Track):
         ax.set_yticklabels(())
         ax.set_yticks(())
         ax.set_xticks(())
+        ax.set_xlim([0, end-start])
 
 
 class HeatTrack(Track):
@@ -1829,3 +1854,4 @@ class HeatTrack(Track):
         ax.set_yticklabels(ticks)
         ax.set_xticks(())
         ax.set_yticks(np.arange(0, len(ticks) + 1, 1.0))
+        ax.set_xlim([0, end-start])
