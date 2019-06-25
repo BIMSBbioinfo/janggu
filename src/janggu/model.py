@@ -799,7 +799,9 @@ class Janggu(object):
             callback.score(self, preds, outputs=outputs_, datatags=datatags)
         return values
 
-    def predict_variant_effect(self, bioseq, variants,  # pylint: disable=too-many-locals
+    def predict_variant_effect(self,  # pylint: disable=too-many-locals
+                               bioseq,
+                               variants,
                                conditions,
                                output_folder,
                                condition_filter=None,
@@ -853,6 +855,9 @@ class Janggu(object):
             raise ValueError('Only one input layer supported for this operation.')
         binsize = self.kerasmodel.layers[0].input_shape[1] + bioseq.garray.order - 1
 
+        if not bioseq.garray._full_genome_stored:
+            raise ValueError('Incompatible Bioseq: '
+                             'Bioseq must be loaded with store_whole_genome=True.')
         # the network might output arbitrarily many
         # output.
         # With the filter option it is possible to
@@ -931,13 +936,13 @@ class Janggu(object):
                            for chrom, start, name, ref, alt in zip(chromlist,
                                                                    poslist,
                                                                    vnamelist, reflist, altlist)]),
-                from_string=True).saveas(os.path.join(output_folder, 'snps.bed.gzip'))
+                from_string=True).saveas(os.path.join(output_folder, 'snps.bed.gz'))
 
         bar.finish()
         h5file.close()
 
         return (os.path.join(output_folder, 'scores.hdf5'),
-                os.path.join(output_folder, 'snps.bed.gzip'))
+                os.path.join(output_folder, 'snps.bed.gz'))
 
     def __dim_logging(self, data):
         if isinstance(data, dict):
