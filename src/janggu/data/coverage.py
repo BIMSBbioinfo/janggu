@@ -1552,7 +1552,7 @@ class Cover(Dataset):
             bw_file.close()
 
 
-def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
+def plotGenomeTrack(tracks, chrom, start, end, figsize=(10, 5), plottypes=None):
 
     """plotGenomeTrack shows plots of a specific interval from cover objects data.
 
@@ -1562,8 +1562,8 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
 
     Parameters
     ----------
-    covers : janggu.data.Cover or list(janggu.data.Cover)
-        One or more coverge objects.
+    tracks : janggu.data.Cover or list(janggu.data.Cover) or janggu.data.Track or list(janggu.data.Track)
+        One or more track objects.
     chrom : str
         chromosome name.
     start : int
