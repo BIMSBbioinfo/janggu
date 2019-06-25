@@ -1,6 +1,8 @@
 from pkg_resources import resource_filename
 
 from janggu.data import Cover
+from janggu.data import HeatTrack
+from janggu.data import LineTrack
 from janggu.data import plotGenomeTrack
 
 roi = resource_filename('janggu',
@@ -27,6 +29,5 @@ cover2 = Cover.create_from_bigwig('coverage2',
 plotGenomeTrack([cover, cover2],
                 'chr1', 16000, 18000).savefig('coverage.png')
 
-plotGenomeTrack([cover, cover2],
-                'chr1', 16000, 18000,
-                plottypes=['heatmap', 'lineplot']).savefig('coverage2.png')
+plotGenomeTrack([HeatTrack(cover), LineTrack(cover2)],
+                'chr1', 16000, 18000).savefig('coverage2.png')
