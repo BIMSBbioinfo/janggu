@@ -493,9 +493,10 @@ Furthermore, it is possible to visualize the tracks interactively
 
 .. code:: python
 
+   from janggu.data import LineTrack
    from janggu.data import plotGenomeTrack
 
-   fig = plotGenomeTrack([cover, predictions], 'chr1', 16000, 18000).figsave('coverage.png')
+   fig = plotGenomeTrack([LineTrack(cover), LineTrack(predictions)], 'chr1', 16000, 18000).figsave('coverage.png')
 
 
 .. image:: coverage.png
@@ -770,30 +771,37 @@ In this case the example becomes
    model.fit(DNA, ReduceDim(LABELS), epochs=100)
 
 
+Part III) Evaluation and interpretation of the model
+-----------------------------------------------------
 
-Evaluation through Scorer callbacks
+Janggu supports various methods to evaluate and interprete a trained model,
+including evaluating summary scores, inspecting the results in
+the built-in genome browser (see Part I), evaluating the integrated gradients
+which allows to visualized input feature importance and by
+offering support for variant effect predictions.
+In this last part we will illustrate these aspects.
+
+Evaluation of summary scores
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Finally, we would like to evaluate various aspects of the model performance
-and investigate the predictions. This can be done by invoking
+After the model has been trained, the quality of the predictions
+is usually summarized by its agreement with the ground truth, e.g. by
+evaluating the area under the ROC curve in a binary classification application
+or by computing the correlation between predictions and targets in a regression
+setting.
 
-.. code-block:: python
-
-   model.evaluate(DNA_TEST, LABELS_TEST)
-   model.predict(DNA_TEST)
-
-which resemble the familiar keras methods.
-Janggu additionally offers a simple way to evaluate and export model results,
-for example on independent test data.
-
-For a binary classification task you might just want to supply the names
-of commonly used evaluation metrics as follows, which produces figures
-of the ROC and PRC as well as tsv file containing the areas under the respective
-curves.
+For some commonly used evaluation criteria, the evaluate method directly allows
+to determine and export the given metric results.
+For example, for a classification task the following line
+evaluates the ROC and PRC and exports a figure and a tsv file, respectively,
+for each measure.
 
 .. code-block:: python
 
    model.evaluate(DNA_TEST, LABELS_TEST, callbacks=['roc', 'prc', 'auprc', 'auroc'])
+
+The results are stored in :code:`<results_root>/evaluation/{roc,prc}.png`
+as well as :code:`<results_root>/evaluation/{auroc,auprc}.tsv`.
 
 Furthermore, for a regression setting it is possible to invoke
 
@@ -801,71 +809,44 @@ Furthermore, for a regression setting it is possible to invoke
 
    model.evaluate(DNA_TEST, LABELS_TEST, callbacks=['cor', 'mae', 'mse', 'var_explained'])
 
-which dumps the Pearson's correlation, the mean absolute error, the mean squared error
+which evaluates the Pearson's correlation, the mean absolute error, the mean squared error
 and the explained variance into tsv files.
+
 
 It is also possible to customize the scoring callbacks by instantiating a
 :code:`Scorer` objects which can be passed to
-:code:`model.evaluate` and :code:`model.predict`.
-This allows you to determine different performance metrics and/or
-export the results in various ways, e.g. as tsv file, as plot or
-as a BIGWIG file.
+:code:`model.evaluate` and :code:`model.predict`. Further details about
+customizing the scoring callbacks are given in :doc:`custom_scorer`.
 
-A :code:`Scorer` maintains a **name**, a **scoring function** and
-an **exporter function**. The latter two dictate the scoring method
-and how the results should be stored.
+Input feature importance example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An example of using :code:`Scorer` to
-evaluate the ROC curve and the area under the ROC curve (auROC)
-and export it as plot and into a tsv file, respectively, is shown below
+In order to inspect what the model has learned,
+it is possible to identify the most important features in the input space
+using the integrated gradients method.
 
-.. code:: python
+This is illustrated on a toy example in
+`influence attribution and variant effect prediction <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/example_input_importance.py>`_.
+Note that this script can be run with different sequence feature encodings using the
+:code:`-order` option,
+e.g. mono-, di- or tri-nucleotide based.
+When using higher-orders, the two types of sequences (Oct4 vs. Mafk bound sequences)
+can be better separated. Moreover, the influence attribution also reveals the underlying
+Oct4 and Mafk binding sites better.
 
-   from sklearn.metrics import roc_auc_score
-   from sklearn.metrics import roc_curve
-   from janggu import Scorer
-   from janggu.utils import ExportTsv
-   from janggu.utils import ExportScorePlot
+Variant effect prediction
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   # create a scorer
-   score_auroc = Scorer('auROC',
-                        roc_auc_score,
-                        exporter=ExportTsv())
-   score_roc = Scorer('ROC',
-                      roc_curve,
-                      exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
-   # determine the auROC
-   model.evaluate(DNA, LABELS, callbacks=[score_auroc, score_roc])
-
-After the evaluation, you will find :code:`auROC.tsv` and :code:`ROC.png`
-in :code:`<results-root>/evaluation/<modelname>/`.
-
-Similarly, you can use :code:`Scorer` to export the predictions
-of the model. Below, the output predictions are exported in json format.
-
-.. code:: python
-
-   from janggu import Scorer
-   from janggu import ExportJson
-
-   # create scorer
-   pred_scorer = Scorer('predict', exporter=ExportJson())
-
-   # Evaluate predictions
-   model.predict(DNA, callbacks=[pred_scorer])
-
-Using the Scorer callback objects, a number of evaluations can
-be run out of the box. For example, with different `sklearn.metrics`
-and different exporter options. A list of available exporters
-can be found in :ref:`reference-label`.
-
-Alternatively, you can also plug in custom functions
-
-.. code:: python
-
-   # computes the per-data point loss
-   score_loss = Scorer('loss', lambda t, p: -t * numpy.log(p),
-                            exporter=ExportJson())
+In order to measure the effect of single nucleotide variant on the predict
+network output can be tested via the :code:`Janggu.predict_variant_effect`
+based on a Bioseq object and single nucleotide variants in VCF format.
+This method evaluates the network for each variant (using its sequence context)
+as well as its respective reference sequence.
+As a result, an hdf5 file and a bed file will be produced which
+contain the network predictions for each variant and the associated genomic
+loci.
+An illustration of the variant effect prediction is given in
+`influence attribution and variant effect prediction <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/example_input_importance.py>`_.
 
 
 Browse through the results

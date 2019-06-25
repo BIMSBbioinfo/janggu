@@ -12,45 +12,24 @@ janggu.data - Genomics datasets for deep learning
    Cover.create_from_bed
    Cover.create_from_array
    plotGenomeTrack
+   Track
+   HeatTrack
+   LineTrack
+   SeqTrack
 
-
-
-Interface
----------
-.. autosummary::
-   Dataset
-
-.. autoclass:: Dataset
-   :members: name, shape
-
-Classes
--------
 
 Main Dataset classes
+---------------------
 
 .. autosummary::
+   Dataset
    Cover
    Bioseq
    Array
+   GenomicIndexer
 
-
-Dataset wrappers that faciliate reshaping, data augmentation, NaN removal.
-
-.. autosummary::
-   ReduceDim
-   NanToNumConverter
-   RandomOrientation
-   RandomSignalScale
-
-Normalization classes and functions
-
-.. autosummary::
-   LogTransform
-   PercentileTrimming
-   RegionLengthNormalization
-   ZScore
-   ZScoreLog
-   normalize_garray_tpm
+.. autoclass:: Dataset
+   :members: name, shape
 
 .. autoclass:: Cover
    :members: create_from_bam, create_from_bigwig, create_from_bed, create_from_array
@@ -60,6 +39,21 @@ Normalization classes and functions
 
 .. autoclass:: Array
 
+.. autoclass:: GenomicIndexer
+   :members: create_from_file
+
+
+Dataset wrappers
+----------------
+
+Utilities for reshaping, data augmentation, NaN removal.
+
+.. autosummary::
+   ReduceDim
+   NanToNumConverter
+   RandomOrientation
+   RandomSignalScale
+
 .. autoclass:: ReduceDim
 
 .. autoclass:: NanToNumConverter
@@ -67,6 +61,18 @@ Normalization classes and functions
 .. autoclass:: RandomOrientation
 
 .. autoclass:: RandomSignalScale
+
+
+Normalization and transformation
+--------------------------------
+
+.. autosummary::
+   LogTransform
+   PercentileTrimming
+   RegionLengthNormalization
+   ZScore
+   ZScoreLog
+   normalize_garray_tpm
 
 .. autoclass:: LogTransform
 
@@ -81,7 +87,15 @@ Normalization classes and functions
 .. autofunction:: normalize_garray_tpm
 
 
-Functions
-----------
+Visualization utilitites
+------------------------
 
 .. autofunction:: plotGenomeTrack
+
+.. autoclass:: Track
+
+.. autoclass:: HeatTrack
+
+.. autoclass:: LineTrack
+
+.. autoclass:: SeqTrack

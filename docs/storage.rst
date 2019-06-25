@@ -291,8 +291,7 @@ the output corresponds to an ordinary numpy array.
 In order to reestablish the association of the predicted values
 with the genomic coordinates **Cover** exposes the constructor: `create_from_array`.
 Upon invocation, a new :code:`Cover` object is composed that holds the predicted values.
-These predictions may subsequently be illustrated via `plotGenomeTrack` or exported
-to a BIGWIG file.
+These predictions may subsequently be illustrated via `plotGenomeTrack` or exported to a BIGWIG file.
 
 
 Evaluation features
@@ -327,40 +326,9 @@ dimensions of Cover might be single dimensional (e.g. containing only one elemen
 These dimensions can be dropped using :code:`ReduceDim`.
 For example :code:`ReduceDim(cover)`.
 
-==============================
-Output directory configuration
-==============================
 
-Optionally, janggu produces various kinds of output files, including cache files
-for the datasets, log files for monitoring the training / evaluation procedure,
-stored model parameters or summary output files about the evaluation performance.
-
-The root directory specifying the janggu output location can be configured
-via setting the environment variable :code:`JANGGU_OUTPUT`.
-This might be done in the following ways:
-
-Setting the directory globally::
-
-   export JANGGU_OUTPUT='/output/dir'
-
-on startup of the script::
-
-  JANGGU_OUTPUT='/output/dir' python classify.py
-
-or inside your model script using
-
-.. code:: python
-
-   import os
-   os.environ['JANGGU_OUTPUT']='/output/dir'
-
-If  :code:`JANGGU_OUTPUT` is not set, root directory will be set
-to :code:`/home/user/janggu_results`.
-
-
-====================================
 Different views datasets
-====================================
+------------------------
 
 Suppose you already have loaded DNA sequence from a reference genome
 and you want to use a different parts of it
@@ -390,11 +358,11 @@ Since underneath the actual dataset is just referenced rather than copied,
 the memory footprint won't increase. It just allows to read out different parts
 of the genome.
 
-A full example is illustrated in `Example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_w_view.py>`_.
+A full example is illustrated in `usage of view <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_w_view.py>`_.
 
-====================================
+
 Randomized dataset
-====================================
+------------------
 
 In order to achieve good predictive performances,
 it is recommended to randomize the mini-batches  during model fitting.
@@ -426,4 +394,34 @@ e.g. training need to be provided with the same :code:`random_state` value.
 Furthermore, the HDF5 file needs to be stored with :code:`store_whole_genome=False`,
 since data storage is not affected by the random_state when the entire genome
 is stored.
-A full example is illustrated in `Example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_hdf5.py>`_.
+A full example is illustrated in `Randomization with HDF5 <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_hdf5.py>`_.
+
+==============================
+Output directory configuration
+==============================
+
+Optionally, janggu produces various kinds of output files, including cache files
+for the datasets, log files for monitoring the training / evaluation procedure,
+stored model parameters or summary output files about the evaluation performance.
+
+The root directory specifying the janggu output location can be configured
+via setting the environment variable :code:`JANGGU_OUTPUT`.
+This might be done in the following ways:
+
+Setting the directory globally::
+
+   export JANGGU_OUTPUT='/output/dir'
+
+on startup of the script::
+
+  JANGGU_OUTPUT='/output/dir' python classify.py
+
+or inside your model script using
+
+.. code:: python
+
+   import os
+   os.environ['JANGGU_OUTPUT']='/output/dir'
+
+If  :code:`JANGGU_OUTPUT` is not set, root directory will be set
+to :code:`/home/user/janggu_results`.

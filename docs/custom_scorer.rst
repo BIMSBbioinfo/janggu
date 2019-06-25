@@ -1,3 +1,5 @@
+.. custom-score:
+
 ====================
 Customize Evaluation
 ====================
@@ -78,3 +80,64 @@ a tuple `(modelname, layername, conditionname)` and whose values are the returne
 score values from the scoring function (see above).
 Example exporters can be found in :ref:`reference-label` or in the source code of
 the package.
+
+
+Custom example scorers
+----------------------
+
+
+A :code:`Scorer` maintains a **name**, a **scoring function** and
+an **exporter function**. The latter two dictate the scoring method
+and how the results should be stored.
+
+An example of using :code:`Scorer` to
+evaluate the ROC curve and the area under the ROC curve (auROC)
+and export it as plot and into a tsv file, respectively, is shown below
+
+.. code:: python
+
+   from sklearn.metrics import roc_auc_score
+   from sklearn.metrics import roc_curve
+   from janggu import Scorer
+   from janggu.utils import ExportTsv
+   from janggu.utils import ExportScorePlot
+
+   # create a scorer
+   score_auroc = Scorer('auROC',
+                        roc_auc_score,
+                        exporter=ExportTsv())
+   score_roc = Scorer('ROC',
+                      roc_curve,
+                      exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
+   # determine the auROC
+   model.evaluate(DNA, LABELS, callbacks=[score_auroc, score_roc])
+
+After the evaluation, you will find :code:`auROC.tsv` and :code:`ROC.png`
+in :code:`<results-root>/evaluation/<modelname>/`.
+
+Similarly, you can use :code:`Scorer` to export the predictions
+of the model. Below, the output predictions are exported in json format.
+
+.. code:: python
+
+   from janggu import Scorer
+   from janggu import ExportJson
+
+   # create scorer
+   pred_scorer = Scorer('predict', exporter=ExportJson())
+
+   # Evaluate predictions
+   model.predict(DNA, callbacks=[pred_scorer])
+
+Using the Scorer callback objects, a number of evaluations can
+be run out of the box. For example, with different `sklearn.metrics`
+and different exporter options. A list of available exporters
+can be found in :ref:`reference-label`.
+
+Alternatively, you can also plug in custom functions
+
+.. code:: python
+
+   # computes the per-data point loss
+   score_loss = Scorer('loss', lambda t, p: -t * numpy.log(p),
+                            exporter=ExportJson())

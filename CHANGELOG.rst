@@ -2,6 +2,18 @@
 Changelog
 =========
 
+0.9.3 (2019-06-12)
+------------------
+
+- View mechanism added which allows to reuse the same dataset for different purposes, e.g. training set and test set.
+- Added a dataset randomization which allows to internally randomize the data in order to avoid having to use shuffle=True with the fit method. This allows fetch randomized data in coherent chunks from hdf5 format files which improves access time.
+- Added lazy loading mechanism for DNA and BED files, which defer the determination of the genome size to the dataset creation phase, but does not perform it when loading cached files to improve reload time.
+- Caching logic improved in order to maximize the amount of reusability of dataset. For example, when the whole genome is loaded, the data can later be reloaded with different binsizes.
+- Variant effect prediction functionality added.
+- Improved efficiency for loading coverage from an array.
+- Added axis option to ReduceDim
+- Added Track classes to improve flexibility on plotGenomeTrack
+
 0.9.2 (2019-05-04)
 ------------------
 
