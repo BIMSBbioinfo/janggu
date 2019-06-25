@@ -51,12 +51,12 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 # Training input and labels are purely defined genomic coordinates
 DNA = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                   roi=ROI_FILE,
+                                   roi=ROI_TRAIN_FILE,
                                    binsize=200,
                                    order=args.order,
                                    cache=True)
 
-LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
+LABELS = Cover.create_from_bed('peaks', roi=ROI_TRAIN_FILE,
                                bedfiles=PEAK_FILE,
                                binsize=200,
                                resolution=200,
@@ -65,13 +65,13 @@ LABELS = Cover.create_from_bed('peaks', roi=ROI_FILE,
 
 
 DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
-                                        roi=ROI_FILE,
+                                        roi=ROI_TEST_FILE,
                                         binsize=200,
                                         order=args.order)
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
-                                    roi=ROI_FILE,
+                                    roi=ROI_TEST_FILE,
                                     binsize=200,
                                     resolution=200,
                                     storage='sparse')
@@ -129,6 +129,14 @@ model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
 
 pred = model.predict(DNA_TEST)
 cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
+
+print('Oct4 predictions scores should be greater than Mafk scores:')
+print('Prediction score examples for Oct4')
+for i in range(4):
+    print('{}.: {}'.format(i, pred[i]))
+print('Prediction score examples for Mafk')
+for i in range(1, 5):
+    print('{}.: {}'.format(i, pred[-i]))
 
 
 model.predict(DNA_TEST, datatags=['test'],

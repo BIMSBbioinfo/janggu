@@ -145,6 +145,15 @@ pred = model.predict(DNA_TEST)
 pred = pred[:, None, None, :]
 cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
 
+print('Oct4 predictions scores should be greater than Mafk scores:')
+print('Prediction score examples for Oct4')
+for i in range(4):
+    print('{}.: {}'.format(i, cov_pred[i]))
+print('Prediction score examples for Mafk')
+for i in range(1, 5):
+    print('{}.: {}'.format(i, cov_pred[-i]))
+
 model.predict(DNA_TEST, datatags=['test'],
               callbacks=[heatmap_eval, tsne_eval],
               layername='motif')
+

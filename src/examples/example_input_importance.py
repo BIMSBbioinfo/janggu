@@ -16,11 +16,11 @@ from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.data import GenomicIndexer
 from janggu.data import ReduceDim
-from janggu.layers import DnaConv2D
-from janggu.utils import ExportClustermap
-from janggu.utils import ExportTsne
-from janggu import input_attribution
 from janggu.data import plotGenomeTrack
+from janggu.data import LineTrack
+from janggu.data import SeqTrack
+from janggu.layers import DnaConv2D
+from janggu import input_attribution
 
 np.random.seed(1234)
 
@@ -117,48 +117,82 @@ print('loss: {}, acc: {}'.format(hist.history['loss'][-1],
                                  hist.history['acc'][-1]))
 print('#' * 40)
 
+pred = model.predict(DNA_TEST)
+cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
+
+print('Oct4 predictions scores should be greater than Mafk scores:')
+print('Prediction score examples for Oct4')
+for i in range(4):
+    print('{}.: {}'.format(i, cov_pred[i]))
+print('Prediction score examples for Mafk')
+for i in range(1, 5):
+    print('{}.: {}'.format(i, cov_pred[-i]))
+
+# Extract the 4th interval to perform input feature importance attribution
+# which represents an Oct4 bound region
 gi = DNA.gindexer[3]
 chrom = gi.chrom
 start = gi.start
 end = gi.end
-attr = input_attribution(model, DNA, chrom=chrom, start=start, end=end)
+attr_oct = input_attribution(model, DNA, chrom=chrom, start=start, end=end)
 
-plotGenomeTrack(attr, chrom, start, end,
-                plottypes=['seqplot']).savefig('influence_oct4_example_order{}.png'.format(args.order))
+# visualize the important sequence features
+plotGenomeTrack(SeqTrack(attr_oct[0]),
+                chrom, start, end).savefig(os.path.join(
+                    args.path, 'influence_oct4_example_order{}.png'.format(args.order)))
 
-
-vcfoutput = os.path.join(os.environ['JANGGU_OUTPUT'], 'vcfoutput')
-os.makedirs(vcfoutput, exist_ok=True)
-
-model.predict_variant_effect(DNA, VCFFILE, conditions=['m'+str(i) for i in range(1)],
-                             output_folder=vcfoutput)
-
-scoresfile = os.path.join(vcfoutput, 'scores.hdf5')
-varinatsfile = os.path.join(vcfoutput, 'snps.bed.gzip')
-
-f = h5py.File(scoresfile, 'r')
-
-gindexer = GenomicIndexer.create_from_file(VCFFILE, None, None)
-
-snpcov = Cover.create_from_array('snps', f['diffscore'],
-                              gindexer,
-                              store_whole_genome=True)
-
-
-gi = DNA.gindexer[3]
-chrom = gi.chrom
-start = gi.start
-end = gi.end
-
-print(attr)
-print(snpcov)
-plotGenomeTrack([snpcov] + attr, chrom, start, end, plottypes=['line', 'seqplot']).savefig('predicted_variant_effects_oct4_order{}.png'.format(args.order))
-
+# For the comparison, extract an interval
+# representing a Mafk bound region and visualize the
+# important features.
 gi = DNA.gindexer[7796]
 chrom = gi.chrom
 start = gi.start
 end = gi.end
-attr = input_attribution(model, DNA, chrom=chrom, start=start, end=end)
+attr_mafk = input_attribution(model, DNA, chrom=chrom, start=start, end=end)
 
-plotGenomeTrack(attr, chrom, start, end,
-                plottypes=['seqplot']).savefig('influence_mafk_example_order{}.png'.format(args.order))
+plotGenomeTrack(SeqTrack(attr_mafk[0]),
+                chrom, start, end).savefig(os.path.join(
+                    args.path,
+                    'influence_mafk_example_order{}.png'.format(args.order)))
+# output directory for the variant effect prediction
+vcfoutput = os.path.join(os.environ['JANGGU_OUTPUT'], 'vcfoutput')
+os.makedirs(vcfoutput, exist_ok=True)
+
+# perform variant effect prediction using Bioseq object and
+# a VCF file
+scoresfile, variantsfile = model.predict_variant_effect(DNA,
+                                                        VCFFILE,
+                                                        conditions=['feature'],
+                                                        output_folder=vcfoutput)
+
+scoresfile = os.path.join(vcfoutput, 'scores.hdf5')
+variantsfile = os.path.join(vcfoutput, 'snps.bed.gz')
+
+# parse the variant effect predictions (difference between
+# reference and alternative variant) into a Cover object
+# for the purpose of visualization
+f = h5py.File(scoresfile, 'r')
+
+gindexer = GenomicIndexer.create_from_file(variantsfile, None, None)
+
+snpcov = Cover.create_from_array('snps', f['diffscore'],
+                                 gindexer,
+                                 store_whole_genome=True,
+                                 padding_value=np.nan)
+snpcov = Cover.create_from_array('snps', f['diffscore'],
+                                 gindexer,
+                                 store_whole_genome=False,
+                                 padding_value=np.nan)
+
+
+gi = DNA.gindexer[3]
+chrom = gi.chrom
+start = gi.start
+end = gi.end
+
+plotGenomeTrack([LineTrack(snpcov,
+                           linestyle="None"), SeqTrack(attr_oct[0])],
+                chrom, start, end).savefig(os.path.join(
+                    args.path,
+                    'predicted_variant_effects_oct4_order{}.png'.format(args.order)))
+

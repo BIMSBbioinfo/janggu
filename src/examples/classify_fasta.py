@@ -147,7 +147,8 @@ K.clear_session()
 model = Janggu.create(template=modeltemplate,
                       modelparams=(30, 21, 'relu'),
                       inputs=DNA,
-                      outputs=LABELS)
+                      outputs=LABELS,
+                      name='fasta_seqs_m{}_o{}'.format(args.model, args.order))
 
 model.compile(optimizer='adadelta', loss='binary_crossentropy',
               metrics=['acc'])
@@ -190,6 +191,16 @@ pred_tsv = Scorer('pred', exporter=ExportTsv(annot=annot_test,
 model.evaluate(DNA_TEST, LABELS_TEST, datatags=['test'],
                callbacks=['auc', 'auprc', 'roc', 'auroc'])
 
-model.predict(DNA_TEST, datatags=['test'],
+pred = model.predict(DNA_TEST, datatags=['test'],
               callbacks=[pred_tsv, heatmap_eval],
               layername='motif')
+
+pred = model.predict(DNA_TEST)
+print('Oct4 predictions scores should be greater than Mafk scores:')
+print('Prediction score examples for Oct4')
+for i in range(4):
+    print('{}.: {}'.format(i, pred[i]))
+print('Prediction score examples for Mafk')
+for i in range(1, 5):
+    print('{}.: {}'.format(i, pred[-i]))
+

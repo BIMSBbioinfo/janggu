@@ -43,8 +43,7 @@ PEAK_FILE = resource_filename('janggu', 'resources/scores.bed')
 
 DNA_TEST = Bioseq.create_from_refgenome('dna', refgenome=REFGENOME,
                                         roi=ROI_TEST,
-                                        binsize=200,
-                                        order=1)
+                                        binsize=200)
 
 LABELS_TEST = Cover.create_from_bed('peaks',
                                     bedfiles=PEAK_FILE,
@@ -96,11 +95,12 @@ print('#' * 40)
 pred = model.predict(DNA_TEST)
 cov_pred = Cover.create_from_array('BindingProba', pred, LABELS_TEST.gindexer)
 
-# predicted labels for chromosome pseudo1 should be higher than for pseudo2,
-# because in the example all of chromosome pseudo1 is bound and pseudo2 is unbound
-for chrom in ['pseudo1', 'pseudo2']:
-    print('prediction score for {}: {}'.format(chrom, cov_pred[chrom, 0, 1]))
-
+print('Prediction score examples for Oct4')
+for i in range(4):
+    print('{}.: {}'.format(i, cov_pred[i]))
+print('Prediction score examples for Mafk')
+for i in range(1, 5):
+    print('{}.: {}'.format(i, cov_pred[-i]))
 
 # predictions (or feature activities) can finally be exported to bigwig
 cov_pred.export_to_bigwig(output_dir=args.path)
