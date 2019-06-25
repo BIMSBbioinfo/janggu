@@ -670,7 +670,7 @@ class VariantStreamer:
 
                     names.append(rec.id if rec.id is not None else '')
                     chroms.append(rec.chrom)
-                    poss.append(rec.pos)
+                    poss.append(rec.pos - 1)
                     rallele.append(rec.ref.upper())
                     aallele.append(rec.alts[0].upper())
 
@@ -718,4 +718,3 @@ class VariantStreamer:
             alts = alts[:ibatch]
 
             yield names, chroms, poss, rallele, aallele, refs, alts
-            raise StopIteration()
