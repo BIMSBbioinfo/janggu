@@ -1592,18 +1592,18 @@ def plotGenomeTrack(tracks, chrom, start, end, figsize=(10, 5), plottypes=None):
         and savefig() can be used.
     """
 
-    if not isinstance(covers, list):
-        covers = [covers]
+    if not isinstance(tracks, list):
+        tracks = [tracks]
 
-    for cover in covers:
-        if not isinstance(cover, Track):
+    for track in tracks:
+        if not isinstance(track, Track):
             warnings.warn('Convert the Dataset object to proper Track objects.'
                           ' In the future, only Track objects will be supported.',
                           FutureWarning)
             if plottypes is None:
-                plottypes = ['line'] * len(covers)
+                plottypes = ['line'] * len(tracks)
 
-            assert len(plottypes) == len(covers), \
+            assert len(plottypes) == len(tracks), \
                 "The number of cover objects must be the same as the number of plottyes."
             break
 
@@ -1616,16 +1616,17 @@ def plotGenomeTrack(tracks, chrom, start, end, figsize=(10, 5), plottypes=None):
             track = LineTrack(cover)
         return track
 
-    tracks = []
-    for icov, cover in enumerate(covers):
-        if isinstance(cover, Track):
-            tracks.append(cover)
+    tracks_ = []
+    for itrack, track in enumerate(tracks):
+        if isinstance(track, Track):
+            tracks_.append(track)
         else:
             warnings.warn('Convert the Dataset object to proper Track objects.'
                           ' In the future, only Track objects will be supported.',
                           FutureWarning)
-            tracks.append(_convert_to_track(cover, plottypes[icov]))
+            tracks_.append(_convert_to_track(track, plottypes[itrack]))
 
+    tracks = tracks_
     headertrack = 2
     trackheights = 0
     for track in tracks:
