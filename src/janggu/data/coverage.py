@@ -430,7 +430,7 @@ class Cover(Dataset):
 
     def __init__(self, name, garray,
                  gindexer,  # indices of pointing to region start
-                 channel_last):  # padding value
+                 channel_last):
 
         self.garray = garray
         self.gindexer = gindexer
@@ -1643,7 +1643,7 @@ def plotGenomeTrack(covers, chrom, start, end, figsize=(10, 5), plottypes=None):
     y_offset = 1
     for j, track in enumerate(tracks):
         y_offset += 1
-        
+
         track.add_side_bar(fig, grid, y_offset)
         track.plot(fig, grid, y_offset, chrom, start, end)
         y_offset += track.height
