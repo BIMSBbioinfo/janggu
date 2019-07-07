@@ -786,8 +786,6 @@ class SparseGenomicArray(GenomicArray):
         names = [name for name in storage if '__length__' not in name]
 
         if store_whole_genome:
-            print(names)
-            print('shape', [(name, _get_iv_length(storage[str(name)+'__length__'], resolution), (2 if stranded else 1) * len(self.condition)) for name in names])
             self.handle = {name: sparse.coo_matrix(
                 (storage[name][:, 0],
                  (storage[name][:, 1].astype('int'),
