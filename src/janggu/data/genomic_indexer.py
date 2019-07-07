@@ -1,4 +1,3 @@
-"""Genomic Indexer"""
 import os
 import tempfile
 
@@ -21,7 +20,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     _stepsize = None
     _binsize = None
     _flank = None
-    _collapse = None
+    zero_padding = None
+    collapse = None
     _randomidx = None
     chrs = None
     starts = None
@@ -31,9 +31,18 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     @property
     def randomidx(self):
-        if self._random_state is not None and self._randomidx is None:
-            self._randomidx = check_random_state(self._random_state).permutation(len(self))
+        if self.random_state is not None and self._randomidx is None:
+            self._randomidx = check_random_state(self.random_state).permutation(len(self))
         return self._randomidx
+
+    @property
+    def random_state(self):
+        return self._random_state
+
+    @random_state.setter
+    def random_state(self, value):
+        self._randomidx = None
+        self._random_state = value
 
     @classmethod
     def create_from_file(cls, regions,  # pylint: disable=too-many-locals
@@ -92,26 +101,13 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             else:
                 stepsize = binsize
 
-        gind = cls(binsize, stepsize, flank)
-
-        gind._collapse = collapse
-        gind.chrs = []
-        gind.starts = []
-        gind.strand = []
-        gind.ends = []
-        gind._random_state = random_state
+        gind = cls(binsize, stepsize, flank, zero_padding=zero_padding, collapse=collapse, random_state=random_state)
 
         for reg in regions_:
 
-            tmp_gidx = cls.create_from_region(
+            gind.add_interval(
                 str(reg.chrom),
-                int(reg.start), int(reg.end), str(reg.strand),
-                binsize, stepsize, flank, zero_padding)
-
-            gind.chrs += tmp_gidx.chrs
-            gind.starts += tmp_gidx.starts
-            gind.strand += tmp_gidx.strand
-            gind.ends += tmp_gidx.ends
+                int(reg.start), int(reg.end), str(reg.strand))
 
         return gind
 
@@ -129,24 +125,11 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             and lengths, respectively.
         """
 
-        gind = cls(None, None, 0)
-
-        gind.chrs = []
-        gind.starts = []
-        gind.strand = []
-        gind.ends = []
+        gind = cls(None, None, 0, zero_padding=False, collapse=False)
 
         for chrom in gsize:
 
-            tmp_gidx = cls.create_from_region(
-                chrom,
-                0, gsize[chrom], '.',
-                None, None, 0, False)
-
-            gind.chrs += tmp_gidx.chrs
-            gind.starts += tmp_gidx.starts
-            gind.strand += tmp_gidx.strand
-            gind.ends += tmp_gidx.ends
+            gind.add_interval(chrom, 0, gsize[chrom], '.')
 
         return gind
 
@@ -190,7 +173,35 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         if stepsize is None:
             stepsize = binsize
 
-        gind = cls(binsize, stepsize, flank)
+        gind = cls(binsize, stepsize, flank, zero_padding=zero_padding)
+
+        gind.add_interval(chrom, start, end, strand)
+        return gind
+
+    def add_interval(self, chrom, start, end, strand):
+        """Adds an interal to a GenomicIndexer object.
+
+        This method adds another interal to a GenomicIndexer.
+
+        Parameters
+        ----------
+        chrom : str
+            Chromosome name.
+        start : int
+            Interval start
+        end : int
+            Interval end
+        """
+
+        binsize = self.binsize
+        stepsize = self.stepsize
+        zero_padding = self.zero_padding
+
+        if binsize is None:
+            binsize = end - start
+
+        if stepsize is None:
+            stepsize = binsize
 
         if stepsize <= binsize:
             val = (end - start - binsize + stepsize)
@@ -211,17 +222,40 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             ends += [end]
             strands += [strand]
 
-        gind.chrs = chrs
-        gind.starts = starts
-        gind.strand = strands
-        gind.ends = ends
-        return gind
+        self.chrs += chrs
+        self.starts += starts
+        self.strand += strands
+        self.ends += ends
+        return self
 
-    def __init__(self, binsize, stepsize, flank=0):
+    def add_gindexer(self, othergindexer):
+        """Adds intervals from another GenomicIndexer object.
+
+        Parameters
+        ----------
+        othergindexer : GenomicIndexer
+            GenomicIndexer object.
+        """
+
+        # add_interval ensures that the intervals from the other indexer
+        # are adapted according to the binsize and stepsize used in self
+        for region in othergindexer:
+            self.add_interval(region.chrom, region.start, region.end, region.strand)
+        return self
+
+    def __init__(self, binsize, stepsize, flank=0, zero_padding=True, collapse=False, random_state=None):
 
         self.binsize = binsize
         self.stepsize = stepsize
         self.flank = flank
+        self.chrs = []
+        self.starts = []
+        self.strand = []
+        self.ends = []
+        self.zero_padding = zero_padding
+        self.collapse = collapse
+        self.random_state = random_state
+
 
     def __len__(self):
         return len(self.chrs)
@@ -246,8 +280,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                             end + self.flank,
                             strand=self.strand[index])
 
-        raise IndexError('Index support only for "int". Given {}'.format(
-            type(index)))
+        raise IndexError('Index support only for "int". Given {}'.format(type(index_)))
 
     @property
     def binsize(self):
@@ -373,55 +406,19 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             Containing the filtered regions.
         """
 
-        roifile = None
+        idxs = self.idx_by_region(include=include, exclude=exclude,
+                                  start=start, end=end)
 
-        if isinstance(include, str) and os.path.exists(include) or \
-            isinstance(exclude, str) and os.path.exists(exclude):
-            tmpdir = tempfile.mkdtemp()
-            predictable_filename = 'gindexerdump'
-            tmpfilename = os.path.join(tmpdir, predictable_filename)
-
-            self.export_to_bed(tmpfilename)
-
-            roifile = BedTool(tmpfilename)
-
-            if isinstance(include, str) and os.path.exists(include):
-                # intersect with bed file
-                keepregs = BedTool(include)
-                roifile = roifile.intersect(keepregs, u=True, wa=True)
-                include = None
-
-
-            if isinstance(exclude, str) and os.path.exists(exclude):
-                # intersect with bed file
-                removeregs = BedTool(exclude)
-                roifile = roifile.intersect(removeregs, v=True, wa=True)
-                exclude = None
-
-        new_gindexer = None
-        if roifile is not None:
-            new_gindexer = GenomicIndexer.create_from_file(roifile.TEMPFILES[-1],
-                                                           self.binsize,
-                                                           self.stepsize,
-                                                           self.flank,
-                                                           True,
-                                                           self._collapse,
-                                                           random_state=self._random_state)
-
-        gind = self if new_gindexer is None else new_gindexer
-
-        if include is not None or exclude is not None:
-            idxs = gind.idx_by_region(include=include, exclude=exclude,
-                                      start=start, end=end)
-            #  construct the filtered gindexer
-            new_gindexer = GenomicIndexer(self.binsize,
-                                          self.stepsize,
-                                          self.flank)
-            new_gindexer._random_state = self._random_state
-            new_gindexer.chrs = [self.chrs[i] for i in idxs]
-            new_gindexer.starts = [self.starts[i] for i in idxs]
-            new_gindexer.strand = [self.strand[i] for i in idxs]
-            new_gindexer.ends = [self.ends[i] for i in idxs]
+        new_gindexer = GenomicIndexer(self.binsize,
+                                      self.stepsize,
+                                      self.flank,
+                                      zero_padding=self.zero_padding,
+                                      collapse=self.collapse,
+                                      random_state=self.random_state)
+        new_gindexer.chrs = [self.chrs[i] for i in idxs]
+        new_gindexer.starts = [self.starts[i] for i in idxs]
+        new_gindexer.strand = [self.strand[i] for i in idxs]
+        new_gindexer.ends = [self.ends[i] for i in idxs]
 
         return new_gindexer
 
@@ -443,3 +440,16 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                     name='-',
                     score='-',
                     strand=self.strand[i]))
+
+
+def check_resolution_compatibility(gindexer, resolution, store_whole_genome):
+    if resolution is not None and resolution > 1 and store_whole_genome:
+        for iv_ in gindexer or []:
+            if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
+                raise ValueError(
+                    'Please prepare all ROI starts and ends to be '
+                    'divisible by resolution={} to '.format(resolution) + \
+                    'avoid undesired rounding effects.'
+                    'Consider using '
+                    '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
+                    .format(input=roi, output=roi, resolution=resolution))

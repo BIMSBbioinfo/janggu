@@ -17,6 +17,7 @@ from pybedtools import Interval
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
+from janggu.data.genomic_indexer import check_resolution_compatibility
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NMAP
@@ -44,25 +45,28 @@ class BedGenomicSizeLazyLoader:
     The call method is invoked for constructing a new genomic array
     with the correct shape.
     """
-    def __init__(self, bedfiles, store_whole_genome, gindexer, genomesize):
+    def __init__(self, bedfiles, store_whole_genome, gindexer, genomesize,
+                 binsize, stepsize, flank):
         self.bedfiles = bedfiles
         self.store_whole_genome = store_whole_genome
-        self.gindexer = gindexer
+        self.external_gindexer = gindexer
         self.genomesize = genomesize
         self.gsize_ = None
+        self.gindexer_ = None
+        self.binsize = binsize
+        self.stepsize = stepsize
+        self.flank = flank
 
     def load_gsize(self):
-        print('loading from lazy loader')
-        store_whole_genome = self.store_whole_genome
-        gindexer = self.gindexer
-        genomesize = self.genomesize
+        print('loading from bed lazy loader')
 
-        if not store_whole_genome:
-            if genomesize is not None:
-                gsize = GenomicIndexer.create_from_genomesize(genomesize.copy())
+        if not self.store_whole_genome:
+            if self.genomesize is not None:
+                gsize = GenomicIndexer.create_from_genomesize(self.genomesize.copy())
             else:
-                gsize = gindexer
+                gsize = self.external_gindexer
             self.gsize_ = gsize
+            self.gindexer_ = self.external_gindexer
             return
 
         gsize = OrderedDict()
@@ -80,11 +84,23 @@ class BedGenomicSizeLazyLoader:
 
         self.gsize_ = gsize_
 
+        # New gindexer for the entire genome
+        gind = GenomicIndexer(self.binsize, self.stepsize,
+                              self.flank, zero_padding=True, collapse=False)
+        gind.add_gindexer(gsize_)
+        self.gindexer_ = gind
+
     @property
     def gsize(self):
         if self.gsize_ is None:
             self.load_gsize()
         return self.gsize_
+
+    @property
+    def gindexer(self):
+        if self.gindexer_ is None:
+            self.load_gsize()
+        return self.gindexer_
 
     def __call__(self):
         return self.gsize
@@ -287,24 +303,27 @@ class BedLoader:
     ----------
     files : str or list(str)
         Bed file locations.
-    gindexer : GenomicIndexer
-        GenomicIndexer object.
+    lazyloader : BedGenomicSizeLazyLoader
+        BedGenomicSizeLazyLoader object.
     mode : str
         Mode might be 'binary', 'score' or 'categorical'.
     minoverlap : float or None
         Minimum fraction of overlap of a given feature with a roi bin.
         Default: None (already a single base-pair overlap is considered)
     """
-    def __init__(self, files, gindexer, mode, minoverlap):
+    def __init__(self, files, lazyloader, mode, minoverlap):
         self.files = files
-        self.gindexer = gindexer
+        self.lazyloader = lazyloader
         self.mode = mode
         self.minoverlap = minoverlap
 
     def __call__(self, garray):
         files = self.files
         dtype = garray.typecode
-        gindexer = self.gindexer
+        # Gindexer contains all relevant intervals
+        # We use the bedtools intersect method to
+        # project the feature overlaps with the ROI intervals.
+        gindexer = self.lazyloader.gindexer
         mode = self.mode
 
         tmpdir = tempfile.mkdtemp()
@@ -316,6 +335,7 @@ class BedLoader:
         roifile = BedTool(tmpfilename)
         nfields_a = len(roifile[0].fields)
 
+        bar = Bar('Loading bed files', max=len(files))
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
             if regions_[0].score == '.' and mode in ['score',
@@ -333,9 +353,6 @@ class BedLoader:
             else:
                 overlapping_regions = roifile.intersect(regions_, wa=True, wb=True)
 
-            bar = Bar('[{}/{}] Loading {}'.format(i+1, len(files),
-                                                  sample_file),
-                      max=len(overlapping_regions))
             for region in overlapping_regions:
                 #region = overlapping_regions[ireg]
 
@@ -361,7 +378,7 @@ class BedLoader:
                     garray[region, score] = array
                 elif mode == 'binary':
                     garray[region, i] = array
-                bar.next()
+            bar.next()
 
         bar.finish()
         os.remove(tmpfilename)
@@ -609,16 +626,7 @@ class Cover(Dataset):
         else:
             gindexer = None
 
-        if resolution is not None and resolution > 1 and store_whole_genome:
-            for iv_ in gindexer or []:
-                if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
-                    raise ValueError(
-                        'Please prepare all ROI starts and ends to be '
-                        'divisible by resolution={} to '.format(resolution) + \
-                        'avoid undesired rounding effects.'
-                        'Consider using '
-                        '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                        .format(input=roi, output=roi, resolution=resolution))
+        check_resolution_compatibility(gindexer, resolution, store_whole_genome)
 
         if isinstance(bamfiles, str):
             bamfiles = [bamfiles]
@@ -850,19 +858,7 @@ class Cover(Dataset):
         else:
             gindexer = None
 
-        if resolution is not None and resolution > 1 and store_whole_genome:
-            for iv_ in gindexer or []:
-                if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
-                    raise ValueError(
-                        'Please prepare all ROI starts and ends to be '
-                        'divisible by resolution={} to '.format(resolution) + \
-                        'avoid undesired rounding effects. '
-                        'Consider using '
-                        '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                        .format(input=roi,
-                                output=os.path.join(os.path.dirname(roi),
-                                                    'trun_' + os.path.basename(roi)),
-                                resolution=resolution))
+        check_resolution_compatibility(gindexer, resolution, store_whole_genome)
 
         if isinstance(bigwigfiles, str):
             bigwigfiles = [bigwigfiles]
@@ -1089,23 +1085,15 @@ class Cover(Dataset):
         else:
             gindexer = None
 
-        if resolution is not None and resolution > 1 and store_whole_genome:
-            for iv_ in gindexer or []:
-                if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
-                    raise ValueError(
-                        'Please prepare all ROI starts and ends to be '
-                        'divisible by resolution={} to '.format(resolution) + \
-                        'avoid undesired rounding effects.'
-                        'Consider using '
-                        '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                        .format(input=roi, output=roi, resolution=resolution))
+        check_resolution_compatibility(gindexer, resolution, store_whole_genome)
 
         if isinstance(bedfiles, str):
             bedfiles = [bedfiles]
 
         gsize = BedGenomicSizeLazyLoader(bedfiles,
                                          store_whole_genome,
-                                         gindexer, genomesize)
+                                         gindexer, genomesize,
+                                         binsize, stepsize, flank)
 
         if mode == 'categorical':
             if len(bedfiles) > 1:
@@ -1124,7 +1112,7 @@ class Cover(Dataset):
             conditions = [os.path.splitext(os.path.basename(f))[0]
                           for f in bedfiles]
 
-        bedloader = BedLoader(bedfiles, gindexer, mode, minoverlap)
+        bedloader = BedLoader(bedfiles, gsize, mode, minoverlap)
         # At the moment, we treat the information contained
         # in each bed-file as unstranded
 
@@ -1145,9 +1133,10 @@ class Cover(Dataset):
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
                           store_whole_genome, version, minoverlap,
                           random_state]
+            # Because different binsizes may affect loading e.g. if a min overlap is required.
+            parameters += [binsize, stepsize, flank]
             if not store_whole_genome:
                 files += [roi]
-                parameters += [binsize, stepsize, flank]
             if storage == 'hdf5':
                 parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)

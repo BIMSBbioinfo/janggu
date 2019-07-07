@@ -727,9 +727,11 @@ class SparseGenomicArray(GenomicArray):
         cachefile = _get_cachefile(cache, datatags, '.npz')
         load_from_file = _load_data(cache, datatags, '.npz')
 
-        # lazy loading is not supported for sparse arrays at the moment.
-        gsize_ = gsize() if callable(gsize) else gsize
+        gsize_ = None
+
         if not store_whole_genome:
+            if gsize_ is None:
+                gsize_ = gsize() if callable(gsize) else gsize
 
             self.region2index = {_iv_to_str(region.chrom,
                                             region.start,
@@ -737,6 +739,8 @@ class SparseGenomicArray(GenomicArray):
                                                 for i, region in enumerate(gsize_)}
 
         if load_from_file:
+            if gsize_ is None:
+                gsize_ = gsize() if callable(gsize) else gsize
 
             if store_whole_genome:
                 data = {str(region.chrom): sparse.dok_matrix(
@@ -766,6 +770,9 @@ class SparseGenomicArray(GenomicArray):
                                                data[chrom].row,
                                                data[chrom].col]) \
                                                for chrom in data}
+            for region in gsize_:
+                if store_whole_genome:
+                    storage[region.chrom + '__length__'] = region.length
 
             names = [name for name in storage]
 
@@ -775,17 +782,21 @@ class SparseGenomicArray(GenomicArray):
         if cachefile is not None:
             print('reload {}'.format(cachefile))
             storage = np.load(cachefile)
-            names = [name for name in storage]
+
+        names = [name for name in storage if '__length__' not in name]
 
         if store_whole_genome:
-            self.handle = {str(region.chrom): sparse.coo_matrix(
-                (storage[str(region.chrom)][:, 0],
-                 (storage[str(region.chrom)][:, 1].astype('int'),
-                  storage[str(region.chrom)][:, 2].astype('int'))),
-                shape=(_get_iv_length(region.length, resolution),
+            print(names)
+            print('shape', [(name, _get_iv_length(storage[str(name)+'__length__'], resolution), (2 if stranded else 1) * len(self.condition)) for name in names])
+            self.handle = {name: sparse.coo_matrix(
+                (storage[name][:, 0],
+                 (storage[name][:, 1].astype('int'),
+                  storage[name][:, 2].astype('int'))),
+                shape=(_get_iv_length(storage[str(name)+'__length__'], resolution),
                        (2 if stranded else 1) * len(self.condition))).tocsr()
-                           for region in gsize_}
+                           for name in names}
         else:
+            # gsize_ is always available for store_whole_genome=False
             self.handle = {name: sparse.coo_matrix(
                 (storage[name][:, 0],
                  (storage[name][:, 1].astype('int'),

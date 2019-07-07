@@ -430,20 +430,14 @@ class Bioseq(Dataset):
         flank = 0
         stepsize = 1
 
-        gindexer = GenomicIndexer(reglen, stepsize, flank)
-        gindexer.chrs = chroms
-        gindexer.starts = [0]*len(lens)
-        gindexer.strand = ['.']*len(lens)
-        gindexer.ends = [reglen]*len(lens)
+        gindexer = GenomicIndexer(reglen, stepsize, flank, zero_padding=False)
+        for chrom in chroms:
+            gindexer.add_interval(chrom, 0, reglen, '.')
 
         garray = cls._make_genomic_array(name, gindexer, seqs, order, storage,
                                          cache=cache, datatags=datatags,
                                          overwrite=overwrite,
                                          store_whole_genome=False)
-
-        # this is a special case. Here a GenomicIndexer will be created
-        # with pseudo genomic coordinates
-        #gindexer.ends = [reglen]*len(lens)
 
         return cls(name, garray, gindexer,
                    alphabet=seqs[0].seq.alphabet.letters,

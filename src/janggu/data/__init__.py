@@ -11,6 +11,7 @@ from janggu.data.data import Dataset  # noqa
 from janggu.data.dna import Bioseq  # noqa
 from janggu.data.dna import VariantStreamer  # noqa
 from janggu.data.genomic_indexer import GenomicIndexer  # noqa
+from janggu.data.genomic_indexer import check_resolution_compatibility  # noqa
 from janggu.data.genomicarray import GenomicArray  # noqa
 from janggu.data.genomicarray import LogTransform  # noqa
 from janggu.data.genomicarray import PercentileTrimming  # noqa
@@ -26,23 +27,55 @@ from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 
 
-def view(dataset, include_regions=None, exclude_regions=None):
-    """Splits dataset into training and test set.
+def view(dataset, use_regions):
+    """Creates a new view on the dataset.
 
-    A Cover or Bioseq dataset will be split into
-    training and test set according to a list of
-    heldout_chroms. That is the training datset
-    exludes the heldout_chroms and the test set
-    only includes the heldout_chroms.
+    It may be used to utilize the same dataset
+    for reading out a training, validation and test
+    set without creating an additional memory overhead.
+    When using this method, consider using the `store_whole_genome=True`
+    option with the datasets.
+
+    Parameters
+    ----------
+    dataset : Cover or Bioseq object
+        Original Dataset containing a union of training and test set.
+    use_regions: str
+        BED file name defining the regions to use for the new view.
+    """
+    if not hasattr(dataset, 'gindexer'):
+        raise ValueError("Unknown dataset type: {}".format(type(dataset)))
+
+    gind = GenomicIndexer.create_from_file(use_regions,
+                                           dataset.gindexer.binsize,
+                                           dataset.gindexer.stepsize,
+                                           dataset.gindexer.flank,
+                                           zero_padding=dataset.gindexer.zero_padding,
+                                           collapse=dataset.gindexer.collapse,
+                                           random_state=dataset.gindexer.random_state)
+
+    check_resolution_compatibility(gind, dataset.garray.resolution,
+                                   dataset.garray._full_genome_stored)
+    subdata = copy(dataset)
+    subdata.gindexer = gind
+
+    return subdata
+
+
+def subset(dataset, include_regions=None, exclude_regions=None):
+    """Create a new subset of the dataset.
+
+    A Cover or Bioseq dataset will be filtered
+    with respect to the selected chromosomes.
 
     Parameters
     ----------
     dataset : Cover or Bioseq object
         Original Dataset containing a union of training and test set.
     include_regions: None, str or list(str)
-        List of chromosome names or BED file defining the regions to keep.
+        List of chromosome names for regions to keep.
     exclude_regions: None, str or list(str)
-        List of chromosome names or BED file defining the regions to remove.
+        List of chromosome names for regions to remove.
     """
     if include_regions is None and exclude_regions is None:
         raise ValueError("No filter specified.")
@@ -75,8 +108,8 @@ def split_train_test_(dataset, holdout_chroms):
     if not hasattr(dataset, 'gindexer'):
         raise ValueError("Unknown dataset type: {}".format(type(dataset)))
 
-    traindata = view(dataset, exclude_regions=holdout_chroms)
-    testdata = view(dataset, include_regions=holdout_chroms)
+    traindata = subset(dataset, exclude_regions=holdout_chroms)
+    testdata = subset(dataset, include_regions=holdout_chroms)
 
     return traindata, testdata
 
