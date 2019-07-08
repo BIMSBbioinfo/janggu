@@ -875,7 +875,7 @@ class Janggu(object):
 
         if len(conditions) != self.kerasmodel.output_shape[-1]:
             raise ValueError("The number of conditions does not match with the "
-                              "number of network output units.")
+                             "number of network output units.")
 
         # get number of variants
         variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size)
@@ -884,10 +884,10 @@ class Janggu(object):
 
         h5file = h5py.File(os.path.join(output_folder, 'scores.hdf5'), 'w')
 
-        labels = h5file.create_dataset('labels', (len(conditions),),
-                                       dtype=h5py.special_dtype(vlen=str),
-                                       data=np.array([c[-1] for c in conditions],
-                                                     dtype=h5py.special_dtype(vlen=str)))
+        h5file.create_dataset('labels', (len(conditions),),
+                              dtype=h5py.special_dtype(vlen=str),
+                              data=np.array([c[-1] for c in conditions],
+                                            dtype=h5py.special_dtype(vlen=str)))
 
         refscore = h5file.create_dataset('refscore', (nvariants, len(conditions)),
                                          dtype='float16')
@@ -896,7 +896,7 @@ class Janggu(object):
         diffscore = h5file.create_dataset('diffscore', (nvariants, len(conditions)),
                                           dtype='float16')
         logodds = h5file.create_dataset('logoddsscore', (nvariants, len(conditions)),
-                                          dtype='float16')
+                                        dtype='float16')
 
 
         bar = Bar('Parsing {}: '.format(variants), max=int(np.ceil(nvariants/float(batch_size))))
@@ -927,8 +927,11 @@ class Janggu(object):
 
             refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:, icond].astype('float16')
             altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16')
-            diffscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16') - ref_score[:, icond].astype('float16')
-            logodds[ibatch:(ibatch + ref_score.shape[0])] = np.log(alt_score[:, icond].astype('float16')/ref_score[:, icond].astype('float16') + 1e-7)
+            diffscore[ibatch:(ibatch + ref_score.shape[0])] = \
+                alt_score[:, icond].astype('float16') - ref_score[:, icond].astype('float16')
+            logodds[ibatch:(ibatch + ref_score.shape[0])] = \
+                np.log(alt_score[:, icond].astype('float16')/
+                       ref_score[:, icond].astype('float16') + 1e-7)
             ibatch += ref_score.shape[0]
 
         #form large string
@@ -999,6 +1002,7 @@ class Janggu(object):
 
 
 def model_from_json(json_string, custom_objects=None):
+    """Wrapping keras.models.model_from_json"""
     if not custom_objects:
         custom_objects = {}
 
@@ -1008,6 +1012,7 @@ def model_from_json(json_string, custom_objects=None):
 
 
 def model_from_yaml(yaml_string, custom_objects=None):
+    """Wrapping keras.models.model_from_yaml"""
     if not custom_objects:
         custom_objects = {}
 

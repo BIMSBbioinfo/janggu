@@ -8,7 +8,6 @@ from itertools import product
 import Bio
 import numpy as np
 from progress.bar import Bar
-from pybedtools import BedTool
 from pybedtools import Interval
 from pysam import VariantFile
 
@@ -686,10 +685,10 @@ class VariantStreamer:
                         if NMAP[rec.ref.upper()] != irefbase:
                             self.logger.info('VCF reference and reference genome not compatible.'
                                              'Expected reference {}, but VCF indicates {}.'.format(
-                                             irefbase, NMAP[rec.ref.upper()]) +
+                                                 irefbase, NMAP[rec.ref.upper()]) +
                                              'VCF-Record: {}:{}-{}>{};{}. Skipped.'.format(
-                                             rec.chrom, rec.pos, rec.ref,
-                                             rec.alts[0], rec.id))
+                                                 rec.chrom, rec.pos, rec.ref,
+                                                 rec.alts[0], rec.id))
                         else:
 
                             replacement = (NMAP[rec.alts[0].upper()] -

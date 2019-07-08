@@ -55,7 +55,7 @@ class Array(Dataset):
         return self.data.shape
 
     @property
-    def ndim(self):  # pragma: no cover 
+    def ndim(self):  # pragma: no cover
         "ndim"
         return len(self.shape)
 
@@ -154,6 +154,7 @@ class ReduceDim(Dataset):
 
     @property
     def gindexer(self):  # pragma: no cover
+        """gindexer"""
         if hasattr(self.data, 'gindexer'):
             return self.data.gindexer
         raise ValueError('No gindexer available.')
@@ -228,6 +229,7 @@ class NanToNumConverter(Dataset):
 
     @property
     def gindexer(self):  # pragma: no cover
+        """gindexer"""
         if hasattr(self.data, 'gindexer'):
             return self.data.gindexer
         raise ValueError('No gindexer available.')
@@ -299,6 +301,7 @@ class RandomSignalScale(Dataset):
 
     @property
     def gindexer(self):  # pragma: no cover
+        """gindexer"""
         if hasattr(self.data, 'gindexer'):
             return self.data.gindexer
         raise ValueError('No gindexer available.')
@@ -369,6 +372,7 @@ class RandomOrientation(Dataset):
 
     @property
     def gindexer(self):  # pragma: no cover
+        """gindexer"""
         if hasattr(self.data, 'gindexer'):
             return self.data.gindexer
         raise ValueError('No gindexer available.')

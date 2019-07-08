@@ -58,6 +58,7 @@ class BedGenomicSizeLazyLoader:
         self.flank = flank
 
     def load_gsize(self):
+        """loads the gsize if first required."""
         print('loading from bed lazy loader')
 
         if not self.store_whole_genome:
@@ -92,12 +93,14 @@ class BedGenomicSizeLazyLoader:
 
     @property
     def gsize(self):
+        """gsize"""
         if self.gsize_ is None:
             self.load_gsize()
         return self.gsize_
 
     @property
     def gindexer(self):
+        """gindexer"""
         if self.gindexer_ is None:
             self.load_gsize()
         return self.gindexer_
@@ -106,6 +109,7 @@ class BedGenomicSizeLazyLoader:
         return self.gsize
 
     def tostr(self):
+        """string representation"""
         return "full_genome_lazy_loading"
 
 
@@ -677,7 +681,7 @@ class Cover(Dataset):
             if not store_whole_genome:
                 files += [roi]
                 parameters += [binsize, stepsize, flank,
-                              template_extension]
+                               template_extension]
             if storage == 'hdf5':
                 parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
@@ -1252,7 +1256,7 @@ class Cover(Dataset):
                              "The number intervals in gindexer"
                              " must match the number of datapoints in "
                              "the array (len(gindexer)={} != array.shape[0]={})".
-                             format(len(gindexer),array.shape[0]))
+                             format(len(gindexer), array.shape[0]))
 
         if store_whole_genome:
             # in this case the intervals must be non-overlapping
@@ -1551,7 +1555,7 @@ def plotGenomeTrack(tracks, chrom, start, end, figsize=(10, 5), plottypes=None):
 
     Parameters
     ----------
-    tracks : janggu.data.Cover or list(janggu.data.Cover) or janggu.data.Track or list(janggu.data.Track)
+    tracks : janggu.data.Cover, list(Cover), janggu.data.Track or list(Track)
         One or more track objects.
     chrom : str
         chromosome name.
@@ -1708,7 +1712,7 @@ class LineTrack(Track):
         self.color = color
 
     def plot(self, fig, grid, offset, chrom, start, end):
-        coverage = self.data[chrom, start, end][0, :, :, :]
+        coverage = self.get_data(chrom, start, end)
         offset_ = offset
         trackheight = self.height//len(self.data.conditions)
 
@@ -1767,17 +1771,14 @@ class SeqTrack(Track):
 
     def plot(self, fig, grid, offset, chrom, start, end):
         # check if coverage represents dna
-        alphabetsize = 0
+
         if len(self.data.conditions) % len(NMAP) == 0:
             alphabetsize = len(NMAP)
             MAP = NMAP
-        if len(self.data.conditions) % len(PMAP) == 0:
+        elif len(self.data.conditions) % len(PMAP) == 0:  # pragma: no cover
             alphabetsize = len(PMAP)
             MAP = PMAP
-
-        alphabetsize = int(alphabetsize)
-
-        if alphabetsize == 0:
+        else:  # pragma: no cover
             raise ValueError(
                 "Coverage tracks seems not represent biological sequences. "
                 "The last dimension must be divisible by the alphabetsize.")
@@ -1788,7 +1789,7 @@ class SeqTrack(Track):
                     "Coverage tracks seems not represent biological sequences. "
                     "Condition names must represent the alphabet letters.")
 
-        coverage = self.data[chrom, start, end][0, :, :, :]
+        coverage = self.get_data(chrom, start, end)
         coverage = coverage.reshape(coverage.shape[0], -1)
         coverage = coverage.reshape(coverage.shape[:-1] +
                                     (alphabetsize,
@@ -1831,7 +1832,7 @@ class HeatTrack(Track):
 
     def plot(self, fig, grid, offset, chrom, start, end):
         ax = self.get_track_axis(fig, grid, offset, self.height)
-        coverage = self.data[chrom, start, end][0, :, :, :]
+        coverage = self.get_data(chrom, start, end)
 
         im = ax.pcolor(coverage.reshape(coverage.shape[0], -1).T)
 

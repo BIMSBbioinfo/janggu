@@ -187,7 +187,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         if not self.stranded and value.shape[1] != 1:
             value = value.sum(axis=1, keepdims=True)
 
-        if isinstance(interval, Interval) and isinstance(condition, (int,slice)):
+        if isinstance(interval, Interval) and isinstance(condition, (int, slice)):
             chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
@@ -199,7 +199,8 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             # along the second dimension.
             if self.collapser is not None:
                 if self.resolution is None and value.shape[0] == 1 or \
-                    self.resolution is not None and value.shape[0] == interval.length//self.resolution:
+                    self.resolution is not None and \
+                    value.shape[0] == interval.length//self.resolution:
                     # collapsing becomes obsolete, because the data has already
                     # the expected shape (after collapsing)
                     pass
@@ -210,8 +211,10 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                         value = value.reshape((1,) + value.shape)
                     else:
                         # collapse in bins of size resolution
-                        value = value.reshape((value.shape[0]//min(self.resolution, value.shape[0]),
-                                               min(self.resolution, value.shape[0]),) + value.shape[1:])
+                        value = value.reshape((value.shape[0]//min(self.resolution,
+                                               value.shape[0]),
+                                               min(self.resolution,
+                                                   value.shape[0]),) + value.shape[1:])
 
                     value = self.collapser(value)
 
@@ -510,8 +513,9 @@ class HDF5GenomicArray(GenomicArray):
                                                                        self.typecode))
                     self.handle = h5file
             else:
-                shape = (len(gsize_), _get_iv_length(gsize_.binsize + 2*gsize_.flank - self.order + 1,
-                                                    self.resolution),
+                shape = (len(gsize_),
+                         _get_iv_length(gsize_.binsize + 2*gsize_.flank - self.order + 1,
+                                        self.resolution),
                          2 if stranded else 1, len(self.condition))
                 h5file.create_dataset('data', shape,
                                       dtype=self.typecode,
@@ -830,7 +834,8 @@ class SparseGenomicArray(GenomicArray):
             # along the second dimension.
             if self.collapser is not None:
                 if self.resolution is None and value.shape[0] == 1 or \
-                    self.resolution is not None and value.shape[0] == interval.length//self.resolution:
+                    self.resolution is not None and \
+                    value.shape[0] == interval.length//self.resolution:
                     # collapsing becomes obsolete, because the data has already
                     # the expected shape (after collapsing)
                     pass
@@ -840,8 +845,10 @@ class SparseGenomicArray(GenomicArray):
                         value = value.reshape((1,) + value.shape)
                     else:
                         # collapse in bins of size resolution
-                        value = value.reshape((value.shape[0]//min(self.resolution, value.shape[0]),
-                                               min(self.resolution, value.shape[0]),) + value.shape[1:])
+                        value = value.reshape((value.shape[0]//min(self.resolution,
+                                               value.shape[0]),
+                                               min(self.resolution,
+                                                   value.shape[0]),) + value.shape[1:])
 
                     value = self.collapser(value)
 
