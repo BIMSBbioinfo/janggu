@@ -417,9 +417,10 @@ Dataset wrappers
 
 In addition to the core datset :code:`Bioseq` and :code:`Cover`, Janggu offers convenience wrappers
 to transform them in various ways.
-First, :code:`ReduceDim` can be used to convert a 4D coverage dataset into 2D table like object.
-This wrapper aggretates the original 4D object with dimensions representing
-:code:`(region, region_length, strand, condition)` into a 2D array with dimensions :code:`(region, condition)`.
+For instance, :code:`ReduceDim` can be used to convert a 4D coverage dataset into 2D table like object.
+That is it may be used to transform the dimensions
+:code:`(region, region_length, strand, condition)` to :code:`(region, condition)` by
+aggregating over the middel two dimensions.
 
 .. code:: python
 
@@ -428,20 +429,20 @@ This wrapper aggretates the original 4D object with dimensions representing
    data = ReduceDim(cover, aggregator='sum')
 
 
-Furthermore, dataset wrapper can be used in order to perform data augmentation.
-For that matter, Janggu ships
+Other dataset wrappers can be used in order to perform data augmentation, including
 :code:`RandomSignalScale` and :code:`RandomOrientation` which can be used
-to randomly alter the signal intesity during model fitting and randomly flipping
+to randomly alter the signal intensity during model fitting and randomly flipping
 the 5' to 3' orientations of the coverage signal.
 
-For more specialized cases, these wrappers might also be a good starting point to derive or adapt from.
+For more specialized cases, these wrappers might also be a good starting point
+to derive or adapt from.
 
 Using the Genomic Datasets with keras models
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The above mentioned datasets :code:`Bioseq` and :code:`Cover`
 can be directly used with keras. An illustration of this
-is shown in `Example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions_w_keras.py>`_.
+is shown in the `example notebook <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/bedfile_examples.ipynb>`_.
 
 
 Converting a Numpy array to :code:`Cover`
@@ -818,21 +819,16 @@ It is also possible to customize the scoring callbacks by instantiating a
 :code:`model.evaluate` and :code:`model.predict`. Further details about
 customizing the scoring callbacks are given in :doc:`custom_scorer`.
 
-Input feature importance example
+Input feature importance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In order to inspect what the model has learned,
 it is possible to identify the most important features in the input space
 using the integrated gradients method.
 
-This is illustrated on a toy example in
-`influence attribution and variant effect prediction <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/example_input_importance.py>`_.
-Note that this script can be run with different sequence feature encodings using the
-:code:`-order` option,
-e.g. mono-, di- or tri-nucleotide based.
-When using higher-orders, the two types of sequences (Oct4 vs. Mafk bound sequences)
-can be better separated. Moreover, the influence attribution also reveals the underlying
-Oct4 and Mafk binding sites better.
+This is illustrated on a toy example for discriminating Oct4 and Mafk binding sites.
+`influence attribution example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb>`_.
+
 
 Variant effect prediction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -846,7 +842,7 @@ As a result, an hdf5 file and a bed file will be produced which
 contain the network predictions for each variant and the associated genomic
 loci.
 An illustration of the variant effect prediction is given in
-`influence attribution and variant effect prediction <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/example_input_importance.py>`_.
+`influence attribution and variant effect prediction <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb>`_.
 
 
 Browse through the results
