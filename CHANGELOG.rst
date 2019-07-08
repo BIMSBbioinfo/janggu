@@ -2,7 +2,7 @@
 Changelog
 =========
 
-0.9.3 (2019-06-12)
+0.9.3 (2019-07-08)
 ------------------
 
 - View mechanism added which allows to reuse the same dataset for different purposes, e.g. training set and test set.
