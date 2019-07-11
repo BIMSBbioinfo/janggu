@@ -47,7 +47,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     @classmethod
     def create_from_file(cls, regions,  # pylint: disable=too-many-locals
                          binsize, stepsize, flank=0,
-                         zero_padding=True, collapse=False, 
+                         zero_padding=True, collapse=False,
                          random_state=None):
         """Creates a GenomicIndexer object.
 
@@ -442,8 +442,9 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                     strand=self.strand[i]))
 
 
-def check_resolution_compatibility(gindexer, resolution, store_whole_genome):
+def check_gindexer_compatibility(gindexer, resolution, store_whole_genome):
     if resolution is not None and resolution > 1 and store_whole_genome:
+        # check resolution compatible
         for iv_ in gindexer or []:
             if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
                 raise ValueError(
@@ -453,3 +454,6 @@ def check_resolution_compatibility(gindexer, resolution, store_whole_genome):
                     'Consider using '
                     '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
                     .format(input=roi, output=roi, resolution=resolution))
+
+    if not store_whole_genome and gindexer is None:
+        raise ValueError('Either roi must be supplied or store_whole_genome must be True')

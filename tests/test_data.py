@@ -52,6 +52,12 @@ def test_split_train_test():
     assert len(testdna) == 50
     assert len(dna) == len(traindna) + len(testdna)
 
+    traindna, testdna = split_train_test([dna, dna], holdout_chroms='chr2')
+
+    assert len(traindna[0]) == 50
+    assert len(testdna[0]) == 50
+    assert len(dna) == len(traindna[0]) + len(testdna[0])
+
 
 def test_subset_include_chrname_test():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -103,5 +109,3 @@ def test_view_bed_test():
     subdna = view(dna, use_regions=bedsub_file)
 
     assert len(subdna) == 4
-
-

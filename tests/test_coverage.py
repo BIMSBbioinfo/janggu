@@ -837,6 +837,23 @@ def test_cover_bam_paired_midpoint():
     assert cover.garray.handle['ref'][34, 0, 0] == 1
 
 
+def test_cover_bam_list(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bamfile_ = os.path.join(data_path, "sample.bam")
+
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    for store in ['ndarray', 'hdf5', 'sparse']:
+        # base pair binsize
+        cover = Cover.create_from_bam(
+            "yeast_I_II_III.bam",
+            bamfiles=[bamfile_],
+            roi=bed_file,
+            conditions=['condition2'],
+            normalizer='tpm',
+            binsize=200, stepsize=200)
+
 def test_cover_bam(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')

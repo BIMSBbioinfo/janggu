@@ -116,9 +116,8 @@ class ReduceDim(Dataset):
                 return np.mean
             elif name == 'max':
                 return np.max
-            else:
-                raise ValueError('ReduceDim aggregator="{}" not known.'.format(name) +
-                                 'Must be "sum", "mean" or "max" or a callable.')
+            raise ValueError('ReduceDim aggregator="{}" not known.'.format(name) +
+                             'Must be "sum", "mean" or "max" or a callable.')
         self.aggregator = _get_aggregator(aggregator)
         self.axis = axis if axis is not None else (1, 2)
         Dataset.__init__(self, array.name)
@@ -138,9 +137,7 @@ class ReduceDim(Dataset):
     @property
     def conditions(self):
         """conditions"""
-        if hasattr(self.data, "conditions"):
-            return self.data.conditions
-        return None
+        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def shape(self):
@@ -218,9 +215,7 @@ class NanToNumConverter(Dataset):
     @property
     def conditions(self):
         """conditions"""
-        if hasattr(self.data, "conditions"):
-            return self.data.conditions
-        return None
+        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def shape(self):
@@ -295,9 +290,7 @@ class RandomSignalScale(Dataset):
     @property
     def conditions(self):
         """conditions"""
-        if hasattr(self.data, "conditions"):
-            return self.data.conditions
-        return None
+        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def gindexer(self):  # pragma: no cover
@@ -366,9 +359,7 @@ class RandomOrientation(Dataset):
     @property
     def conditions(self):
         """conditions"""
-        if hasattr(self.data, "conditions"):
-            return self.data.conditions
-        return None
+        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def gindexer(self):  # pragma: no cover

@@ -1,6 +1,7 @@
 from copy import copy
 
 import numpy as np
+import pytest
 
 from janggu.data import Array
 from janggu.data import NanToNumConverter
@@ -30,6 +31,8 @@ def test_reducedim():
     x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator='mean')
     x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator='max')
     x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator=np.mean)
+    with pytest.raises(ValueError):
+        ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator='nonsense')
     np.testing.assert_equal(len(x_reduce), 3)
     np.testing.assert_equal(len(x_reduce), 3)
     np.testing.assert_equal(len(x_reduce), 3)

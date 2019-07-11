@@ -17,7 +17,7 @@ from pybedtools import Interval
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
-from janggu.data.genomic_indexer import check_resolution_compatibility
+from janggu.data.genomic_indexer import check_gindexer_compatibility
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NMAP
@@ -34,6 +34,21 @@ try:
     import pysam
 except ImportError:  # pragma: no cover
     pysam = None
+
+def _to_list(objs):
+    """Makes a list of objs"""
+    if objs is None:
+        return []
+    elif not isinstance(objs, list):
+        return [objs]
+    else:
+        return objs
+
+def _condition_from_filename(files, conditions):
+    if conditions is None:
+        conditions = [os.path.splitext(os.path.basename(f))[0]
+                      for f in files]
+    return conditions
 
 class BedGenomicSizeLazyLoader:
     """BedGenomicSizeLazyLoader class
@@ -101,7 +116,7 @@ class BedGenomicSizeLazyLoader:
     @property
     def gindexer(self):
         """gindexer"""
-        if self.gindexer_ is None:
+        if self.gindexer_ is None:  # pragma: no cover
             self.load_gsize()
         return self.gindexer_
 
@@ -380,7 +395,7 @@ class BedLoader:
                     garray[region, i] = array
                 elif mode == 'categorical':
                     garray[region, score] = array
-                elif mode == 'binary':
+                else:
                     garray[region, i] = array
             bar.next()
 
@@ -586,6 +601,7 @@ class Cover(Dataset):
             and rpkm normalization are performed, respectively.
             If callable, a function with signature `norm(garray)` should be
             provided that performs the normalization on the genomic array.
+            Normalization is ignored when using storage='sparse'.
             Default: None.
         random_state : None or int
             random_state used to internally randomize the dataset.
@@ -604,20 +620,16 @@ class Cover(Dataset):
             must be specified. Default: False
         """
 
-        if overwrite:
+        if overwrite:  # pragma: no cover
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-        if datatags is not None:
+        if datatags is not None:  # pragma: no cover
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-
-        if pysam is None:  # pragma: no cover
-            raise Exception('pysam not available. '
-                            '`create_from_bam` requires pysam to be installed.')
 
         collapse = True if resolution is None else False
 
@@ -630,23 +642,16 @@ class Cover(Dataset):
         else:
             gindexer = None
 
-        check_resolution_compatibility(gindexer, resolution, store_whole_genome)
+        check_gindexer_compatibility(gindexer, resolution, store_whole_genome)
 
-        if isinstance(bamfiles, str):
-            bamfiles = [bamfiles]
+        bamfiles = _to_list(bamfiles)
 
-        if conditions is None:
-            conditions = [os.path.splitext(os.path.basename(f))[0] for f in bamfiles]
+        _condition_from_filename(bamfiles, conditions)
 
         if min_mapq is None:
             min_mapq = 0
 
-        full_genome_index = store_whole_genome
-
-        if not full_genome_index and not gindexer:
-            raise ValueError('Either roi must be supplied or store_whole_genome must be True')
-
-        if not full_genome_index:
+        if not store_whole_genome:
             # if whole genome should not be loaded
             gsize = gindexer
         else:
@@ -666,10 +671,7 @@ class Cover(Dataset):
                               min_mapq, pairedend)
 
         datatags = [name]
-        if normalizer is None:
-            normalizer = []
-        if not isinstance(normalizer, list):
-            normalizer = [normalizer]
+        normalizer = _to_list(normalizer)
 
         if cache:
             files = copy.copy(bamfiles)
@@ -812,6 +814,7 @@ class Cover(Dataset):
             and rpkm normalization are performed, respectively.
             If callable, a function with signature `norm(garray)` should be
             provided that performs the normalization on the genomic array.
+            Normalization is ignored when using storage='sparse'.
             Default: None.
         collapser : None, str or callable
             This option defines how the genomic signal should be summarized when resolution
@@ -836,20 +839,16 @@ class Cover(Dataset):
             Default: None means that no randomization is used.
         """
 
-        if overwrite:
+        if overwrite:  # pragma: no cover
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-        if datatags is not None:
+        if datatags is not None:  # pragma: no cover
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-
-        if pyBigWig is None:  # pragma: no cover
-            raise Exception('pyBigWig not available. '
-                            '`create_from_bigwig` requires pyBigWig to be installed.')
 
         collapse = True if resolution is None else False
 
@@ -862,13 +861,9 @@ class Cover(Dataset):
         else:
             gindexer = None
 
-        check_resolution_compatibility(gindexer, resolution, store_whole_genome)
+        check_gindexer_compatibility(gindexer, resolution, store_whole_genome)
 
-        if isinstance(bigwigfiles, str):
-            bigwigfiles = [bigwigfiles]
-
-        if not store_whole_genome and not gindexer:
-            raise ValueError('Either roi must be supplied or store_whole_genome must be True')
+        bigwigfiles = _to_list(bigwigfiles)
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -884,19 +879,13 @@ class Cover(Dataset):
                 gsize = bwfile.chroms()
             gsize = GenomicIndexer.create_from_genomesize(gsize)
 
-        if conditions is None:
-            conditions = [os.path.splitext(os.path.basename(f))[0] \
-                          for f in bigwigfiles]
-
+        _condition_from_filename(bigwigfiles, conditions)
 
         bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num)
         datatags = [name]
 
         collapser_ = collapser if collapser is not None else 'mean'
-        if normalizer is None:
-            normalizer = []
-        if not isinstance(normalizer, list):
-            normalizer = [normalizer]
+        normalizer = _to_list(normalizer)
 
         if cache:
             files = copy.copy(bigwigfiles)
@@ -1035,6 +1024,7 @@ class Cover(Dataset):
             and rpkm normalization are performed, respectively.
             If callable, a function with signature `norm(garray)` should be
             provided that performs the normalization on the genomic array.
+            Normalization is ignored when using storage='sparse'.
             Default: None.
         collapser : None, str or callable
             This option defines how the genomic signal should be summarized when resolution
@@ -1063,19 +1053,16 @@ class Cover(Dataset):
             Default: None means that no randomization is used.
         """
 
-        if overwrite:
+        if overwrite:  # pragma: no cover
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-        if datatags is not None:
+        if datatags is not None:  # pragma: no cover
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-
-        if roi is None and genomesize is None:
-            raise ValueError('Either roi or genomesize must be specified.')
 
         collapse = True if resolution is None else False
 
@@ -1089,10 +1076,9 @@ class Cover(Dataset):
         else:
             gindexer = None
 
-        check_resolution_compatibility(gindexer, resolution, store_whole_genome)
+        check_gindexer_compatibility(gindexer, resolution, store_whole_genome)
 
-        if isinstance(bedfiles, str):
-            bedfiles = [bedfiles]
+        bedfiles = _to_list(bedfiles)
 
         gsize = BedGenomicSizeLazyLoader(bedfiles,
                                          store_whole_genome,
@@ -1112,22 +1098,15 @@ class Cover(Dataset):
                     max_class = int(reg.score)
             if conditions is None:
                 conditions = [str(i) for i in range(int(max_class + 1))]
-        if conditions is None:
-            conditions = [os.path.splitext(os.path.basename(f))[0]
-                          for f in bedfiles]
+        conditions = _condition_from_filename(bedfiles, conditions)
 
         bedloader = BedLoader(bedfiles, gsize, mode, minoverlap)
-        # At the moment, we treat the information contained
-        # in each bed-file as unstranded
 
         datatags = [name]
 
         collapser_ = collapser if collapser is not None else 'max'
 
-        if normalizer is None:
-            normalizer = []
-        if not isinstance(normalizer, list):
-            normalizer = [normalizer]
+        normalizer = _to_list(normalizer)
 
         if cache:
             files = copy.copy(bedfiles)
@@ -1222,12 +1201,12 @@ class Cover(Dataset):
             last position. Default: True.
         """
 
-        if overwrite:
+        if overwrite:  # pragma: no cover
             warnings.warn('overwrite=True is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
                           FutureWarning)
-        if datatags is not None:
+        if datatags is not None:  # pragma: no cover
             warnings.warn('datatags is without effect '
                           'due to revised caching functionality.'
                           'The argument will be removed in the future.',
@@ -1514,10 +1493,6 @@ class Cover(Dataset):
             or from the garray-size of `store_whole_genome=True`.
         """
 
-        if pyBigWig is None:  # pragma: no cover
-            raise Exception('pyBigWig not available. '
-                            '`export_to_bigwig` requires pyBigWig to be installed.')
-
         resolution = self.garray.resolution
 
         if genomesize is not None:
@@ -1744,12 +1719,12 @@ class LineTrack(Track):
                 ax.plot(xvalue, yvalue,
                         linewidth=self.linewidth,
                         linestyle=self.linestyle,
-                        color=self.color, label="+", marker=self.marker)
+                        color=self.color, label="+", marker='+')
                 xvalue, yvalue = _get_xy(coverage[:, 1, i])
                 ax.plot(xvalue, yvalue,
                         linewidth=self.linewidth,
                         linestyle=self.linestyle,
-                        color=self.color, label="-", marker=self.marker)
+                        color=self.color, label="-", marker=1)
                 ax.legend()
             else:
                 xvalue, yvalue = _get_xy(coverage[:, 0, i])
@@ -1803,6 +1778,7 @@ class SeqTrack(Track):
                     "Condition names must represent the alphabet letters.")
 
         coverage = self.get_data(chrom, start, end)
+        # project higher-order sequence structure onto original sequence.
         coverage = coverage.reshape(coverage.shape[0], -1)
         coverage = coverage.reshape(coverage.shape[:-1] +
                                     (alphabetsize,

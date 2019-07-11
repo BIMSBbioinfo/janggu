@@ -11,7 +11,7 @@ from janggu.data.data import Dataset  # noqa
 from janggu.data.dna import Bioseq  # noqa
 from janggu.data.dna import VariantStreamer  # noqa
 from janggu.data.genomic_indexer import GenomicIndexer  # noqa
-from janggu.data.genomic_indexer import check_resolution_compatibility  # noqa
+from janggu.data.genomic_indexer import check_gindexer_compatibility  # noqa
 from janggu.data.genomicarray import GenomicArray  # noqa
 from janggu.data.genomicarray import LogTransform  # noqa
 from janggu.data.genomicarray import PercentileTrimming  # noqa
@@ -54,7 +54,7 @@ def view(dataset, use_regions):
                                            collapse=dataset.gindexer.collapse,
                                            random_state=dataset.gindexer.random_state)
 
-    check_resolution_compatibility(gind, dataset.garray.resolution,
+    check_gindexer_compatibility(gind, dataset.garray.resolution,
                                    dataset.garray._full_genome_stored)
     subdata = copy(dataset)
     subdata.gindexer = gind

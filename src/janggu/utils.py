@@ -336,9 +336,7 @@ def get_genome_size_from_regions(regions):
         regions_ = _get_genomic_reader(regions)
 
     gsize = {}
-    for region in regions_:
-        if isinstance(region, Interval):
-            interval = region
+    for interval in regions_:
         if interval.chrom not in gsize:
             gsize[interval.chrom] = interval.end
         elif gsize[interval.chrom] < interval.end:
@@ -542,9 +540,7 @@ class ExportBigwig(object):
             bw_file.addHeader(bw_header)
             pred = results[keys]['value']
             # compute the ratio between binsize and stepsize
-            bsss = float(self.gindexer.binsize) / float(self.gindexer.stepsize)
-            if bsss < 1.:
-                bsss = 1.
+            bsss = max(np.ceil(float(self.gindexer.binsize) / float(self.gindexer.stepsize)), 1.)
             ppi = int(np.rint(len(pred)/(len(self.gindexer) - 1. + bsss)))
 
             # case 1) stepsize >= binsize

@@ -25,15 +25,14 @@ def get_collapser(method):
 
     if method is None:
         return None
-    elif isinstance(method, str):
-        if method == 'mean':
-            return lambda x: x.mean(axis=1)
-        elif method == 'sum':
-            return lambda x: x.sum(axis=1)
-        elif method == 'max':
-            return lambda x: x.max(axis=1)
-    elif callable(method):
+    elif  callable(method):
         return method
+    elif method == 'mean':
+        return lambda x: x.mean(axis=1)
+    elif method == 'sum':
+        return lambda x: x.sum(axis=1)
+    elif method == 'max':
+        return lambda x: x.max(axis=1)
 
     raise ValueError('Unknown method: {}'.format(method))
 
@@ -486,8 +485,7 @@ class HDF5GenomicArray(GenomicArray):
         gsize_ = None
 
         if not store_whole_genome:
-            if gsize_ is None:
-                gsize_ = gsize() if callable(gsize) else gsize
+            gsize_ = gsize() if callable(gsize) else gsize
             self.region2index = {_iv_to_str(region.chrom,
                                             region.start,
                                             region.end): i \
@@ -603,8 +601,8 @@ class NPGenomicArray(GenomicArray):
         gsize_ = None
 
         if not store_whole_genome:
-            if gsize_ is None:
-                gsize_ = gsize() if callable(gsize) else gsize
+
+            gsize_ = gsize() if callable(gsize) else gsize
 
             self.region2index = {_iv_to_str(region.chrom,
                                             region.start,
@@ -734,8 +732,8 @@ class SparseGenomicArray(GenomicArray):
         gsize_ = None
 
         if not store_whole_genome:
-            if gsize_ is None:
-                gsize_ = gsize() if callable(gsize) else gsize
+
+            gsize_ = gsize() if callable(gsize) else gsize
 
             self.region2index = {_iv_to_str(region.chrom,
                                             region.start,
@@ -1103,19 +1101,19 @@ def get_normalizer(normalizer):
     """ maps built-in normalizers by name and
     returns the respective function """
 
-    if isinstance(normalizer, str):
-        if normalizer == 'zscore':
-            return ZScore()
-        elif normalizer == 'zscorelog':
-            return ZScoreLog()
-        elif normalizer == 'binsizenorm':
-            return RegionLengthNormalization()
-        elif normalizer == 'perctrim':
-            return PercentileTrimming(99)
-        elif normalizer == 'tpm':
-            return normalize_garray_tpm
-    elif callable(normalizer):
+    if callable(normalizer):
         return normalizer
+    elif normalizer == 'zscore':
+        return ZScore()
+    elif normalizer == 'zscorelog':
+        return ZScoreLog()
+    elif normalizer == 'binsizenorm':
+        return RegionLengthNormalization()
+    elif normalizer == 'perctrim':
+        return PercentileTrimming(99)
+    elif normalizer == 'tpm':
+        return normalize_garray_tpm
+
     raise ValueError('unknown normalizer: {}'.format(normalizer))
 
 
@@ -1224,9 +1222,6 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               normalizer=normalizer,
                               collapser=get_collapser(collapser))
     elif storage == 'sparse':
-        if not (normalizer is None or normalizer == []):
-            print("{}: Dataset normalization is not supported ".format(normalizer) +
-                  "for sparse genomic data yet. Argument ignored.")
         return SparseGenomicArray(chroms, stranded=stranded,
                                   conditions=conditions,
                                   typecode=typecode,
