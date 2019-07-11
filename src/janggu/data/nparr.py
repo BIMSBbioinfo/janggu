@@ -264,8 +264,7 @@ class SqueezeDim(Dataset):
         return len(self.shape)
 
     def __copy__(self):
-        obj = SqueezeDim(copy.copy(self.data), self.aggregator,
-                        self.axis)
+        obj = SqueezeDim(copy.copy(self.data), self.axis)
         return obj
 
 
