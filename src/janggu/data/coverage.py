@@ -179,13 +179,6 @@ class BamLoader:
                     if aln.mapq < min_mapq:
                         continue
 
-                    if aln.is_read2:
-                        # only consider read1 so as not to double count
-                        # fragments for paired end reads
-                        # read2 will also be false for single end
-                        # reads.
-                        continue
-
                     if aln.is_paired:
                         # if paired end read, consider the midpoint
                         if not (aln.is_proper_pair and
@@ -198,10 +191,17 @@ class BamLoader:
                         # the read is considered as a paired end read
                         # in this case we consider the mid point
                         if pairedend == 'midpoint':
+                            if aln.is_read2:
+                                # only consider read1 so as not to double count
+                                # fragments for paired end reads
+                                # read2 will also be false for single end
+                                # reads.
+                                continue
                             pos = min(aln.reference_start,
                                       aln.next_reference_start) + \
                                       abs(aln.template_length) // 2
                         else:
+
                             if aln.is_reverse:
                                 # last position of the downstream read
                                 pos = max(aln.reference_end,
