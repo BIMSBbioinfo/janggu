@@ -86,59 +86,13 @@ def test_cover_export_bigwig(tmpdir):
             np.testing.assert_allclose(cov2[:].sum(), 1044.0 / resolution)
 
 
-
-def test_bam_genomic_interval_access_whole_genome():
+def test_bam_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bam")
 
-    storage = True
-    for reso in [1, 50]:
-        for shift in [0, 1]:
-            cover = Cover.create_from_bam(
-                'test',
-                bamfiles=bamfile_,
-                roi=bed_file,
-                flank=0,
-                storage='ndarray',
-                store_whole_genome=storage,
-                resolution=reso)
-
-            for i in range(len(cover)):
-                print('resolution :',reso,'/ shift :',shift)
-
-                np.testing.assert_equal(cover[i],cover[cover.gindexer[i]])
-
-                chrom, start, end, strand = cover.gindexer[i].chrom, \
-                    cover.gindexer[i].start, \
-                    cover.gindexer[i].end, \
-                    cover.gindexer[i].strand
-
-                np.testing.assert_equal(cover[i],
-                                        cover[chrom, start, end, strand])
-
-                if shift != 0:
-                    start += shift * reso
-                    end += shift * reso
-
-                    if strand != '-':
-                        np.testing.assert_equal(cover[i][:, shift:,:, :],
-                            cover[chrom, start, end, strand][:, :-shift,:,:])
-                    else:
-                        np.testing.assert_equal(cover[i][:, :-shift,:, :],
-                            cover[chrom, start, end, strand][:, shift:,:,:])
-
-
-def test_bam_genomic_interval_access_part_genome():
-    data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "sample.bed")
-
-    bamfile_ = os.path.join(data_path, "sample.bam")
-
-    storage = False
-    for reso in [1, 50]:
-        for shift in [0, 1]:
+    for reso, shift, storage in product([1, 50], [0, 1], [True, False]):
             cover = Cover.create_from_bam(
                 'test',
                 bamfiles=bamfile_,
@@ -178,55 +132,13 @@ def test_bam_genomic_interval_access_part_genome():
                         gicov.reshape((1, gicov.shape[1]//reso, reso, 2, 1))[:, :, 0, :, :])
 
 
-def test_bigwig_genomic_interval_access_whole_genome():
+def test_bigwig_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bw")
 
-    storage = True
-    for reso in [1, 50]:
-        for shift in [0, 1]:
-            cover = Cover.create_from_bigwig(
-                'test',
-                bigwigfiles=bamfile_,
-                roi=bed_file,
-                flank=0,
-                storage='ndarray',
-                store_whole_genome=storage,
-                resolution=reso)
-
-            for i in range(len(cover)):
-                print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-
-                np.testing.assert_equal(cover[i],cover[cover.gindexer[i]])
-
-                chrom, start, end, strand = cover.gindexer[i].chrom, \
-                    cover.gindexer[i].start, \
-                    cover.gindexer[i].end, \
-                    cover.gindexer[i].strand
-
-                np.testing.assert_equal(cover[i],
-                                        cover[chrom, start, end, strand])
-                if shift != 0:
-                    start += shift * reso
-                    end += shift * reso
-
-                    if strand != '-':
-                        np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
-                    else:
-                        np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
-
-
-def test_bigwig_genomic_interval_access_part_genome():
-    data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "sample.bed")
-
-    bamfile_ = os.path.join(data_path, "sample.bw")
-
-    storage = False
-    for reso in [1, 50]:
-        for shift in [0, 1]:
+    for reso, shift, storage in product([1, 50], [0, 1], [True, False]):
             cover = Cover.create_from_bigwig(
                 'test',
                 bigwigfiles=bamfile_,
@@ -266,92 +178,51 @@ def test_bigwig_genomic_interval_access_part_genome():
                         gicov.reshape((1, gicov.shape[1]//reso, reso, 1, 1))[:, :, 0, :, :])
 
 
-def test_bed_genomic_interval_access_whole_genome():
+def test_bed_genomic_interval_access():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
 
     bamfile_ = os.path.join(data_path, "sample.bed")
 
-    storage = True
-    for reso in [1, 50]:
-        for shift in [0, 1]:
-            cover = Cover.create_from_bed(
-                'test',
-                bedfiles=bamfile_,
-                roi=bed_file,
-                flank=0,
-                storage='ndarray',
-                store_whole_genome=storage,
-                resolution=reso)
 
-            for i in range(len(cover)):
-                print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
+    for reso, shift, storage in product([1, 50], [0, 1], [True, False]):
+        cover = Cover.create_from_bed(
+            'test',
+            bedfiles=bamfile_,
+            roi=bed_file,
+            flank=0,
+            storage='ndarray',
+            store_whole_genome=storage,
+            resolution=reso)
 
-                np.testing.assert_equal(cover[i],cover[cover.gindexer[i]])
+        for i in range(len(cover)):
+            print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
 
-                chrom, start, end, strand = cover.gindexer[i].chrom, \
-                    cover.gindexer[i].start, \
-                    cover.gindexer[i].end, \
-                    cover.gindexer[i].strand
+            np.testing.assert_equal(np.repeat(cover[i],
+                                cover.garray.resolution,
+                                axis=1), cover[cover.gindexer[i]])
 
-                np.testing.assert_equal(cover[i],
-                                        cover[chrom, start, end, strand])
-                if shift != 0:
-                    start += shift * reso
-                    end += shift * reso
+            chrom, start, end, strand = cover.gindexer[i].chrom, \
+                cover.gindexer[i].start, \
+                cover.gindexer[i].end, \
+                cover.gindexer[i].strand
 
-                    if strand != '-':
-                        np.testing.assert_equal(cover[i][:, shift:,:, :], cover[chrom, start, end, strand][:, :-shift,:,:])
-                    else:
-                        np.testing.assert_equal(cover[i][:, :-shift,:, :], cover[chrom, start, end, strand][:, shift:,:,:])
+            np.testing.assert_equal(np.repeat(cover[i],
+                                cover.garray.resolution, axis=1),
+                                cover[chrom, start, end, strand])
 
+            if shift != 0:
+                start += shift * reso
+                end += shift * reso
 
-def test_bed_genomic_interval_access_part_genome():
-    data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_file = os.path.join(data_path, "sample.bed")
-
-    bamfile_ = os.path.join(data_path, "sample.bed")
-
-    storage = False
-    for reso in [1, 50]:
-        for shift in [0, 1]:
-            cover = Cover.create_from_bed(
-                'test',
-                bedfiles=bamfile_,
-                roi=bed_file,
-                flank=0,
-                storage='ndarray',
-                store_whole_genome=storage,
-                resolution=reso)
-
-            for i in range(len(cover)):
-                print('storage :',storage,'/ resolution :',reso,'/ shift :',shift)
-
-                np.testing.assert_equal(np.repeat(cover[i],
-                                    cover.garray.resolution,
-                                    axis=1), cover[cover.gindexer[i]])
-
-                chrom, start, end, strand = cover.gindexer[i].chrom, \
-                    cover.gindexer[i].start, \
-                    cover.gindexer[i].end, \
-                    cover.gindexer[i].strand
-
-                np.testing.assert_equal(np.repeat(cover[i],
-                                    cover.garray.resolution, axis=1),
-                                    cover[chrom, start, end, strand])
-
-                if shift != 0:
-                    start += shift * reso
-                    end += shift * reso
-
-                    if strand != '-':
-                        gicov = cover[chrom, start, end, strand][:, :(-shift*reso),:,:]
-                        np.testing.assert_equal(cover[i][:, shift:,:, :],
-                            gicov.reshape((1, gicov.shape[1]//reso, reso, 1, 1))[:, :, 0, :, :])
-                    else:
-                        gicov = cover[chrom, start, end, strand][:, (shift*reso):,:,:]
-                        np.testing.assert_equal(cover[i][:, :-shift,:, :],
+                if strand != '-':
+                    gicov = cover[chrom, start, end, strand][:, :(-shift*reso),:,:]
+                    np.testing.assert_equal(cover[i][:, shift:,:, :],
                         gicov.reshape((1, gicov.shape[1]//reso, reso, 1, 1))[:, :, 0, :, :])
+                else:
+                    gicov = cover[chrom, start, end, strand][:, (shift*reso):,:,:]
+                    np.testing.assert_equal(cover[i][:, :-shift,:, :],
+                    gicov.reshape((1, gicov.shape[1]//reso, reso, 1, 1))[:, :, 0, :, :])
 
 
 def test_bam_inferred_binsize():
@@ -730,7 +601,7 @@ def test_cover_from_bigwig_sanity():
         store_whole_genome=True)
 
     assert len(cov2.garray.handle) == 2
-    assert cov2['chr1', 100, 200].shape == (1, 100//7 + 1, 1, 1)
+    assert cov2['chr1', 100, 200].shape == (1, 100, 1, 1)
 
     with pytest.raises(Exception):
         cov2.shape

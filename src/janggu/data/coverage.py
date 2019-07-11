@@ -1345,8 +1345,18 @@ class Cover(Dataset):
         elif isinstance(idxs, Interval):
             if self.garray._full_genome_stored:
                 # accept a genomic interval directly
+                # but upscale the length to nucleotide resolution
+                # because the plotting functionality expects that.
                 data = self._getsingleitem(idxs)
                 data = data.reshape((1,) + data.shape)
+                resolution = self.garray.resolution
+                data = data.repeat(resolution, axis=1)
+
+                # the actual genomic coordinates must no be mapped onto the
+                # rescaled data.
+                data_start_offset = idxs.start - (idxs.start//resolution)*resolution
+                data_end_offset = data_start_offset + idxs.length
+                data = data[:,data_start_offset:data_end_offset,:,:]
 
             else:
                 chrom = str(idxs.chrom)
