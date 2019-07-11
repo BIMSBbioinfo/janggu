@@ -135,13 +135,16 @@ class SeqLoader:
         bar = Bar('Loading sequences', max=len(gsize))
         for region, seq in zip(gsize, seqs):
 
-            indarray = np.asarray(seq2ind(seq), dtype=dtype)
+            indarray = np.asarray(seq2ind(seq))
 
             if order > 1:
                 # for higher order motifs, this part is used
                 filter_ = np.asarray([pow(len(seq.seq.alphabet.letters),
                                           i) for i in range(order)])
                 indarray = np.convolve(indarray, filter_, mode='valid')
+                # the specific type int8 is not irrelevant, as long as
+                # the negative values are maintained correctly.
+                indarray[indarray<np.iinfo('int8').min] = np.iinfo('int8').min
 
             garray[region, 0] = indarray.reshape(-1, 1)
             bar.next()
@@ -211,7 +214,8 @@ class Bioseq(Dataset):
         # always use int 16 to store bioseq indices
         # do not use int8 at the moment, because 'N' is encoded
         # as -1024, which causes an underflow with int8.
-        dtype = 'int16'
+        # changed to be more permissive for the order.
+        dtype = 'int16' if order > 3 else 'int32'
 
         # Extract chromosome lengths
         seqloader = SeqLoader(gsize, seqs, order)
@@ -483,7 +487,7 @@ class Bioseq(Dataset):
         # for each index read use the adaptor indices to retrieve the seq.
         iseq = np.zeros((len(idxs), self.gindexer.binsize +
                          2*self.gindexer.flank - self.garray.order + 1),
-                        dtype="int16")
+                        dtype=self.garray.typecode)
 
         for i, idx in enumerate(idxs):
             interval = self.gindexer[idx]

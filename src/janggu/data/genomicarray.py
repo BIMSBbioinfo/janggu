@@ -125,8 +125,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         self.padding_value = padding_value
         if not isinstance(order, int) or order < 1:
             raise Exception('order must be a positive integer')
-        if order > 4:
-            raise Exception('order support only up to order=4.')
+
         self.resolution = resolution
         self.typecode = typecode
         self._full_genome_stored = store_whole_genome
