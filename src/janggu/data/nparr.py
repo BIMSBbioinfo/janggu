@@ -173,6 +173,102 @@ class ReduceDim(Dataset):
         return obj
 
 
+class SqueezeDim(Dataset):
+    """SqueezeDim class.
+
+    This class wraps an 4D coverage object and reduces
+    the middle two dimensions by applying the aggregate function.
+    Therefore, it transforms the 4D object into a table-like 2D representation
+
+    Example
+    -------
+    .. code-block:: python
+
+      # given some dataset, e.g. a Cover object
+      # originally, the cover object is a 4D-object.
+      cover.shape
+      cover = ReduceDim(cover, aggregator='mean')
+      cover.shape
+      # Afterwards, the cover object is 2D, where the second and
+      # third dimension have been averaged out.
+
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset
+    aggregator : str or callable
+        Aggregator used for reducing the intermediate dimensions.
+        Available aggregators are 'sum', 'mean', 'max' for performing
+        summation, averaging or obtaining the maximum value.
+        It is also possible to supply a callable directly that performs the
+        operation.
+        Default: 'sum'
+    axis : None or tuple(ints)
+        Dimensions over which to perform aggregation. Default: None
+        aggregates with :code:`axis=(1, 2)`
+    """
+
+    def __init__(self, array, axis=None):
+
+        self.data = copy.copy(array)
+
+        self.axis = axis
+        Dataset.__init__(self, array.name)
+
+    def __repr__(self):  # pragma: no cover
+        return 'SqueezeDim({})'.format(str(self.data))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        if isinstance(idxs, int):
+            idxs = slice(idxs, idxs + 1)
+        data = np.squeeze(self.data[idxs], axis=self.axis)
+        return data
+
+    @property
+    def conditions(self):
+        """conditions"""
+        return self.data.conditions if hasattr(self.data, "conditions") else None
+
+    @property
+    def shape(self):
+        """Shape of the dataset"""
+        shape = tuple()
+        for idx in range(self.data.ndim):
+            if self.data.shape[idx] == 1:
+                if self.axis is None or idx in self.axis:
+#            if idx in self.axis and self.data.shape[idx] == 1:
+                    continue
+            shape += (self.data.shape[idx],)
+        return shape
+
+    @property
+    def gindexer(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'gindexer'):
+            return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):  # pragma: no cover
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def __copy__(self):
+        obj = SqueezeDim(copy.copy(self.data), self.aggregator,
+                        self.axis)
+        return obj
+
+
 class NanToNumConverter(Dataset):
     """NanToNumConverter class.
 

@@ -8,6 +8,7 @@ from janggu.data import NanToNumConverter
 from janggu.data import RandomOrientation
 from janggu.data import RandomSignalScale
 from janggu.data import ReduceDim
+from janggu.data import SqueezeDim
 
 
 def test_nparr(tmpdir):
@@ -33,8 +34,7 @@ def test_reducedim():
     x_reduce = ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator=np.mean)
     with pytest.raises(ValueError):
         ReduceDim(Array('test', x_orig, conditions=["A", "B"]), aggregator='nonsense')
-    np.testing.assert_equal(len(x_reduce), 3)
-    np.testing.assert_equal(len(x_reduce), 3)
+
     np.testing.assert_equal(len(x_reduce), 3)
     np.testing.assert_equal(x_reduce.shape, (3,2))
     np.testing.assert_equal(x_reduce.ndim, 2)
@@ -45,6 +45,26 @@ def test_reducedim():
     new_x = copy(x_reduce)
     assert x_reduce[0].shape == new_x[0].shape
     assert x_reduce.conditions == ["A", "B"]
+
+def test_squeezedim():
+    x_orig = np.zeros((3,1,1,2))
+
+    np.testing.assert_equal(x_orig.ndim, 4)
+    x_sq = SqueezeDim(Array('test', x_orig, conditions=["A", "B"]))
+
+    np.testing.assert_equal(len(x_sq), 3)
+
+    np.testing.assert_equal(x_sq.shape, (3,2))
+
+    np.testing.assert_equal(x_sq.ndim, 2)
+    assert x_sq[0].shape == (2,)
+    assert x_sq[:3].shape == (3, 2)
+    assert x_sq[[0,1]].shape == (2, 2)
+    assert x_sq.ndim == 2
+    new_x = copy(x_sq)
+    assert x_sq[0].shape == new_x[0].shape
+    assert x_sq.conditions == ["A", "B"]
+
 
 def test_nantonumconverter():
     x_orig = np.zeros((3,1,1,2))
