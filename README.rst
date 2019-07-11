@@ -61,14 +61,15 @@ Hallmarks of Janggu:
 
 1. Janggu provides special **Genomics datasets** that allow you to access raw data in FASTA, BAM, BIGWIG, BED and GFF file format.
 2. Various **normalization** procedures are supported for dealing with of the genomics dataset, including 'TPM', 'zscore' or custom normalizers.
-3. The dataset are directly consumable with neural networks implemented in  `keras <https://keras.io>`_.
-4. Numpy format output of a keras model can be converted to represent genomic coverage tracks, which allows exporting the predictions as BIGWIG files and visualization of genome browser-like plots.
-5. Genomic datasets can be stored in various ways, including as numpy array, sparse dataset or in hdf5 format.
-6. Caching of Genomic datasets avoids time consuming preprocessing steps and facilitates fast reloading.
-7. Janggu provides a wrapper for `keras <https://keras.io>`_ models with built-in logging functionality and automatized result evaluation.
-8. Janggu provides a special keras layer for scanning both DNA strands for motif occurrences.
-9. Janggu provides  `keras <https://keras.io>`_ models constructors that automatically infer input and output layer shapes to reduce code redundancy.
-10. Janggu provides a web application that allows to browse through the results.
+3. Biological features can be represented in terms of higher-order sequence features, e.g. di-nucleotide based features.
+4. The dataset objects are directly consumable with neural networks for example implemented using `keras <https://keras.io>`_ or using `scikit-learn <https://scikit-learn.org/stable/index.html>`_ (see src/examples in this repository).
+5. Numpy format output of a keras model can be converted to represent genomic coverage tracks, which allows exporting the predictions as BIGWIG files and visualization of genome browser-like plots.
+6. Genomic datasets can be stored in various ways, including as numpy array, sparse dataset or in hdf5 format.
+7. Caching of Genomic datasets avoids time consuming preprocessing steps and facilitates fast reloading.
+8. Janggu provides a wrapper for `keras <https://keras.io>`_ models with built-in logging functionality and automatized result evaluation.
+9. Janggu supports input feature importance attribution using the integrated gradients method and variant effect prediction assessment.
+10. Janggu provides a utilities such as keras layer for scanning both DNA strands for motif occurrences.
+
 
 Why the name Janggu?
 ---------------------
@@ -113,3 +114,6 @@ janggu package as follows
    git clone https://github.com/BIMSBbioinfo/janggu
    cd janggu
    python ./src/examples/classify_fasta.py single
+
+A range of additional examples can be found in './src/examples' including
+some jupyter notebooks.

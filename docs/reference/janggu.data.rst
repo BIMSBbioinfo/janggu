@@ -50,11 +50,14 @@ Utilities for reshaping, data augmentation, NaN removal.
 
 .. autosummary::
    ReduceDim
+   SqueezeDim
    NanToNumConverter
    RandomOrientation
    RandomSignalScale
 
 .. autoclass:: ReduceDim
+
+.. autoclass:: SqueezeDim
 
 .. autoclass:: NanToNumConverter
 
