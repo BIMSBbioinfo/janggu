@@ -28,6 +28,10 @@ Janggu - Deep learning for Genomics
     :alt: Supported Python Versions
     :target: https://pypi.org/project/janggu/
 
+.. image:: https://pepy.tech/badge/janggu
+    :alt: Downloads
+    :target: https://pepy.tech/project/janggu
+
 .. end-badges
 
 .. image:: jangguhex.png
