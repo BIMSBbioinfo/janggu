@@ -23,6 +23,7 @@ from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NMAP
 from janggu.utils import PMAP
 from janggu.utils import _get_genomic_reader
+from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
 from janggu.version import version
 
@@ -35,14 +36,6 @@ try:
 except ImportError:  # pragma: no cover
     pysam = None
 
-def _to_list(objs):
-    """Makes a list of objs"""
-    if objs is None:
-        return []
-    elif not isinstance(objs, list):
-        return [objs]
-    else:
-        return objs
 
 def _condition_from_filename(files, conditions):
     if conditions is None:

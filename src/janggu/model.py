@@ -33,6 +33,8 @@ from janggu.layers import DnaConv2D
 from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
+from janggu.utils import _to_list
+
 
 JANGGU_LAYERS = {'Reverse': Reverse,
                  'Complement': Complement,
@@ -145,8 +147,8 @@ class Janggu(object):
         grad = K.gradients(total_output, self.kerasmodel.input)
         kinp = self.kerasmodel.input
 
-        if not isinstance(kinp, list):
-            kinp = [kinp]
+        kinp = _to_list(kinp)
+
         self._influence = K.function(kinp, grad)
 
         self.name = name
@@ -211,8 +213,7 @@ class Janggu(object):
 
         path = cls._storage_path(name, _get_output_root_directory())
 
-        if not custom_objects:
-            custom_objects = {}
+        custom_objects = {} if not custom_objects else custom_objects
 
         custom_objects.update(JANGGU_LAYERS)
 
@@ -472,8 +473,7 @@ class Janggu(object):
         for par_ in hyper_params:
             self.logger.info('%s: %s', par_, str(hyper_params[par_]))
 
-        if callbacks is None:
-            callbacks = []
+        callbacks = [] if callbacks is None else callbacks
 
         callbacks.append(LambdaCallback(on_epoch_end=lambda epoch, logs: self.logger.info(
             "epoch %s: %s",
@@ -780,8 +780,8 @@ class Janggu(object):
             raise
 
         self.logger.info('#' * 40)
-        if not isinstance(values, list):
-            values = [values]
+        values = _to_list(values)
+
         for i, value in enumerate(values):
             self.logger.info('%s: %f', self.kerasmodel.metrics_names[i], value)
         self.logger.info('#' * 40)
@@ -1003,8 +1003,7 @@ class Janggu(object):
 
 def model_from_json(json_string, custom_objects=None):
     """Wrapping keras.models.model_from_json"""
-    if not custom_objects:
-        custom_objects = {}
+    custom_objects = {} if custom_objects is None else custom_objects
 
     custom_objects.update(JANGGU_LAYERS)
 
@@ -1013,8 +1012,7 @@ def model_from_json(json_string, custom_objects=None):
 
 def model_from_yaml(yaml_string, custom_objects=None):
     """Wrapping keras.models.model_from_yaml"""
-    if not custom_objects:
-        custom_objects = {}
+    custom_objects = {} if custom_objects is None else custom_objects
 
     custom_objects.update(JANGGU_LAYERS)
 
@@ -1161,8 +1159,7 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
 
     output_chrom, output_start, output_end = chrom, start, end
 
-    if not isinstance(inputs, list):
-        inputs = [inputs]
+    inputs = _to_list(inputs)
 
     # store original gindexer
     gindexers_save = [ip.gindexer for ip in inputs]

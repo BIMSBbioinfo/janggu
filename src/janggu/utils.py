@@ -97,6 +97,16 @@ def sequences_from_fasta(fasta, string='dna'):
 
 
 NOLETTER = -1024
+def _to_list(objs):
+    """Makes a list of objs"""
+    if objs is None:
+        return []
+    elif not isinstance(objs, list):
+        return [objs]
+    else:
+        return objs
+
+
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.unambiguous_dna.letters))}
 NNUC = len(IUPAC.unambiguous_dna.letters)
 
