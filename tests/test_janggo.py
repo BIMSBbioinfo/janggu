@@ -247,9 +247,17 @@ def test_janggu_influence_genomic(tmpdir):
 
     model.compile(optimizer='adadelta', loss='binary_crossentropy')
 
+    # check with some nice offset
     iv = dna.gindexer[0]
     chrom, start, end = iv.chrom, iv.start, iv.end
     influence = input_attribution(model, dna, chrom=chrom, start=start, end=end)
+
+    # check with an odd offset
+
+#    chrom, start, end =
+    influence2 = input_attribution(model, dna, chrom=chrom, start=start-1, end=end+1)
+    np.testing.assert_equal(influence[0][:], influence2[0][:][:,1:-1])
+
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")

@@ -471,6 +471,10 @@ def test_dna_dataset_sanity(tmpdir):
                                   store_whole_genome=True)
     with pytest.raises(ValueError):
         Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                  roi=bed_file, order=0,
+                                  store_whole_genome=True)
+    with pytest.raises(ValueError):
+        Bioseq.create_from_refgenome('train', refgenome=refgenome,
                                      roi=None, store_whole_genome=False)
 
     Bioseq.create_from_refgenome('train', refgenome=refgenome,

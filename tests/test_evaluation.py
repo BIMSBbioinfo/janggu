@@ -131,9 +131,10 @@ def test_output_score_by_name(tmpdir):
 
     dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15)
 
-    bwm.evaluate(inputs, outputs, callbacks=['auc', 'prc', 'auprc', 'auroc',
+    bwm.evaluate(inputs, outputs, callbacks=['auc', 'roc', 'prc',
+                                             'auprc', 'auroc',
                                              'cor', 'mae', 'mse',
-                                             'var_explained'])
+                                             'var_explained', dummy_eval])
 
     # check correctness of json
     os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auc.png"))
