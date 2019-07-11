@@ -1262,7 +1262,8 @@ class Cover(Dataset):
         if store_whole_genome:
             # in this case the intervals must be non-overlapping
             # in order to obtain unambiguous data.
-            if gindexer.binsize > gindexer.stepsize:
+
+            if not gindexer.collapse and gindexer.binsize > gindexer.stepsize:
                 raise ValueError("Overlapping intervals: With overlapping "
                                  "intervals the mapping between the array and "
                                  "genomic-array values is ambiguous. "
