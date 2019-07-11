@@ -1168,6 +1168,7 @@ class Cover(Dataset):
                           gindexer,
                           genomesize=None,
                           conditions=None,
+                          resolution=None,
                           storage='ndarray',
                           overwrite=False,
                           cache=False,
@@ -1267,12 +1268,13 @@ class Cover(Dataset):
                                  "genomic-array values is ambiguous. "
                                  "Please ensure that binsize <= stepsize.")
 
-        # determine the resolution
-        if gindexer.binsize is None:
-            # binsize will not be set if gindexer was loaded in collapse mode
-            resolution = None
-        else:
-            resolution = max(1, gindexer.binsize // array.shape[1])
+        if resolution is None:
+            # determine the resolution
+            if gindexer.collapse:
+                # binsize will not be set if gindexer was loaded in collapse mode
+                resolution = None
+            else:
+                resolution = max(1, gindexer.binsize // array.shape[1])
 
         # determine strandedness
         stranded = True if array.ndim == 3 and array.shape[2] == 2 else False
