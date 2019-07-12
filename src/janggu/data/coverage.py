@@ -628,7 +628,7 @@ class Cover(Dataset):
 
         bamfiles = _to_list(bamfiles)
 
-        _condition_from_filename(bamfiles, conditions)
+        conditions = _condition_from_filename(bamfiles, conditions)
 
         if min_mapq is None:
             min_mapq = 0
@@ -855,7 +855,7 @@ class Cover(Dataset):
                 gsize = bwfile.chroms()
             gsize = GenomicIndexer.create_from_genomesize(gsize)
 
-        _condition_from_filename(bigwigfiles, conditions)
+        conditions = _condition_from_filename(bigwigfiles, conditions)
 
         bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num)
         datatags = [name]
