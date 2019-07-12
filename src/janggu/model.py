@@ -13,7 +13,6 @@ import keras.backend as K
 import numpy as np
 from keras.callbacks import CSVLogger
 from keras.callbacks import LambdaCallback
-from keras.layers import Lambda
 from keras.models import Model
 from keras.models import load_model
 from keras.utils import Sequence
@@ -34,7 +33,6 @@ from janggu.layers import LocalAveragePooling2D
 from janggu.layers import Reverse
 from janggu.utils import _get_output_root_directory
 from janggu.utils import _to_list
-
 
 JANGGU_LAYERS = {'Reverse': Reverse,
                  'Complement': Complement,

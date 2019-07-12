@@ -7,6 +7,8 @@ import warnings
 from collections import OrderedDict
 
 import numpy as np
+import pyBigWig
+import pysam
 from progress.bar import Bar
 from pybedtools import BedTool
 from pybedtools import Interval
@@ -16,21 +18,10 @@ from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomic_indexer import check_gindexer_compatibility
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
-from janggu.utils import NMAP
-from janggu.utils import PMAP
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
 from janggu.version import version
-
-try:
-    import pyBigWig
-except ImportError:  # pragma: no cover
-    pyBigWig = None
-try:
-    import pysam
-except ImportError:  # pragma: no cover
-    pysam = None
 
 
 def _condition_from_filename(files, conditions):
@@ -1297,7 +1288,7 @@ class Cover(Dataset):
                 # rescaled data.
                 data_start_offset = idxs.start - (idxs.start//resolution)*resolution
                 data_end_offset = data_start_offset + idxs.length
-                data = data[:,data_start_offset:data_end_offset,:,:]
+                data = data[:, data_start_offset:data_end_offset, :, :]
 
             else:
                 chrom = str(idxs.chrom)

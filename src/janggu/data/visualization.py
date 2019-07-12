@@ -1,15 +1,15 @@
 """Genomic track visualization utilities."""
-from itertools import product
 import warnings
+from itertools import product
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from matplotlib.pyplot import cm
 
 from janggu.utils import NMAP
 from janggu.utils import PMAP
 from janggu.utils import _to_list
+
 
 def plotGenomeTrack(tracks, chrom, start, end, figsize=(10, 5), plottypes=None):
 
@@ -107,7 +107,7 @@ def plotGenomeTrack(tracks, chrom, start, end, figsize=(10, 5), plottypes=None):
     plt.yticks(())
 
     y_offset = 1
-    for j, track in enumerate(tracks):
+    for track in tracks:
         y_offset += 1
 
         track.add_side_bar(fig, grid, y_offset)
@@ -134,9 +134,11 @@ class Track(object):
 
     @property
     def name(self):
+        """Track name"""
         return self.data.name
 
     def add_side_bar(self, fig, grid, offset):
+        """Side-bar"""
         # side bar indicator for current cover
         ax = fig.add_subplot(grid[(offset): (offset + self.height), 0])
 
@@ -148,9 +150,11 @@ class Track(object):
         ax.set_yticklabels([self.name])
 
     def get_track_axis(self, fig, grid, offset, height):
+        """Returns axis object"""
         return fig.add_subplot(grid[offset:(offset + height), 1:])
 
     def get_data(self, chrom, start, end):
+        """Returns data to plot."""
         return self.data[chrom, start, end][0, :, :, :]
 
 
@@ -185,6 +189,7 @@ class LineTrack(Track):
         self.color = color
 
     def plot(self, fig, grid, offset, chrom, start, end):
+        """Plot line track."""
         coverage = self.get_data(chrom, start, end)
         offset_ = offset
         trackheight = self.height//len(self.data.conditions)
@@ -242,7 +247,7 @@ class SeqTrack(Track):
         super(SeqTrack, self).__init__(data, height)
 
     def plot(self, fig, grid, offset, chrom, start, end):
-        # check if coverage represents dna
+        """Plot sequence track"""
 
         if len(self.data.conditions) % len(NMAP) == 0:
             alphabetsize = len(NMAP)
@@ -304,6 +309,7 @@ class HeatTrack(Track):
         super(HeatTrack, self).__init__(data, height)
 
     def plot(self, fig, grid, offset, chrom, start, end):
+        """Plot heatmap track."""
         ax = self.get_track_axis(fig, grid, offset, self.height)
         coverage = self.get_data(chrom, start, end)
 

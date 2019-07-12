@@ -211,8 +211,8 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                         # collapse in bins of size resolution
                         value = value.reshape((value.shape[0]//min(self.resolution,
                                                value.shape[0]),
-                                               min(self.resolution,
-                                                   value.shape[0]),) + value.shape[1:])
+                                               min(self.resolution, value.shape[0]),) + \
+                                              value.shape[1:])
 
                     value = self.collapser(value)
 
@@ -844,8 +844,8 @@ class SparseGenomicArray(GenomicArray):
                         # collapse in bins of size resolution
                         value = value.reshape((value.shape[0]//min(self.resolution,
                                                value.shape[0]),
-                                               min(self.resolution,
-                                                   value.shape[0]),) + value.shape[1:])
+                                               min(self.resolution, value.shape[0]),) + \
+                                              value.shape[1:])
 
                     value = self.collapser(value)
 

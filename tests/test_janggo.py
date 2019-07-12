@@ -1,11 +1,11 @@
 import os
 
+import h5py
 import matplotlib
 import numpy as np
 import pandas as pd
 import pkg_resources
 import pytest
-import h5py
 from keras.layers import Average
 from keras.layers import Concatenate
 from keras.layers import Conv2D

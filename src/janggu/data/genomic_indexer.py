@@ -1,8 +1,6 @@
-import os
-import tempfile
+"""GenomicIndexer module"""
 
 import numpy as np
-from pybedtools import BedTool
 from pybedtools import Interval
 from sklearn.utils import check_random_state
 
@@ -452,8 +450,8 @@ def check_gindexer_compatibility(gindexer, resolution, store_whole_genome):
                     'divisible by resolution={} to '.format(resolution) + \
                     'avoid undesired rounding effects.'
                     'Consider using '
-                    '"janggu-trim {input} trun_{output} -divisible_by {resolution}"'
-                    .format(input=roi, output=roi, resolution=resolution))
+                    '"janggu-trim <input_roi> <trun_output> -divisible_by {resolution}"'
+                    .format(resolution=resolution))
 
     if not store_whole_genome and gindexer is None:
         raise ValueError('Either roi must be supplied or store_whole_genome must be True')

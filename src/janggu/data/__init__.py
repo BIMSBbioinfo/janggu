@@ -2,11 +2,6 @@
 from copy import copy
 
 from janggu.data.coverage import Cover  # noqa
-from janggu.data.visualization import plotGenomeTrack  # noqa
-from janggu.data.visualization import LineTrack  # noqa
-from janggu.data.visualization import Track  # noqa
-from janggu.data.visualization import SeqTrack  # noqa
-from janggu.data.visualization import HeatTrack  # noqa
 from janggu.data.data import Dataset  # noqa
 from janggu.data.dna import Bioseq  # noqa
 from janggu.data.dna import VariantStreamer  # noqa
@@ -27,6 +22,11 @@ from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 from janggu.data.nparr import SqueezeDim  # noqa
 from janggu.data.nparr import Transpose  # noqa
+from janggu.data.visualization import HeatTrack  # noqa
+from janggu.data.visualization import LineTrack  # noqa
+from janggu.data.visualization import SeqTrack  # noqa
+from janggu.data.visualization import Track  # noqa
+from janggu.data.visualization import plotGenomeTrack  # noqa
 
 
 def view(dataset, use_regions):
@@ -57,7 +57,7 @@ def view(dataset, use_regions):
                                            random_state=dataset.gindexer.random_state)
 
     check_gindexer_compatibility(gind, dataset.garray.resolution,
-                                   dataset.garray._full_genome_stored)
+                                 dataset.garray._full_genome_stored)
     subdata = copy(dataset)
     subdata.gindexer = gind
 

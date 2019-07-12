@@ -6,8 +6,8 @@ import pytest
 
 from janggu.data import Bioseq
 from janggu.data import split_train_test
-from janggu.data import view
 from janggu.data import subset
+from janggu.data import view
 from janggu.data.data import _data_props
 
 matplotlib.use('AGG')

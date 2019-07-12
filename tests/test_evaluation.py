@@ -89,14 +89,11 @@ def get_janggu(inputs, outputs):
     @outputdense('sigmoid')
     def _model(inputs, inp, oup, params):
         return inputs, inputs[0]
-
     bwm = Janggu.create(_model,
                         inputs=inputs,
                         outputs=outputs,
                         name='nptest')
-
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
-
     storage = bwm._storage_path(bwm.name, outputdir=bwm.outputdir)
     assert not os.path.exists(storage)
     return bwm
@@ -129,22 +126,28 @@ def test_output_score_by_name(tmpdir):
 
     bwm = get_janggu(inputs, outputs)
 
-    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15)
+    dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15, immediate_export=False)
 
     bwm.evaluate(inputs, outputs, callbacks=['auc', 'roc', 'prc',
                                              'auprc', 'auroc',
                                              'cor', 'mae', 'mse',
                                              'var_explained', dummy_eval])
 
-    # check correctness of json
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auc.png"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "prc.png"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "cor.tsv"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "mae.tsv"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "mse.tsv"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "var_explained.tsv"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auprc.tsv"))
-    os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auroc.tsv"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auc.tsv"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "prc.png"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "roc.png"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "cor.tsv"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "mae.tsv"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "mse.tsv"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "var_explained.tsv"))
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "auprc.tsv"))
+    assert not os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "score.json"))
+
+    dummy_eval.export(os.path.join(tmpdir.strpath, dummy_eval.subdir), bwm.name)
+    assert os.path.exists(os.path.join(tmpdir.strpath, "evaluation", bwm.name, "score.json"))
+
+    with pytest.raises(ValueError):
+        bwm.evaluate(inputs, outputs, callbacks=['adsf'])
 
 
 def test_output_json_score(tmpdir):
@@ -155,6 +158,12 @@ def test_output_json_score(tmpdir):
                     conditions=['random'])
 
     bwm = get_janggu(inputs, outputs)
+
+    # check exception if no scoring function is provided
+    dummy_eval = Scorer('score')
+
+    with pytest.raises(ValueError):
+        bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
     dummy_eval = Scorer('score', lambda y_true, y_pred: 0.15)
 

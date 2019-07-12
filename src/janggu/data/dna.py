@@ -130,7 +130,6 @@ class SeqLoader:
             gsize = self.gsize
             seqs = self.seqs
         order = self.order
-        dtype = garray.typecode
 
         bar = Bar('Loading sequences', max=len(gsize))
         for region, seq in zip(gsize, seqs):
@@ -144,7 +143,7 @@ class SeqLoader:
                 indarray = np.convolve(indarray, filter_, mode='valid')
                 # the specific type int8 is not irrelevant, as long as
                 # the negative values are maintained correctly.
-                indarray[indarray<np.iinfo('int8').min] = np.iinfo('int8').min
+                indarray[indarray < np.iinfo('int8').min] = np.iinfo('int8').min
 
             garray[region, 0] = indarray.reshape(-1, 1)
             bar.next()

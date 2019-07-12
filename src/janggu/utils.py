@@ -12,26 +12,13 @@ from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pybedtools import BedTool
-from pybedtools import Interval
 
-try:
-    import matplotlib.pyplot as plt  # pylint: disable=import-error
-except ImportError:  # pragma: no cover
-    plt = None
+import matplotlib.pyplot as plt
+import pyBigWig
+import seaborn as sns
 
-try:
-    import pyBigWig
-except ImportError:  # pragma: no cover
-    pyBigWig = None
-try:
-    import seaborn as sns  # pylint: disable=import-error
-except ImportError:  # pragma: no cover
-    sns = None
+from sklearn.manifold import TSNE  # pylint: disable=import-error
 
-try:
-    from sklearn.manifold import TSNE  # pylint: disable=import-error
-except ImportError:  # pragma: no cover
-    TSNE = None
 
 try:
     from urllib import urlcleanup, urlretrieve

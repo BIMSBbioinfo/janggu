@@ -118,9 +118,11 @@ def test_bam_genomic_interval_access():
                     cover.gindexer[i].strand
 
                 np.testing.assert_equal(np.repeat(cover[i],
-                                    cover.garray.resolution, axis=1),
-                                    cover[chrom, start, end, strand])
+                                        cover.garray.resolution, axis=1),
+                                        cover[chrom, start, end, strand])
 
+                np.testing.assert_equal(cover[chrom, start, end, strand],
+                                        cover[chrom, start-1, end+1, strand][:, 1:-1, :, :])
                 if shift != 0:
                     start += shift * reso
                     end += shift * reso
@@ -326,6 +328,20 @@ def test_bed_unsync_roi_targets():
         resolution=1,
         store_whole_genome=True,
         storage='ndarray', minoverlap=.5)
+    assert len(cover) == 25
+    assert cover.shape == (25, 200, 1, 1)
+    assert cover[:].sum() == 0
+
+    # check bed file loading without roi
+    cover_ = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_shift_file,
+        roi=None,
+        resolution=1,
+        store_whole_genome=True,
+        storage='ndarray', minoverlap=.5)
+
+    cover_.gindexer = cover.gindexer
     assert len(cover) == 25
     assert cover.shape == (25, 200, 1, 1)
     assert cover[:].sum() == 0
@@ -1026,7 +1042,9 @@ def test_load_cover_bigwig_default(tmpdir):
             roi=bed_file,
             binsize=200, stepsize=200,
             genomesize=gsize,
-            storage=store, cache=True)
+            storage=store,
+            store_whole_genome=True,
+            cache=True)
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
@@ -1035,6 +1053,20 @@ def test_load_cover_bigwig_default(tmpdir):
         np.testing.assert_allclose(cover[4].sum(), 36.)
         np.testing.assert_allclose(cover[52].sum(), 2*36.)
 
+    cover = Cover.create_from_bigwig(
+        "cov",
+        bigwigfiles=bwfile_,
+        roi=bed_file,
+        binsize=200, stepsize=200,
+        genomesize=gsize,
+        store_whole_genome=False, cache=True)
+
+    np.testing.assert_equal(len(cover), 100)
+    np.testing.assert_equal(cover.shape, (100, 200, 1, 1))
+
+    # there is one read in the region
+    np.testing.assert_allclose(cover[4].sum(), 36.)
+    np.testing.assert_allclose(cover[52].sum(), 2*36.)
 
 def test_load_cover_bigwig_resolution1(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
@@ -1175,6 +1207,21 @@ def test_load_cover_bed_binary(tmpdir):
         np.testing.assert_equal(cover[0].sum(), 0)
         np.testing.assert_equal(cover[4].sum(), 1)
 
+        cover = Cover.create_from_bed(
+            "cov50_firstdim",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            storage=store,
+            store_whole_genome=True,
+            resolution=200,
+            collapser='max',
+            mode='binary', cache=True)
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+
 
 def test_load_cover_bed_scored():
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
@@ -1230,6 +1277,16 @@ def test_load_cover_bed_categorical():
     bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
     score_file = pkg_resources.resource_filename('janggu',
                                                  'resources/scored_sample.bed')
+
+    with pytest.raises(ValueError):
+        # Only one bed file allowed.
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=[score_file] * 2,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            mode='categorical')
 
     for store in ['ndarray', 'sparse']:
         cover = Cover.create_from_bed(
@@ -1395,3 +1452,32 @@ def test_plotgenometracks_seqplot():
     a = plotGenomeTrack(dna,'chr1',16000,18000, plottypes=['seqplot'])
 
     a = plotGenomeTrack(SeqTrack(dna), 'chr1', 16000, 18000)
+
+def test_padding_value_nan():
+    variantsfile = pkg_resources.resource_filename('janggu', 'resources/pseudo_snps.vcf')
+    gindexer = GenomicIndexer.create_from_file(variantsfile, None, None)
+    array = np.zeros((len(gindexer), 3))
+
+    snpcov = Cover.create_from_array('snps', array,
+                                     gindexer,
+                                     store_whole_genome=True,
+                                     padding_value=np.nan)
+
+    assert snpcov.shape == (6, 1, 1, 3)
+
+    np.testing.assert_equal(snpcov['pseudo1', 650, 670][0,:,0,0],
+                            np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
+                                      0., np.nan,  0., np.nan,  0.,  0.,  0.,
+                                      np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]))
+
+    snpcov = Cover.create_from_array('snps', array,
+                                     gindexer,
+                                     store_whole_genome=False,
+                                     padding_value=np.nan)
+
+    assert snpcov.shape == (6, 1, 1, 3)
+
+    np.testing.assert_equal(snpcov['pseudo1', 650, 670][0,:,0,0],
+                            np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
+                                      0., np.nan,  0., np.nan,  0.,  0.,  0.,
+                                      np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]))

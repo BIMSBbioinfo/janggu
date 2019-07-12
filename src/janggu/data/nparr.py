@@ -165,6 +165,7 @@ class ReduceDim(Dataset):
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     def __copy__(self):
@@ -180,30 +181,10 @@ class SqueezeDim(Dataset):
     the middle two dimensions by applying the aggregate function.
     Therefore, it transforms the 4D object into a table-like 2D representation
 
-    Example
-    -------
-    .. code-block:: python
-
-      # given some dataset, e.g. a Cover object
-      # originally, the cover object is a 4D-object.
-      cover.shape
-      cover = ReduceDim(cover, aggregator='mean')
-      cover.shape
-      # Afterwards, the cover object is 2D, where the second and
-      # third dimension have been averaged out.
-
-
     Parameters
     -----------
     array : Dataset
         Dataset
-    aggregator : str or callable
-        Aggregator used for reducing the intermediate dimensions.
-        Available aggregators are 'sum', 'mean', 'max' for performing
-        summation, averaging or obtaining the maximum value.
-        It is also possible to supply a callable directly that performs the
-        operation.
-        Default: 'sum'
     axis : None or tuple(ints)
         Dimensions over which to perform aggregation. Default: None
         aggregates with :code:`axis=(1, 2)`
@@ -240,7 +221,6 @@ class SqueezeDim(Dataset):
         for idx in range(self.data.ndim):
             if self.data.shape[idx] == 1:
                 if self.axis is None or idx in self.axis:
-#            if idx in self.axis and self.data.shape[idx] == 1:
                     continue
             shape += (self.data.shape[idx],)
         return shape
@@ -261,6 +241,7 @@ class SqueezeDim(Dataset):
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     def __copy__(self):
@@ -330,6 +311,7 @@ class Transpose(Dataset):
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     def __copy__(self):
@@ -402,6 +384,7 @@ class NanToNumConverter(Dataset):
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     def __copy__(self):
@@ -472,10 +455,12 @@ class RandomSignalScale(Dataset):
 
     @property
     def shape(self):
+        """shape"""
         return self.data.shape
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     def __copy__(self):
@@ -541,10 +526,12 @@ class RandomOrientation(Dataset):
 
     @property
     def shape(self):
+        """shape"""
         return self.data.shape
 
     @property
     def ndim(self):
+        """ndim"""
         return len(self.shape)
 
     def __copy__(self):

@@ -313,24 +313,27 @@ def get_scorer(scorer):
     This function takes a scorer by name or a Scorer object
     and returns an instantiation of a Scorer object.
     """
-    if isinstance(scorer, str):
-        if scorer in ['ROC', 'roc']:
-            scorer = Scorer(scorer, wrap_roc_,
-                            exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
-        elif scorer in ['PRC', 'prc']:
-            scorer = Scorer(scorer, wrap_prc_,
-                            exporter=ExportScorePlot(xlabel='Recall',
-                                                     ylabel='Precision'))
-        elif scorer in ['auc', 'AUC', 'auROC', 'auroc']:
-            scorer = Scorer(scorer, roc_auc_score, exporter=ExportTsv())
-        elif scorer in ['auprc', 'auPRC', 'ap', 'AP']:
-            scorer = Scorer(scorer, average_precision_score, exporter=ExportTsv())
-        elif scorer in ['cor', 'pearson']:
-            scorer = Scorer(scorer, wrap_cor_, exporter=ExportTsv())
-        elif scorer in ['var_explained']:
-            scorer = Scorer(scorer, explained_variance_score, exporter=ExportTsv())
-        elif scorer in ['mse', 'MSE']:
-            scorer = Scorer(scorer, mean_squared_error, exporter=ExportTsv())
-        elif scorer in ['mae', 'MAE']:
-            scorer = Scorer(scorer, mean_absolute_error, exporter=ExportTsv())
+    if isinstance(scorer, Scorer):
+        pass
+    elif scorer in ['ROC', 'roc']:
+        scorer = Scorer(scorer, wrap_roc_,
+                        exporter=ExportScorePlot(xlabel='FPR', ylabel='TPR'))
+    elif scorer in ['PRC', 'prc']:
+        scorer = Scorer(scorer, wrap_prc_,
+                        exporter=ExportScorePlot(xlabel='Recall',
+                                                 ylabel='Precision'))
+    elif scorer in ['auc', 'AUC', 'auROC', 'auroc']:
+        scorer = Scorer(scorer, roc_auc_score, exporter=ExportTsv())
+    elif scorer in ['auprc', 'auPRC', 'ap', 'AP']:
+        scorer = Scorer(scorer, average_precision_score, exporter=ExportTsv())
+    elif scorer in ['cor', 'pearson']:
+        scorer = Scorer(scorer, wrap_cor_, exporter=ExportTsv())
+    elif scorer in ['var_explained']:
+        scorer = Scorer(scorer, explained_variance_score, exporter=ExportTsv())
+    elif scorer in ['mse', 'MSE']:
+        scorer = Scorer(scorer, mean_squared_error, exporter=ExportTsv())
+    elif scorer in ['mae', 'MAE']:
+        scorer = Scorer(scorer, mean_absolute_error, exporter=ExportTsv())
+    else:
+        raise ValueError("scoring callback {} unknown.".format(scorer))
     return scorer
