@@ -68,3 +68,4 @@ docs/_build
 
 # Janggu output
 janggu_results
+.ipynb_checkpoints
