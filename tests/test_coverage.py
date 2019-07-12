@@ -14,6 +14,10 @@ from janggu.data import Cover
 from janggu.data import Transpose
 from janggu.data import GenomicIndexer
 from janggu.data import plotGenomeTrack
+from janggu.data import LineTrack
+from janggu.data import SeqTrack
+from janggu.data import HeatTrack
+
 
 def test_channel_last_first():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -1316,7 +1320,7 @@ def test_filter_by_region():
     np.testing.assert_equal(len(test6), 0)
 
 
-def test_plotgenometracks():
+def test_plotgenometracks_bigwigs():
 
     roi = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
 
@@ -1340,6 +1344,8 @@ def test_plotgenometracks():
     a = plotGenomeTrack([cover,cover2],'chr1',16000,18000)
     a = plotGenomeTrack(cover,'chr1',16000,18000)
 
+    a = plotGenomeTrack(LineTrack(cover),'chr1',16000,18000)
+
     a = plotGenomeTrack([cover,cover2],'chr1',16000,18000, plottypes=['heatmap'] * 2)
     with pytest.raises(AssertionError):
         # differing number of plottypes and coverage objects raises an error
@@ -1352,7 +1358,7 @@ def test_plotgenometracks():
         a = plotGenomeTrack(cover2,'chr1',16000,18000, plottypes=['seqplot'])
 
 
-def test_plotgenometracks():
+def test_plotgenometracks_bams():
 
     roi = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
 
@@ -1370,6 +1376,9 @@ def test_plotgenometracks():
 
     a = plotGenomeTrack([cover,cover],'chr1',16000,18000, plottypes=['heatmap'] * 2)
 
+    a = plotGenomeTrack([HeatTrack(cover), HeatTrack(cover)],'chr1',16000,18000)
+    a = plotGenomeTrack([LineTrack(cover)],'chr1',16000,18000)
+
 
 def test_plotgenometracks_seqplot():
 
@@ -1384,3 +1393,5 @@ def test_plotgenometracks_seqplot():
                                        store_whole_genome=True)
 
     a = plotGenomeTrack(dna,'chr1',16000,18000, plottypes=['seqplot'])
+
+    a = plotGenomeTrack(SeqTrack(dna), 'chr1', 16000, 18000)
