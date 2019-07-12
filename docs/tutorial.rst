@@ -2,7 +2,9 @@
 Tutorial
 =========
 
-This tutorial is split in two parts. Part I treats the Genomic Dataset
+This tutorial is split in three parts.
+
+Part I treats the Genomic Dataset
 that are available through Janggu which can be directly consumed
 by your keras model.
 The tutorial illustates how to access genomics
@@ -14,9 +16,45 @@ in numpy format can be converted to a genomic coverage representation
 that can in turn be exported to BIGWIG file format
 or visualized directly via a genome browser-like plot.
 
-Part II treats utilities that are directed against defining a neural network,
-based on keras and how to automatically produce summary figures or statistics
-using callback functions.
+Part II treats utilities for defining a neural networks based on keras.
+
+Part III illustrates Janggu's evaluation utilities.
+
+Complementary to this tutorial, the janggu repository contains
+a number of jupyter notebooks that illustrate for example with keras or
+sklearn:
+
+.. _notebook_tutorials:
++--------------------------------+
+| Example notebooks              |
++================================+
+| `keras cnn example`_           |
++--------------------------------+
+| `sklearn example`_             |
++--------------------------------+
+| `janggu example I`_            |
++--------------------------------+
+| `janggu example II`_           |
++--------------------------------+
+| `reusing datasets with view`_  |
++--------------------------------+
+| `randomizing HDF5 data`_       |
++--------------------------------+
+| `variant effect prediction`_   |
++--------------------------------+
+| `plotting genome coverage`_    |
++--------------------------------+
+
+.. _`keras cnn example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/keras_convnet_example.ipynb
+.. _`sklearn example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/sklearn_example_with_kmers.ipynb
+.. _`janggu example I`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/classify_nucleotide_sequences.ipynb
+.. _`janggu example II`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples.ipynb
+.. _`reusing datasets with view`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
+.. _`randomizing HDF5 data`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
+.. _`variant effect prediction`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb
+.. _`plotting genome coverage`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/plot_coverage.ipynb
+
+
 
 
 Part I) Introduction to Genomic Datasets
@@ -420,7 +458,7 @@ to transform them in various ways.
 For instance, :code:`ReduceDim` can be used to convert a 4D coverage dataset into 2D table like object.
 That is it may be used to transform the dimensions
 :code:`(region, region_length, strand, condition)` to :code:`(region, condition)` by
-aggregating over the middel two dimensions.
+aggregating over the middle two dimensions.
 
 .. code:: python
 
@@ -437,12 +475,16 @@ the 5' to 3' orientations of the coverage signal.
 For more specialized cases, these wrappers might also be a good starting point
 to derive or adapt from.
 
-Using the Genomic Datasets with keras models
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using the Genomic Datasets with keras or sklearn
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The above mentioned datasets :code:`Bioseq` and :code:`Cover`
-can be directly used with keras. An illustration of this
-is shown in the `example notebook <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/bedfile_examples.ipynb>`_.
+are directly compatible with keras and sklearn models. An illustration of a
+simple convolutional neural network with keras is shown in
+`keras cnn example`_.
+Moreover, an example of a logistic regression model from sklearn used with Janggu
+is shown in
+`sklearn example`_.
 
 
 Converting a Numpy array to :code:`Cover`
@@ -517,11 +559,8 @@ It offers the following features:
 1. Building models using automatic input and output layer shape inference
 2. Built-in logging functionality
 3. Automatic evaluation through the attachment of Scorer callbacks
-4. Dash-app for browsing the evaluation statistics and figures
 
-A example scripts illustrating the material covered in this part
-can be found at `Example 1 <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_bedregions.py>`_
-and `Example 2 <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/classify_fasta.py>`_.
+A list of examples can be found in the Table :ref:`notebook_tutorials` at the beginning.
 
 .. sidebar:: Datasets are named
 
@@ -590,7 +629,7 @@ upon model creation. This allows to parametrize the network
 and reduces code redundancy.
 
 From the model template it is also possible to obtain
-a keras model directly, rather than the Janggu model wrapper if this is perfered
+a keras model directly, rather than the Janggu model wrapper if this is preferred
 
 .. code-block:: python
 
@@ -826,9 +865,8 @@ In order to inspect what the model has learned,
 it is possible to identify the most important features in the input space
 using the integrated gradients method.
 
-This is illustrated on a toy example for discriminating Oct4 and Mafk binding sites.
-`influence attribution example <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb>`_.
-
+This is illustrated on a toy example for discriminating Oct4 and Mafk binding sites (see
+`variant effect prediction`_).
 
 Variant effect prediction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -841,9 +879,8 @@ as well as its respective reference sequence.
 As a result, an hdf5 file and a bed file will be produced which
 contain the network predictions for each variant and the associated genomic
 loci.
-An illustration of the variant effect prediction is given in
-`influence attribution and variant effect prediction <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb>`_.
-
+An illustration of the variant effect prediction in the notebook (see
+`variant effect prediction`_).
 
 Browse through the results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
