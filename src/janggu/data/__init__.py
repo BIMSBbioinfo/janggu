@@ -26,6 +26,7 @@ from janggu.data.nparr import RandomOrientation  # noqa
 from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 from janggu.data.nparr import SqueezeDim  # noqa
+from janggu.data.nparr import Transpose  # noqa
 
 
 def view(dataset, use_regions):

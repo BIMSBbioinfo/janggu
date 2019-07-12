@@ -458,12 +458,10 @@ class Cover(Dataset):
     _gindexer = None
 
     def __init__(self, name, garray,
-                 gindexer,  # indices of pointing to region start
-                 channel_last):
+                 gindexer):
 
         self.garray = garray
         self.gindexer = gindexer
-        self._channel_last = channel_last
         Dataset.__init__(self, name)
 
     @classmethod
@@ -484,7 +482,6 @@ class Cover(Dataset):
                         template_extension=0,
                         datatags=None,
                         cache=False,
-                        channel_last=True,
                         normalizer=None,
                         zero_padding=True,
                         random_state=None,
@@ -577,10 +574,6 @@ class Cover(Dataset):
             whole genome, e.g. roi is not None.
         cache : boolean
             Indicates whether to cache the dataset. Default: False.
-        channel_last : boolean
-            Indicates whether the condition axis should be the last dimension
-            or the first. For example, tensorflow expects the channel at the
-            last position. Default: True.
         zero_padding : boolean
             Indicates if variable size intervals should be zero padded.
             Zero padding is only supported with a specified
@@ -696,8 +689,7 @@ class Cover(Dataset):
                                      normalizer=normalizer,
                                      collapser='sum')
 
-        return cls(name, cover, gindexer,
-                   channel_last=channel_last)
+        return cls(name, cover, gindexer)
 
     @classmethod
     def create_from_bigwig(cls, name,  # pylint: disable=too-many-locals
@@ -712,7 +704,6 @@ class Cover(Dataset):
                            overwrite=False,
                            datatags=None, cache=False,
                            store_whole_genome=False,
-                           channel_last=True,
                            zero_padding=True,
                            normalizer=None,
                            collapser=None,
@@ -790,10 +781,6 @@ class Cover(Dataset):
             Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
-        channel_last : boolean
-            Indicates whether the condition axis should be the last dimension
-            or the first. For example, tensorflow expects the channel at the
-            last position. Default: True.
         zero_padding : boolean
             Indicates if variable size intervals should be zero padded.
             Zero padding is only supported with a specified
@@ -908,8 +895,7 @@ class Cover(Dataset):
                                      collapser=collapser_,
                                      normalizer=normalizer)
 
-        return cls(name, cover, gindexer,
-                   channel_last=channel_last)
+        return cls(name, cover, gindexer)
 
     @classmethod
     def create_from_bed(cls, name,  # pylint: disable=too-many-locals
@@ -924,7 +910,6 @@ class Cover(Dataset):
                         mode='binary',
                         store_whole_genome=False,
                         overwrite=False,
-                        channel_last=True,
                         zero_padding=True,
                         normalizer=None,
                         collapser=None,
@@ -1000,10 +985,6 @@ class Cover(Dataset):
             Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False.
-        channel_last : boolean
-            Indicates whether the condition axis should be the last dimension
-            or the first. For example, tensorflow expects the channel at the
-            last position. Default: True.
         zero_padding : boolean
             Indicates if variable size intervals should be zero padded.
             Zero padding is only supported with a specified
@@ -1131,8 +1112,7 @@ class Cover(Dataset):
                                      collapser=collapser_,
                                      normalizer=normalizer)
 
-        return cls(name, cover, gindexer,
-                   channel_last=channel_last)
+        return cls(name, cover, gindexer)
 
     @classmethod
     def create_from_array(cls, name,  # pylint: disable=too-many-locals
@@ -1145,7 +1125,6 @@ class Cover(Dataset):
                           overwrite=False,
                           cache=False,
                           datatags=None,
-                          channel_last=True,
                           padding_value=0.0,
                           store_whole_genome=False):
         """Create a Cover class from a numpy.array.
@@ -1187,11 +1166,6 @@ class Cover(Dataset):
             should be loaded. Default: False.
         padding_value : float
             Padding value. Default: 0.
-        channel_last : boolean
-            This tells the constructor how to interpret the array dimensions.
-            It indicates whether the condition axis is the last dimension
-            or the first. For example, tensorflow expects the channel at the
-            last position. Default: True.
         """
 
         if overwrite:  # pragma: no cover
@@ -1216,9 +1190,6 @@ class Cover(Dataset):
             # based on the gindexer intervals.
             gsize = get_genome_size_from_regions(gindexer)
             gsize = GenomicIndexer.create_from_genomesize(gsize)
-
-        if not channel_last:
-            array = np.transpose(array, (0, 3, 1, 2))
 
         if conditions is None:
             conditions = ["Cond_{}".format(i) for i in range(array.shape[-1])]
@@ -1287,8 +1258,7 @@ class Cover(Dataset):
                                      padding_value=padding_value,
                                      collapser=_dummy_collapser)
 
-        return cls(name, cover, gindexer,
-                   channel_last=channel_last)
+        return cls(name, cover, gindexer)
 
     @property
     def gindexer(self):
@@ -1396,9 +1366,6 @@ class Cover(Dataset):
                     # invert it back relative to minus strand
                     data = data[:, ::-1, ::-1, :]
 
-            if not self._channel_last:
-                data = np.transpose(data, (0, 3, 1, 2))
-
             return data
 
         try:
@@ -1413,9 +1380,6 @@ class Cover(Dataset):
 
             dat = self._getsingleitem(interval)
             data[i, :len(dat), :, :] = dat
-
-        if not self._channel_last:
-            data = np.transpose(data, (0, 3, 1, 2))
 
         return data
 
@@ -1434,11 +1398,7 @@ class Cover(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-
-        if self._channel_last:
-            return self.shape_static
-
-        return tuple(self.shape_static[x] for x in [0, 3, 1, 2])
+        return self.shape_static
 
     @property
     def shape_static(self):

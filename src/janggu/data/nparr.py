@@ -268,6 +268,75 @@ class SqueezeDim(Dataset):
         return obj
 
 
+class Transpose(Dataset):
+    """Transpose class.
+
+    This class can be used to shuffle the dimensions.
+    For example, if the channel is expected to be at a specific location.
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset
+    axis : tuple(ints)
+        Order to the dimensions.
+    """
+
+    def __init__(self, array, axis):
+
+        self.data = copy.copy(array)
+
+        self.axis = axis
+        Dataset.__init__(self, array.name)
+
+    def __repr__(self):  # pragma: no cover
+        return 'SqueezeDim({})'.format(str(self.data))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        if isinstance(idxs, int):
+            idxs = slice(idxs, idxs + 1)
+        data = np.transpose(self.data[idxs], self.axis)
+        return data
+
+    @property
+    def conditions(self):
+        """conditions"""
+        return self.data.conditions if hasattr(self.data, "conditions") else None
+
+    @property
+    def shape(self):
+        """Shape of the dataset"""
+        shape = tuple()
+        for idx in self.axis:
+            shape += (self.data.shape[idx],)
+        return shape
+
+    @property
+    def gindexer(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'gindexer'):
+            return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):  # pragma: no cover
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def __copy__(self):
+        obj = Transpose(copy.copy(self.data), self.axis)
+        return obj
+
+
 class NanToNumConverter(Dataset):
     """NanToNumConverter class.
 

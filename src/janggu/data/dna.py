@@ -177,7 +177,7 @@ class Bioseq(Dataset):
     _flank = None
     _gindexer = None
 
-    def __init__(self, name, garray, gindexer, alphabet, channel_last):
+    def __init__(self, name, garray, gindexer, alphabet):
 
         self.garray = garray
         self.gindexer = gindexer
@@ -188,7 +188,6 @@ class Bioseq(Dataset):
         self._alphabetsize = len(self._alphabet)
         self._rcindex = [_complement_index(idx, garray.order)
                          for idx in range(pow(self._alphabetsize, garray.order))]
-        self._channel_last = channel_last
 
         Dataset.__init__(self, '{}'.format(name))
 
@@ -256,7 +255,6 @@ class Bioseq(Dataset):
                               datatags=None,
                               cache=False,
                               overwrite=False,
-                              channel_last=True,
                               random_state=None,
                               store_whole_genome=False):
         """Create a Bioseq class from a reference genome.
@@ -349,8 +347,7 @@ class Bioseq(Dataset):
                                          random_state=random_state)
 
         return cls(name, garray, gindexer,
-                   alphabet='ACGT',
-                   channel_last=channel_last)
+                   alphabet='ACGT')
 
     @classmethod
     def create_from_seq(cls, name,  # pylint: disable=too-many-locals
@@ -361,7 +358,6 @@ class Bioseq(Dataset):
                         fixedlen=None,
                         datatags=None,
                         cache=False,
-                        channel_last=True,
                         overwrite=False):
         """Create a Bioseq class from a biological sequences.
 
@@ -443,8 +439,7 @@ class Bioseq(Dataset):
                                          store_whole_genome=False)
 
         return cls(name, garray, gindexer,
-                   alphabet=seqs[0].seq.alphabet.letters,
-                   channel_last=channel_last)
+                   alphabet=seqs[0].seq.alphabet.letters)
 
     def __repr__(self):  # pragma: no cover
         return 'Bioseq("{}")'.format(self.name,)
@@ -538,8 +533,6 @@ class Bioseq(Dataset):
                              self.garray.order,
                              self._alphabetsize)
 
-            if not self._channel_last:
-                data = np.transpose(data, (0, 3, 1, 2))
             return data
 
         try:
@@ -551,9 +544,6 @@ class Bioseq(Dataset):
         data = as_onehot(self.iseq4idx(idxs), self.garray.order,
                          self._alphabetsize)
 
-        if not self._channel_last:
-            data = np.transpose(data, (0, 3, 1, 2))
-
         return data
 
     def __len__(self):
@@ -562,15 +552,10 @@ class Bioseq(Dataset):
     @property
     def shape(self):
         """Shape of the dataset"""
-        if self._channel_last:
-            return (len(self), self.gindexer.binsize +
-                    2*self.gindexer.flank - self.garray.order + 1, 1,
-                    pow(self._alphabetsize, self.garray.order))
 
-        return (len(self),
-                pow(self._alphabetsize, self.garray.order),
-                self.gindexer.binsize +
-                2*self.gindexer.flank - self.garray.order + 1, 1)
+        return (len(self), self.gindexer.binsize +
+                2*self.gindexer.flank - self.garray.order + 1, 1,
+                pow(self._alphabetsize, self.garray.order))
 
     @property
     def ndim(self):  # pragma: no cover

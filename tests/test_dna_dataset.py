@@ -31,28 +31,6 @@ def datalen(bed_file):
         binsizes += (reg.iv.end - reg.iv.start - binsize + stepsize)//stepsize
     return binsizes
 
-def test_dna_first_last_channel():
-
-    data_path = pkg_resources.resource_filename('janggu', 'resources/')
-    bed_merged = os.path.join(data_path, 'sample.gtf')
-    refgenome = os.path.join(data_path, 'sample_genome.fa')
-
-    data1 = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     roi=bed_merged,
-                                     storage='ndarray',
-                                     channel_last=True)
-    assert data1.shape == (2, 10000, 1, 4)
-    assert data1[0].shape == (1, 10000, 1, 4)
-
-    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
-                                     roi=bed_merged,
-                                     storage='ndarray',
-                                     channel_last=False)
-    assert data.shape == (2, 4, 10000, 1)
-    assert data[0].shape == (1, 4, 10000, 1)
-
-    np.testing.assert_equal(data1[0], np.transpose(data[0], (0, 2, 3, 1)))
-
 
 def test_dna_loading_from_seqrecord(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
