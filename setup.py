@@ -60,7 +60,8 @@ setup(
         'Topic :: Utilities',
     ],
     keywords=[
-        'genomics', 'deep learning', 'keras',
+        'genomics', 'epigenomics', 'bioinformatics',
+        'deep learning', 'machine learning'
     ],
     install_requires=[
         'numpy',
