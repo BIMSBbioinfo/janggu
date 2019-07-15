@@ -16,11 +16,11 @@ Janggu - Deep learning for Genomics
     :alt: Coverage Status
     :target: https://codecov.io/github/BIMSBbioinfo/janggu
 
-.. image:: https://img.shields.io/pypi/v/janggu.svg
+.. image:: https://badge.fury.io/py/janggu.svg
     :alt: PyPI Package latest release
-    :target: https://pypi.org/project/janggu
+    :target: https://badge.fury.io/py/janggu
 
-.. image:: https://img.shields.io/pypi/l/janggu.svg
+.. image:: https://img.shields.io/pypi/l/janggu.svg?color=green
     :alt: License
     :target: https://pypi.org/project/janggu
 
