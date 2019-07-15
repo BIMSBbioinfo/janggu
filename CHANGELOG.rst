@@ -2,6 +2,18 @@
 Changelog
 =========
 
+0.9.4 (2019-07-15)
+------------------
+
+- Added SqueezeDim wrapper for compatibility with sklearn
+- Added Transpose wrapper, replaces channel_last option of the datasets
+- Loading paired-end bam-files with pairedend='5pend' option counts both ends now.
+- resolution option added to create_from_array
+- Relaxed restriction for sequence feature order
+- Cover access via interval now returns nucleotide-resolution data regardless of the store_whole_genome option to ensure consistency.
+- Refactoring
+
+
 0.9.3 (2019-07-08)
 ------------------
 
