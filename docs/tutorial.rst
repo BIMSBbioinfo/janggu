@@ -25,6 +25,7 @@ a number of jupyter notebooks that illustrate for example with keras or
 sklearn:
 
 .. _notebook_tutorials:
+
 +--------------------------------+
 | Example notebooks              |
 +================================+
@@ -560,7 +561,7 @@ It offers the following features:
 2. Built-in logging functionality
 3. Automatic evaluation through the attachment of Scorer callbacks
 
-A list of examples can be found in the Table :ref:`notebook_tutorials` at the beginning.
+A list of examples can be found in the :ref:`Table <notebook_tutorials>` at the beginning.
 
 .. sidebar:: Datasets are named
 

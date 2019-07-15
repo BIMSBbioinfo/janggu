@@ -18,7 +18,7 @@ Janggu - Deep learning for Genomics
 
 .. image:: https://badge.fury.io/py/janggu.svg
     :alt: PyPI Package latest release
-    :target: https://badge.fury.io/py/janggu
+    :target: https://pypi.org/project/janggu
 
 .. image:: https://img.shields.io/pypi/l/janggu.svg?color=green
     :alt: License

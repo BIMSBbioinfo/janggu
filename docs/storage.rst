@@ -358,7 +358,7 @@ Since underneath the actual dataset is just referenced rather than copied,
 the memory footprint won't increase. It just allows to read out different parts
 of the genome.
 
-An example is illustrated in the `jupyter notebook <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/bedfile_examples.ipynb>`_.
+An example is illustrated in the `using view notebook <https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_view.ipynb>`_.
 
 
 Randomized dataset
@@ -394,7 +394,7 @@ e.g. training need to be provided with the same :code:`random_state` value.
 Furthermore, the HDF5 file needs to be stored with :code:`store_whole_genome=False`,
 since data storage is not affected by the random_state when the entire genome
 is stored.
-An example is illustrated in the `jupyter notebook <https://github.com/BIMSBbioinfo/janggu/blob/master/src/examples/bedfile_examples.ipynb>`_.
+An example is illustrated in the `using hdf5 notebook <https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb>`_.
 
 ==============================
 Output directory configuration
