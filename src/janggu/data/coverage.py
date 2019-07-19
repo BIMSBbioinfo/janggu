@@ -652,11 +652,11 @@ class Cover(Dataset):
             parameters = [gsize.tostr(), min_mapq,
                           resolution, storage, dtype, stranded,
                           pairedend, zero_padding,
-                          store_whole_genome, version, random_state]
+                          store_whole_genome, version]
             if not store_whole_genome:
                 files += [roi]
                 parameters += [binsize, stepsize, flank,
-                               template_extension]
+                               template_extension, random_state]
             if storage == 'hdf5':
                 parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
@@ -860,10 +860,10 @@ class Cover(Dataset):
                           resolution, storage, dtype,
                           zero_padding,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome, nan_to_num, version, random_state]
+                          store_whole_genome, nan_to_num, version]
             if not store_whole_genome:
                 files += [roi]
-                parameters += [binsize, stepsize, flank]
+                parameters += [binsize, stepsize, flank, random_state]
             if storage == 'hdf5':
                 parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
@@ -1075,10 +1075,9 @@ class Cover(Dataset):
                           resolution, storage, dtype,
                           zero_padding, mode,
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
-                          store_whole_genome, version, minoverlap,
-                          random_state]
+                          store_whole_genome, version, minoverlap]
             # Because different binsizes may affect loading e.g. if a min overlap is required.
-            parameters += [binsize, stepsize, flank]
+            parameters += [binsize, stepsize, flank, random_state]
             if not store_whole_genome:
                 files += [roi]
             if storage == 'hdf5':

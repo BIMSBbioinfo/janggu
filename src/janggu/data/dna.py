@@ -226,7 +226,9 @@ class Bioseq(Dataset):
             files = seqs
             parameters = [gsize.tostr(),
                           storage, dtype, order,
-                          store_whole_genome, version, random_state]
+                          store_whole_genome, version]
+            if not store_whole_genome:
+                parameters += [random_state]
             cache_hash = create_sha256_cache(files, parameters)
         else:
             cache_hash = None
