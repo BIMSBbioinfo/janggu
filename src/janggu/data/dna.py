@@ -23,7 +23,7 @@ from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
 from janggu.utils import sequences_from_fasta
-from janggu.version import version
+from janggu.version import dataversion as version
 
 
 class GenomicSizeLazyLoader:

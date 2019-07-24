@@ -21,7 +21,7 @@ from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
-from janggu.version import version
+from janggu.version import dataversion as version
 
 
 def _condition_from_filename(files, conditions):
