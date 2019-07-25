@@ -271,8 +271,8 @@ class Bioseq(Dataset):
         refgenome : str or Bio.SeqRecord.SeqRecord
             Reference genome location pointing to a fasta file
             or a SeqRecord object from Biopython that contains the sequences.
-        roi : str or None
-            Bed-file defining the region of interest.
+        roi : str, list(Interval), BedTool, pandas.DataFrame or None
+            Region of interest over which to iterate.
             If set to None, the sequence will be
             fetched from the entire genome and a
             genomic indexer must be attached later.

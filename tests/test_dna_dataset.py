@@ -3,6 +3,7 @@ import os
 
 import matplotlib
 import numpy as np
+import pandas
 import pkg_resources
 import pytest
 from keras.layers import Input
@@ -43,7 +44,15 @@ def test_dna_loading_from_seqrecord(tmpdir):
     data = Bioseq.create_from_refgenome('train', refgenome=seqs,
                                      roi=bed_merged,
                                      storage='ndarray',
+                                     store_whole_genome=True,
                                      order=order)
+
+    np.testing.assert_equal(data[0], data[data.gindexer[0]])
+    chrom = data.gindexer[0].chrom
+    start = data.gindexer[0].start
+    end = data.gindexer[0].end
+    np.testing.assert_equal(data[0], data[(chrom, start, end)])
+    np.testing.assert_equal(data[0], data[chrom, start, end])
 
 
 def test_dna_genomic_interval_access(tmpdir):
@@ -75,6 +84,64 @@ def test_dna_genomic_interval_access(tmpdir):
     np.testing.assert_equal(data[0], data[(chrom, start, end)])
     np.testing.assert_equal(data[0], data[chrom, start, end])
 
+def test_dna_dims_order_1_from_subset_dataframe(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    order = 1
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.gtf')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    roi = pandas.read_csv(bed_merged,
+                          sep='\t', header=None, usecols=[0, 2, 3, 4, 5,  6], skiprows=2, 
+                          names=['chrom', 'name', 'start', 'end', 'score', 'strand'])
+    roi.start -= 1
+    print(roi)
+
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     roi=roi,
+                                     storage='ndarray',
+                                     store_whole_genome=True,
+                                     order=order)
+
+    np.testing.assert_equal(data[0], data[data.gindexer[0]])
+    assert len(data.garray.handle) == 2
+
+    # for order 1
+    assert len(data) == 2
+    assert data.shape == (2, 10000, 1, 4)
+    assert data[:].sum() == 20000
+
+    roi = BedTool(bed_merged)
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     roi=roi,
+                                     storage='ndarray',
+                                     store_whole_genome=True,
+                                     order=order)
+
+    np.testing.assert_equal(data[0], data[data.gindexer[0]])
+    assert len(data.garray.handle) == 2
+
+    # for order 1
+    assert len(data) == 2
+    assert data.shape == (2, 10000, 1, 4)
+    assert data[:].sum() == 20000
+
+    roi = [iv for iv in BedTool(bed_merged)]
+    data = Bioseq.create_from_refgenome('train', refgenome=refgenome,
+                                     roi=roi,
+                                     storage='ndarray',
+                                     store_whole_genome=True,
+                                     order=order)
+
+    np.testing.assert_equal(data[0], data[data.gindexer[0]])
+    assert len(data.garray.handle) == 2
+
+    # for order 1
+    assert len(data) == 2
+    assert data.shape == (2, 10000, 1, 4)
+    assert data[:].sum() == 20000
+
+
 def test_dna_dims_order_1_from_subset(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     order = 1
@@ -93,6 +160,7 @@ def test_dna_dims_order_1_from_subset(tmpdir):
     # for order 1
     assert len(data) == 2
     assert data.shape == (2, 10000, 1, 4)
+    assert data[:].sum() == 20000
 
 
 def test_dna_dims_order_1_from_subset(tmpdir):

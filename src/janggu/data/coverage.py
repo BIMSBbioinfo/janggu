@@ -487,8 +487,8 @@ class Cover(Dataset):
             Name of the dataset
         bamfiles : str or list
             bam-file or list of bam files.
-        roi : str or None
-            Bed-file defining the region of interest.
+        roi : str, list(Interval), BedTool, pandas.DataFrame or None
+            Region of interest over which to iterate.
             If set to None, the coverage will be
             fetched from the entire genome and a
             genomic indexer must be attached later.
@@ -704,8 +704,8 @@ class Cover(Dataset):
             Name of the dataset
         bigwigfiles : str or list
             bigwig-file or list of bigwig files.
-        roi : str or None
-            Bed-file defining the region of interest.
+        roi : str, list(Interval), BedTool, pandas.DataFrame or None
+            Region of interest over which to iterate.
             If set to None, the coverage will be
             fetched from the entire genome and a
             genomic indexer must be attached later.
@@ -911,8 +911,8 @@ class Cover(Dataset):
             Name of the dataset
         bedfiles : str or list
             bed-file or list of bed files.
-        roi : str or None
-            Bed-file defining the region of interest.
+        roi : str, list(Interval), BedTool, pandas.DataFrame or None
+            Region of interest over which to iterate.
             If set to None a genomesize must be supplied and
             a genomic indexer must be attached later.
         genomesize : dict or None

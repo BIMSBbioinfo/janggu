@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import pkg_resources
 import pytest
+import pandas as pd
 
 from janggu.data import GenomicIndexer
 
@@ -29,6 +30,28 @@ def test_gindexer_short_interval():
     gi = GenomicIndexer.create_from_file(os.path.join(data_path,
                                                  'sample_equalsize.bed'),
                                     binsize=210, stepsize=20, zero_padding=True)
+    assert len(gi) == 4
+
+
+def test_gindexer_short_interval_with_dataframe():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    df = pd.read_csv(os.path.join(data_path, 'sample_equalsize.bed'),
+                     sep='\t', header=None, names=['chrom', 'start', 'end'])
+
+    gi = GenomicIndexer.create_from_file(df,
+                                         binsize=200, stepsize=200)
+    assert len(gi) == 4
+    gi = GenomicIndexer.create_from_file(df,
+                                         binsize=180, stepsize=20)
+    assert len(gi) == 8
+    gi = GenomicIndexer.create_from_file(df,
+                                         binsize=210, stepsize=20,
+                                         zero_padding=False)
+    assert len(gi) == 0
+
+    gi = GenomicIndexer.create_from_file(df,
+                                         binsize=210, stepsize=20,
+                                         zero_padding=True)
     assert len(gi) == 4
 
 

@@ -12,6 +12,7 @@ from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from pybedtools import BedTool
+from pybedtools import Interval
 
 import matplotlib.pyplot as plt
 import pyBigWig
@@ -271,10 +272,31 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     return content.to_dict()['length']
 
 
-def _get_genomic_reader(filename):
+def _get_genomic_reader(inputregions):
     """regions from a BedTool
     """
-    regions_ = BedTool(filename)
+    if isinstance(inputregions, BedTool):
+        # already in the desired format
+        return inputregions
+
+    if isinstance(inputregions, pd.DataFrame):
+        if np.any([c not in inputregions.columns \
+                   for c in ['chrom', 'start', 'end']]):
+            raise ValueError("The dataframe must contain the columns"
+                             "'chrom', 'start' and 'end'")
+        if 'strand' not in inputregions.columns:
+            inputregions['strand'] = '.'
+
+        # transform the pandas dataframe to a list of intervals
+        inputregions = [Interval(str(row['chrom']),
+                                 int(row['start']),
+                                 int(row['end']),
+                                 strand=str(row['strand'])) for \
+                                 _, row in inputregions.iterrows()]
+
+    # at this point the inputregions are either a filename pointing to a
+    # bedfile or a list of intervals. Both of which are understood by BedTool.
+    regions_ = BedTool(inputregions)
 
     return regions_
 

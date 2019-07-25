@@ -8,6 +8,7 @@ import numpy as np
 import pandas
 import pkg_resources
 import pytest
+from pybedtools import BedTool
 
 from janggu.data import Bioseq
 from janggu.data import Cover
@@ -438,6 +439,96 @@ def test_bed_store_whole_genome_option():
     np.testing.assert_equal(cover2[:], np.ones(cover1.shape))
 
 
+def test_bed_store_whole_genome_option_dataframe(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+
+    # as pd.dataframe
+    roi = pandas.read_csv(bed_file,
+                          sep='\t', header=None, names=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+
+    print(roi.head())
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        roi=roi,
+        binsize=200, stepsize=200,
+        store_whole_genome=True,
+        cache=False,
+        storage='ndarray')
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bed_file,
+        roi=roi,
+        binsize=200, stepsize=200,
+        store_whole_genome=False,
+        cache=True,
+        storage='ndarray')
+
+    print(cover1.gindexer[0])
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    np.testing.assert_equal(cover1[:], np.ones(cover1.shape))
+
+    # as bedtool
+    roi = BedTool(bed_file)
+    print(roi)
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        roi=roi,
+        binsize=200, stepsize=200,
+        store_whole_genome=True,
+        storage='ndarray')
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bed_file,
+        roi=roi,
+        binsize=200, stepsize=200,
+        store_whole_genome=False,
+        cache=True,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    np.testing.assert_equal(cover1[:], np.ones(cover1.shape))
+
+    # as interval list
+    roi = [iv for iv in BedTool(bed_file)]
+    print(roi)
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bed_file,
+        roi=roi,
+        binsize=200, stepsize=200,
+        store_whole_genome=True,
+        storage='ndarray')
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bed_file,
+        roi=roi,
+        binsize=200, stepsize=200,
+        store_whole_genome=False,
+        cache=True,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    np.testing.assert_equal(cover1[:], np.ones(cover1.shape))
+
+
 def test_bigwig_store_whole_genome_option():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
     bed_file = os.path.join(data_path, "sample.bed")
@@ -473,6 +564,206 @@ def test_bigwig_store_whole_genome_option():
     np.testing.assert_equal(cover1[:], cover2[:])
     assert cover1[:].sum() == 1044.0
     assert cover3[:].sum() == 1044.0
+
+
+def test_bigwig_store_whole_genome_option_dataframe(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    # as dataframe
+    roi = pandas.read_csv(bed_file,
+                          sep='\t', header=None, names=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        cache=True,
+        storage='ndarray')
+    cover3 = Cover.create_from_bigwig(
+        'test3',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        nan_to_num=False,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 1044.0
+    assert cover3[:].sum() == 1044.0
+
+    # as bedtool
+    roi = BedTool(bed_file)
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        cache=True,
+        storage='ndarray')
+    cover3 = Cover.create_from_bigwig(
+        'test3',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        nan_to_num=False,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 1044.0
+    assert cover3[:].sum() == 1044.0
+
+    # as list of intervals
+    roi = [iv for iv in roi]
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        cache=True,
+        storage='ndarray')
+    cover3 = Cover.create_from_bigwig(
+        'test3',
+        bigwigfiles=bwfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        nan_to_num=False,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 1044.0
+    assert cover3[:].sum() == 1044.0
+
+
+
+def test_bam_store_whole_genome_option_dataframe(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "sample.bed")
+    bamfile_ = os.path.join(data_path, "sample.bam")
+
+    # as dataframe
+    roi = pandas.read_csv(bed_file,
+                          sep='\t', header=None, names=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        roi=roi,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bamfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        cache=True,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 2, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 29.
+
+    # as bedtool
+    roi = BedTool(bed_file)
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        roi=roi,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bamfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        cache=True,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 2, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 29.
+
+    # as list of intervals
+    roi = [iv for iv in roi]
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bamfile_,
+        roi=roi,
+        store_whole_genome=True,
+        binsize=200, stepsize=200,
+        storage='ndarray')
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bamfile_,
+        roi=roi,
+        store_whole_genome=False,
+        binsize=200, stepsize=200,
+        cache=True,
+        storage='ndarray')
+
+    assert len(cover1) == 100
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (100, 200, 2, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+    assert cover1[:].sum() == 29.
 
 
 def test_bam_store_whole_genome_option():
