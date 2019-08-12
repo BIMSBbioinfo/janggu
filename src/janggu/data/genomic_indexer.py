@@ -443,12 +443,19 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 def check_gindexer_compatibility(gindexer, resolution, store_whole_genome):
     if resolution is not None and resolution > 1 and store_whole_genome:
         # check resolution compatible
+        if gindexer is not None and (gindexer.binsize % resolution) > 0:
+            raise ValueError(
+                   'binsize must be an integer-multipe of resolution. '
+                   'Got binsize={} and resolution={}'.format(gindexer.binsize, resolution))
+
         for iv_ in gindexer or []:
-            if (iv_.start % resolution) > 0 or (iv_.end % resolution) > 0:
+            if (iv_.start % resolution) > 0:
+                
                 raise ValueError(
-                    'Please prepare all ROI starts and ends to be '
-                    'divisible by resolution={} to '.format(resolution) + \
-                    'avoid undesired rounding effects.'
+                    'Please ensure that all interval starts line up '
+                    'with the resolution-sized bins. '
+                    'Interval ({}:{}-{}) not compatible with resolution {}. '.format(
+                        iv_.chrom, iv_.start, iv_.end, resolution) +\
                     'Consider using '
                     '"janggu-trim <input_roi> <trun_output> -divisible_by {resolution}"'
                     .format(resolution=resolution))

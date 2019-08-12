@@ -195,42 +195,10 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             # it will be reshaped to a 2D array where the collapse operation is performed
 
             # along the second dimension.
-            if self.collapser is not None:
-                if self.resolution is None and value.shape[0] == 1 or \
-                    self.resolution is not None and \
-                    value.shape[0] == interval.length//self.resolution:
-                    # collapsing becomes obsolete, because the data has already
-                    # the expected shape (after collapsing)
-                    pass
-                else:
-                    # if value.shape[0] is already of the right shape
-                    if self.resolution is None:
-                        # collapse along the entire interval
-                        value = value.reshape((1,) + value.shape)
-                    else:
-                        # collapse in bins of size resolution
-                        value = value.reshape((value.shape[0]//min(self.resolution,
-                                               value.shape[0]),
-                                               min(self.resolution, value.shape[0]),) + \
-                                              value.shape[1:])
-
-                    value = self.collapser(value)
+            value = self._do_collapse(interval, value)
 
             try:
-                if not self._full_genome_stored:
-                    idx = self.region2index[_iv_to_str(chrom, interval.start,
-                                                       interval.end)]
-
-                    # correcting for the overshooting starts and ends is not necessary
-                    # for partially loaded data
-                    self.handle['data'][idx, :length, :, condition] = value
-
-                else:
-                    ref_start, ref_end, array_start, \
-                        array_end = self._get_indices(interval, value.shape[0])
-
-                    self.handle[chrom][ref_start:ref_end, :, condition] = \
-                                       value[array_start:array_end]
+                self._setitem(interval, condition, length, value)
 
             except KeyError:
                 # we end up here if the peak regions are not a subset of
@@ -246,6 +214,49 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         else:
             raise IndexError("Index must be a Interval and a condition index")
 
+    def _setitem(self, interval, condition, length, value):
+        if not self._full_genome_stored:
+            idx = self.region2index[_iv_to_str(interval.chrom, interval.start,
+                                               interval.end)]
+
+            # correcting for the overshooting starts and ends is not necessary
+            # for partially loaded data
+            self.handle['data'][idx, :length, :, condition] = value
+
+        else:
+            ref_start, ref_end, array_start, \
+                array_end = self._get_indices(interval, value.shape[0])
+            self.handle[interval.chrom][ref_start:ref_end, :, condition] = \
+                               value[array_start:array_end]
+
+    def _do_collapse(self, interval, value):
+        if self.collapser is not None:
+
+            if self.resolution is None and value.shape[0] == 1 or \
+                self.resolution is not None and \
+                value.shape[0] == interval.length//self.resolution:
+                # collapsing becomes obsolete, because the data has already
+                # the expected shape (after collapsing)
+                pass
+            else:
+                if self.resolution is None:
+                    # collapse along the entire interval
+                    value = value.reshape((1,) + value.shape)
+                else:
+                    # if the array shape[0] is a multipe of resolution,
+                    # it can simply be reshaped. otherwise,
+                    # it needs to be resized before.
+                    if value.shape[0] % self.resolution > 0:
+                        value = np.resize(value, (int(np.ceil(value.shape[0]/float(self.resolution))*self.resolution),) +
+                                      value.shape[1:])
+                    # collapse in bins of size resolution
+                    value = value.reshape((value.shape[0]//min(self.resolution,
+                                           value.shape[0]),
+                                           min(self.resolution, value.shape[0]),) + \
+                                          value.shape[1:])
+
+                value = self.collapser(value)
+        return value
 
     def __getitem__(self, index):
         # for now lets ignore everything except for chrom, start and end.
@@ -266,6 +277,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                                      (length, 2 if self.stranded else 1,
                                       len(self.condition)))
 
+            if chrom not in self.handle:
+                return np.ones((length, 2 if self.stranded else 1,
+                                len(self.condition)),
+                               dtype=self.typecode) * self.padding_value
+
             if start >= 0 and end <= self.handle[chrom].shape[0]:
                 end = end - self.order + 1
                 # this is a short-cut, which does not require zero-padding
@@ -279,11 +295,11 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             if self.padding_value == 0.0:
                 data = np.zeros((length, 2 if self.stranded else 1,
                                  len(self.condition)),
-                                dtype=self.handle[chrom].dtype)
+                                dtype=self.typecode)
             else:
                 data = np.ones((length, 2 if self.stranded else 1,
                                 len(self.condition)),
-                               dtype=self.handle[chrom].dtype) * self.padding_value
+                               dtype=self.typecode) * self.padding_value
 
             ref_start, ref_end, array_start, array_end = self._get_indices(interval, data.shape[0])
 
@@ -806,89 +822,6 @@ class SparseGenomicArray(GenomicArray):
                        (2 if stranded else 1) * len(self.condition))).tocsr()
                            for name in names}
 
-
-    def __setitem__(self, index, value):
-        interval = index[0]
-        condition = index[1]
-        if isinstance(condition, slice) and value.ndim != 3:
-            raise ValueError('Expected 3D array with condition slice.')
-        if isinstance(condition, slice):
-            condition = slice(None, value.shape[-1], None)
-
-        if self.stranded and value.shape[1] != 2:
-            raise ValueError('If genomic array is in stranded mode, shape[-1] == 2 is expected')
-
-        if not self.stranded and value.shape[1] != 1:
-            value = value.sum(axis=1, keepdims=True)
-
-        if isinstance(interval, Interval) and isinstance(condition, (int, slice)):
-            chrom = interval.chrom
-            start = self.get_iv_start(interval.start)
-            end = self.get_iv_end(interval.end)
-
-            # value should be a 2 dimensional array
-            # it will be reshaped to a 2D array where the collapse operation is performed
-            # along the second dimension.
-            if self.collapser is not None:
-                if self.resolution is None and value.shape[0] == 1 or \
-                    self.resolution is not None and \
-                    value.shape[0] == interval.length//self.resolution:
-                    # collapsing becomes obsolete, because the data has already
-                    # the expected shape (after collapsing)
-                    pass
-                else:
-                    if self.resolution is None:
-                        # collapse along the entire interval
-                        value = value.reshape((1,) + value.shape)
-                    else:
-                        # collapse in bins of size resolution
-                        value = value.reshape((value.shape[0]//min(self.resolution,
-                                               value.shape[0]),
-                                               min(self.resolution, value.shape[0]),) + \
-                                              value.shape[1:])
-
-                    value = self.collapser(value)
-
-
-            try:
-                if not self._full_genome_stored:
-                    regidx = self.region2index[_iv_to_str(chrom, interval.start, interval.end)]
-                    nconditions = len(self.condition)
-                    ncondstrand = len(self.condition) * value.shape[-1]
-                    end = end - self.order + 1
-                    idxs = np.where(value > 0)
-                    for idx in zip(*idxs):
-                        basepos = idx[0] * ncondstrand
-                        strand = idx[1] * nconditions
-                        cond = condition if isinstance(condition, int) else idx[2]
-                        self.handle['data'][regidx,
-                                            basepos + strand + cond] = value[idx]
-                else:
-                    ref_start, ref_end, array_start, \
-                        array_end = self._get_indices(interval, value.shape[0])
-                    idxs = np.where(value > 0)
-                    iarray = np.arange(ref_start, ref_end)
-                    for idx in zip(*idxs):
-                        cond = condition if isinstance(condition, int) else idx[2]
-                        self.handle[chrom][iarray[idx[0]],
-                                           idx[1] * len(self.condition)
-                                           + cond] = value[idx[0] + array_start][idx[1:]]
-
-            except KeyError:
-                # we end up here if the peak regions are not a subset of
-                # the regions of interest. that might be the case if
-                # peaks from the holdout proportion of the genome are tried
-                # to be added.
-                # unfortunately, it is also possible that store_whole_genome=False
-                # and the peaks and regions of interest are just not synchronized
-                # in which case nothing (or too few peaks) are added. in the latter
-                # case an error would help actually, but I am not sure how to
-                # check if the first or the second is the case here.
-
-                pass
-            return
-        raise IndexError("Index must be a Interval and a condition index")
-
     def _reshape(self, data, shape):
         # what to do with zero padding
         data = data.toarray()
@@ -898,6 +831,29 @@ class SparseGenomicArray(GenomicArray):
         else:
             return data.reshape(data.shape[1]//(shape[-2]*shape[-1]), shape[-2], shape[-1])
 
+    def _setitem(self, interval, condition, length, value):
+        if not self._full_genome_stored:
+            regidx = self.region2index[_iv_to_str(interval.chrom, interval.start, interval.end)]
+            nconditions = len(self.condition)
+            ncondstrand = len(self.condition) * value.shape[-1]
+            #end = end - self.order + 1
+            idxs = np.where(value > 0)
+            for idx in zip(*idxs):
+                basepos = idx[0] * ncondstrand
+                strand = idx[1] * nconditions
+                cond = condition if isinstance(condition, int) else idx[2]
+                self.handle['data'][regidx,
+                                    basepos + strand + cond] = value[idx]
+        else:
+            ref_start, ref_end, array_start, \
+                array_end = self._get_indices(interval, value.shape[0])
+            idxs = np.where(value > 0)
+            iarray = np.arange(ref_start, ref_end)
+            for idx in zip(*idxs):
+                cond = condition if isinstance(condition, int) else idx[2]
+                self.handle[interval.chrom][iarray[idx[0]],
+                                   idx[1] * len(self.condition)
+                                   + cond] = value[idx[0] + array_start][idx[1:]]
 
 class PercentileTrimming(object):
     """Percentile trimming normalization.

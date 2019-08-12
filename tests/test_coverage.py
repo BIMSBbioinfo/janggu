@@ -52,6 +52,171 @@ def test_channel_last_first():
     np.testing.assert_equal(cover1[0], np.transpose(cover[0], (0, 3, 2, 1)))
 
 
+def test_cover_roi_binsize_padding(tmpdir):
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample_equalsize.bed')
+    print(pandas.read_csv(bed_file,
+                          sep='\t', header=None,
+                          names=['chrom', 'start', 'end',
+                                 'name', 'score', 'strand']))
+
+    roi_file = os.path.join(data_path, "sample.bed")
+    roi = pandas.read_csv(roi_file,
+                          sep='\t', header=None,
+                          names=['chrom', 'start', 'end',
+                                 'name', 'score', 'strand'])
+
+    roi.end.iloc[0] += 12
+    roi.end.iloc[1] += 111
+    print(roi)
+
+    with pytest.raises(ValueError):
+        # error due to binsize not being a multiple of resolution
+        Cover.create_from_bed('test',
+                              bedfiles=bed_file,
+                              roi=roi, binsize=30,
+                              stepsize=30,
+                              store_whole_genome=True,
+                              cache=False, resolution=7)
+
+    with pytest.raises(ValueError):
+        # interval starts must align with resolution intervals
+        rroi = roi.copy()
+        rroi.start += 1
+        Cover.create_from_bed('test',
+                              bedfiles=bed_file,
+                              roi=rroi, binsize=30,
+                              stepsize=30,
+                              store_whole_genome=True,
+                              cache=False, resolution=30)
+
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cov = Cover.create_from_bed('test',
+                                    bedfiles=bed_file,
+                                    roi=roi, binsize=300,
+                                    stepsize=300,
+                                    store_whole_genome=swg,
+                                    storage=store,
+                                    cache=False, resolution=10)
+        assert len(cov) == 68
+        assert cov.shape == (68, 30, 1, 1)
+        [c for c in cov]
+
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cov = Cover.create_from_bed('test',
+                                    bedfiles=bed_file,
+                                    roi=roi, binsize=300,
+                                    stepsize=300,
+                                    store_whole_genome=swg,
+                                    cache=False, resolution=3)
+        assert len(cov) == 68
+        assert cov.shape == (68, 100, 1, 1)
+        [c for c in cov]
+
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cov = Cover.create_from_bed('test',
+                                    bedfiles=bed_file,
+                                    roi=roi, binsize=300,
+                                    stepsize=300,
+                                    store_whole_genome=swg,
+                                    storage=store,
+                                    cache=False, resolution=3)
+        assert len(cov) == 68
+        assert cov.shape == (68, 100, 1, 1)
+        [c for c in cov]
+
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cov = Cover.create_from_bed('test',
+                                    bedfiles=bed_file,
+                                    roi=roi, binsize=300,
+                                    stepsize=300,
+                                    store_whole_genome=swg,
+                                    storage=store,
+                                    cache=False, resolution=3)
+        assert len(cov) == 68
+        assert cov.shape == (68, 100, 1, 1)
+        [c for c in cov]
+
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cov = Cover.create_from_bed('test',
+                                    bedfiles=bed_file,
+                                    roi=roi, binsize=300,
+                                    stepsize=300,
+                                    store_whole_genome=swg,
+                                    storage=store,
+                                    cache=False, resolution=100)
+        assert len(cov) == 68
+        assert cov.shape == (68, 3, 1, 1)
+        [c for c in cov]
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cov = Cover.create_from_bed('test',
+                                    bedfiles=bed_file,
+                                    roi=roi, binsize=300,
+                                    stepsize=300,
+                                    store_whole_genome=swg,
+                                    cache=False, resolution=100,
+                                    storage=store,
+                                    zero_padding=False)
+        assert len(cov) == 66
+        assert cov.shape == (66, 3, 1, 1)
+        [c for c in cov]
+
+    bwfile_ = os.path.join(data_path, "sample.bw")
+
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cover = Cover.create_from_bigwig(
+            'test',
+            bigwigfiles=bwfile_,
+            resolution=100,
+            binsize=300,
+            roi=roi,
+            storage=store,
+            store_whole_genome=swg)
+        assert len(cover) == 68
+        assert cover.shape == (68, 3, 1, 1)
+        [c for c in cover]
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cover = Cover.create_from_bigwig(
+            'test',
+            bigwigfiles=bwfile_,
+            resolution=100,
+            binsize=300,
+            roi=roi, zero_padding=False,
+            storage=store,
+            store_whole_genome=swg)
+        assert len(cover) == 66
+        assert cover.shape == (66, 3, 1, 1)
+        [c for c in cover]
+
+    bamfile_ = os.path.join(data_path, "sample.bam")
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cover = Cover.create_from_bam(
+            'test',
+            bamfile_,
+            resolution=100,
+            binsize=300,
+            roi=roi,
+            stranded=False,
+            storage=store,
+            store_whole_genome=swg)
+        assert len(cover) == 68
+        assert cover.shape == (68, 3, 1, 1)
+        [c for c in cover]
+    for swg, store in product([True, False], ['ndarray', 'sparse']):
+        cover = Cover.create_from_bam(
+            'test',
+            bamfile_,
+            resolution=100,
+            binsize=300,
+            roi=roi, zero_padding=False,
+            stranded=False,
+            storage=store,
+            store_whole_genome=swg)
+        assert len(cover) == 66
+        assert cover.shape == (66, 3, 1, 1)
+        [c for c in cover]
+
 def test_cover_export_bigwig(tmpdir):
     path = tmpdir.strpath
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -446,7 +611,9 @@ def test_bed_store_whole_genome_option_dataframe(tmpdir):
 
     # as pd.dataframe
     roi = pandas.read_csv(bed_file,
-                          sep='\t', header=None, names=['chrom', 'start', 'end', 'name', 'score', 'strand'])
+                          sep='\t', header=None,
+                          names=['chrom', 'start', 'end',
+                                 'name', 'score', 'strand'])
 
     print(roi.head())
     cover1 = Cover.create_from_bed(
