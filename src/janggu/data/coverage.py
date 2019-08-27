@@ -152,21 +152,16 @@ class BamLoader:
         bar = Bar('Loading bam files'.format(len(files)), max=len(files))
         for i, sample_file in enumerate(files):
             aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
-            for interval in gsize:
 
-                if resolution is None:
-                    length = interval.length
-                else:
-                    length = garray.get_iv_end(interval.end -
-                                               interval.start) * resolution
+            unique_chroms = list(set(gsize.chrs))
+            for process_chrom in unique_chroms:
+                print('processing chrom {} ..'.format(process_chrom))
+                tmp_gsize = gsize.filter_by_region(include=process_chrom)
+                length = aln_file.header.get_reference_length(process_chrom)
 
                 array = np.zeros((length, 2), dtype=dtype)
 
-                start = interval.start
-
-                for aln in aln_file.fetch(str(interval.chrom),
-                                          int(interval.start - template_extension),
-                                          int(interval.end + template_extension)):
+                for aln in aln_file.fetch(str(process_chrom)):
 
                     if aln.is_unmapped:
                         continue
@@ -217,7 +212,7 @@ class BamLoader:
                     if not garray._full_genome_stored:
                         # if we get here, a region was given,
                         # otherwise, the entire chromosome is read.
-                        pos -= start + template_extension
+                        #pos -= start + template_extension
 
                         if pos < 0 or pos >= length:
                             # if the read 5 p end or mid point is outside
@@ -230,7 +225,8 @@ class BamLoader:
                     else:
                         array[pos, 0] += 1
 
-                garray[interval, i] = array
+                for interval in tmp_gsize:
+                    garray[interval, i] = array[interval.start:interval.end,:]
             bar.next()
         bar.finish()
         return garray
@@ -268,25 +264,23 @@ class BigWigLoader:
         for i, sample_file in enumerate(files):
             bwfile = pyBigWig.open(sample_file)
 
-            for interval in gsize:
-
-                if resolution is None:
-                    length = interval.length
-                else:
-                    length = garray.get_iv_end(interval.end -
-                                               interval.start) * resolution
+            unique_chroms = list(set(gsize.chrs))
+            for process_chrom in unique_chroms:
+                tmp_gsize = gsize.filter_by_region(include=process_chrom)
+                length = max(tmp_gsize.ends)
 
                 array = np.zeros((length, 1), dtype=dtype)
 
-                values = np.asarray(bwfile.values(str(interval.chrom),
-                                                  int(interval.start),
-                                                  int(interval.end)))
+                values = np.asarray(bwfile.values(str(process_chrom),
+                                                  int(0),
+                                                  int(length)))
                 if nan_to_num:
                     values = np.nan_to_num(values, copy=False)
 
                 array[:len(values), 0] = values
 
-                garray[interval, i] = array
+                for interval in tmp_gsize:
+                    garray[interval, i] = array[int(interval.start):int(interval.end),:]
             bar.next()
         bar.finish()
         return garray
