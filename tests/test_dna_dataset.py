@@ -9,6 +9,7 @@ import pytest
 from keras.layers import Input
 from keras.models import Model
 from pybedtools import BedTool
+from pybedtools import Interval
 
 from janggu.data import Bioseq
 from janggu.data import GenomicIndexer
@@ -92,7 +93,7 @@ def test_dna_dims_order_1_from_subset_dataframe(tmpdir):
     refgenome = os.path.join(data_path, 'sample_genome.fa')
 
     roi = pandas.read_csv(bed_merged,
-                          sep='\t', header=None, usecols=[0, 2, 3, 4, 5,  6], skiprows=2, 
+                          sep='\t', header=None, usecols=[0, 2, 3, 4, 5,  6], skiprows=2,
                           names=['chrom', 'name', 'start', 'end', 'score', 'strand'])
     roi.start -= 1
     print(roi)
@@ -785,6 +786,73 @@ def test_janggu_variant_streamer_order_1(tmpdir):
     print(alternative)
     np.testing.assert_equal(reference[0,1,0,:], np.array([0,0,0,1]))
     np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_1_revcomp(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                       storage='ndarray',
+                                       binsize=50,
+                                       store_whole_genome=True,
+                                       order=order)
+
+    annot = BedTool([Interval('chr2', 110, 130, '-')])
+
+    # even binsize
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1)
+    it_vcf = iter(vcf.flow())
+    next(it_vcf)
+    # C to T
+    #print(names, chroms, poss, ra, aa)
+    #print(reference)
+    #print(alternative)
+    #assert names[0] == 'refmismatch'
+    #np.testing.assert_equal(reference, alternative)
+    #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    next(it_vcf)
+    # C to T
+    #print(names, chroms, poss, ra, aa)
+    #print(reference)
+    #print(alternative)
+    #np.testing.assert_equal(reference[0,4,0,:], np.array([0,1,0,0]))
+    #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,0,0,1]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+#    np.testing.assert_equal(reference[0,4,0,:], np.array([0,0,0,1]))
+#    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    # even binsize
+    vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
+                          annotation=annot)
+    it_vcf = iter(vcf.flow())
+    next(it_vcf)
+    # C to T
+
+
+    next(it_vcf)
+    # C to T
+
+    names, chroms, poss, ra, aa, reference2, alternative2 = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference, reference2[:,::-1, :, ::-1])
+    np.testing.assert_equal(alternative, alternative2[:,::-1, :, ::-1])
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")

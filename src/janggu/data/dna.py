@@ -8,6 +8,7 @@ from itertools import product
 import Bio
 import numpy as np
 from progress.bar import Bar
+from pybedtools import BedTool
 from pybedtools import Interval
 from pysam import VariantFile
 
@@ -503,9 +504,11 @@ class Bioseq(Dataset):
         if interval.strand in ['.', '+']:
             return np.asarray(self.garray[interval][:, 0, 0])
 
-        return np.asarray([self._rcindex[val] if val >= 0 else val for val
-                           in self.garray[interval][:, 0, 0]])[::-1]
+        return self._revcomp(self.garray[interval][:, 0, 0])
 
+    def _revcomp(self, index_sequence):
+        return np.asarray([self._rcindex[val] if val >= 0 else val for val
+                           in index_sequence])[::-1]
 
     def __getitem__(self, idxs):
         if isinstance(idxs, tuple):
@@ -583,14 +586,23 @@ class VariantStreamer:
         Context region size must be compatible with the network architecture.
     batch_size : int
         Batch size for parsing the VCF file.
-    filter_region : None or str
-        BED file name. If None, all VCF file entries are considered.
+    annotation : bedfile or BedTool object or None
+        BedTool holding feature annotation e.g. gene annotation.
+        The annotation may be used to perform strand-specific variant effect
+        predictions. Each variant is intersected with the annotation
+        in order to derive the correct strandedness. If variants
+        do not overlap with an annotation features or annotation is missing,
+        always the forward strand is returned.
     """
-    def __init__(self, bioseq, variants, binsize, batch_size):
+    def __init__(self, bioseq, variants, binsize, batch_size, annotation=None):
         self.bioseq = bioseq
         self.variants = variants
         self.binsize = binsize
         self.batch_size = batch_size
+        if isinstance(annotation, str):
+            # convert a bedfile to a bedtool object
+            annotation = BedTool(annotation)
+        self.annotation = annotation
         self.logger = logging.getLogger('variantstreamer')
 
     def is_compatible(self, rec):
@@ -627,6 +639,11 @@ class VariantStreamer:
 
         vcf = VariantFile(self.variants).fetch()
 
+        if self.annotation is not None:
+            varbed = BedTool(self.variants)
+            n_vcf_fields  = len(varbed[0].fields)
+            vcf_strand_augment = iter(varbed.intersect(self.annotation, loj=True))
+
         try:
             while True:
                 # construct genomic region
@@ -640,7 +657,10 @@ class VariantStreamer:
 
                 while ibatch < self.batch_size:
                     rec = next(vcf)
-
+                    rec_strandedness = '+'
+                    if self.annotation is not None:
+                        rec_aug = next(vcf_strand_augment)
+                        rec_strandedness = '-' if '-' in rec_aug[n_vcf_fields:] else '+'
 
                     if not self.is_compatible(rec):
                         continue
@@ -657,14 +677,10 @@ class VariantStreamer:
                     rallele.append(rec.ref.upper())
                     aallele.append(rec.alts[0].upper())
 
+
                     iref = self.bioseq._getsingleitem(Interval(rec.chrom, start, end)).copy()
+                    ialt = iref.copy()
 
-                    ref = as_onehot(iref[None, :], self.bioseq.garray.order,
-                                    self.bioseq._alphabetsize)
-                    refs[ibatch] = ref
-                    #mutate the position with the variant
-
-                    # only support single nucleotide variants at the moment
                     for o in range(self.bioseq.garray.order):
 
                         irefbase = iref[self.binsize//2 + o - self.bioseq.garray.order +
@@ -685,13 +701,21 @@ class VariantStreamer:
                                            NMAP[rec.ref.upper()]) * \
                                           pow(self.bioseq._alphabetsize, o)
 
-                            iref[self.binsize//2 + o - self.bioseq.garray.order +
+                            ialt[self.binsize//2 + o - self.bioseq.garray.order +
                                  (0 if self.binsize%2 == 0 else 1)] += replacement
 
-                    alt = as_onehot(iref[None, :], self.bioseq.garray.order,
+                    if rec_strandedness == '-':
+                        ialt = self.bioseq._revcomp(ialt)
+                        iref = self.bioseq._revcomp(iref)
+
+                    alt = as_onehot(ialt[None, :], self.bioseq.garray.order,
                                     self.bioseq._alphabetsize)
 
                     alts[ibatch] = alt
+
+                    ref = as_onehot(iref[None, :], self.bioseq.garray.order,
+                                    self.bioseq._alphabetsize)
+                    refs[ibatch] = ref
 
                     ibatch += 1
                 yield names, chroms, poss, rallele, aallele, refs, alts

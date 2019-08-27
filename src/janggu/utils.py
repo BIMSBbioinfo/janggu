@@ -179,6 +179,8 @@ def as_onehot(iseq, order, alphabetsize):
     order: int
         Order of the sequence representation. Used for higher-order
         motif modelling.
+    alphabetsize : int
+        Alphabetsize.
 
     Returns
     -------

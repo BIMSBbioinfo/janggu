@@ -803,7 +803,8 @@ class Janggu(object):
                                conditions,
                                output_folder,
                                condition_filter=None,
-                               batch_size=None):
+                               batch_size=None,
+                               annotation=None):
         """Evaluates the performance.
 
         Parameters
@@ -824,6 +825,13 @@ class Janggu(object):
             If None, all output conditions will be returned.
         batch_size : int, None.
             Batch size. If None, a batch_size of 128 is used.
+        annotation : BedTool object or None
+            BedTool holding feature annotation e.g. gene annotation.
+            The annotation may be used to perform strand-specific variant effect
+            predictions. Each variant is intersected with the annotation
+            in order to derive the correct strandedness. If variants
+            do not overlap with an annotation features or for missing annotation,
+            the forward strand is used.
 
 
         Returns
@@ -876,7 +884,8 @@ class Janggu(object):
                              "number of network output units.")
 
         # get number of variants
-        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size)
+        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
+                                         annotation=annotation)
 
         nvariants = variantsstream.get_variant_count()
 
@@ -895,7 +904,6 @@ class Janggu(object):
                                           dtype='float16')
         logodds = h5file.create_dataset('logoddsscore', (nvariants, len(conditions)),
                                         dtype='float16')
-
 
         bar = Bar('Parsing {}: '.format(variants), max=int(np.ceil(nvariants/float(batch_size))))
 
