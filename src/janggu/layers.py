@@ -12,7 +12,7 @@ import tensorflow as tf  # pylint: disable=import-error
 from keras import backend as K
 from keras.engine.topology import Layer
 from keras.initializers import Constant
-from keras.layers import Wrapper
+from keras.layers.wrappers import Wrapper
 
 from janggu.utils import complement_permmatrix
 
