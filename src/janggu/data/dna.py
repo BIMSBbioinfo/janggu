@@ -45,7 +45,6 @@ class GenomicSizeLazyLoader:
         self.gsize_ = None
 
     def load_sequence(self):
-        print('loading from lazy loader')
         store_whole_genome = self.store_whole_genome
         gindexer = self.gindexer
 
@@ -117,11 +116,14 @@ class SeqLoader:
         fasta file name
     order : int
         Order of the one-hot representation.
+    verbose : boolean
+        Verbosity. Default: False
     """
-    def __init__(self, gsize, seqs, order):
+    def __init__(self, gsize, seqs, order, verbose=False):
         self.seqs = seqs
         self.order = order
         self.gsize = gsize
+        self.verbose = verbose
 
     def __call__(self, garray):
         if callable(self.gsize):
@@ -132,7 +134,7 @@ class SeqLoader:
             seqs = self.seqs
         order = self.order
 
-        bar = Bar('Loading sequences', max=len(gsize))
+        if self.verbose: bar = Bar('Loading sequences', max=len(gsize))
         for region, seq in zip(gsize, seqs):
 
             indarray = np.asarray(seq2ind(seq))
@@ -147,8 +149,8 @@ class SeqLoader:
                 indarray[indarray < np.iinfo('int8').min] = np.iinfo('int8').min
 
             garray[region, 0] = indarray.reshape(-1, 1)
-            bar.next()
-        bar.finish()
+            if self.verbose: bar.next()
+        if self.verbose: bar.finish()
 
 
 class Bioseq(Dataset):
@@ -195,7 +197,7 @@ class Bioseq(Dataset):
     def _make_genomic_array(name, gsize, seqs, order, storage,
                             cache=None, datatags=None,
                             overwrite=False, store_whole_genome=True,
-                            random_state=None):
+                            random_state=None, verbose=False):
 
         if overwrite:
             warnings.warn('overwrite=True is without effect '
@@ -217,7 +219,7 @@ class Bioseq(Dataset):
         dtype = 'int16' if order > 3 else 'int32'
 
         # Extract chromosome lengths
-        seqloader = SeqLoader(gsize, seqs, order)
+        seqloader = SeqLoader(gsize, seqs, order, verbose)
 
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
@@ -244,7 +246,8 @@ class Bioseq(Dataset):
                                       overwrite=overwrite,
                                       padding_value=NOLETTER,
                                       typecode=dtype,
-                                      loader=seqloader)
+                                      loader=seqloader,
+                                      verbose=verbose)
 
         return garray
 
@@ -258,7 +261,8 @@ class Bioseq(Dataset):
                               cache=False,
                               overwrite=False,
                               random_state=None,
-                              store_whole_genome=False):
+                              store_whole_genome=False,
+                              verbose=False):
         """Create a Bioseq class from a reference genome.
 
         This constructor loads nucleotide sequences from a reference genome.
@@ -322,6 +326,8 @@ class Bioseq(Dataset):
             (e.g. input and output datasets) use the same random_state
             value so that the datasets are synchronized.
             Default: None means that no randomization is used.
+        verbose : boolean
+            Verbosity. Default: False
         """
         # fill up int8 rep of DNA
         # load bioseq, region index, and within region index
@@ -346,7 +352,8 @@ class Bioseq(Dataset):
                                          cache=cache,
                                          overwrite=overwrite,
                                          store_whole_genome=store_whole_genome,
-                                         random_state=random_state)
+                                         random_state=random_state,
+                                         verbose=verbose)
 
         return cls(name, garray, gindexer,
                    alphabet='ACGT')
@@ -360,7 +367,8 @@ class Bioseq(Dataset):
                         fixedlen=None,
                         datatags=None,
                         cache=False,
-                        overwrite=False):
+                        overwrite=False,
+                        verbose=False):
         """Create a Bioseq class from a biological sequences.
 
         This constructor loads a set of nucleotide or amino acid sequences.
@@ -397,6 +405,8 @@ class Bioseq(Dataset):
             Indicates whether to cache the dataset. Default: False.
         overwrite : boolean
             Overwrite the cachefiles. Default: False.
+        verbose : boolean
+            Verbosity. Default: False
         """
         if storage not in ['ndarray', 'hdf5']:
             raise ValueError('Available storage options for Bioseq are: ndarray or hdf5')
@@ -438,7 +448,8 @@ class Bioseq(Dataset):
         garray = cls._make_genomic_array(name, gindexer, seqs, order, storage,
                                          cache=cache, datatags=datatags,
                                          overwrite=overwrite,
-                                         store_whole_genome=False)
+                                         store_whole_genome=False,
+                                         verbose=verbose)
 
         return cls(name, garray, gindexer,
                    alphabet=seqs[0].seq.alphabet.letters)

@@ -472,6 +472,8 @@ class HDF5GenomicArray(GenomicArray):
         Function to be called for loading the genomic array.
     collapser : None or callable
         Method to aggregate values along a given interval.
+    verbose : boolean
+        Verbosity. Default: False
     """
 
     def __init__(self, gsize,  # pylint: disable=too-many-locals
@@ -486,7 +488,8 @@ class HDF5GenomicArray(GenomicArray):
                  cache=None,
                  overwrite=False, loader=None,
                  normalizer=None,
-                 collapser=None):
+                 collapser=None,
+                 verbose=False):
         super(HDF5GenomicArray, self).__init__(stranded, conditions, typecode,
                                                resolution,
                                                order=order,
@@ -543,7 +546,7 @@ class HDF5GenomicArray(GenomicArray):
             for norm in normalizer or []:
                 get_normalizer(norm)(self)
             h5file.close()
-        print('reload {}'.format(cachefile))
+        if verbose: print('reload {}'.format(cachefile))
         h5file = h5py.File(cachefile, 'a', driver='stdio')
 
         self.handle = h5file
@@ -591,6 +594,8 @@ class NPGenomicArray(GenomicArray):
         Default: None.
     collapser : None or callable
         Method to aggregate values along a given interval.
+    verbose : boolean
+        Verbosity. Default: False
     """
 
     def __init__(self, gsize,  # pylint: disable=too-many-locals
@@ -604,7 +609,8 @@ class NPGenomicArray(GenomicArray):
                  store_whole_genome=True,
                  cache=None,
                  overwrite=False, loader=None,
-                 normalizer=None, collapser=None):
+                 normalizer=None, collapser=None,
+                 verbose=False):
 
         super(NPGenomicArray, self).__init__(stranded, conditions, typecode,
                                              resolution,
@@ -663,7 +669,7 @@ class NPGenomicArray(GenomicArray):
 
 
         if cachefile is not None:
-            print('reload {}'.format(cachefile))
+            if verbose: print('reload {}'.format(cachefile))
             data = np.load(cachefile)
             names = [x for x in data]
 
@@ -718,6 +724,8 @@ class SparseGenomicArray(GenomicArray):
         Default: None.
     collapser : None or callable
         Method to aggregate values along a given interval.
+    verbose : boolean
+        Verbosity. Default: False
     """
 
     def __init__(self, gsize,  # pylint: disable=too-many-locals
@@ -732,7 +740,8 @@ class SparseGenomicArray(GenomicArray):
                  padding_value=0.0,
                  overwrite=False,
                  loader=None,
-                 collapser=None):
+                 collapser=None,
+                 verbose=False):
         super(SparseGenomicArray, self).__init__(stranded, conditions,
                                                  typecode,
                                                  resolution,
@@ -797,7 +806,7 @@ class SparseGenomicArray(GenomicArray):
                 np.savez(cachefile, **storage)
 
         if cachefile is not None:
-            print('reload {}'.format(cachefile))
+            if verbose: print('reload {}'.format(cachefile))
             storage = np.load(cachefile)
 
         names = [name for name in storage if '__length__' not in name]
@@ -1079,7 +1088,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                          store_whole_genome=True,
                          datatags=None, cache=None, overwrite=False,
                          loader=None,
-                         normalizer=None, collapser=None):
+                         normalizer=None, collapser=None,
+                         verbose=False):
     """Factory function for creating a GenomicArray.
 
     This function creates a genomic array for a given storage mode.
@@ -1134,6 +1144,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
     collapser : str, callable or None
         Collapse method defines how the signal is aggregated for resolution>1 or resolution=None.
         For example, by summing the signal over a given interval.
+    verbose : boolean
+        Verbosity. Default: False
     """
 
     # check if collapser available
@@ -1161,7 +1173,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                 overwrite=overwrite,
                                 loader=loader,
                                 normalizer=normalizer,
-                                collapser=get_collapser(collapser))
+                                collapser=get_collapser(collapser),
+                                verbose=verbose)
     elif storage == 'ndarray':
         return NPGenomicArray(chroms, stranded=stranded,
                               conditions=conditions,
@@ -1175,7 +1188,8 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                               overwrite=overwrite,
                               loader=loader,
                               normalizer=normalizer,
-                              collapser=get_collapser(collapser))
+                              collapser=get_collapser(collapser),
+                              verbose=verbose)
     elif storage == 'sparse':
         return SparseGenomicArray(chroms, stranded=stranded,
                                   conditions=conditions,
@@ -1188,6 +1202,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
                                   padding_value=padding_value,
                                   overwrite=overwrite,
                                   loader=loader,
-                                  collapser=get_collapser(collapser))
+                                  collapser=get_collapser(collapser),
+                                  verbose=verbose)
 
     raise Exception("Storage type must be 'hdf5', 'ndarray' or 'sparse'")

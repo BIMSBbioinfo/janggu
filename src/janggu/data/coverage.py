@@ -54,7 +54,6 @@ class BedGenomicSizeLazyLoader:
 
     def load_gsize(self):
         """loads the gsize if first required."""
-        print('loading from bed lazy loader')
 
         if not self.store_whole_genome:
             if self.genomesize is not None:
@@ -131,14 +130,17 @@ class BamLoader:
         Minimum mapping quality to be considered.
     pairedend : str
         Paired-end mode 'midpoint' or '5prime'.
+    verbose : boolean
+        Default: False
     """
     def __init__(self, files, gsize, template_extension,
-                 min_mapq, pairedend):
+                 min_mapq, pairedend, verbose=False):
         self.files = files
         self.gsize = gsize
         self.template_extension = template_extension
         self.min_mapq = min_mapq
         self.pairedend = pairedend
+        self.verbose = verbose
 
     def __call__(self, garray):
         files = self.files
@@ -149,7 +151,7 @@ class BamLoader:
         min_mapq = self.min_mapq
         pairedend = self.pairedend
 
-        bar = Bar('Loading bam files'.format(len(files)), max=len(files))
+        if self.verbose: bar = Bar('Loading bam files'.format(len(files)), max=len(files))
         for i, sample_file in enumerate(files):
             aln_file = pysam.AlignmentFile(sample_file, 'rb')  # pylint: disable=no-member
 
@@ -226,8 +228,8 @@ class BamLoader:
 
                 for interval in tmp_gsize:
                     garray[interval, i] = array[interval.start:interval.end,:]
-            bar.next()
-        bar.finish()
+            if self.verbose: bar.next()
+        if self.verbose: bar.finish()
         return garray
 
 
@@ -246,11 +248,14 @@ class BigWigLoader:
         GenomicIndexer representing the genomic region that should be loaded.
     nan_to_num : bool
         Whether to convert NAN's to zeros or not. Default: True.
+    verbose : boolean
+        Default: False
     """
-    def __init__(self, files, gsize, nan_to_num):
+    def __init__(self, files, gsize, nan_to_num, verbose=False):
         self.files = files
         self.gsize = gsize
         self.nan_to_num = nan_to_num
+        self.verbose = verbose
 
     def __call__(self, garray):
         files = self.files
@@ -259,7 +264,7 @@ class BigWigLoader:
         dtype = garray.typecode
         nan_to_num = self.nan_to_num
 
-        bar = Bar('Loading bigwig files'.format(len(files)), max=len(files))
+        if self.verbose: bar = Bar('Loading bigwig files'.format(len(files)), max=len(files))
         for i, sample_file in enumerate(files):
             bwfile = pyBigWig.open(sample_file)
 
@@ -280,8 +285,8 @@ class BigWigLoader:
 
                 for interval in tmp_gsize:
                     garray[interval, i] = array[int(interval.start):int(interval.end),:]
-            bar.next()
-        bar.finish()
+            if self.verbose: bar.next()
+        if self.verbose: bar.finish()
         return garray
 
 
@@ -302,12 +307,15 @@ class BedLoader:
     minoverlap : float or None
         Minimum fraction of overlap of a given feature with a roi bin.
         Default: None (already a single base-pair overlap is considered)
+    verbose : boolean
+        Default: False
     """
-    def __init__(self, files, lazyloader, mode, minoverlap):
+    def __init__(self, files, lazyloader, mode, minoverlap, verbose=False):
         self.files = files
         self.lazyloader = lazyloader
         self.mode = mode
         self.minoverlap = minoverlap
+        self.verbose = verbose
 
     def __call__(self, garray):
         files = self.files
@@ -327,7 +335,7 @@ class BedLoader:
         roifile = BedTool(tmpfilename)
         nfields_a = len(roifile[0].fields)
 
-        bar = Bar('Loading bed files', max=len(files))
+        if self.verbose: bar = Bar('Loading bed files', max=len(files))
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
             if regions_[0].score == '.' and mode in ['score',
@@ -370,9 +378,9 @@ class BedLoader:
                     garray[region, score] = array
                 else:
                     garray[region, i] = array
-            bar.next()
+            if self.verbose: bar.next()
 
-        bar.finish()
+        if self.verbose: bar.finish()
         os.remove(tmpfilename)
         os.rmdir(tmpdir)
 
@@ -392,16 +400,19 @@ class ArrayLoader:
     gindexer : GenomicIndexer
         A GenomicIndexer that holds the corresponding genomic intervals
         for the predictions in the array.
+    verbose : boolean
+        Default: False
     """
-    def __init__(self, array, gindexer):
+    def __init__(self, array, gindexer, verbose=False):
         self.array = array
         self.gindexer = gindexer
+        self.verbose = verbose
 
     def __call__(self, garray):
         array = self.array
         gindexer = self.gindexer
 
-        bar = Bar('Loading from array', max=len(gindexer))
+        if self.verbose: bar = Bar('Loading from array', max=len(gindexer))
         for i, region in enumerate(gindexer):
             interval = region
             new_item = array[i]
@@ -409,8 +420,8 @@ class ArrayLoader:
                 garray[interval, :] = new_item[None, None, :]
             else:
                 garray[interval, :] = new_item[:]
-            bar.next()
-        bar.finish()
+            if self.verbose: bar.next()
+        if self.verbose: bar.finish()
 
         return garray
 
@@ -465,7 +476,8 @@ class Cover(Dataset):
                         normalizer=None,
                         zero_padding=True,
                         random_state=None,
-                        store_whole_genome=False):
+                        store_whole_genome=False,
+                        verbose=False):
         """Create a Cover class from a bam-file (or files).
 
         This constructor can be used to obtain coverage from BAM files.
@@ -584,6 +596,8 @@ class Cover(Dataset):
             Indicates whether the whole genome or only ROI
             should be loaded. If False, a bed-file with regions of interest
             must be specified. Default: False
+        verbose : boolean
+            Verbosity. Default: False
         """
 
         if overwrite:  # pragma: no cover
@@ -634,7 +648,7 @@ class Cover(Dataset):
             gsize = GenomicIndexer.create_from_genomesize(gsize)
 
         bamloader = BamLoader(bamfiles, gsize, template_extension,
-                              min_mapq, pairedend)
+                              min_mapq, pairedend, verbose)
 
         datatags = [name]
         normalizer = _to_list(normalizer)
@@ -667,7 +681,8 @@ class Cover(Dataset):
                                      resolution=resolution,
                                      loader=bamloader,
                                      normalizer=normalizer,
-                                     collapser='sum')
+                                     collapser='sum',
+                                     verbose=verbose)
 
         return cls(name, cover, gindexer)
 
@@ -688,7 +703,8 @@ class Cover(Dataset):
                            normalizer=None,
                            collapser=None,
                            random_state=None,
-                           nan_to_num=True):
+                           nan_to_num=True,
+                           verbose=False):
         """Create a Cover class from a bigwig-file (or files).
 
         Parameters
@@ -797,6 +813,8 @@ class Cover(Dataset):
             (e.g. input and output datasets) use the same random_state
             value so that the datasets are synchronized.
             Default: None means that no randomization is used.
+        verbose : boolean
+            Verbosity. Default: False
         """
 
         if overwrite:  # pragma: no cover
@@ -841,7 +859,7 @@ class Cover(Dataset):
 
         conditions = _condition_from_filename(bigwigfiles, conditions)
 
-        bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num)
+        bigwigloader = BigWigLoader(bigwigfiles, gsize, nan_to_num, verbose)
         datatags = [name]
 
         collapser_ = collapser if collapser is not None else 'mean'
@@ -873,7 +891,8 @@ class Cover(Dataset):
                                      typecode=dtype,
                                      loader=bigwigloader,
                                      collapser=collapser_,
-                                     normalizer=normalizer)
+                                     normalizer=normalizer,
+                                     verbose=verbose)
 
         return cls(name, cover, gindexer)
 
@@ -895,7 +914,8 @@ class Cover(Dataset):
                         collapser=None,
                         minoverlap=None,
                         random_state=None,
-                        datatags=None, cache=False):
+                        datatags=None, cache=False,
+                        verbose=False):
         """Create a Cover class from a bed-file (or files).
 
         Parameters
@@ -1005,6 +1025,8 @@ class Cover(Dataset):
             (e.g. input and output datasets) use the same random_state
             value so that the datasets are synchronized.
             Default: None means that no randomization is used.
+        verbose : boolean
+            Verbosity. Default: False
         """
 
         if overwrite:  # pragma: no cover
@@ -1054,7 +1076,7 @@ class Cover(Dataset):
                 conditions = [str(i) for i in range(int(max_class + 1))]
         conditions = _condition_from_filename(bedfiles, conditions)
 
-        bedloader = BedLoader(bedfiles, gsize, mode, minoverlap)
+        bedloader = BedLoader(bedfiles, gsize, mode, minoverlap, verbose)
 
         datatags = [name]
 
@@ -1089,7 +1111,8 @@ class Cover(Dataset):
                                      store_whole_genome=store_whole_genome,
                                      loader=bedloader,
                                      collapser=collapser_,
-                                     normalizer=normalizer)
+                                     normalizer=normalizer,
+                                     verbose=verbose)
 
         return cls(name, cover, gindexer)
 
@@ -1105,7 +1128,8 @@ class Cover(Dataset):
                           cache=False,
                           datatags=None,
                           padding_value=0.0,
-                          store_whole_genome=False):
+                          store_whole_genome=False,
+                          verbose=False):
         """Create a Cover class from a numpy.array.
 
         The purpose of this function is to convert output prediction from
@@ -1145,6 +1169,8 @@ class Cover(Dataset):
             should be loaded. Default: False.
         padding_value : float
             Padding value. Default: 0.
+        verbose : boolean
+            Verbosity. Default: False
         """
 
         if overwrite:  # pragma: no cover
@@ -1202,7 +1228,7 @@ class Cover(Dataset):
         # determine strandedness
         stranded = True if array.ndim == 3 and array.shape[2] == 2 else False
 
-        arrayloader = ArrayLoader(array, gindexer)
+        arrayloader = ArrayLoader(array, gindexer, verbose)
         # At the moment, we treat the information contained
         # in each bw-file as unstranded
 
@@ -1235,7 +1261,8 @@ class Cover(Dataset):
                                      store_whole_genome=store_whole_genome,
                                      loader=arrayloader,
                                      padding_value=padding_value,
-                                     collapser=_dummy_collapser)
+                                     collapser=_dummy_collapser,
+                                     verbose=verbose)
 
         return cls(name, cover, gindexer)
 
