@@ -141,7 +141,11 @@ class Janggu(object):
             name = hasher.hexdigest()
             print("Generated model-id: '{}'".format(name))
 
-        total_output = K.sum(self.kerasmodel.output, axis=-1)
+        if hasattr(outputs, '__len__') > 1:
+            total_output = K.sum([K.sum(o, axis=-1) for o in self.kerasmodel.output], axis=-1)
+        else:
+            total_output = K.sum(self.kerasmodel.output, axis=-1)
+
         grad = K.gradients(total_output, self.kerasmodel.input)
         kinp = self.kerasmodel.input
 
