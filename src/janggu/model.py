@@ -808,7 +808,8 @@ class Janggu(object):
                                output_folder,
                                condition_filter=None,
                                batch_size=None,
-                               annotation=None):
+                               annotation=None,
+                               ignore_reference_match=False):
         """Evaluates the performance.
 
         Parameters
@@ -836,6 +837,11 @@ class Janggu(object):
             in order to derive the correct strandedness. If variants
             do not overlap with an annotation features or for missing annotation,
             the forward strand is used.
+        ignore_reference_match : boolean
+            Whether to ignore mismatches between the reference sequence and
+            the reference base in the VCF file. If False, the variant will
+            be skipped over and only matching positions are processed.
+            Otherwise all variants will be processed. Default: False.
 
 
         Returns
@@ -889,7 +895,8 @@ class Janggu(object):
 
         # get number of variants
         variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
-                                         annotation=annotation)
+                                         annotation=annotation,
+                                         ignore_reference_match=ignore_reference_match)
 
         nvariants = variantsstream.get_variant_count()
 

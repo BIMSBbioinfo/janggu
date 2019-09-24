@@ -789,6 +789,52 @@ def test_janggu_variant_streamer_order_1(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_12_ignore_ref_match(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    for order in [1, 2]:
+
+        dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                           storage='ndarray',
+                                           binsize=50,
+                                           store_whole_genome=True,
+                                           order=order)
+    
+        # even binsize
+        vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
+                              ignore_reference_match=True)
+        it_vcf = iter(vcf.flow())
+        names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+        # C to T
+        print(names, chroms, poss, ra, aa)
+        print(reference)
+        print(alternative)
+
+        assert names[0] == 'refmismatch'
+        #np.testing.assert_equal(reference, alternative)
+        np.testing.assert_equal(np.abs(reference-alternative).sum(), 2*order)
+        #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+    
+        # odd binsize
+        vcf = VariantStreamer(dna, vcffile, binsize=3, batch_size=1,
+                              ignore_reference_match=True)
+        it_vcf = iter(vcf.flow())
+    
+        names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+        # C to T
+        print(names, chroms, poss, ra, aa)
+        print(reference)
+        print(alternative)
+        assert names[0] == 'refmismatch'
+        np.testing.assert_equal(np.abs(reference-alternative).sum(), 2*order)
+        #np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
+
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_variant_streamer_order_1_revcomp(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """

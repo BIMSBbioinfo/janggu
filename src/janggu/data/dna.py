@@ -604,12 +604,19 @@ class VariantStreamer:
         in order to derive the correct strandedness. If variants
         do not overlap with an annotation features or annotation is missing,
         always the forward strand is returned.
+    ignore_reference_match : boolean
+        Whether to ignore mismatches between the reference sequence and
+        the reference base in the VCF file. If False, the variant will
+        be skipped over and only matching positions are processed.
+        Otherwise all variants will be processed. Default: False.
     """
-    def __init__(self, bioseq, variants, binsize, batch_size, annotation=None):
+    def __init__(self, bioseq, variants, binsize, batch_size, annotation=None,
+                 ignore_reference_match=False):
         self.bioseq = bioseq
         self.variants = variants
         self.binsize = binsize
         self.batch_size = batch_size
+        self.ignore_reference_match = ignore_reference_match
         if isinstance(annotation, str):
             # convert a bedfile to a bedtool object
             annotation = BedTool(annotation)
@@ -621,7 +628,15 @@ class VariantStreamer:
 
         If the variant is not compatible the method returns False,
         otherwise True.
+        This function removes all non-single-variants, including
+        deletions and insertions.
         """
+
+        start, _ = self.get_interval(rec)
+        if start < 0:
+            # if the start is beyond the chromosome start, don't consider it
+            return False
+
         if rec.alts is None or len(rec.alts) != 1 or len(rec.alts[0]) != 1:
             return False
 
@@ -634,12 +649,14 @@ class VariantStreamer:
         """Obtains the number of admissible variants"""
         ncounts = 0
         for rec in VariantFile(self.variants).fetch():
-            start = rec.pos-self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
-            if start < 0:
-                continue
             if self.is_compatible(rec):
                 ncounts += 1
         return ncounts
+
+    def get_interval(self, rec):
+        start = rec.pos - self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
+        end = rec.pos + self.binsize//2
+        return start, end
 
     def flow(self):
         """Data flow generator."""
@@ -676,11 +693,7 @@ class VariantStreamer:
                     if not self.is_compatible(rec):
                         continue
 
-                    start = rec.pos-self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
-                    end = rec.pos+self.binsize//2
-
-                    if start < 0:
-                        continue
+                    start, end = self.get_interval(rec)
 
                     names.append(rec.id if rec.id is not None else '')
                     chroms.append(rec.chrom)
@@ -699,6 +712,24 @@ class VariantStreamer:
                         irefbase = irefbase // pow(self.bioseq._alphabetsize, o)
                         irefbase = irefbase % self.bioseq._alphabetsize
 
+                        if self.ignore_reference_match:
+                            # process the variant even if
+                            # it does not match with the reference base
+                            replacement = (NMAP[rec.ref.upper()] -
+                                           irefbase) * \
+                                           pow(self.bioseq._alphabetsize, o)
+
+                            iref[self.binsize//2 + o - self.bioseq.garray.order +
+                                 (0 if self.binsize%2 == 0 else 1)] += replacement
+
+                            replacement = (NMAP[rec.alts[0].upper()] -
+                                           irefbase) * \
+                                          pow(self.bioseq._alphabetsize, o)
+
+                            ialt[self.binsize//2 + o - self.bioseq.garray.order +
+                                 (0 if self.binsize%2 == 0 else 1)] += replacement
+                            continue
+
                         if NMAP[rec.ref.upper()] != irefbase:
                             self.logger.info('VCF reference and reference genome not compatible.'
                                              'Expected reference {}, but VCF indicates {}.'.format(
@@ -707,7 +738,8 @@ class VariantStreamer:
                                                  rec.chrom, rec.pos, rec.ref,
                                                  rec.alts[0], rec.id))
                         else:
-
+                            # at this point, it is ensured that the VCF reference
+                            # agrees with the reference genome.
                             replacement = (NMAP[rec.alts[0].upper()] -
                                            NMAP[rec.ref.upper()]) * \
                                           pow(self.bioseq._alphabetsize, o)
