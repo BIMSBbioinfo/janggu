@@ -18,8 +18,10 @@ from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
 from janggu.utils import NMAP
 from janggu.utils import NOLETTER
+from janggu.utils import _check_valid_files
 from janggu.utils import _complement_index
 from janggu.utils import _iv_to_str
+from janggu.utils import _to_list
 from janggu.utils import as_onehot
 from janggu.utils import seq2ind
 from janggu.utils import sequence_padding
@@ -412,11 +414,10 @@ class Bioseq(Dataset):
             raise ValueError('Available storage options for Bioseq are: ndarray or hdf5')
 
         seqs = []
-        if isinstance(fastafile, str):
-            fastafile = [fastafile]
+        fastafile = _to_list(fastafile)
 
         if not isinstance(fastafile[0], Bio.SeqRecord.SeqRecord):
-            for fasta in fastafile:
+            for fasta in _check_valid_files(fastafile):
                 # += is necessary since sequences_from_fasta
                 # returns a list
                 seqs += sequences_from_fasta(fasta, seqtype)

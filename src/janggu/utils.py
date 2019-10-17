@@ -93,6 +93,13 @@ def _to_list(objs):
     else:
         return objs
 
+def _check_valid_files(list_of_files):
+    if len(list_of_files) == 0:
+        raise ValueError("Empty list fo files.")
+    for f in list_of_files:
+        if not os.path.exists(f):
+            raise ValueError("File {} does not exist.".format(f))
+    return list_of_files
 
 NOLETTER = -100000000
 LETTERMAP = {k: i for i, k in enumerate(sorted(IUPAC.unambiguous_dna.letters))}

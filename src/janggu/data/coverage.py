@@ -18,6 +18,7 @@ from janggu.data.genomic_indexer import GenomicIndexer
 from janggu.data.genomic_indexer import check_gindexer_compatibility
 from janggu.data.genomicarray import create_genomic_array
 from janggu.data.genomicarray import create_sha256_cache
+from janggu.utils import _check_valid_files
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
@@ -624,7 +625,7 @@ class Cover(Dataset):
 
         check_gindexer_compatibility(gindexer, resolution, store_whole_genome)
 
-        bamfiles = _to_list(bamfiles)
+        bamfiles = _check_valid_files(_to_list(bamfiles))
 
         conditions = _condition_from_filename(bamfiles, conditions)
 
@@ -841,7 +842,7 @@ class Cover(Dataset):
 
         check_gindexer_compatibility(gindexer, resolution, store_whole_genome)
 
-        bigwigfiles = _to_list(bigwigfiles)
+        bigwigfiles = _check_valid_files(_to_list(bigwigfiles))
 
         if not store_whole_genome:
             # if whole genome should not be loaded
@@ -1054,7 +1055,7 @@ class Cover(Dataset):
 
         check_gindexer_compatibility(gindexer, resolution, store_whole_genome)
 
-        bedfiles = _to_list(bedfiles)
+        bedfiles = _check_valid_files(_to_list(bedfiles))
 
         gsize = BedGenomicSizeLazyLoader(bedfiles,
                                          store_whole_genome,

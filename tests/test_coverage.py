@@ -998,6 +998,24 @@ def test_cover_from_bam_sanity():
             storage='ndarray')
 
     with pytest.raises(Exception):
+        # bamfile does not exist
+        Cover.create_from_bam(
+            'test',
+            bamfiles="",
+            roi=bed_file,
+            binsize=1, stepsize=1,
+            flank=-1,
+            storage='ndarray')
+    with pytest.raises(Exception):
+        # bamfile does not exist
+        Cover.create_from_bam(
+            'test',
+            bamfiles=[],
+            roi=bed_file,
+            binsize=1, stepsize=1,
+            flank=-1,
+            storage='ndarray')
+    with pytest.raises(Exception):
         Cover.create_from_bam(
             'test',
             bamfiles=bamfile_,
