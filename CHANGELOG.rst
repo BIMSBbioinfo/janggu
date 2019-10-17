@@ -2,6 +2,19 @@
 Changelog
 =========
 
+0.9.5 (2019-10-17)
+------------------
+
+- Variant effect prediction: added annotation argument which enables strand-specific variant effect predictions using the strandedness of features in the annotation file.
+- Variant effect prediction: added ignore_reference_match argument which enables ignores mismatching nucleotides between the VCF reference base and the reference genome. By default, variant effects are only evaluated if the nucleotides agree in the reference genome and the VCF file.
+- Added file validity check
+- Added option to control verbosity 
+- Improved efficiency for reading BAM and BIGWIG files
+- Create a new cachefile with random_state only for not storing the whole genome
+- Relaxed constraint for using resolution > 1 with ROI intervals. Still the interval starts have to be divisible by the resolution. Otherwise, weird rounding errors might occur.
+- Fixed issue due to different numbers of network output layers.
+- Added seperate dataversion to better control when cache files need to be reloaded from scratch.
+
 0.9.4 (2019-07-15)
 ------------------
 
