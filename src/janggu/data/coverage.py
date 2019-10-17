@@ -1093,9 +1093,10 @@ class Cover(Dataset):
                           collapser.__name__ if hasattr(collapser, '__name__') else collapser,
                           store_whole_genome, version, minoverlap]
             # Because different binsizes may affect loading e.g. if a min overlap is required.
-            parameters += [binsize, stepsize, flank, random_state]
+            parameters += [binsize, stepsize, flank]
             if not store_whole_genome:
                 files += [roi]
+                parameters += [random_state]
             if storage == 'hdf5':
                 parameters += normalizer
             cache_hash = create_sha256_cache(files, parameters)
