@@ -22,6 +22,7 @@ from janggu.utils import _check_valid_files
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
+from janggu.utils import isbedgraph
 from janggu.version import dataversion as version
 
 
@@ -360,7 +361,11 @@ class BedLoader:
                 # if region score is not defined, take the mere
                 # presence of a range as positive label.
 
-                score = int(region.fields[nfields_a + 4]) if mode == 'score' else 1
+                if not isbedgraph(sample_file):
+                    score = int(region.fields[nfields_a + 4]) if mode == 'score' else 1
+                else:
+                    score = float(region.fields[-1])
+
                 array = np.repeat(np.dtype(dtype).type(score).reshape((1, 1)),
                                   region.length, axis=0)
 
