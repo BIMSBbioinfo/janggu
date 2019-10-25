@@ -581,21 +581,19 @@ class RandomShift(Dataset):
         if self.batchwise:
             s = np.random.randint(-self.shift, self.shift)
             if s < 0:
-                data_transform = np.roll(data, s, 1)
-                data_transform[:,s:,:,:] = 0.
-                data = data_transform
+                data[:,:s,:,:] = data[:,-s:,:,:]
+                data[:,s:,:,:] = 0.
             elif s > 0:
-                data_transform = np.roll(data, s, 1)
-                data_transform[:, :s, :, :] = 0.
-                data = data_transform
+                data[:,s:,:,:] = data[:,:-s,:,:]
+                data[:,:s,:,:] = 0.
         else:
             for i, _ in enumerate(data):
                 s = np.random.randint(-self.shift, self.shift)
                 if s < 0:
-                    data[i] = np.roll(data[i], s, 0)
+                    data[i,:s,:,:] = data[i,-s:,:,:]
                     data[i,s:,:,:] = 0.
                 elif s > 0:
-                    data[i] = np.roll(data[i], s, 0)
+                    data[i,s:,:,:] = data[i,:-s,:,:]
                     data[i,:s,:,:] = 0.
         return data
 
