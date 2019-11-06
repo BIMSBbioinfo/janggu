@@ -115,5 +115,7 @@ janggu package as follows
    cd janggu
    python ./src/examples/classify_fasta.py single
 
+A model is then trained to predict the class labels of two sets of toy sequences.
+The entire training process takes a few minutes on CPU backend.
 A range of additional examples can be found in './src/examples' including
 some jupyter notebooks.
