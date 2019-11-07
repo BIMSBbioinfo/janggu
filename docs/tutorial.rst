@@ -55,6 +55,13 @@ sklearn:
 .. _`variant effect prediction`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb
 .. _`plotting genome coverage`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/plot_coverage.ipynb
 
+Furthermore, use cases
+for predicting JunD binding, training and adapting published genomics models
+as well as a regression model example are demonstrated in
+the supplementary repository: `Janggu use cases`_
+
+
+.. _`Janggu use cases`: https://github.com/wkopp/janggu_usecases
 
 
 
