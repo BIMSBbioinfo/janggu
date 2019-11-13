@@ -338,8 +338,11 @@ class BedLoader:
         nfields_a = len(roifile[0].fields)
 
         if self.verbose: bar = Bar('Loading bed files', max=len(files))
+        gsize = self.lazyloader.gsize
+
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
+
             if regions_[0].score == '.' and mode in ['score',
                                                      'categorical']:
                 raise ValueError(
@@ -347,44 +350,60 @@ class BedLoader:
                     'present in {}'.format(sample_file) + \
                     'for mode="{}"'.format(mode))
 
-            nfields_b = len(regions_[0].fields)
+            # process each chromosome in turn
+            unique_chroms = list(set(gsize.chrs))
 
-            if self.minoverlap is not None:
-                overlapping_regions = roifile.intersect(regions_,
-                                                        wa=True, wb=True, f=self.minoverlap)
-            else:
-                overlapping_regions = roifile.intersect(regions_, wa=True, wb=True)
+            for process_chrom in unique_chroms:
 
-            for region in overlapping_regions:
-                #region = overlapping_regions[ireg]
+                tmp_gsize = gsize.filter_by_region(include=process_chrom)
+                length = max(tmp_gsize.ends)
 
-                # if region score is not defined, take the mere
-                # presence of a range as positive label.
+                array = np.zeros((length, 2), dtype=dtype)
 
-                if not isbedgraph(sample_file):
-                    score = int(region.fields[nfields_a + 4]) if mode == 'score' else 1
-                else:
-                    score = float(region.fields[-1])
+                overlapping_regions = regions_.intersect(BedTool(
+                    [Interval(process_chrom, 0, length)]), wa=True, u=True)
 
-                array = np.repeat(np.dtype(dtype).type(score).reshape((1, 1)),
-                                  region.length, axis=0)
+                # extract the signal/overlap for the current chromosome
+                for region in overlapping_regions:
+                    # if region score is not defined, take the mere
+                    # presence of a range as positive label.
 
-                actual_start = int(region.fields[nfields_a + 1])
-                actual_end = int(region.fields[nfields_a + 2])
-                if region.start < actual_start:
-                    # set the beginning of array to zero
-                    array[:(actual_start - region.start), 0] = 0
-                if region.end > actual_end:
-                    # set the end of the array to zero
-                    array[-(region.end - actual_end):, 0] = 0
+                    if not isbedgraph(sample_file):
+                        score = int(region.score) if mode == 'score' else 1
+                    else:
+                        score = float(region.fields[-1])
 
-                if mode == 'score':
-                    garray[region, i] = array
-                elif mode == 'categorical':
-                    garray[region, score] = array
-                else:
-                    garray[region, i] = array
-            if self.verbose: bar.next()
+                    # first dim, score value, second dim, mask
+                    array[region.start:region.end,0] = score
+                    array[region.start:region.end,1] = 1
+
+                # map the signal onto the region of interest
+                for roireg in roifile.intersect(BedTool([Interval(process_chrom, 0, length)]), wa=True, u=True):
+
+                    if roireg.end <= length:
+                        tmp_array = array[roireg.start:roireg.end]
+                    else:
+                        tmp_array = np.zeros((roireg.length, 2))
+                        tmp_array[:array[roireg.start:].shape[0]] = \
+                            array[roireg.start:]
+                    if self.minoverlap is not None:
+                        if tmp_array[:,:1].nonzero()[0].shape[0]/roireg.length < \
+                            self.minoverlap:
+                            # minimum overlap not achieved, skip
+                            continue
+
+                    if mode == 'score':
+                        garray[roireg, i] = tmp_array[:,:1]
+                    elif mode == 'categorical':
+                        tmp_cat = np.zeros((roireg.length, 1, int(tmp_array.max())+1), dtype=dtype)
+                        tmp_cat[np.arange(roireg.length), 0, tmp_array[:,0].astype('int')] = tmp_array[:,1]
+
+                        for r in range(tmp_cat.shape[-1]):
+                            garray[roireg, r] = tmp_cat[:,:,r]
+
+                    else:
+                        garray[roireg, i] = tmp_array[:,:1]
+                if self.verbose: bar.next()
 
         if self.verbose: bar.finish()
         os.remove(tmpfilename)

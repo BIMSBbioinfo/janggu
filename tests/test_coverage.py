@@ -1712,12 +1712,15 @@ def test_load_cover_bed_scored():
             binsize=200, stepsize=200,
             resolution=200,
             storage=store,
+            store_whole_genome=True,
             mode='score')
 
         np.testing.assert_equal(len(cover), 100)
         np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
         np.testing.assert_equal(cover[0].sum(), 0)
         np.testing.assert_equal(cover[4].sum(), 5)
+        np.testing.assert_equal(cover[50].sum(), 0)
+        np.testing.assert_equal(cover[54].sum(), 4)
 
         cover = Cover.create_from_bed(
             "cov50",
@@ -1765,6 +1768,7 @@ def test_load_cover_bed_categorical():
             mode='categorical')
 
     for store in ['ndarray', 'sparse']:
+        print(store)
         cover = Cover.create_from_bed(
             "cov",
             bedfiles=score_file,
@@ -1957,3 +1961,26 @@ def test_padding_value_nan():
                             np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan,
                                       0., np.nan,  0., np.nan,  0.,  0.,  0.,
                                       np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]))
+
+
+def test_bedgraph():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, "positive.bed")
+    bgfile_ = os.path.join(data_path, "positive.bedgraph")
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bgfile_,
+        roi=bed_file,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bgfile_,
+        roi=bed_file,
+        store_whole_genome=False)
+
+    assert len(cover1) == 25
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (25, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
