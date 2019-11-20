@@ -8,4 +8,4 @@ version = '0.9.5'
 # The dataversion has to be bumped whenever,
 # the cached files are not compatible anymore with
 # the new version anymore.
-dataversion = '0.9.4'
+dataversion = '0.9.6'
