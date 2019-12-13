@@ -86,6 +86,11 @@ namely data acquisition and evaluation.
 
 Installation
 ============
+
+A list of python dependencies is defined in `setup.py`.
+Additionally, `bedtools <https://bedtools.readthedocs.io/>`_ is required for `pybedtools` which `janggu` depends on.
+
+
 The simplest way to install janggu is via the conda package management system.
 Assuming you have already installed conda, create a new environment
 and type
@@ -105,7 +110,6 @@ support or CPU only. To install tensorflow type
 Further information regarding the installation of tensorflow can be found on
 the official `tensorflow webpage <https://www.tensorflow.org>`_
 
-
 To verify that the installation works try to run the example contained in the
 janggu package as follows
 
@@ -115,7 +119,13 @@ janggu package as follows
    cd janggu
    python ./src/examples/classify_fasta.py single
 
-A model is then trained to predict the class labels of two sets of toy sequences.
+A model is then trained to predict the class labels of two sets of toy sequencesby scanning the forward strand for sequence patterns and using an ordinary mono-nucleotide one-hot sequence encoding.
 The entire training process takes a few minutes on CPU backend.
+Eventually, some example prediction scores are shown for Oct4 and Mafk sequences. The accuracy should be around 85% and individual example prediction scores should tend to be higher for Oct4 than for Mafk.
+
+You may also try to rerun the training by evaluating sequences features on both
+strands and using higher-order sequence encoding using i.e. the command-line arguments: `dnaconv -order 2`.
+Accuracies and prediction scores for the individual example sequences should improve compared to the previous example.
+
 A range of additional examples can be found in './src/examples' including
-some jupyter notebooks.
+some jupyter notebooks or by following the tutorial.
