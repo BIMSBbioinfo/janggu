@@ -39,6 +39,8 @@ sklearn:
 +--------------------------------+
 | `reusing datasets with view`_  |
 +--------------------------------+
+| `hyperparameter optimization`_ |
++--------------------------------+
 | `randomizing HDF5 data`_       |
 +--------------------------------+
 | `variant effect prediction`_   |
@@ -54,6 +56,8 @@ sklearn:
 .. _`randomizing HDF5 data`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
 .. _`variant effect prediction`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb
 .. _`plotting genome coverage`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/plot_coverage.ipynb
+.. _`hyperparameter optimization`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/hyperparameter_optimization_w_janggu.ipynb
+
 
 Furthermore, use cases
 for predicting JunD binding, training and adapting published genomics models
