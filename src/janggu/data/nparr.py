@@ -164,6 +164,13 @@ class ReduceDim(Dataset):
         raise ValueError('No gindexer available.')
 
     @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
+        
+    @property
     def ndim(self):
         """ndim"""
         return len(self.shape)
@@ -240,6 +247,13 @@ class SqueezeDim(Dataset):
         raise ValueError('No gindexer available.')
 
     @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
+
+    @property
     def ndim(self):
         """ndim"""
         return len(self.shape)
@@ -308,6 +322,13 @@ class Transpose(Dataset):
             self.data.gindexer = gindexer
             return
         raise ValueError('No gindexer available.')
+
+    @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
 
     @property
     def ndim(self):
@@ -383,6 +404,13 @@ class NanToNumConverter(Dataset):
         raise ValueError('No gindexer available.')
 
     @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
+
+    @property
     def ndim(self):
         """ndim"""
         return len(self.shape)
@@ -454,6 +482,13 @@ class RandomSignalScale(Dataset):
         raise ValueError('No gindexer available.')
 
     @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
+
+    @property
     def shape(self):
         """shape"""
         return self.data.shape
@@ -523,6 +558,13 @@ class RandomOrientation(Dataset):
             self.data.gindexer = gindexer
             return
         raise ValueError('No gindexer available.')
+
+    @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
 
     @property
     def shape(self):
