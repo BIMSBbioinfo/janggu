@@ -1477,6 +1477,7 @@ class Cover(Dataset):
             is determined from the gindexer if `store_whole_genome=False`,
             or from the garray-size of `store_whole_genome=True`.
         """
+        os.makedirs(output_dir, exist_ok=True)
 
         resolution = self.garray.resolution
 
