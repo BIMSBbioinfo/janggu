@@ -659,6 +659,13 @@ class RandomShift(Dataset):
         raise ValueError('No gindexer available.')
 
     @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
+        
+    @property
     def shape(self):
         """shape"""
         return self.data.shape
@@ -669,5 +676,5 @@ class RandomShift(Dataset):
         return len(self.shape)
 
     def __copy__(self):
-        obj = RandomShift(copy.copy(self.data))
+        obj = RandomShift(copy.copy(self.data), copy.copy(self.shift), copy.copy(self.batchwise))
         return obj

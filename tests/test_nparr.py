@@ -126,7 +126,16 @@ def test_randomshift():
     x_orig[0, 2, 0,2] = 1
     x_orig[0, 3, 0,3] = 1
 
-    x_tr = RandomSignalScale(Array('test', x_orig), 1)
+    x_tr = RandomShift(Array('test', x_orig), 1)
+    assert x_tr[0].shape == (1, 4, 1, 4)
+    np.testing.assert_equal(len(x_tr), 1)
+    assert x_tr.shape == (1, 4, 1, 4)
+    assert x_tr.ndim == 4
+    new_x = copy(x_tr)
+    assert x_tr[0].shape == new_x[0].shape
+    assert x_tr.conditions == None
+    
+    x_tr = RandomShift(Array('test', x_orig), 1, True)
     assert x_tr[0].shape == (1, 4, 1, 4)
     np.testing.assert_equal(len(x_tr), 1)
     assert x_tr.shape == (1, 4, 1, 4)
