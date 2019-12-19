@@ -579,3 +579,95 @@ class RandomOrientation(Dataset):
     def __copy__(self):
         obj = RandomOrientation(copy.copy(self.data))
         return obj
+
+
+class RandomShift(Dataset):
+    """Randomshift class.
+
+    This wrapper randomly shifts the input sequence by a random number of
+    up to 'shift' bases in either direction. Meant for use with BioSeq.
+
+    This form of data-augmentation has been shown to reduce overfitting 
+    in a number of settings.
+
+    The sequence is zero-padded in order to remain the same length.
+
+    When 'batchwise' is set to True it will shift all the sequences retrieved
+    by a single call to __getitem__ by the same amount (useful for 
+    computationally efficient batching).
+
+    Parameters
+    -----------
+    array : Dataset
+        Dataset object must be 4D.
+    """
+
+    def __init__(self, array, shift, batchwise=False):
+        self.data = copy.copy(array)
+        self.batchwise = batchwise
+        self.shift = shift
+        Dataset.__init__(self, array.name)
+
+    def __repr__(self):  # pragma: no cover
+        return 'RandomShift({})'.format(str(self.data))
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idxs):
+        if isinstance(idxs, int):
+            data = self.data[slice(idxs, idxs+1)]
+        else:
+            data = self.data[idxs]
+
+        if self.batchwise:
+            s = np.random.randint(-self.shift, self.shift)
+            if s < 0:
+                data[:,:s,:,:] = data[:,-s:,:,:]
+                data[:,s:,:,:] = 0.
+            elif s > 0:
+                data[:,s:,:,:] = data[:,:-s,:,:]
+                data[:,:s,:,:] = 0.
+        else:
+            for i, _ in enumerate(data):
+                s = np.random.randint(-self.shift, self.shift)
+                if s < 0:
+                    data[i,:s,:,:] = data[i,-s:,:,:]
+                    data[i,s:,:,:] = 0.
+                elif s > 0:
+                    data[i,s:,:,:] = data[i,:-s,:,:]
+                    data[i,:s,:,:] = 0.
+        return data
+
+    @property
+    def conditions(self):
+        """conditions"""
+        return self.data.conditions if hasattr(self.data, "conditions") else None
+
+    @property
+    def gindexer(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'gindexer'):
+            return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):  # pragma: no cover
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def shape(self):
+        """shape"""
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        """ndim"""
+        return len(self.shape)
+
+    def __copy__(self):
+        obj = RandomShift(copy.copy(self.data))
+        return obj
