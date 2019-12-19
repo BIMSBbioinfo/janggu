@@ -567,7 +567,7 @@ class RandomShift(Dataset):
         Dataset.__init__(self, array.name)
 
     def __repr__(self):  # pragma: no cover
-        return 'Randomshift({})'.format(str(self.data))
+        return 'RandomShift({})'.format(str(self.data))
 
     def __len__(self):
         return len(self.data)
@@ -627,5 +627,5 @@ class RandomShift(Dataset):
         return len(self.shape)
 
     def __copy__(self):
-        obj = RandomOrientation(copy.copy(self.data))
+        obj = RandomShift(copy.copy(self.data))
         return obj

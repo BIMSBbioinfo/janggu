@@ -68,6 +68,8 @@ Utilities for reshaping, data augmentation, NaN removal.
 
 .. autoclass:: RandomSignalScale
 
+.. autoclass:: RandomShift
+
 
 Normalization and transformation
 --------------------------------

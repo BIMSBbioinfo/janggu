@@ -18,7 +18,7 @@ from janggu.data.genomicarray import normalize_garray_tpm  # noqa
 from janggu.data.nparr import Array  # noqa
 from janggu.data.nparr import NanToNumConverter  # noqa
 from janggu.data.nparr import RandomOrientation  # noqa
-from janggu.data.nparr import RandomShift
+from janggu.data.nparr import RandomShift  # noqa
 from janggu.data.nparr import RandomSignalScale  # noqa
 from janggu.data.nparr import ReduceDim  # noqa
 from janggu.data.nparr import SqueezeDim  # noqa
