@@ -273,7 +273,7 @@ class BigWigLoader:
             unique_chroms = list(set(gsize.chrs))
             for process_chrom in unique_chroms:
                 tmp_gsize = gsize.filter_by_region(include=process_chrom)
-                length = max(tmp_gsize.ends)
+                length = max(tmp_gsize.ends) + tmp_gsize.flank
 
                 array = np.zeros((length, 1), dtype=dtype)
 
