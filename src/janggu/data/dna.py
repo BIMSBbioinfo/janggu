@@ -46,7 +46,7 @@ class GenomicSizeLazyLoader:
         self.seqs_ = None
         self.gsize_ = None
 
-    def load_sequence(self):
+    def _load_sequence(self):
         store_whole_genome = self.store_whole_genome
         gindexer = self.gindexer
 
@@ -86,13 +86,13 @@ class GenomicSizeLazyLoader:
     @property
     def gsize(self):
         if self.gsize_ is None:
-            self.load_sequence()
+            self._load_sequence()
         return self.gsize_
 
     @property
     def seqs(self):  # pragma: no cover
         if self.seqs_ is None:
-            self.load_sequence()
+            self._load_sequence()
         return self.seqs_
 
     def __call__(self):
@@ -670,7 +670,7 @@ class VariantStreamer:
 
         if self.annotation is not None:
             varbed = BedTool(self.variants)
-            n_vcf_fields  = len(varbed[0].fields)
+            n_vcf_fields = len(varbed[0].fields)
             vcf_strand_augment = iter(varbed.intersect(self.annotation, loj=True))
 
         try:

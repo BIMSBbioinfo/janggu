@@ -29,12 +29,14 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
     @property
     def randomidx(self):
+        """randomidx property"""
         if self.random_state is not None and self._randomidx is None:
             self._randomidx = check_random_state(self.random_state).permutation(len(self))
         return self._randomidx
 
     @property
     def random_state(self):
+        """random_state property"""
         return self._random_state
 
     @random_state.setter
@@ -99,7 +101,9 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             else:
                 stepsize = binsize
 
-        gind = cls(binsize, stepsize, flank, zero_padding=zero_padding, collapse=collapse, random_state=random_state)
+        gind = cls(binsize, stepsize, flank,
+                   zero_padding=zero_padding,
+                   collapse=collapse, random_state=random_state)
 
         for reg in regions_:
 
@@ -241,7 +245,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
             self.add_interval(region.chrom, region.start, region.end, region.strand)
         return self
 
-    def __init__(self, binsize, stepsize, flank=0, zero_padding=True, collapse=False, random_state=None):
+    def __init__(self, binsize, stepsize, flank=0, zero_padding=True,
+                 collapse=False, random_state=None):
 
         self.binsize = binsize
         self.stepsize = stepsize
@@ -441,16 +446,25 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
 
 
 def check_gindexer_compatibility(gindexer, resolution, store_whole_genome):
+    """Sanity check for gindexer.
+
+    This function tests if the gindexer is compatible with
+    other properties of the dataset, including the resolution and
+    the store_whole_genome argument
+
+    A ValueError is thrown if the gindexer is not valid.
+    """
+
     if resolution is not None and resolution > 1 and store_whole_genome:
         # check resolution compatible
         if gindexer is not None and (gindexer.binsize % resolution) > 0:
             raise ValueError(
-                   'binsize must be an integer-multipe of resolution. '
-                   'Got binsize={} and resolution={}'.format(gindexer.binsize, resolution))
+                'binsize must be an integer-multipe of resolution. '
+                'Got binsize={} and resolution={}'.format(gindexer.binsize, resolution))
 
         for iv_ in gindexer or []:
             if (iv_.start % resolution) > 0:
-                
+
                 raise ValueError(
                     'Please ensure that all interval starts line up '
                     'with the resolution-sized bins. '

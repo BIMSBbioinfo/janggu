@@ -169,7 +169,7 @@ class ReduceDim(Dataset):
         if hasattr(self.data, 'garray'):
             return self.data.garray
         raise ValueError('No garray available.')
-        
+
     @property
     def ndim(self):
         """ndim"""
@@ -587,13 +587,13 @@ class RandomShift(Dataset):
     This wrapper randomly shifts the input sequence by a random number of
     up to 'shift' bases in either direction. Meant for use with BioSeq.
 
-    This form of data-augmentation has been shown to reduce overfitting 
+    This form of data-augmentation has been shown to reduce overfitting
     in a number of settings.
 
     The sequence is zero-padded in order to remain the same length.
 
     When 'batchwise' is set to True it will shift all the sequences retrieved
-    by a single call to __getitem__ by the same amount (useful for 
+    by a single call to __getitem__ by the same amount (useful for
     computationally efficient batching).
 
     Parameters
@@ -621,22 +621,22 @@ class RandomShift(Dataset):
             data = self.data[idxs]
 
         if self.batchwise:
-            s = np.random.randint(-self.shift, self.shift)
-            if s < 0:
-                data[:,:s,:,:] = data[:,-s:,:,:]
-                data[:,s:,:,:] = 0.
-            elif s > 0:
-                data[:,s:,:,:] = data[:,:-s,:,:]
-                data[:,:s,:,:] = 0.
+            rshift = np.random.randint(-self.shift, self.shift)
+            if rshift < 0:
+                data[:, :rshift, :, :] = data[:, -rshift:, :, :]
+                data[:, rshift:, :, :] = 0.
+            elif rshift > 0:
+                data[:, rshift:, :, :] = data[:, :-rshift, :, :]
+                data[:, :rshift, :, :] = 0.
         else:
             for i, _ in enumerate(data):
-                s = np.random.randint(-self.shift, self.shift)
-                if s < 0:
-                    data[i,:s,:,:] = data[i,-s:,:,:]
-                    data[i,s:,:,:] = 0.
-                elif s > 0:
-                    data[i,s:,:,:] = data[i,:-s,:,:]
-                    data[i,:s,:,:] = 0.
+                rshift = np.random.randint(-self.shift, self.shift)
+                if rshift < 0:
+                    data[i, :rshift, :, :] = data[i, -rshift:, :, :]
+                    data[i, rshift:, :, :] = 0.
+                elif rshift > 0:
+                    data[i, rshift:, :, :] = data[i, :-rshift, :, :]
+                    data[i, :rshift, :, :] = 0.
         return data
 
     @property

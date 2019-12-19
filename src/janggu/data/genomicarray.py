@@ -186,7 +186,6 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
             value = value.sum(axis=1, keepdims=True)
 
         if isinstance(interval, Interval) and isinstance(condition, (int, slice)):
-            chrom = interval.chrom
             start = self.get_iv_start(interval.start)
             end = self.get_iv_end(interval.end)
 
@@ -247,11 +246,12 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                     # it can simply be reshaped. otherwise,
                     # it needs to be resized before.
                     if value.shape[0] % self.resolution > 0:
-                        value = np.resize(value, (int(np.ceil(value.shape[0]/float(self.resolution))*self.resolution),) +
-                                      value.shape[1:])
+                        value = np.resize(value, (
+                            int(np.ceil(value.shape[0]/float(self.resolution))*self.resolution),) +
+                                          value.shape[1:])
                     # collapse in bins of size resolution
                     value = value.reshape((value.shape[0]//min(self.resolution,
-                                           value.shape[0]),
+                                                               value.shape[0]),
                                            min(self.resolution, value.shape[0]),) + \
                                           value.shape[1:])
 
@@ -429,6 +429,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
         return start // self.resolution
 
 def init_with_padding_value(padding_value, shape, dtype):
+    """ create array with given padding value. """
     if padding_value == 0.0:
         return np.zeros(shape, dtype)
     else:
@@ -854,15 +855,14 @@ class SparseGenomicArray(GenomicArray):
                 self.handle['data'][regidx,
                                     basepos + strand + cond] = value[idx]
         else:
-            ref_start, ref_end, array_start, \
-                array_end = self._get_indices(interval, value.shape[0])
+            ref_start, ref_end, array_start, _ = self._get_indices(interval, value.shape[0])
             idxs = np.where(value > 0)
             iarray = np.arange(ref_start, ref_end)
             for idx in zip(*idxs):
                 cond = condition if isinstance(condition, int) else idx[2]
                 self.handle[interval.chrom][iarray[idx[0]],
-                                   idx[1] * len(self.condition)
-                                   + cond] = value[idx[0] + array_start][idx[1:]]
+                                            idx[1] * len(self.condition)
+                                            + cond] = value[idx[0] + array_start][idx[1:]]
 
 class PercentileTrimming(object):
     """Percentile trimming normalization.

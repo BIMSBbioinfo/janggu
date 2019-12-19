@@ -229,7 +229,7 @@ class BamLoader:
                         array[pos, 0] += 1
 
                 for interval in tmp_gsize:
-                    garray[interval, i] = array[interval.start:interval.end,:]
+                    garray[interval, i] = array[interval.start:interval.end, :]
             if self.verbose: bar.next()
         if self.verbose: bar.finish()
         return garray
@@ -286,7 +286,7 @@ class BigWigLoader:
                 array[:len(values), 0] = values
 
                 for interval in tmp_gsize:
-                    garray[interval, i] = array[int(interval.start):int(interval.end),:]
+                    garray[interval, i] = array[int(interval.start):int(interval.end), :]
             if self.verbose: bar.next()
         if self.verbose: bar.finish()
         return garray
@@ -374,11 +374,12 @@ class BedLoader:
                         score = float(region.fields[-1])
 
                     # first dim, score value, second dim, mask
-                    array[region.start:region.end,0] = score
-                    array[region.start:region.end,1] = 1
+                    array[region.start:region.end, 0] = score
+                    array[region.start:region.end, 1] = 1
 
                 # map the signal onto the region of interest
-                for roireg in roifile.intersect(BedTool([Interval(process_chrom, 0, length)]), wa=True, u=True):
+                for roireg in roifile.intersect(BedTool([Interval(process_chrom,
+                                                                  0, length)]), wa=True, u=True):
 
                     if roireg.end <= length:
                         tmp_array = array[roireg.start:roireg.end]
@@ -387,22 +388,22 @@ class BedLoader:
                         tmp_array[:array[roireg.start:].shape[0]] = \
                             array[roireg.start:]
                     if self.minoverlap is not None:
-                        if tmp_array[:,:1].nonzero()[0].shape[0]/roireg.length < \
+                        if tmp_array[:, :1].nonzero()[0].shape[0]/roireg.length < \
                             self.minoverlap:
                             # minimum overlap not achieved, skip
                             continue
 
                     if mode == 'score':
-                        garray[roireg, i] = tmp_array[:,:1]
+                        garray[roireg, i] = tmp_array[:, :1]
                     elif mode == 'categorical':
                         tmp_cat = np.zeros((roireg.length, 1, int(tmp_array.max())+1), dtype=dtype)
-                        tmp_cat[np.arange(roireg.length), 0, tmp_array[:,0].astype('int')] = tmp_array[:,1]
+                        tmp_cat[np.arange(roireg.length), 0, tmp_array[:, 0].astype('int')] = tmp_array[:, 1]
 
                         for r in range(tmp_cat.shape[-1]):
-                            garray[roireg, r] = tmp_cat[:,:,r]
+                            garray[roireg, r] = tmp_cat[:, :, r]
 
                     else:
-                        garray[roireg, i] = tmp_array[:,:1]
+                        garray[roireg, i] = tmp_array[:, :1]
                 if self.verbose: bar.next()
 
         if self.verbose: bar.finish()
