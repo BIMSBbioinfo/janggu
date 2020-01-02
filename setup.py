@@ -66,7 +66,7 @@ setup(
         'numpy',
         'pandas',
         'Biopython',
-        'keras==2.1.5',
+        'keras<2.3.0',
         'h5py',
         'pybedtools',
         'pydot',
