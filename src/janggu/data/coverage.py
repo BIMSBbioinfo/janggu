@@ -1493,6 +1493,13 @@ class Cover(Dataset):
         bw_header = [(str(chrom), gsize[chrom])
                      for chrom in gsize]
 
+        # approch suggested by remo
+        multi = int(np.ceil(self.gindexer[0].length / resolution))
+        chroms = np.repeat(self.gindexer.chrs, multi).tolist()
+        starts = [iv.start + resolution*m for iv in self.gindexer for m in range(multi)]
+        ends = [iv.start + (resolution)*m for iv in self.gindexer for m in range(1, multi+1)]
+        cov = self[:].reshape((-1,)+ self.shape[2:]).sum(axis=1)
+
         for idx, condition in enumerate(self.conditions):
             bw_file = pyBigWig.open(os.path.join(
                 output_dir,
@@ -1501,20 +1508,9 @@ class Cover(Dataset):
 
             bw_file.addHeader(bw_header)
 
-            # we need to add data to the bigwig file handle
-            # in the same order as given by bw_header.
-            # therefore, we process each chromosome in order below
+            bw_file.addEntries(chroms,
+                               starts,
+                               ends=ends,
+                               values=cov[:, idx].tolist())
 
-            for chrom, _ in bw_header:
-                idxs = self.gindexer.idx_by_region(include=chrom)
-
-                for ridx in idxs:
-                    region = self.gindexer[int(ridx)]
-                    cov = self[int(ridx)][0, :, :, idx].sum(axis=1).tolist()
-
-                    bw_file.addEntries(str(region.chrom),
-                                       int(region.start),
-                                       values=cov,
-                                       span=int(resolution),
-                                       step=int(resolution))
             bw_file.close()
