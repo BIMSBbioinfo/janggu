@@ -23,6 +23,7 @@ before_install:
   - sudo apt-get install -y bedtools
 install:
   - pip install tox
+  - pip install cython
   - virtualenv --version
   - easy_install --version
   - pip --version
