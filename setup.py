@@ -70,7 +70,7 @@ setup(
         'h5py',
         'pybedtools',
         'pydot',
-        'pysam',
+        'pysam<=0.15.3',
         'pyBigWig',
         'progress',
         'urllib3',
