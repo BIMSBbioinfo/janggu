@@ -285,7 +285,7 @@ class Transpose(Dataset):
         Dataset.__init__(self, array.name)
 
     def __repr__(self):  # pragma: no cover
-        return 'SqueezeDim({})'.format(str(self.data))
+        return 'Transpose({})'.format(str(self.data))
 
     def __len__(self):
         return len(self.data)
