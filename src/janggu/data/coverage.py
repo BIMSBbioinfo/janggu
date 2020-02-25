@@ -1490,8 +1490,10 @@ class Cover(Dataset):
         else:
             gsize = get_genome_size_from_regions(self.gindexer)
 
+        chrorder = OrderedDict.fromkeys(self.gindexer.chrs)
+
         bw_header = [(str(chrom), gsize[chrom])
-                     for chrom in gsize]
+                     for chrom in chrorder]
 
         # approch suggested by remo
         multi = int(np.ceil(self.gindexer[0].length / resolution))

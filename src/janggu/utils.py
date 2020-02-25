@@ -3,6 +3,7 @@
 import json
 import os
 from collections import defaultdict
+from collections import OrderedDict
 from copy import deepcopy
 
 import numpy as np
@@ -369,7 +370,7 @@ def get_genome_size_from_regions(regions):
     if isinstance(regions, str):
         regions_ = _get_genomic_reader(regions)
 
-    gsize = {}
+    gsize = OrderedDict()
     for interval in regions_:
         if interval.chrom not in gsize:
             gsize[interval.chrom] = interval.end
@@ -547,7 +548,7 @@ class ExportBigwig(object):
             raise Exception('pyBigWig not available. '
                             '`export_bigwig` requires pyBigWig to be installed.')
 
-        genomesize = {}
+        genomesize = OrderedDict()
 
         # extract genome size from gindexer
         # check also if sorted and non-overlapping

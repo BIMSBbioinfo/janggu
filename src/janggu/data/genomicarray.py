@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+from collections import OrderedDict
 
 import h5py
 import numpy as np
@@ -107,7 +108,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     collapser : None or callable
         Method to aggregate values along a given interval.
     """
-    handle = dict()
+    handle = OrderedDict()
     _condition = None
     _resolution = None
     _order = None
