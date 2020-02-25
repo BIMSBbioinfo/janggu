@@ -6,6 +6,59 @@ import numpy as np
 from janggu.data.data import Dataset
 
 
+class Wrapper(Dataset):
+    def __init__(self, data, *args):
+        super(Wrapper, self).__init__(data.name)
+        self.data = copy.copy(data)
+        self.args = args
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    @property
+    def conditions(self):
+        """conditions"""
+        return self.data.conditions if hasattr(self.data, "conditions") else None
+
+    @property
+    def shape(self):
+        """shape"""
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        return len(self.shape)
+
+    def __copy__(self):
+        ar = tuple([copy.copy(e) for e in (self.data,)+self.args])
+        obj = self.__class__(*ar)
+        return obj
+
+    @property
+    def gindexer(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'gindexer'):
+            return self.data.gindexer
+        raise ValueError('No gindexer available.')
+
+    @gindexer.setter
+    def gindexer(self, gindexer):  # pragma: no cover
+        if hasattr(self.data, 'gindexer'):
+            self.data.gindexer = gindexer
+            return
+        raise ValueError('No gindexer available.')
+
+    @property
+    def garray(self):  # pragma: no cover
+        """gindexer"""
+        if hasattr(self.data, 'garray'):
+            return self.data.garray
+        raise ValueError('No garray available.')
+
+
 class Array(Dataset):
     """Array class.
 
@@ -65,7 +118,7 @@ class Array(Dataset):
         return obj
 
 
-class ReduceDim(Dataset):
+class ReduceDim(Wrapper):
     """ReduceDim class.
 
     This class wraps an 4D coverage object and reduces
@@ -102,8 +155,8 @@ class ReduceDim(Dataset):
     """
 
     def __init__(self, array, aggregator=None, axis=None):
+        super(ReduceDim, self).__init__(array, *(aggregator, axis))
 
-        self.data = copy.copy(array)
         if aggregator is None:
             aggregator = 'sum'
 
@@ -120,24 +173,13 @@ class ReduceDim(Dataset):
                              'Must be "sum", "mean" or "max" or a callable.')
         self.aggregator = _get_aggregator(aggregator)
         self.axis = axis if axis is not None else (1, 2)
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'ReduceDim({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
+        #Dataset.__init__(self, array.name)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = slice(idxs, idxs + 1)
         data = self.aggregator(self.data[idxs], axis=self.axis)
         return data
-
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def shape(self):
@@ -149,39 +191,8 @@ class ReduceDim(Dataset):
             shape += (self.data.shape[idx],)
         return shape
 
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
 
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = ReduceDim(copy.copy(self.data), self.aggregator,
-                        self.axis)
-        return obj
-
-
-class SqueezeDim(Dataset):
+class SqueezeDim(Wrapper):
     """SqueezeDim class.
 
     This class wraps an 4D coverage object and reduces
@@ -199,27 +210,15 @@ class SqueezeDim(Dataset):
 
     def __init__(self, array, axis=None):
 
-        self.data = copy.copy(array)
+        super(SqueezeDim, self).__init__(array, *(axis,))
 
         self.axis = axis
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'SqueezeDim({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = slice(idxs, idxs + 1)
         data = np.squeeze(self.data[idxs], axis=self.axis)
         return data
-
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def shape(self):
@@ -232,38 +231,9 @@ class SqueezeDim(Dataset):
             shape += (self.data.shape[idx],)
         return shape
 
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
-
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = SqueezeDim(copy.copy(self.data), self.axis)
-        return obj
 
 
-class Transpose(Dataset):
+class Transpose(Wrapper):
     """Transpose class.
 
     This class can be used to shuffle the dimensions.
@@ -278,28 +248,15 @@ class Transpose(Dataset):
     """
 
     def __init__(self, array, axis):
-
-        self.data = copy.copy(array)
+        super(Transpose, self).__init__(array, *(axis,))
 
         self.axis = axis
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'Transpose({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
             idxs = slice(idxs, idxs + 1)
         data = np.transpose(self.data[idxs], self.axis)
         return data
-
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
 
     @property
     def shape(self):
@@ -309,38 +266,8 @@ class Transpose(Dataset):
             shape += (self.data.shape[idx],)
         return shape
 
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
 
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = Transpose(copy.copy(self.data), self.axis)
-        return obj
-
-
-class NanToNumConverter(Dataset):
+class NanToNumConverter(Wrapper):
     """NanToNumConverter class.
 
     This wrapper dataset converts NAN's in the dataset to
@@ -363,15 +290,7 @@ class NanToNumConverter(Dataset):
     """
 
     def __init__(self, array):
-
-        self.data = copy.copy(array)
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'NanToNumConverter({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
+        super(NanToNumConverter, self).__init__(array, *())
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -379,49 +298,9 @@ class NanToNumConverter(Dataset):
         data = np.nan_to_num(self.data[idxs])
         return data
 
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
-
-    @property
-    def shape(self):
-        """Shape of the dataset"""
-        return self.data.shape
-
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
-
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = NanToNumConverter(copy.copy(self.data))
-        return obj
-
 
 # Wrappers for data augmentation
-class RandomSignalScale(Dataset):
+class RandomSignalScale(Wrapper):
     """RandomSignalScale class.
 
     This wrapper performs
@@ -438,16 +317,8 @@ class RandomSignalScale(Dataset):
     """
 
     def __init__(self, array, deviance):
-
-        self.data = copy.copy(array)
+        super(RandomSignalScale, self).__init__(array, *(deviance,))
         self.deviance = deviance
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'RandomSignalScale({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -462,47 +333,8 @@ class RandomSignalScale(Dataset):
 
         return data
 
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
 
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
-
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-
-    @property
-    def shape(self):
-        """shape"""
-        return self.data.shape
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = RandomSignalScale(copy.copy(self.data), copy.copy(self.deviance))
-        return obj
-
-class RandomOrientation(Dataset):
+class RandomOrientation(Wrapper):
     """RandomOrientation class.
 
     This wrapper randomly inverts the directionality of
@@ -518,15 +350,7 @@ class RandomOrientation(Dataset):
     """
 
     def __init__(self, array):
-
-        self.data = copy.copy(array)
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'RandomOrientation({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
+        super(RandomOrientation, self).__init__(array, *())
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -540,48 +364,9 @@ class RandomOrientation(Dataset):
 
         return data
 
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
-
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
-
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-
-    @property
-    def shape(self):
-        """shape"""
-        return self.data.shape
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = RandomOrientation(copy.copy(self.data))
-        return obj
 
 
-class RandomShift(Dataset):
+class RandomShift(Wrapper):
     """Randomshift class.
 
     This wrapper randomly shifts the input sequence by a random number of
@@ -603,16 +388,9 @@ class RandomShift(Dataset):
     """
 
     def __init__(self, array, shift, batchwise=False):
-        self.data = copy.copy(array)
+        super(RandomShift, self).__init__(array, *(shift, batchwise))
         self.batchwise = batchwise
         self.shift = shift
-        Dataset.__init__(self, array.name)
-
-    def __repr__(self):  # pragma: no cover
-        return 'RandomShift({})'.format(str(self.data))
-
-    def __len__(self):
-        return len(self.data)
 
     def __getitem__(self, idxs):
         if isinstance(idxs, int):
@@ -639,42 +417,3 @@ class RandomShift(Dataset):
                     data[i, :rshift, :, :] = 0.
         return data
 
-    @property
-    def conditions(self):
-        """conditions"""
-        return self.data.conditions if hasattr(self.data, "conditions") else None
-
-    @property
-    def gindexer(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'gindexer'):
-            return self.data.gindexer
-        raise ValueError('No gindexer available.')
-
-    @gindexer.setter
-    def gindexer(self, gindexer):  # pragma: no cover
-        if hasattr(self.data, 'gindexer'):
-            self.data.gindexer = gindexer
-            return
-        raise ValueError('No gindexer available.')
-
-    @property
-    def garray(self):  # pragma: no cover
-        """gindexer"""
-        if hasattr(self.data, 'garray'):
-            return self.data.garray
-        raise ValueError('No garray available.')
-        
-    @property
-    def shape(self):
-        """shape"""
-        return self.data.shape
-
-    @property
-    def ndim(self):
-        """ndim"""
-        return len(self.shape)
-
-    def __copy__(self):
-        obj = RandomShift(copy.copy(self.data), copy.copy(self.shift), copy.copy(self.batchwise))
-        return obj
