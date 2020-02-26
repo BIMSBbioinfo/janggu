@@ -33,6 +33,8 @@ sklearn:
 +--------------------------------+
 | `sklearn example`_             |
 +--------------------------------+
+| `pytorch example`_             |
++--------------------------------+
 | `janggu example I`_            |
 +--------------------------------+
 | `janggu example II`_           |
@@ -50,6 +52,7 @@ sklearn:
 
 .. _`keras cnn example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/keras_convnet_example.ipynb
 .. _`sklearn example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/sklearn_example_with_kmers.ipynb
+.. _`pytorch example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/pytorch_convnet_example.ipynb
 .. _`janggu example I`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/classify_nucleotide_sequences.ipynb
 .. _`janggu example II`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples.ipynb
 .. _`reusing datasets with view`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb

@@ -50,7 +50,7 @@ genomics. The package is freely available under a GPL-3.0 license.
 
 In particular, the package allows for easy access to
 typical **Genomics data formats**
-and **out-of-the-box evaluation** so that you can concentrate
+and **out-of-the-box evaluation** (for keras models specifically) so that you can concentrate
 on designing the neural network architecture for the purpose
 of quickly testing biological hypothesis.
 A comprehensive documentation is available `here <https://janggu.readthedocs.io/en/latest>`_.
@@ -70,6 +70,23 @@ Hallmarks of Janggu:
 9. Janggu supports input feature importance attribution using the integrated gradients method and variant effect prediction assessment.
 10. Janggu provides a utilities such as keras layer for scanning both DNA strands for motif occurrences.
 
+Getting started
+----------------
+
+Janggu makes it easy to access data from genomic file formats and utilize it for
+machine learning purposes.
+
+:: python
+
+  dna = Bioseq.create_from_genome('dna', refgenome=<refgenome.fa>, roi=<roi.bed>)
+  labels = Cover.create_from_bed('labels', bedfiles=<labels.bed>, roi=<roi.bed>)
+
+  kerasmodel.fit(dna, labels)
+  
+A range of examples can be found in './src/examples' of this repository,
+which includes jupyter notebooks that illustrate Janggu's functionality
+and how it can be used with popular deep learning frameworks, including
+ keras, sklearn or pytorch.
 
 Why the name Janggu?
 ---------------------
@@ -127,5 +144,3 @@ You may also try to rerun the training by evaluating sequences features on both
 strands and using higher-order sequence encoding using i.e. the command-line arguments: `dnaconv -order 2`.
 Accuracies and prediction scores for the individual example sequences should improve compared to the previous example.
 
-A range of additional examples can be found in './src/examples' including
-some jupyter notebooks or by following the tutorial.
