@@ -2,6 +2,16 @@
 Changelog
 =========
 
+0.9.6 (2020-02-26)
+------------------
+
+- Retired support for python 2.7
+- RandomShift wrapper for data augmentation applied to DNA/Protein sequences was added by (thanks to @remomomo).
+- Bedgraph files can be read using Cover.create_from_bed
+- Improved efficiency of Cover.export_to_bigwig
+- Improved efficiency of Cover.create_from_bed
+- Internal refactoring
+
 0.9.5 (2019-10-17)
 ------------------
 
