@@ -76,7 +76,7 @@ Getting started
 Janggu makes it easy to access data from genomic file formats and utilize it for
 machine learning purposes.
 
-:: python
+.. code-block:: python
 
   dna = Bioseq.create_from_genome('dna', refgenome=<refgenome.fa>, roi=<roi.bed>)
   labels = Cover.create_from_bed('labels', bedfiles=<labels.bed>, roi=<roi.bed>)
@@ -86,7 +86,7 @@ machine learning purposes.
 A range of examples can be found in './src/examples' of this repository,
 which includes jupyter notebooks that illustrate Janggu's functionality
 and how it can be used with popular deep learning frameworks, including
- keras, sklearn or pytorch.
+keras, sklearn or pytorch.
 
 Why the name Janggu?
 ---------------------
