@@ -99,6 +99,8 @@ class GenomicSizeLazyLoader:
         return self.gsize
 
     def tostr(self):
+        if not self.store_whole_genome:
+            return self.gindexer.tostr()
         return "full_genome_lazy_loading"
 
 
