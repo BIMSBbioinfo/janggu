@@ -224,7 +224,7 @@ class Scorer(object):
         self.logger.info(' '.join(('scoring:', self.score_name)))
         score_fct = self.score_fct
         if score_fct is None and outputs is not None:
-            raise ValueError('Scorer: score_fct must be supplied if and outputs are present.')
+            raise ValueError('Scorer: without outputs a score_fct must be supplied.')
 
         if score_fct is None:
             def _dummy(value):

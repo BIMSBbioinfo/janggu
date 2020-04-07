@@ -92,7 +92,8 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                 if binsize_ is None:
                     binsize_ = reg.length
                 if reg.length != binsize_:
-                    raise ValueError('An interval length must be specified if collapse=False.')
+                    raise ValueError('Cannot infer binsize, because intervals are of uneven length. '
+                                     'Either specify binsize=<int> or use collapse=True.')
             binsize = binsize_
 
         if stepsize is None:
@@ -283,7 +284,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
                             end + self.flank,
                             strand=self.strand[index])
 
-        raise IndexError('Index support only for "int". Given {}'.format(type(index_)))
+        raise IndexError('Cannot interpret index: {}'.format(type(index_)))
 
     @property
     def binsize(self):
@@ -293,7 +294,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     @binsize.setter
     def binsize(self, value):
         if value is not None and value <= 0:
-            raise ValueError('binsize must be positive')
+            raise ValueError('binsize>0 required')
         self._binsize = value
 
     @property
@@ -304,7 +305,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     @stepsize.setter
     def stepsize(self, value):
         if value is not None and value <= 0:
-            raise ValueError('stepsize must be positive')
+            raise ValueError('stepsize>0 required')
         self._stepsize = value
 
     @property
@@ -315,7 +316,7 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
     @flank.setter
     def flank(self, value):
         if not isinstance(value, int) or value < 0:
-            raise ValueError('_flank must be a non-negative integer')
+            raise ValueError('flank>=0 required')
         self._flank = value
 
     def tostr(self):
@@ -468,6 +469,7 @@ def check_gindexer_compatibility(gindexer, resolution, store_whole_genome):
                 raise ValueError(
                     'Please ensure that all interval starts line up '
                     'with the resolution-sized bins. '
+                    'This is necessary to prevent rounding issues. '
                     'Interval ({}:{}-{}) not compatible with resolution {}. '.format(
                         iv_.chrom, iv_.start, iv_.end, resolution) +\
                     'Consider using '
@@ -475,4 +477,4 @@ def check_gindexer_compatibility(gindexer, resolution, store_whole_genome):
                     .format(resolution=resolution))
 
     if not store_whole_genome and gindexer is None:
-        raise ValueError('Either roi must be supplied or store_whole_genome must be True')
+        raise ValueError('Either specify roi or store_whole_genome=True')

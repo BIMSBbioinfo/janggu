@@ -212,7 +212,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                 # check if the first or the second is the case here.
                 pass
         else:
-            raise IndexError("Index must be a Interval and a condition index")
+            raise IndexError("Cannot interpret interval and condition: {}".format((interval, condition)))
 
     def _setitem(self, interval, condition, length, value):
         if not self._full_genome_stored:
@@ -310,7 +310,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
                                                                len(self.condition)))
             return data
 
-        raise IndexError("Index must be a Interval")
+        raise IndexError("Cannot interpret interval: {}".format(index))
 
     @property
     def condition(self):
@@ -329,7 +329,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     @resolution.setter
     def resolution(self, value):
         if value is not None and value <= 0:
-            raise ValueError('resolution must be greater than zero')
+            raise ValueError('resolution>0 required')
         self._resolution = value
 
     def _reshape(self, data, shape):
@@ -416,7 +416,7 @@ class GenomicArray(object):  # pylint: disable=too-many-instance-attributes
     @order.setter
     def order(self, order):
         if order <= 0:
-            raise ValueError('order must be greater than zero')
+            raise ValueError('order>0 required')
         self._order = order
 
     def get_iv_end(self, end):
@@ -500,7 +500,7 @@ class HDF5GenomicArray(GenomicArray):
                                                collapser=collapser)
 
         if cache is None:
-            raise ValueError('HDF5 format requires cache=True')
+            raise ValueError('cache=True required for HDF format')
 
         gsize_ = None
 
@@ -1151,9 +1151,7 @@ def create_genomic_array(chroms, stranded=True, conditions=None, typecode='float
 
     # check if collapser available
     if (resolution is None or resolution > 1) and collapser is None:
-        raise ValueError('A collapse method must be specified when'
-                         'resolution is None or greater than one, but'
-                         'collapser=None.')
+        raise ValueError('Requiring collapser due to resolution=None or resolution>1')
 
     # force store_whole_genome=False if resolution=None
     if resolution is None and store_whole_genome:

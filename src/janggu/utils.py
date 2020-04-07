@@ -338,7 +338,7 @@ def _str_to_iv(givstr, template_extension=0):
         second_split[0] = '-' + second_split[0]
     if second_split[1] == '':
         # if end is a negative value it does not make sense.
-        raise ValueError('Start and end appear to be netative: {}'.format(givstr))
+        raise ValueError('Invalid genomic location string: {}'.format(givstr))
 
     start = int(second_split[0])
     end = int(second_split[1])

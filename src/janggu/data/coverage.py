@@ -1090,7 +1090,8 @@ class Cover(Dataset):
         if mode == 'categorical':
             if len(bedfiles) > 1:
                 raise ValueError('Only one bed-file is '
-                                 'allowed with mode=categorical')
+                                 'allowed with mode=categorical, '
+                                 'but got multiple files.')
             sample_file = bedfiles[0]
             regions_ = _get_genomic_reader(sample_file)
 
@@ -1229,9 +1230,9 @@ class Cover(Dataset):
         # check if dimensions of gindexer and array match
         if len(gindexer) != array.shape[0]:
             raise ValueError("Data incompatible: "
-                             "The number intervals in gindexer"
-                             " must match the number of datapoints in "
-                             "the array (len(gindexer)={} != array.shape[0]={})".
+                             "Number of regions must match with "
+                             "the number of datapoints. "
+                             "(len(gindexer)={} != array.shape[0]={})".
                              format(len(gindexer), array.shape[0]))
 
         if store_whole_genome:
@@ -1297,7 +1298,7 @@ class Cover(Dataset):
     def gindexer(self):
         """GenomicIndexer property"""
         if self._gindexer is None:
-            raise ValueError('GenomicIndexer has not been set yet. Please specify an indexer.')
+            raise ValueError('No GenomicIndexer available. Please specify an gindexer.')
         return self._gindexer
 
     @gindexer.setter

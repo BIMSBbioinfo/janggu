@@ -345,7 +345,7 @@ class Bioseq(Dataset):
             gindexer = None
 
         if not store_whole_genome and gindexer is None:
-            raise ValueError('Either roi must be supplied or store_whole_genome must be True')
+            raise ValueError('Specify roi or store_whole_genome=True')
 
         gsize = GenomicSizeLazyLoader(refgenome, 'dna', store_whole_genome, gindexer)
 
@@ -462,8 +462,8 @@ class Bioseq(Dataset):
     def gindexer(self):
         """GenomicIndexer property."""
         if self._gindexer is None:
-            raise ValueError('GenomicIndexer has not been set yet. '
-                             'Please specify an indexer.')
+            raise ValueError('No GenomicIndexer specified. '
+                             'Please set gindexer.')
         return self._gindexer
 
     @gindexer.setter
@@ -528,8 +528,8 @@ class Bioseq(Dataset):
                 # interpret idxs as genomic interval
                 idxs = Interval(*idxs)
             else:
-                raise ValueError('idxs cannot be interpreted as genomic interval.'
-                                 ' use (chr, start, end) or (chr, start, end, strand)')
+                raise ValueError('Cannot interpret genomic interval.'
+                                 ' Use (chr, start, end) or (chr, start, end, strand)')
 
         if isinstance(idxs, int):
             idxs = [idxs]
@@ -539,8 +539,8 @@ class Bioseq(Dataset):
                          idxs.step if idxs.step else 1)
         elif isinstance(idxs, Interval):
             if not self.garray._full_genome_stored:
-                raise ValueError('Indexing with Interval only possible '
-                                 'when the whole genome (or chromosome) was loaded')
+                raise ValueError('Indexing with Interval '
+                                 'requires store_whole_genome=True.')
 
             data = np.zeros((1, idxs.length  - self.garray.order + 1))
             data[0] = self._getsingleitem(idxs)

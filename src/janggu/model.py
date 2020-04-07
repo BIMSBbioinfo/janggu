@@ -868,7 +868,7 @@ class Janggu(object):
             batch_size = 128
 
         if len(self.kerasmodel.inputs) > 1:
-            raise ValueError('Only one input layer supported for this operation.')
+            raise ValueError('Only one input layer supported for predict_variant_effect.')
         binsize = self.kerasmodel.layers[0].input_shape[1] + bioseq.garray.order - 1
 
         if not bioseq.garray._full_genome_stored:
@@ -891,7 +891,9 @@ class Janggu(object):
 
         if len(conditions) != self.kerasmodel.output_shape[-1]:
             raise ValueError("The number of conditions does not match with the "
-                             "number of network output units.")
+                             "number of network output units. [{}!={}]".format(
+                                 len(conditions),
+                                 self.kerasmodel.output_shape[-1]))
 
         # get number of variants
         variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
