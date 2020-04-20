@@ -9,6 +9,7 @@ from collections import OrderedDict
 import numpy as np
 import pyBigWig
 import pysam
+import pandas as pd
 from progress.bar import Bar
 from pybedtools import BedTool
 from pybedtools import Interval
@@ -340,6 +341,8 @@ class BedLoader:
         if self.verbose: bar = Bar('Loading bed files', max=len(files))
         gsize = self.lazyloader.gsize
 
+        gs = pd.DataFrame({'chrom': gsize.chrs, 'end': gsize.ends}).groupby('chrom').aggregate({'end':'max'})
+
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
 
@@ -350,61 +353,48 @@ class BedLoader:
                     'present in {}'.format(sample_file) + \
                     'for mode="{}"'.format(mode))
 
-            # process each chromosome in turn
-            unique_chroms = list(set(gsize.chrs))
+            # init whole genome array
+            arrays = {i: np.zeros((row['end'], 2), dtype=dtype) for i, row in gs.iterrows()}
 
-            for process_chrom in unique_chroms:
+            # load data from signal coverage
+            for region in regions_:
+                if not isbedgraph(sample_file):
+                    score = int(region.score) if mode == 'score' else 1
+                else:
+                    score = float(region.fields[-1])
 
-                tmp_gsize = gsize.filter_by_region(include=process_chrom)
-                length = max(tmp_gsize.ends)
-
-                array = np.zeros((length, 2), dtype=dtype)
-
-                overlapping_regions = regions_.intersect(BedTool(
-                    [Interval(process_chrom, 0, length)]), wa=True, u=True)
-
-                # extract the signal/overlap for the current chromosome
-                for region in overlapping_regions:
-                    # if region score is not defined, take the mere
-                    # presence of a range as positive label.
-
-                    if not isbedgraph(sample_file):
-                        score = int(region.score) if mode == 'score' else 1
-                    else:
-                        score = float(region.fields[-1])
-
+                if region.chrom in arrays:
                     # first dim, score value, second dim, mask
-                    array[region.start:region.end, 0] = score
-                    array[region.start:region.end, 1] = 1
+                    arrays[region.chrom][region.start:region.end, 0] = score
+                    arrays[region.chrom][region.start:region.end, 1] = 1
 
-                # map the signal onto the region of interest
-                for roireg in roifile.intersect(BedTool([Interval(process_chrom,
-                                                                  0, length)]), wa=True, u=True):
+            # map data to rois
+            roiregs = roifile.intersect(regions_, wa=True, u=True)
+            for roireg in roiregs:
+                if roireg.end <= arrays[roireg.chrom].shape[0]:
+                    tmp_array = arrays[roireg.chrom][roireg.start:roireg.end]
+                else:
+                    tmp_array = np.zeros((roireg.length, 2))
+                    tmp_array[:arrays[roireg.chrom][roireg.start:].shape[0]] = \
+                        arrays[roireg.chrom][roireg.start:]
+                if self.minoverlap is not None:
+                    if tmp_array[:, :1].nonzero()[0].shape[0]/roireg.length < \
+                        self.minoverlap:
+                        # minimum overlap not achieved, skip
+                        continue
 
-                    if roireg.end <= length:
-                        tmp_array = array[roireg.start:roireg.end]
-                    else:
-                        tmp_array = np.zeros((roireg.length, 2))
-                        tmp_array[:array[roireg.start:].shape[0]] = \
-                            array[roireg.start:]
-                    if self.minoverlap is not None:
-                        if tmp_array[:, :1].nonzero()[0].shape[0]/roireg.length < \
-                            self.minoverlap:
-                            # minimum overlap not achieved, skip
-                            continue
+                if mode == 'score':
+                    garray[roireg, i] = tmp_array[:, :1]
+                elif mode == 'categorical':
+                    tmp_cat = np.zeros((roireg.length, 1, int(tmp_array.max())+1), dtype=dtype)
+                    tmp_cat[np.arange(roireg.length), 0, tmp_array[:, 0].astype('int')] = tmp_array[:, 1]
 
-                    if mode == 'score':
-                        garray[roireg, i] = tmp_array[:, :1]
-                    elif mode == 'categorical':
-                        tmp_cat = np.zeros((roireg.length, 1, int(tmp_array.max())+1), dtype=dtype)
-                        tmp_cat[np.arange(roireg.length), 0, tmp_array[:, 0].astype('int')] = tmp_array[:, 1]
+                    for r in range(tmp_cat.shape[-1]):
+                        garray[roireg, r] = tmp_cat[:, :, r]
 
-                        for r in range(tmp_cat.shape[-1]):
-                            garray[roireg, r] = tmp_cat[:, :, r]
-
-                    else:
-                        garray[roireg, i] = tmp_array[:, :1]
-                if self.verbose: bar.next()
+                else:
+                    garray[roireg, i] = tmp_array[:, :1]
+            if self.verbose: bar.next()
 
         if self.verbose: bar.finish()
         os.remove(tmpfilename)

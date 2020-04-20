@@ -1,4 +1,4 @@
-version = '0.9.6'
+version = '0.9.7'
 
 # As of v0.9.4 there should be a separate
 # dataversion. in case the dataset structure
@@ -8,4 +8,4 @@ version = '0.9.6'
 # The dataversion has to be bumped whenever,
 # the cached files are not compatible anymore with
 # the new version anymore.
-dataversion = '0.9.6'
+dataversion = '0.9.7'
