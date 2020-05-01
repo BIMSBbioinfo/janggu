@@ -88,12 +88,12 @@ class GenomicIndexer(object):  # pylint: disable=too-many-instance-attributes
         if binsize is None and not collapse:
             binsize_ = None
             # binsize will be inferred from bed file
+            # the maximum interval length will be used
             for reg in regions_:
                 if binsize_ is None:
                     binsize_ = reg.length
-                if reg.length != binsize_:
-                    raise ValueError('Cannot infer binsize, because intervals are of uneven length. '
-                                     'Either specify binsize=<int> or use collapse=True.')
+                if binsize_ < reg.length:
+                    binsize_ = reg.length
             binsize = binsize_
 
         if stepsize is None:

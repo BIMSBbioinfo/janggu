@@ -71,13 +71,12 @@ def test_gindexer_errors():
         # due to flank < 0
         GenomicIndexer.create_from_file(os.path.join(data_path, 'sample.bed'),
                                         binsize=200, stepsize=50, flank=-1)
-    with pytest.raises(ValueError):
-        # due to unequal intervals
-        gi=GenomicIndexer.create_from_file(os.path.join(data_path, 'scores.bed'),
-                                        binsize=None, stepsize=None, flank=0)
-        print(len(gi))
-        for reg in gi:
-            print(reg)
+    # due to unequal intervals
+    gi=GenomicIndexer.create_from_file(os.path.join(data_path, 'scores.bed'),
+                                    binsize=None, stepsize=None, flank=0)
+    #print(len(gi))
+    #for reg in gi:
+    #    print(reg)
     GenomicIndexer.create_from_file(os.path.join(data_path, 'scores.bed'),
                                     binsize=200, stepsize=200, flank=0)
 
