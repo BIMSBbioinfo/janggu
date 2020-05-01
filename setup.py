@@ -73,14 +73,10 @@ setup(
         'pysam<=0.15.3',
         'pyBigWig',
         'progress',
-        'urllib3',
         'matplotlib',
         'seaborn',
         'scikit-learn',
-        'dash',
-        'dash_renderer',
-        'dash_core_components',
-        'dash_html_components'
+        'scipy',
     ],
     extras_require={
         "tf": ['tensorflow'],
