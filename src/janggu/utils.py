@@ -261,7 +261,7 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
         as values.
     """
     if urlcleanup is None:  # pragma: no cover
-        raise Exception('urllib not available. Please install urllib3.')
+        raise Exception('\n\nurllib not available. Please install urllib3.\n\n')
 
     outputfile = os.path.join(outputdir, '{}.chrom.sizes'.format(refgenome))
     if not os.path.exists(outputfile):  # pragma: no cover

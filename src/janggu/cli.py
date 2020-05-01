@@ -29,17 +29,16 @@ try:
     import dash_html_components as html  # pylint: disable=import-error
     import plotly.graph_objs as go  # pylint: disable=import-error
 except ImportError as exception:
-    print('dash not available. Please install dash, dash_renderer, '
+    print('\n\ndash not available. Please install dash, dash_renderer, '
           'dash_core_components'
-          ' and dash_html_components to be able to use the janggu app.')
-    raise(exception)
-
+          ' and dash_html_components to be able to use the janggu app.\n\n')
+    exit()
 try:
     from sklearn.decomposition import PCA  # pylint: disable=import-error
     from sklearn.manifold import TSNE  # pylint: disable=import-error
 except ImportError as exception:
-    print('scikit-learn not available. Please install scikit-learn.')
-    raise(exception)
+    print('\n\nscikit-learn not available. Please install scikit-learn.\n\n')
+    exit()
 
 PARSER = argparse.ArgumentParser(description='janggu model explorer.')
 PARSER.add_argument('-path', dest='janggu_results',
