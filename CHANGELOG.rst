@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.9.7 (2020-05-07)
+------------------
+
+- Performance improvement for loading BED files.
+- If no binsize is supplied, the binsize is detected automatically as the longest interval in the roi. Previously automatic detection was only offered if all intervals were of equal length, otherwise, a binsize needed to be specified manually.
+
 0.9.6 (2020-02-26)
 ------------------
 
