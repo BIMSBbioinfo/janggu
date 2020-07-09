@@ -79,8 +79,8 @@ setup(
         'scipy',
     ],
     extras_require={
-        "tf": ['tensorflow'],
-        "tf_gpu": ['tensorflow-gpu']
+        "tf": ['tensorflow==1.14'],
+        "tf_gpu": ['tensorflow-gpu==1.14']
     },
     entry_points={
         'console_scripts': [
