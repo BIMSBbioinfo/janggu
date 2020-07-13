@@ -113,8 +113,7 @@ and type
 
 ::
 
-   pip install janggu[tf]
-   pip install janggu[tf_gpu]
+   pip install janggu[tf] # or janggu[tf_gpu] 
 
 Alternatively, you can install tensorflow and it's dependencies also via conda.
 
