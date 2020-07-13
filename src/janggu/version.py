@@ -1,4 +1,4 @@
-version = '0.9.7'
+version = '0.9.8'
 
 # As of v0.9.4 there should be a separate
 # dataversion. in case the dataset structure

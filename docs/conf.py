@@ -49,7 +49,7 @@ project = u'Janggu'
 year = u'2017-2020'
 author = u'Wolfgang Kopp'
 copyright = '{0}, {1}'.format(year, author)
-version = release = '0.9.7'
+version = release = '0.9.8'
 
 pygments_style = 'trac'
 templates_path = ['.']
