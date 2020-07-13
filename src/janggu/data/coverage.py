@@ -1472,6 +1472,8 @@ class Cover(Dataset):
         os.makedirs(output_dir, exist_ok=True)
 
         resolution = self.garray.resolution
+        if resolution is None:
+            resolution = self.gindexer[0].length
 
         if genomesize is not None:
             gsize = genomesize
