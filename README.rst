@@ -43,7 +43,7 @@ Janggu is a python package that facilitates deep learning in the context of
 genomics. The package is freely available under a GPL-3.0 license.
 
 .. image:: Janggu-visAbstract.png
-   :width: 100%
+   :width: 50%
    :alt: Janggu visual abstract
    :align: center
 
@@ -54,7 +54,6 @@ and **out-of-the-box evaluation** (for keras models specifically) so that you ca
 on designing the neural network architecture for the purpose
 of quickly testing biological hypothesis.
 A comprehensive documentation is available `here <https://janggu.readthedocs.io/en/latest>`_.
-
 
 Hallmarks of Janggu:
 ---------------------
@@ -144,3 +143,7 @@ You may also try to rerun the training by evaluating sequences features on both
 strands and using higher-order sequence encoding using i.e. the command-line arguments: `dnaconv -order 2`.
 Accuracies and prediction scores for the individual example sequences should improve compared to the previous example.
 
+Citation
+========
+
+| Kopp, W., Monti, R., Tamburrini, A., Ohler, U., Akalin, A. Deep learning for genomics using Janggu. Nat Commun 11, 3488 (2020). https://doi.org/10.1038/s41467-020-17155-y
