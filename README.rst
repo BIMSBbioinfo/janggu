@@ -113,11 +113,10 @@ and type
 
 ::
 
-   pip install janggu
+   pip install janggu[tf]
+   pip install janggu[tf_gpu]
 
-The janggu neural network model depends on tensorflow which
-you have to install depending on whether you want to use GPU
-support or CPU only. To install tensorflow type
+Alternatively, you can install tensorflow and it's dependencies also via conda.
 
 ::
 
