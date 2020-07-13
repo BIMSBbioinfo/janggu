@@ -3,6 +3,7 @@ from copy import copy
 
 from janggu.data.coverage import Cover  # noqa
 from janggu.data.data import Dataset  # noqa
+from janggu.data.data import JangguSequence  # noqa
 from janggu.data.dna import Bioseq  # noqa
 from janggu.data.dna import VariantStreamer  # noqa
 from janggu.data.genomic_indexer import GenomicIndexer  # noqa
