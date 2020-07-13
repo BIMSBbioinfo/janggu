@@ -1052,7 +1052,7 @@ def test_janggu_train_predict_sequence(tmpdir):
     outputs = {'y': Array('y', np.random.randint(2, size=(100, 1)),
                     conditions=['random'])}
 
-    jseq = JangguSequence(10, inputs, outputs)
+    jseq = JangguSequence(inputs, outputs, batch_size=10)
 
     @inputlayer
     @outputdense('sigmoid')

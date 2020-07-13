@@ -502,7 +502,7 @@ class Janggu(object):
             # input could be a sequence
             jseq = inputs
         else:
-            jseq = JangguSequence(batch_size, inputs, outputs, sample_weight, shuffle=shuffle)
+            jseq = JangguSequence(inputs, outputs, sample_weight, batch_size, shuffle=shuffle)
 
         if isinstance(validation_data, tuple):
             valinputs = _convert_data(self.kerasmodel, validation_data[0],
@@ -510,7 +510,7 @@ class Janggu(object):
             valoutputs = _convert_data(self.kerasmodel, validation_data[1],
                                        'output_layers')
             sweights = validation_data[2] if len(validation_data) == 3 else None
-            valjseq = JangguSequence(batch_size, valinputs, valoutputs, sweights, shuffle=False)
+            valjseq = JangguSequence(valinputs, valoutputs, sweights, batch_size, shuffle=False)
         elif isinstance(validation_data, Sequence):
             valjseq = validation_data
         elif isinstance(validation_data, list) and isinstance(validation_data[0], str):
@@ -540,18 +540,16 @@ class Janggu(object):
             self.__dim_logging(valinp)
             self.logger.info("Validation-Output:")
             self.__dim_logging(valoup)
-            jseq = JangguSequence(jseq.batch_size,
-                                  _convert_data(self.kerasmodel, traininp,
+            jseq = JangguSequence(_convert_data(self.kerasmodel, traininp,
                                                 'input_layers'),
                                   _convert_data(self.kerasmodel, trainoup,
                                                 'output_layers'),
-                                  sample_weights=None, shuffle=jseq.shuffle)
-            valjseq = JangguSequence(jseq.batch_size,
-                                     _convert_data(self.kerasmodel, valinp,
+                                  sample_weights=None, batch_size=jseq.batch_size, shuffle=jseq.shuffle)
+            valjseq = JangguSequence(_convert_data(self.kerasmodel, valinp,
                                                    'input_layers'),
                                      _convert_data(self.kerasmodel, valoup,
                                                    'output_layers'),
-                                     sample_weights=None, shuffle=False)
+                                     sample_weights=None, batch_size=jseq.batch_size, shuffle=False)
 
         else:
             valjseq = None
@@ -664,7 +662,7 @@ class Janggu(object):
         if isinstance(inputs, Sequence):
             jseq = inputs
         else:
-            jseq = JangguSequence(batch_size, inputs, None, None)
+            jseq = JangguSequence(inputs, None, None, batch_size=batch_size)
 
         try:
             preds = model.kerasmodel.predict_generator(
@@ -769,7 +767,7 @@ class Janggu(object):
         if isinstance(inputs, Sequence):
             jseq = inputs
         else:
-            jseq = JangguSequence(batch_size, inputs_, outputs_, sample_weight)
+            jseq = JangguSequence(inputs_, outputs_, sample_weight, batch_size=batch_size)
 
         try:
             values = self.kerasmodel.evaluate_generator(
