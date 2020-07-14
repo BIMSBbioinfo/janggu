@@ -126,6 +126,8 @@ class JangguSequence(Sequence):
             return x
 
         def _tolist(x):
+            if isinstance(x, dict):
+                raise ValueError('dict-like inputs/output not accepted with option as_dict=False')
             if not isinstance(x, list) and x is not None:
                 x = [x]
             return x
