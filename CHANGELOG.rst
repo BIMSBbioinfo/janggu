@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.9.8 (2020-07-13)
+------------------
+
+- Improved JangguSequence which can be used with keras and tensorflow 2.0
+
 0.9.7 (2020-05-07)
 ------------------
 
