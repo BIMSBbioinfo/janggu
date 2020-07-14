@@ -1036,6 +1036,41 @@ def test_janggu_train_predict_option7(tmpdir):
     bwm.evaluate(inputs, outputs,
                  use_multiprocessing=False)
 
+@pytest.mark.filterwarnings("ignore:inspect")
+def test_sequence_config():
+    """Train, predict and evaluate on dummy data.
+
+    create: YES
+    Input args: Dataset
+    validation_set: YES
+    batch_size: None
+    """
+
+    inputs = Array("x", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
+
+    jseq = JangguSequence(inputs.data, outputs.data, batch_size=10, as_dict=False)
+    assert len(jseq) == 10
+    for x, y, _ in jseq:
+        assert x[0].shape == (10, 10)
+        assert y[0].shape == (10, 1)
+        break
+
+    jseq = JangguSequence(inputs, outputs, batch_size=10, as_dict=False)
+    assert len(jseq) == 10
+    for x, y, _ in jseq:
+        assert x[0].shape == (10, 10)
+        assert y[0].shape == (10, 1)
+        break
+
+    jseq = JangguSequence(inputs, outputs, batch_size=10, as_dict=True)
+    assert len(jseq) == 10
+    for x, y, _ in jseq:
+        assert x['x'].shape == (10, 10)
+        assert y['y'].shape == (10, 1)
+        break
+
 
 @pytest.mark.filterwarnings("ignore:inspect")
 def test_janggu_train_predict_sequence(tmpdir):
