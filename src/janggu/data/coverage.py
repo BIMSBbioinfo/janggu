@@ -273,14 +273,18 @@ class BigWigLoader:
 
             unique_chroms = list(set(gsize.chrs))
             for process_chrom in unique_chroms:
+
                 tmp_gsize = gsize.filter_by_region(include=process_chrom)
                 length = max(tmp_gsize.ends) + tmp_gsize.flank
 
                 array = np.zeros((length, 1), dtype=dtype)
 
+                if process_chrom not in bwfile.chroms():
+                    continue
                 values = np.asarray(bwfile.values(str(process_chrom),
                                                   int(0),
-                                                  int(length)))
+                                                  min(int(length),
+                                                      bwfile.chroms()[process_chrom])))
                 if nan_to_num:
                     values = np.nan_to_num(values, copy=False)
 

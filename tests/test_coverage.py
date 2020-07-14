@@ -1984,3 +1984,130 @@ def test_bedgraph():
     assert cover1.shape == (25, 200, 1, 1)
     assert cover1.shape == cover2.shape
     np.testing.assert_equal(cover1[:], cover2[:])
+
+def test_fulltilebigwig():
+
+    import pkg_resources
+    import os
+    from janggu.data import Cover
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    roi = os.path.join(data_path, "sample_fulltile.bed")
+    bwfile = os.path.join(data_path, "sample.bw")
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile,
+        roi=roi,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile,
+        roi=roi,
+        store_whole_genome=False)
+
+    assert len(cover1) == 2
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (2, 30000, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=False)
+
+    assert len(cover1) == 300
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (300, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=False)
+
+    assert len(cover1) == 300
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (300, 500, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+def test_fulltilebigwig2():
+
+    import pkg_resources
+    import os
+    from janggu.data import Cover
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    roi = os.path.join(data_path, "sample_fulltile2.bed")
+    bwfile = os.path.join(data_path, "sample.bw")
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile,
+        roi=roi,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile,
+        roi=roi,
+        store_whole_genome=False)
+
+    assert len(cover1) == 3
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (3, 30000, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=False)
+
+    assert len(cover1) == 450
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (450, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bigwig(
+        'test',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bigwig(
+        'test2',
+        bigwigfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=False)
+
+    assert len(cover1) == 450
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (450, 500, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
