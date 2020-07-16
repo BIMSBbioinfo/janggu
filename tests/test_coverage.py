@@ -2111,3 +2111,269 @@ def test_fulltilebigwig2():
     assert cover1.shape == cover2.shape
     np.testing.assert_equal(cover1[:], cover2[:])
 
+
+def test_fulltilebam():
+
+    import pkg_resources
+    import os
+    from janggu.data import Cover
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    roi = os.path.join(data_path, "sample_fulltile.bed")
+    bwfile = os.path.join(data_path, "sample.bam")
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bwfile,
+        roi=roi,
+        stranded=False,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bwfile,
+        stranded=False,
+        roi=roi,
+        store_whole_genome=False)
+
+    assert len(cover1) == 2
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (2, 30000, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        stranded=False,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        stranded=False,
+        store_whole_genome=False)
+
+    assert len(cover1) == 300
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (300, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        stranded=False,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        stranded=False,
+        store_whole_genome=False)
+
+    assert len(cover1) == 300
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (300, 500, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+def test_fulltilebam2():
+
+    import pkg_resources
+    import os
+    from janggu.data import Cover
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    roi = os.path.join(data_path, "sample_fulltile2.bed")
+    bwfile = os.path.join(data_path, "sample.bam")
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bwfile,
+        roi=roi,
+        stranded=False,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bwfile,
+        roi=roi,
+        stranded=False,
+        store_whole_genome=False)
+
+    assert len(cover1) == 3
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (3, 30000, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        stranded=False,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        stranded=False,
+        store_whole_genome=False)
+
+    assert len(cover1) == 450
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (450, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bam(
+        'test',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        stranded=False,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bam(
+        'test2',
+        bamfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        stranded=False,
+        store_whole_genome=False)
+
+    assert len(cover1) == 450
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (450, 500, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+
+def test_fulltilebed():
+
+    import pkg_resources
+    import os
+    from janggu.data import Cover
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    roi = os.path.join(data_path, "sample_fulltile.bed")
+    bwfile = os.path.join(data_path, "sample.bed")
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile,
+        roi=roi,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bwfile,
+        roi=roi,
+        store_whole_genome=False)
+
+    assert len(cover1) == 2
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (2, 30000, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=False)
+
+    assert len(cover1) == 300
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (300, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=False)
+
+    assert len(cover1) == 300
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (300, 500, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+def test_fulltilebed2():
+
+    import pkg_resources
+    import os
+    from janggu.data import Cover
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    roi = os.path.join(data_path, "sample_fulltile2.bed")
+    bwfile = os.path.join(data_path, "sample.bed")
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile,
+        roi=roi,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bwfile,
+        roi=roi,
+        store_whole_genome=False)
+
+    assert len(cover1) == 3
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (3, 30000, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        store_whole_genome=False)
+
+    assert len(cover1) == 450
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (450, 200, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
+    cover1 = Cover.create_from_bed(
+        'test',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=True)
+    cover2 = Cover.create_from_bed(
+        'test2',
+        bedfiles=bwfile,
+        roi=roi, binsize=200,
+        flank=150,
+        store_whole_genome=False)
+
+    assert len(cover1) == 450
+    assert len(cover2) == len(cover1)
+    assert cover1.shape == (450, 500, 1, 1)
+    assert cover1.shape == cover2.shape
+    np.testing.assert_equal(cover1[:], cover2[:])
+
