@@ -26,31 +26,34 @@ sklearn:
 
 .. _notebook_tutorials:
 
-+--------------------------------+
-| Example notebooks              |
-+================================+
-| `keras cnn example`_           |
-+--------------------------------+
-| `sklearn example`_             |
-+--------------------------------+
-| `pytorch example`_             |
-+--------------------------------+
-| `janggu example I`_            |
-+--------------------------------+
-| `janggu example II`_           |
-+--------------------------------+
-| `reusing datasets with view`_  |
-+--------------------------------+
-| `hyperparameter optimization`_ |
-+--------------------------------+
-| `randomizing HDF5 data`_       |
-+--------------------------------+
-| `variant effect prediction`_   |
-+--------------------------------+
-| `plotting genome coverage`_    |
-+--------------------------------+
++----------------------------------------------------+
+| Example notebooks                                  |
++====================================================+
+| `keras cnn example`_                               |
++----------------------------------------------------+
+| `keras cnn example with JangguSequence`_           |
++----------------------------------------------------+
+| `sklearn example`_                                 |
++----------------------------------------------------+
+| `pytorch example`_                                 |
++----------------------------------------------------+
+| `janggu example I`_                                |
++----------------------------------------------------+
+| `janggu example II`_                               |
++----------------------------------------------------+
+| `reusing datasets with view`_                      |
++----------------------------------------------------+
+| `hyperparameter optimization`_                     |
++----------------------------------------------------+
+| `randomizing HDF5 data`_                           |
++----------------------------------------------------+
+| `variant effect prediction`_                       |
++----------------------------------------------------+
+| `plotting genome coverage`_                        |
++----------------------------------------------------+
 
 .. _`keras cnn example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/keras_convnet_example.ipynb
+.. _`keras cnn example with JangguSequence`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/keras_convnet_example_w_sequence.ipynb
 .. _`sklearn example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/sklearn_example_with_kmers.ipynb
 .. _`pytorch example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/pytorch_convnet_example.ipynb
 .. _`janggu example I`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/classify_nucleotide_sequences.ipynb
