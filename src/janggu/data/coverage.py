@@ -23,7 +23,6 @@ from janggu.utils import _check_valid_files
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
-from janggu.utils import isbedgraph
 from janggu.version import dataversion as version
 
 
@@ -312,7 +311,7 @@ class BedLoader:
     lazyloader : BedGenomicSizeLazyLoader
         BedGenomicSizeLazyLoader object.
     mode : str
-        Mode might be 'binary', 'score' or 'categorical'.
+        Mode might be 'binary', 'score', 'categorical', 'bedgraph'.
     minoverlap : float or None
         Minimum fraction of overlap of a given feature with a roi bin.
         Default: None (already a single base-pair overlap is considered)
@@ -364,10 +363,10 @@ class BedLoader:
 
             # load data from signal coverage
             for region in regions_:
-                if not isbedgraph(sample_file):
-                    score = int(region.score) if mode == 'score' else 1
-                else:
+                if mode == 'bedgraph':
                     score = float(region.fields[-1])
+                else:
+                    score = int(region.score) if mode == 'score' else 1
 
                 if region.chrom in arrays:
                     # first dim, score value, second dim, mask
@@ -389,9 +388,9 @@ class BedLoader:
                         # minimum overlap not achieved, skip
                         continue
 
-                if mode == 'score':
-                    garray[roireg, i] = tmp_array[:, :1]
-                elif mode == 'categorical':
+                #if mode == 'score':
+                #    garray[roireg, i] = tmp_array[:, :1]
+                if mode == 'categorical':
                     tmp_cat = np.zeros((roireg.length, 1, int(tmp_array.max())+1), dtype=dtype)
                     tmp_cat[np.arange(roireg.length), 0, tmp_array[:, 0].astype('int')] = tmp_array[:, 1]
 
@@ -994,7 +993,7 @@ class Cover(Dataset):
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
         mode : str
-            Mode of the dataset may be 'binary', 'score' or 'categorical'.
+            Mode of the dataset may be 'binary', 'score', 'categorical' or 'bedgraph'.
             Default: 'binary'.
         overwrite : boolean
             Overwrite cachefiles. Default: False.

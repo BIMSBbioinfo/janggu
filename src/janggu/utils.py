@@ -282,12 +282,6 @@ def get_genome_size(refgenome='hg19', outputdir='./', skip_random=True):
     return content.to_dict()['length']
 
 
-def isbedgraph(filename):
-    if filename.endswith('.bedgraph'):
-        return True
-    return False
-
-
 def _get_genomic_reader(inputregions):
     """regions from a BedTool
     """

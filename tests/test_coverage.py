@@ -1972,11 +1972,13 @@ def test_bedgraph():
         'test',
         bedfiles=bgfile_,
         roi=bed_file,
+        mode='bedgraph',
         store_whole_genome=True)
     cover2 = Cover.create_from_bed(
         'test2',
         bedfiles=bgfile_,
         roi=bed_file,
+        mode='bedgraph',
         store_whole_genome=False)
 
     assert len(cover1) == 25
