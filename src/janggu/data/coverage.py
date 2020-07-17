@@ -315,15 +315,21 @@ class BedLoader:
     minoverlap : float or None
         Minimum fraction of overlap of a given feature with a roi bin.
         Default: None (already a single base-pair overlap is considered)
+    conditions : list
+        List of condition names
     verbose : boolean
         Default: False
     """
-    def __init__(self, files, lazyloader, mode, minoverlap, verbose=False):
+    def __init__(self, files, lazyloader, mode,
+                 minoverlap, conditions, verbose=False):
         self.files = files
         self.lazyloader = lazyloader
         self.mode = mode
         self.minoverlap = minoverlap
         self.verbose = verbose
+        self.conditions = conditions
+        self.conditionindex = {c: i for i, c in enumerate(conditions)}
+        print(mode, conditions, self.conditionindex)
 
     def __call__(self, garray):
         files = self.files
@@ -346,29 +352,40 @@ class BedLoader:
         if self.verbose: bar = Bar('Loading bed files', max=len(files))
         gsize = self.lazyloader.gsize
 
-        gs = pd.DataFrame({'chrom': gsize.chrs, 'end': gsize.ends}).groupby('chrom').aggregate({'end':'max'})
+        gs = (pd.DataFrame({'chrom': gsize.chrs,
+                           'end': gsize.ends})
+                 .groupby('chrom')
+                 .aggregate({'end':'max'}))
 
         for i, sample_file in enumerate(files):
             regions_ = _get_genomic_reader(sample_file)
 
             if regions_[0].score == '.' and mode in ['score',
-                                                     'categorical']:
+                                                     'categorical',
+                                                     'score_category',
+                                                     'name_category']:
                 raise ValueError(
                     'No Score available. Score field must '
                     'present in {}'.format(sample_file) + \
                     'for mode="{}"'.format(mode))
 
             # init whole genome array
-            arrays = {i: np.zeros((row['end'], 2), dtype=dtype) for i, row in gs.iterrows()}
+            arrays = {j: np.zeros((row['end'], 2), dtype=dtype) for j, row in gs.iterrows()}
 
             # load data from signal coverage
             for region in regions_:
                 if mode == 'bedgraph':
                     score = float(region.fields[-1])
+                elif mode == 'score':
+                    score = int(region.score)
+                elif mode == 'binary':
+                    score = 1
+                elif mode in ['categorical', 'score_category']:
+                    score = self.conditionindex[str(region.score)] if str(region.score) in self.conditionindex else None
                 else:
-                    score = int(region.score) if mode == 'score' else 1
+                    score = self.conditionindex[region.name] if region.name in self.conditionindex else None
 
-                if region.chrom in arrays:
+                if region.chrom in arrays and score is not None:
                     # first dim, score value, second dim, mask
                     arrays[region.chrom][region.start:region.end, 0] = score
                     arrays[region.chrom][region.start:region.end, 1] = 1
@@ -388,9 +405,7 @@ class BedLoader:
                         # minimum overlap not achieved, skip
                         continue
 
-                #if mode == 'score':
-                #    garray[roireg, i] = tmp_array[:, :1]
-                if mode == 'categorical':
+                if mode in ['categorical', 'score_category', 'name_category']:
                     tmp_cat = np.zeros((roireg.length, 1, int(tmp_array.max())+1), dtype=dtype)
                     tmp_cat[np.arange(roireg.length), 0, tmp_array[:, 0].astype('int')] = tmp_array[:, 1]
 
@@ -993,7 +1008,17 @@ class Cover(Dataset):
             Typecode to define the datatype to be used for storage.
             Default: 'int'.
         mode : str
-            Mode of the dataset may be 'binary', 'score', 'categorical' or 'bedgraph'.
+            Determines how the BED-like file should be interpreted, e.g. as class labels or
+            scores.
+            'binary' is used for presence/absence representation of features
+            for a binary classification setting. Regions in the
+            :code:`bedfiles` that intersect the ROI are considered positive examples, while
+            the remaining ROI intervals are negative examples.
+            'score' allows to use the score-value associated with the intervals (e.g. for regression).
+            'score_category' (formerly 'categorical') allows to interpret the integer-valued score as class-label for categorical labels. The labels will be one-hot encoded.
+            'name_category' allows to interpret the name field as class-label for categorical labels. The labels will be one-hot encoded.
+            'bedgraph' indicates that the input file is in bedgraph format and reads out the associated score for each interval.
+            Mode of the dataset may be 'binary', 'score', 'score_category' (or 'categorical'), 'name_category' or 'bedgraph'.
             Default: 'binary'.
         overwrite : boolean
             Overwrite cachefiles. Default: False.
@@ -1082,7 +1107,8 @@ class Cover(Dataset):
                                          gindexer, genomesize,
                                          binsize, stepsize, flank)
 
-        if mode == 'categorical':
+        if conditions is None and \
+           mode in ['categorical', 'score_category', 'name_category']:
             if len(bedfiles) > 1:
                 raise ValueError('Only one bed-file is '
                                  'allowed with mode=categorical, '
@@ -1090,15 +1116,15 @@ class Cover(Dataset):
             sample_file = bedfiles[0]
             regions_ = _get_genomic_reader(sample_file)
 
-            max_class = 0
+            categories = set()
             for reg in regions_:
-                if int(reg.score) > max_class:
-                    max_class = int(reg.score)
-            if conditions is None:
-                conditions = [str(i) for i in range(int(max_class + 1))]
+                categories.add(reg.name if mode == 'name_category' \
+                               else str(reg.score))
+            conditions = sorted(list(categories))
         conditions = _condition_from_filename(bedfiles, conditions)
 
-        bedloader = BedLoader(bedfiles, gsize, mode, minoverlap, verbose)
+        bedloader = BedLoader(bedfiles, gsize, mode,
+                              minoverlap, conditions, verbose)
 
         datatags = [name]
 

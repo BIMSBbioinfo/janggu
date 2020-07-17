@@ -1779,9 +1779,10 @@ def test_load_cover_bed_categorical():
             mode='categorical')
 
         np.testing.assert_equal(len(cover), 100)
-        np.testing.assert_equal(cover.shape, (100, 1, 1, 6))
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 4))
         np.testing.assert_equal(cover[0].sum(), 0)
         np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[4], [[[[0., 0., 0., 1.]]]])
 
         cover = Cover.create_from_bed(
             "cov50",
@@ -1793,7 +1794,7 @@ def test_load_cover_bed_categorical():
             mode='categorical')
 
         np.testing.assert_equal(len(cover), 100)
-        np.testing.assert_equal(cover.shape, (100, 4, 1, 6))
+        np.testing.assert_equal(cover.shape, (100, 4, 1, 4))
         np.testing.assert_equal(cover[0].sum(), 0)
         np.testing.assert_equal(cover[4].sum(), 4*1)
 
@@ -1808,9 +1809,232 @@ def test_load_cover_bed_categorical():
             mode='categorical')
 
         np.testing.assert_equal(len(cover), 100)
-        np.testing.assert_equal(cover.shape, (100, 1, 1, 6))
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 4))
         np.testing.assert_equal(cover[0].sum(), 0)
         np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[4], [[[[0., 0., 0., 1.]]]])
+
+
+def test_load_cover_bed_score_category():
+    bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+    score_file = pkg_resources.resource_filename('janggu',
+                                                 'resources/scored_sample.bed')
+
+    with pytest.raises(ValueError):
+        # Only one bed file allowed.
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=[score_file] * 2,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            mode='score_category')
+
+    for store in ['ndarray', 'sparse']:
+        print(store)
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            storage=store,
+            mode='score_category')
+
+        assert cover.conditions == ['1', '2', '4', '5']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 4))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[4], [[[[0., 0., 0., 1.]]]])
+
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            conditions=['1', '2', '4', '5'],
+            storage=store,
+            mode='score_category')
+
+        assert cover.conditions == ['1', '2', '4', '5']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 4))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[4], [[[[0., 0., 0., 1.]]]])
+
+        cover = Cover.create_from_bed(
+            "cov50",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=50,
+            storage=store,
+            mode='score_category')
+
+        assert cover.conditions == ['1', '2', '4', '5']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 4, 1, 4))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 4*1)
+
+        cover = Cover.create_from_bed(
+            "cov50",
+            bedfiles=score_file,
+            roi=bed_file,
+            resolution=None,
+            binsize=200, stepsize=200,
+            storage=store,
+            collapser='max',
+            mode='score_category')
+
+        assert cover.conditions == ['1', '2', '4', '5']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 4))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[4], [[[[0., 0., 0., 1.]]]])
+
+
+def test_load_cover_bedgraph():
+    bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+    score_file = pkg_resources.resource_filename('janggu',
+                                                 'resources/sample.bedgraph')
+
+    for store in ['ndarray', 'sparse']:
+        print(store)
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            storage=store,
+            mode='bedgraph')
+
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), .5)
+        np.testing.assert_equal(cover[4], [[[[.5]]]])
+
+        cover = Cover.create_from_bed(
+            "cov50",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=50,
+            storage=store,
+            mode='bedgraph')
+
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 4, 1, 1))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 4*.5)
+
+        cover = Cover.create_from_bed(
+            "cov50",
+            bedfiles=score_file,
+            roi=bed_file,
+            resolution=None,
+            binsize=200, stepsize=200,
+            storage=store,
+            collapser='max',
+            mode='bedgraph')
+
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 1))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), .5)
+        np.testing.assert_equal(cover[4], [[[[.5]]]])
+
+
+def test_load_cover_bed_name_category():
+    bed_file = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+    score_file = pkg_resources.resource_filename('janggu',
+                                                 'resources/scored_sample.bed')
+
+    with pytest.raises(ValueError):
+        # Only one bed file allowed.
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=[score_file] * 2,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            mode='name_category')
+
+    for store in ['ndarray', 'sparse']:
+        print(store)
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            storage=store,
+            mode='name_category')
+
+        assert cover.conditions == ['state1', 'state2']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 2))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[3], [[[[1., 0.]]]])
+        np.testing.assert_equal(cover[4], [[[[0., 1.]]]])
+
+        cover = Cover.create_from_bed(
+            "cov",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=200,
+            conditions=['state1', 'state2'],
+            storage=store,
+            mode='name_category')
+
+        assert cover.conditions == ['state1', 'state2']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 2))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[3], [[[[1., 0.]]]])
+        np.testing.assert_equal(cover[4], [[[[0., 1.]]]])
+
+        cover = Cover.create_from_bed(
+            "cov50",
+            bedfiles=score_file,
+            roi=bed_file,
+            binsize=200, stepsize=200,
+            resolution=50,
+            storage=store,
+            mode='name_category')
+
+        assert cover.conditions == ['state1', 'state2']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 4, 1, 2))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 4*1)
+
+        cover = Cover.create_from_bed(
+            "cov50",
+            bedfiles=score_file,
+            roi=bed_file,
+            resolution=None,
+            binsize=200, stepsize=200,
+            storage=store,
+            collapser='max',
+            mode='name_category')
+
+        assert cover.conditions == ['state1', 'state2']
+        np.testing.assert_equal(len(cover), 100)
+        np.testing.assert_equal(cover.shape, (100, 1, 1, 2))
+        np.testing.assert_equal(cover[0].sum(), 0)
+        np.testing.assert_equal(cover[4].sum(), 1)
+        np.testing.assert_equal(cover[3], [[[[1., 0.]]]])
+        np.testing.assert_equal(cover[4], [[[[0., 1.]]]])
 
 
 def test_filter_by_region():

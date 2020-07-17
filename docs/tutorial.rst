@@ -144,6 +144,17 @@ An example is shown below:
    # One-hot encoding for the first 10 bases of the first region
    dna[0][0, :10, 0, :]
 
+   #array([[0, 1, 0, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 1, 0, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 0, 1, 0],
+   #       [0, 1, 0, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 0, 1, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 0, 1, 0]], dtype=int8)
+
 Furthermore, it is possible to trim variable sequence length using
 the :code:`fixedlen` option. If specfied, all sequences will be truncated
 or zero-padded to length `fixedlen`. For example,
@@ -159,6 +170,14 @@ or zero-padded to length `fixedlen`. For example,
 
    # the last 5 position were zero padded
    dna[0][0, -6:, 0, :]
+
+   #array([[1, 0, 0, 0],
+   #       [0, 0, 0, 0],
+   #       [0, 0, 0, 0],
+   #       [0, 0, 0, 0],
+   #       [0, 0, 0, 0],
+   #       [0, 0, 0, 0]], dtype=int8)
+
 
 Alternatively, nucleotide sequences can be
 obtained from a reference genome directly along with
@@ -183,6 +202,18 @@ can be loaded according to
    dna.shape  # is (4, 200, 1, 4)
    # One-hot encoding of the first 10 nucleotides in region 0
    dna[0][0, :10, 0, :]
+
+   #array([[0, 1, 0, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 1, 0, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 0, 1, 0],
+   #       [0, 1, 0, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 0, 1, 0],
+   #       [1, 0, 0, 0],
+   #       [0, 0, 1, 0]], dtype=int8)
+
 
 
 Sometimes it is more convenient to provide the ROI
@@ -250,6 +281,18 @@ of a di-nucleotide-based one-hot representation is shown below
    # is (100, 199, 1, 16)
    # that is the last dimension represents di-nucleotides
    dna.shape
+
+   dna.conditions
+   # ['AA', 'AC', 'AG', 'AT', 'CA', 'CC', 'CG', 'CT', 'GA', 'GC', 'GG', 'GT', 'TA', 'TC', 'TG', 'TT']
+
+   dna[0][0, :5, 0, :]
+
+   #array([[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   #       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+   #       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+   #       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+   #       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]], dtype=int8)
+
 
 
 Cover
@@ -414,12 +457,14 @@ options are discussed in :ref:`storage`.
 
 
 **Coverage from a BED files** is largely analogous to extracting coverage
-information from BAM or BIGWIG files, but in addition it is possible to interpret
-BED files in various ways:
+information from BAM or BIGWIG files, but in addition the :code:`mode` option
+enables to interpret BED-like files in various ways:
 
-1. **Binary** or Presence/Absence mode interprets the ROI as the union of positive and negative cases in a binary classification setting and regions contained in :code:`bedfiles` as positive examples.
-2. **Score** mode reads out the real-valued score field value from the associated regions.
-3. **Categorical** mode transforms integer-valued scores into one-hot representation. For that option, each of the `nclasses` corresponds to an integer ranging from zero to :code:`nclasses - 1`.
+1. :code:`mode='binary'` Presence/Absence mode interprets the ROI as the union of positive and negative cases in a binary classification setting and regions contained in :code:`bedfiles` as positive examples.
+2. :code:`mode='score'` reads out the real-valued score field value from the associated regions.
+3. :code:`mode='score_category'` transforms integer-valued scores into a categorical one-hot representation.
+4. :code:`mode='name_category'` transforms the name field into a categorical one-hot representation.
+5. :code:`mode='bedgraph'` reads in the score from a file in bedgraph format.
 
 Examples of loading data from a BED file are shown below
 
@@ -439,8 +484,11 @@ Examples of loading data from a BED file are shown below
                                  collapser='max',
                                  resolution=None)
 
-   cover.shape  # is (100, 1, 1, 1)
-   cover[4]  # contains [[[[1.]]]]
+   cover.shape
+   # (100, 1, 1, 1)
+
+   cover[4]
+   # array([[[[1.]]]])
 
    # score mode
    cover = Cover.create_from_bed('score_coverage',
@@ -452,10 +500,16 @@ Examples of loading data from a BED file are shown below
                                  collapser='max',
                                  mode='score')
 
-   cover.shape  # is (100, 1, 1, 1)
-   cover[4]  # contains the score [[[[5.]]]]
+   cover.shape
+   # (100, 1, 1, 1)
 
-   # categorical mode
+   cover[4]
+   # array([[[[5.]]]])
+
+
+   # scoreclass (or categorical) mode
+   # Interprets the integer-valued score as class-label,
+   # which will then be one-hot encoded.
    cover = Cover.create_from_bed('cat_coverage',
                                  bedfiles=score_file,
                                  roi=roi,
@@ -463,10 +517,59 @@ Examples of loading data from a BED file are shown below
                                  stepsize=200,
                                  resolution=None,
                                  collapser='max',
-                                 mode='categorical')
+                                 mode='score_category')
 
-   cover.shape  # is (100, 1, 1, 6)
-   cover[4]  # contains [[[[0., 0., 0., 0., 0., 1.]]]]
+   # there are 4 categories
+   cover.shape
+   # (100, 1, 1, 4)
+
+   # category names
+   cover.conditions
+   # ['1', '2', '4', '5']
+
+   cover[4]
+   # array([[[[0., 0., 0., 1.]]]])
+
+   # nameclass mode
+   # Interprets the name field as class-label.
+   # The class labels will be one hot encoded.
+   cover = Cover.create_from_bed('cat_coverage',
+                                 bedfiles=score_file,
+                                 roi=roi,
+                                 binsize=200,
+                                 stepsize=200,
+                                 resolution=None,
+                                 collapser='max',
+                                 mode='name_category')
+
+   cover.shape
+   # (100, 1, 1, 2)
+
+   # category names
+   cover.conditions
+   # ['state1', 'state2']
+
+   cover[4]
+   # array([[[[0., 1.]]]])
+
+   # bedgraph-format mode
+   bedgraph_file = resource_filename('janggu',
+                                     'resources/sample.bedgraph')
+
+   cover = Cover.create_from_bed('bedgraph_coverage',
+                                 bedfiles=bedgraph_file,
+                                 roi=roi,
+                                 binsize=200,
+                                 stepsize=200,
+                                 resolution=None,
+                                 collapser='max',
+                                 mode='bedgraph')
+
+   cover.shape
+   # (100, 1, 1, 1)
+
+   cover[4]
+   # array([[[[0.5]]]])
 
 Dataset wrappers
 ^^^^^^^^^^^^^^^^^
@@ -482,8 +585,13 @@ aggregating over the middle two dimensions.
 
    from janggu.data import ReduceDim
 
+   cover.shape
+   # (100, 1, 1, 1)
+
    data = ReduceDim(cover, aggregator='sum')
 
+   data.shape
+   # (100, 1)
 
 Other dataset wrappers can be used in order to perform data augmentation, including
 :code:`RandomSignalScale` and :code:`RandomOrientation` which can be used
