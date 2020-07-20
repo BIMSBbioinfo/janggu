@@ -329,7 +329,6 @@ class BedLoader:
         self.verbose = verbose
         self.conditions = conditions
         self.conditionindex = {c: i for i, c in enumerate(conditions)}
-        print(mode, conditions, self.conditionindex)
 
     def __call__(self, garray):
         files = self.files
