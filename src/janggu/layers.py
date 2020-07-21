@@ -184,8 +184,8 @@ class DnaConv2D(Wrapper):
         self.forward_layer = copy(layer)
         config = layer.get_config()
         self.revcomp_layer = layer.__class__.from_config(config)
-        self.forward_layer.name = 'forward_' + self.forward_layer.name
-        self.revcomp_layer.name = 'revcomp_' + self.revcomp_layer.name
+        self.forward_layer._name = 'forward_' + self.forward_layer.name
+        self.revcomp_layer._name = 'revcomp_' + self.revcomp_layer.name
         self.merge_mode = merge_mode
         self._trainable = True
 
@@ -225,11 +225,11 @@ class DnaConv2D(Wrapper):
         return output_shape
 
     def build(self, input_shape):
-        with K.name_scope(self.forward_layer.name):
+        with K.name_scope(self.forward_layer._name):
             if not self.forward_layer.built:
                 self.forward_layer.build(input_shape)
 
-        with K.name_scope(self.revcomp_layer.name):
+        with K.name_scope(self.revcomp_layer._name):
 
             rcmatrix = K.constant(
                 complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
@@ -241,6 +241,12 @@ class DnaConv2D(Wrapper):
             self.revcomp_layer.bias = self.forward_layer.bias
             self.revcomp_layer.use_bias = self.forward_layer.use_bias
             self.revcomp_layer.input_spec = self.forward_layer.input_spec
+            # these attributes have changed between keras 2.2 and 2.4
+            # so they need to be set depending on the keras version.
+            if hasattr(self.forward_layer, '_build_conv_op_input_shape'):
+                self.revcomp_layer._build_conv_op_input_shape = self.forward_layer._build_conv_op_input_shape
+            if hasattr(self.forward_layer, '_convolution_op'):
+                self.revcomp_layer._convolution_op = self.forward_layer._convolution_op
         self.built = True
 
     def get_config(self):
@@ -261,7 +267,6 @@ class DnaConv2D(Wrapper):
     def call(self, inputs):
 
         # revert and complement the weight matrices
-
         # perform the convolution operation
         res1 = self.forward_layer.call(inputs)
         res2 = self.revcomp_layer.call(inputs)
