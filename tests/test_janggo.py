@@ -125,6 +125,30 @@ def test_dnaconv():
     np.testing.assert_allclose(res1, res4, rtol=1e-4)
 
 
+def test_dnaconv2():
+    # this checks if DnaConv2D layer is instantiated correctly if
+    # the conv2d layer has been instantiated beforehand.
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    roi=bed_file, order=1)
+
+    xin = Input(dna.shape[1:])
+    clayer = Conv2D(30, (21, 1), activation='relu')
+
+    clayer(xin)
+
+    l1 = DnaConv2D(clayer)(xin)
+    m1 = Model(xin, l1)
+    res1 =m1.predict(dna[0])[0,0,0,:]
+
+    np.testing.assert_allclose(clayer.get_weights()[0], m1.layers[1].forward_layer.get_weights()[0])
+    assert len(clayer.weights) == 2
+
 
 @pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_instance_dense(tmpdir):
