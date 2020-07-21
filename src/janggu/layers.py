@@ -192,7 +192,6 @@ class DnaConv2D(Wrapper):
         super(DnaConv2D, self).__init__(layer, **kwargs)
         self.input_spec = layer.input_spec
 
-
     @property
     def trainable(self):
         return self._trainable
@@ -227,9 +226,11 @@ class DnaConv2D(Wrapper):
 
     def build(self, input_shape):
         with K.name_scope(self.forward_layer.name):
-            self.forward_layer.build(input_shape)
+            if not self.forward_layer.built:
+                self.forward_layer.build(input_shape)
 
         with K.name_scope(self.revcomp_layer.name):
+
             rcmatrix = K.constant(
                 complement_permmatrix(int(numpy.log(input_shape[-1])/numpy.log(4))),
                 dtype=K.floatx())
