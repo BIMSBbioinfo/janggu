@@ -14,6 +14,7 @@ from keras.layers import Flatten
 from keras.layers import Input
 from keras.layers import Maximum
 from keras.layers import MaxPooling2D
+from keras import Model
 
 from janggu import Janggu
 from janggu import input_attribution
@@ -91,6 +92,38 @@ def test_janggu_generate_name(tmpdir):
     assert os.path.exists(storage)
 
     Janggu.create_by_name(bwm.name)
+
+
+def test_dnaconv():
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_file = os.path.join(data_path, 'sample.bed')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+
+    dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+                                    storage='ndarray',
+                                    roi=bed_file, order=1)
+
+    xin = Input(dna.shape[1:])
+    l1 = DnaConv2D(Conv2D(30, (21, 1), activation='relu'))(xin)
+    m1 = Model(xin, l1)
+    res1 =m1.predict(dna[0])[0,0,0,:]
+
+    clayer = m1.layers[1].forward_layer
+    # forward only
+    l1 = clayer(xin)
+    m2 = Model(xin, l1)
+    res2 = m2.predict(dna[0])[0,0, 0,:]
+
+    rxin = Reverse()(Complement()(xin))
+    l1 = clayer(rxin)
+    l1 = Reverse()(l1)
+    m3 = Model(xin, l1)
+    res3 = m3.predict(dna[0])[0,0, 0,:]
+
+    res4 = np.maximum(res3,res2)
+    np.testing.assert_allclose(res1, res4, rtol=1e-4)
+
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")
