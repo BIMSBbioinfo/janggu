@@ -880,9 +880,15 @@ class Janggu(object):
         if batch_size is None:
             batch_size = 128
 
+        def _get_input_layer_shape(layer):
+            if isinstance(layer.input_shape, list):
+                return layer.input_shape[0]
+            return layer.input_shape
+
         if len(self.kerasmodel.inputs) > 1:
             raise ValueError('Only one input layer supported for predict_variant_effect.')
-        binsize = self.kerasmodel.layers[0].input_shape[1] + bioseq.garray.order - 1
+        binsize = _get_input_layer_shape(self.kerasmodel.layers[0])[1] + \
+             bioseq.garray.order - 1
 
         if not bioseq.garray._full_genome_stored:
             raise ValueError('Incompatible Bioseq: '

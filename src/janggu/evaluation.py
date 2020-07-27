@@ -20,6 +20,7 @@ from sklearn.metrics import roc_curve
 from janggu.utils import ExportJson
 from janggu.utils import ExportScorePlot
 from janggu.utils import ExportTsv
+from janggu.utils import _to_list
 
 
 def _dimension_match(kerasmodel, data, layertype):
@@ -45,10 +46,8 @@ def _dimension_match(kerasmodel, data, layertype):
     if data is None and layertype == 'output_layers':
         return True
 
-    if not isinstance(data, list):
-        tmpdata = [data]
-    else:
-        tmpdata = data
+    tmpdata = _to_list(data)
+
     if len(kerasmodel.get_config()[layertype]) != len(tmpdata):
         return False
     # Check if output dims match between model spec and data
@@ -59,7 +58,12 @@ def _dimension_match(kerasmodel, data, layertype):
             # If the layer name is not present we end up here
             return False
         layer = kerasmodel.get_layer(datum.name)
-        if not layer.output_shape[1:] == datum.shape[1:]:
+        oshape = layer.output_shape
+        if isinstance(oshape, list):
+            # this case is required for keras 2.4.3 and tf 2
+            # which returns a list of tuples
+            oshape = oshape[0]
+        if not oshape[1:] == datum.shape[1:]:
             # if the layer name is present but the dimensions
             # are incorrect, we end up here.
             return False
