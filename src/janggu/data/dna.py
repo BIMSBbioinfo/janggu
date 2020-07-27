@@ -668,8 +668,16 @@ class VariantStreamer:
                          pow(self.bioseq._alphabetsize, self.bioseq.garray.order)))
         alts = np.zeros_like(refs)
 
+        # get variants
         vcf = VariantFile(self.variants).fetch()
 
+        def _get_replacement(new_nucleotide, previous_nucleotide, o):
+            # helper function for replacing old with new nucleotides
+            return (new_nucleotide - previous_nucleotide) * \
+                   pow(self.bioseq._alphabetsize, o)
+
+        # annotation is used to inform about the strandedness
+        # to evaluate the variant
         if self.annotation is not None:
             varbed = BedTool(self.variants)
             n_vcf_fields = len(varbed[0].fields)
@@ -686,6 +694,7 @@ class VariantStreamer:
 
                 ibatch = 0
 
+                # prepare mini-batches of variants
                 while ibatch < self.batch_size:
                     rec = next(vcf)
                     rec_strandedness = '+'
@@ -704,33 +713,49 @@ class VariantStreamer:
                     rallele.append(rec.ref.upper())
                     aallele.append(rec.alts[0].upper())
 
-
+                    # obtain the nucleotide indices around the variant
                     iref = self.bioseq._getsingleitem(Interval(rec.chrom, start, end)).copy()
                     ialt = iref.copy()
 
                     for o in range(self.bioseq.garray.order):
+                        # in the loop we adjust the original DNA sequence
+                        # by using the alternative alleele instead
+                        #
+                        # the loop is required for the higher-order nucleotide representation
+                        # in which a single variant position affects multiple
+                        # mutually overlapping positions in the one-hot encoding
+                        #
+                        # furthermore, the alternative alleele is only set if
+                        # the reference alleele matches with the reference genome.
+                        # unless the ignore_reference_match option was used.
 
-                        irefbase = iref[self.binsize//2 + o - self.bioseq.garray.order +
-                                        (0 if self.binsize%2 == 0 else 1)]
+                        # this is the positions at which to change the nucleotide
+                        position_to_change = self.binsize//2 + o - \
+                                          self.bioseq.garray.order + \
+                                          (0 if self.binsize%2 == 0 else 1)
+
+                        # determine the reference nucleotide
+                        # this would be just irefbase itself for order=1
+                        # but for higher-order representation it needs to
+                        # be determined. e.g. for TT for order=2 would be irefbase==15
+                        # which should give the nucleotides 3, 3
+                        irefbase = iref[position_to_change]
                         irefbase = irefbase // pow(self.bioseq._alphabetsize, o)
                         irefbase = irefbase % self.bioseq._alphabetsize
 
                         if self.ignore_reference_match:
                             # process the variant even if
                             # it does not match with the reference base
-                            replacement = (NMAP[rec.ref.upper()] -
-                                           irefbase) * \
-                                           pow(self.bioseq._alphabetsize, o)
 
-                            iref[self.binsize//2 + o - self.bioseq.garray.order +
-                                 (0 if self.binsize%2 == 0 else 1)] += replacement
+                            # replace nucleotides in the reference
+                            # and in the alternative alleele
+                            iref[position_to_change] += _get_replacement(
+                                 NMAP[rec.ref.upper()],
+                                 irefbase, o)
 
-                            replacement = (NMAP[rec.alts[0].upper()] -
-                                           irefbase) * \
-                                          pow(self.bioseq._alphabetsize, o)
-
-                            ialt[self.binsize//2 + o - self.bioseq.garray.order +
-                                 (0 if self.binsize%2 == 0 else 1)] += replacement
+                            ialt[position_to_change] += _get_replacement(
+                                 NMAP[rec.alts[0].upper()],
+                                 irefbase, o)
                             continue
 
                         if NMAP[rec.ref.upper()] != irefbase:
@@ -743,13 +768,15 @@ class VariantStreamer:
                         else:
                             # at this point, it is ensured that the VCF reference
                             # agrees with the reference genome.
-                            replacement = (NMAP[rec.alts[0].upper()] -
-                                           NMAP[rec.ref.upper()]) * \
-                                          pow(self.bioseq._alphabetsize, o)
+                            # keep the reference as it is, only change
+                            #  the alternative alleele
 
-                            ialt[self.binsize//2 + o - self.bioseq.garray.order +
-                                 (0 if self.binsize%2 == 0 else 1)] += replacement
+                            ialt[position_to_change] += _get_replacement(
+                                 NMAP[rec.alts[0].upper()],
+                                 NMAP[rec.ref.upper()], o)
 
+                    # if the strandedness is negative (from the annotation)
+                    # the DNA sequences are reverse complemented
                     if rec_strandedness == '-':
                         ialt = self.bioseq._revcomp(ialt)
                         iref = self.bioseq._revcomp(iref)
