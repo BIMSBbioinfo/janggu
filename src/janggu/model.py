@@ -10,6 +10,7 @@ import time
 import h5py
 import keras
 import keras.backend as K
+import tensorflow as tf
 import numpy as np
 from keras.callbacks import CSVLogger
 from keras.callbacks import LambdaCallback
@@ -146,12 +147,28 @@ class Janggu(object):
         else:
             total_output = K.sum(self.kerasmodel.output, axis=-1)
 
-        grad = K.gradients(total_output, self.kerasmodel.input)
         kinp = self.kerasmodel.input
-
         kinp = _to_list(kinp)
 
-        self._influence = K.function(kinp, grad)
+        if tf.__version__[0] == '1':
+            grad = K.gradients(total_output, self.kerasmodel.input)
+
+            self._influence = K.function(kinp, grad)
+        else:
+            def _influence(inputs):
+                tfinput = [tf.cast(inp, tf.float32) for inp in inputs]
+                with tf.GradientTape() as tape:
+                    tape.watch(tfinput)
+                    pred = self.kerasmodel(tfinput)
+                    if hasattr(outputs, '__len__') > 1:
+                        total_output = K.sum([K.sum(o, axis=-1) for o in pred], axis=-1)
+                    else:
+                        total_output = K.sum(pred, axis=-1)
+
+                grad = tape.gradient(total_output, tfinput)
+                return [g.numpy() for g in grad]
+
+            self._influence = _influence
 
         self.name = name
 
