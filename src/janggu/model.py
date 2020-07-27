@@ -353,9 +353,9 @@ class Janggu(object):
         model = create_model(template, modelparams, inputs, outputs)
         return cls(model.inputs, model.outputs, name)
 
-    def compile(self, optimizer, loss, metrics=None,
-                loss_weights=None, sample_weight_mode=None,
-                weighted_metrics=None, target_tensors=None):
+    def compile(self, *args, **kargs):
+                #loss_weights=None, sample_weight_mode=None,
+                #weighted_metrics=None, target_tensors=None):
         """Model compilation.
 
         This method delegates the compilation to
@@ -371,9 +371,7 @@ class Janggu(object):
 
         """
 
-        self.kerasmodel.compile(optimizer, loss, metrics, loss_weights,
-                                sample_weight_mode, weighted_metrics,
-                                target_tensors)
+        self.kerasmodel.compile(*args, **kargs)
 
     def fit(self,  # pylint: disable=too-many-locals
             inputs=None,
