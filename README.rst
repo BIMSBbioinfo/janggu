@@ -106,20 +106,28 @@ Installation
 A list of python dependencies is defined in `setup.py`.
 Additionally, `bedtools <https://bedtools.readthedocs.io/>`_ is required for `pybedtools` which `janggu` depends on.
 
-
-The simplest way to install janggu is via the conda package management system.
-Assuming you have already installed conda, create a new environment
-and type
+Janggu depends on tensorflow and keras.
+To install janggu with tensorflow version 1 and 2 use
 
 ::
 
+   # to install with tensorflow==1.14 and keras==2.2
    pip install janggu[tf] # or janggu[tf_gpu] 
 
-Alternatively, you can install tensorflow and it's dependencies also via conda.
+   # to install with tensorflow==2.2 and keras==2.4
+   pip install janggu[tf2] # or janggu[tf2_gpu] 
+
+
+Alternatively, you can install tensorflow and keras via
+the conda environment using
 
 ::
 
-   conda install tensorflow  # or tensorflow-gpu
+   # tensorflow v1
+   conda install tensorflow==1.14 keras==2.2  # or tensorflow-gpu
+
+   # tensorflow v2
+   conda install tensorflow==2.2 keras==2.4  # or tensorflow-gpu
 
 Further information regarding the installation of tensorflow can be found on
 the official `tensorflow webpage <https://www.tensorflow.org>`_
