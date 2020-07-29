@@ -12,7 +12,10 @@ matrix:
   include:
     - python: '3.6'
       env:
-        - TOXENV=py36,tf2,report,codecov
+        - TOXENV=py36,report,codecov
+    - python: '3.7'
+      env:
+        - TOXENV=tf2,report,codecov
 before_install:
   - python --version
   - uname -a
