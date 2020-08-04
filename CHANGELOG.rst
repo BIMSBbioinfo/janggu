@@ -1,6 +1,16 @@
 
 Changelog
 =========
+0.9.9 (2020-08-04)
+-------------------
+
+- Added compatibility and tests for tensorflow 2.2.
+- Adapted setup.py to enable the use with tensorflow 1.14 and tensorflow 2.2 and compatible keras versions, respectively.
+- Expanded mode option for Cover.create_from_bed. New options: 'bedgraph', 'score_category' (synonym for 'categorical'), 'name_category'
+- Fixed mode='categorical'/'score_category' behaviour for Cover.create_from_bed
+- Mode 'bedgraph' enables compatibility with bedgraph format.
+- Fixed issue with intervals overhanging the chromosome ends and intervals on non-existing chromosomes for Cover.create_from_bigwig and Cover.create_from_bam.
+- Fixed issue in building DnaConv2D wrapper if the forward and revcomp layers were already built.
 
 0.9.8 (2020-07-13)
 ------------------
