@@ -15,6 +15,7 @@ from pkg_resources import resource_filename
 from janggu.data import Bioseq
 from janggu.data import Cover
 from janggu.layers import Complement, Reverse
+from janggu.layers import DnaConv2D
 from janggu.data.data import JangguSequence
 
 np.random.seed(1234)
@@ -75,9 +76,7 @@ convl = Conv2D(30, (21, 1),
                activation='relu')
 
 if args.model == 'double':
-   forward = convl(xin)
-   reverse = convl(Complement()(Reverse()(xin)))
-   layer = Maximum()([forward, reverse])
+   layer = DnaConv2D(convl)(xin)
 else:
    layer = convl(xin)
 
@@ -99,7 +98,7 @@ model.summary()
 trainseq = JangguSequence(DNA, LABELS, batch_size=32)
 valseq = JangguSequence(DNA_TEST, LABELS_TEST)
 
-hist = model.fit(trainseq, epochs=100,
+hist = model.fit(trainseq, epochs=500,
                  validation_data=valseq)
 
 print('#' * 40)
