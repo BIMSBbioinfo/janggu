@@ -114,7 +114,7 @@ To install janggu with tensorflow version 1 and 2 use
    # to install with tensorflow==1.14 and keras==2.2
    pip install janggu[tf] # or janggu[tf_gpu] 
 
-   # to install with tensorflow==2.2 and keras==2.4
+   # to install with tensorflow==2.2 and keras==2.4.3
    pip install janggu[tf2] # or janggu[tf2_gpu] 
 
 
@@ -127,7 +127,7 @@ the conda environment using
    conda install tensorflow==1.14 keras==2.2  # or tensorflow-gpu
 
    # tensorflow v2
-   conda install tensorflow==2.2 keras==2.4  # or tensorflow-gpu
+   conda install tensorflow==2.2 keras==2.4.3  # or tensorflow-gpu
 
 Further information regarding the installation of tensorflow can be found on
 the official `tensorflow webpage <https://www.tensorflow.org>`_

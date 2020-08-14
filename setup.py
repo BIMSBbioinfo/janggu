@@ -80,8 +80,8 @@ setup(
     extras_require={
         "tf": ['tensorflow==1.14', 'keras<2.3'],
         "tf_gpu": ['tensorflow-gpu==1.14', 'keras<2.3'],
-        "tf2": ['tensorflow==2.2', 'keras==2.4'],
-        "tf2_gpu": ['tensorflow-gpu==2.2', 'keras==2.4'],
+        "tf2": ['tensorflow==2.2', 'keras==2.4.3', 'scipy==1.4.1'],
+        "tf2_gpu": ['tensorflow-gpu==2.2', 'keras==2.4.3', 'scipy==1.4.1'],
     },
     entry_points={
         'console_scripts': [
