@@ -877,113 +877,15 @@ class Janggu(object):
                                        contition_filter='Cfcf')
 
         """
-        if batch_size is None:
-            batch_size = 128
-
-        def _get_input_layer_shape(layer):
-            if isinstance(layer.input_shape, list):
-                return layer.input_shape[0]
-            return layer.input_shape
-
-        if len(self.kerasmodel.inputs) > 1:
-            raise ValueError('Only one input layer supported for predict_variant_effect.')
-        binsize = _get_input_layer_shape(self.kerasmodel.layers[0])[1] + \
-             bioseq.garray.order - 1
-
-        if not bioseq.garray._full_genome_stored:
-            raise ValueError('Incompatible Bioseq: '
-                             'Bioseq must be loaded with store_whole_genome=True.')
-        # the network might output arbitrarily many
-        # output.
-        # With the filter option it is possible to
-        # restrict the analysis to certain features.
-        if condition_filter is None:
-            conditions = [(idx, cond) for idx, cond in enumerate(conditions)]
-        else:
-            conditions = [(idx, cond) for idx, cond in enumerate(conditions) \
-                          if hasattr(re.search(condition_filter, cond), 'start')]
-
-
-        icond = [el[0] for el in conditions]
-
-        local_model = self.kerasmodel
-
-        if len(conditions) != self.kerasmodel.output_shape[-1]:
-            raise ValueError("The number of conditions does not match with the "
-                             "number of network output units. [{}!={}]".format(
-                                 len(conditions),
-                                 self.kerasmodel.output_shape[-1]))
-
-        # get number of variants
-        variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
-                                         annotation=annotation,
-                                         ignore_reference_match=ignore_reference_match)
-
-        nvariants = variantsstream.get_variant_count()
-
-        h5file = h5py.File(os.path.join(output_folder, 'scores.hdf5'), 'w')
-
-        h5file.create_dataset('labels', (len(conditions),),
-                              dtype=h5py.special_dtype(vlen=str),
-                              data=np.array([c[-1] for c in conditions],
-                                            dtype=h5py.special_dtype(vlen=str)))
-
-        refscore = h5file.create_dataset('refscore', (nvariants, len(conditions)),
-                                         dtype='float16')
-        altscore = h5file.create_dataset('altscore', (nvariants, len(conditions)),
-                                         dtype='float16')
-        diffscore = h5file.create_dataset('diffscore', (nvariants, len(conditions)),
-                                          dtype='float16')
-        logodds = h5file.create_dataset('logoddsscore', (nvariants, len(conditions)),
-                                        dtype='float16')
-
-        bar = Bar('Parsing {}: '.format(variants), max=int(np.ceil(nvariants/float(batch_size))))
-
-        chromlist = []
-        poslist = []
-        vnamelist = []
-        reflist = []
-        altlist = []
-        ibatch = 0
-
-        # read variants file
-        for names, chroms, poss, ra, aa, reference, alternative in variantsstream.flow():
-            bar.next()
-
-            if reference.shape[0] <= 0:
-                # reached the end of the file
-                break
-
-            ref_score = local_model.predict_on_batch(reference)
-            alt_score = local_model.predict_on_batch(alternative)
-
-            chromlist += chroms
-            poslist += poss
-            vnamelist += names
-            reflist += ra
-            altlist += aa
-
-            refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:, icond].astype('float16')
-            altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16')
-            diffscore[ibatch:(ibatch + ref_score.shape[0])] = \
-                alt_score[:, icond].astype('float16') - ref_score[:, icond].astype('float16')
-            logodds[ibatch:(ibatch + ref_score.shape[0])] = \
-                np.log(alt_score[:, icond].astype('float16')/
-                       ref_score[:, icond].astype('float16') + 1e-7)
-            ibatch += ref_score.shape[0]
-
-        #form large string
-        BedTool('\n'.join(['{} {} {} {}_{}>{}'.format(chrom, start, start+1, name, ref, alt)
-                           for chrom, start, name, ref, alt in zip(chromlist,
-                                                                   poslist,
-                                                                   vnamelist, reflist, altlist)]),
-                from_string=True).saveas(os.path.join(output_folder, 'snps.bed.gz'))
-
-        bar.finish()
-        h5file.close()
-
-        return (os.path.join(output_folder, 'scores.hdf5'),
-                os.path.join(output_folder, 'snps.bed.gz'))
+        return predict_variant_effect(self.kerasmodel,
+                                      bioseq,
+                                      variants,
+                                      conditions,
+                                      output_folder,
+                                      condition_filter=condition_filter,
+                                      batch_size=batch_size,
+                                      annotation=annotation,
+                                      ignore_reference_match=ignore_reference_match)
 
     def __dim_logging(self, data):
         if isinstance(data, dict):
@@ -1309,3 +1211,177 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
         raise
 
     return output
+
+
+def predict_variant_effect(model,  # pylint: disable=too-many-locals
+                           bioseq,
+                           variants,
+                           conditions,
+                           output_folder,
+                           condition_filter=None,
+                           batch_size=None,
+                           annotation=None,
+                           ignore_reference_match=False):
+    """Evaluates the performance.
+
+    Parameters
+    ----------
+    model : :code:`keras.Model`
+        A keras model
+    bioseq : :code:`Bioseq`
+        Input sequence containing the reference genome.
+    variants :  str
+        File name of a VCF file containg the variants under study.
+    conditions : list(str)
+        Condition labels for each output prediction.
+    output_folder : str
+        The method produces an hdf5 and a bed file as output.
+        The bed-file contains the variant positions while the
+        hdf5 file contains the reference and alternative variant scores
+        for each output feature.
+    condition_filter : str or None
+        Regular expression filter on which conditions should be evaluated.
+        If None, all output conditions will be returned.
+    batch_size : int, None.
+        Batch size. If None, a batch_size of 128 is used.
+    annotation : BedTool object or None
+        BedTool holding feature annotation e.g. gene annotation.
+        The annotation may be used to perform strand-specific variant effect
+        predictions. Each variant is intersected with the annotation
+        in order to derive the correct strandedness. If variants
+        do not overlap with an annotation features or for missing annotation,
+        the forward strand is used.
+    ignore_reference_match : boolean
+        Whether to ignore mismatches between the reference sequence and
+        the reference base in the VCF file. If False, the variant will
+        be skipped over and only matching positions are processed.
+        Otherwise all variants will be processed. Default: False.
+
+    Returns
+    -------
+    tuple:
+        Tuple containing the output filenames: an hdf5 and a bed file.
+
+    Examples
+    --------
+
+    .. code-block:: python
+
+      # Evaluate all variants and all conditions (outputs)
+      model.predict_variant_effect(DATA, VARIANTS, CONDITIONS,
+                                   'vcfoutput')
+
+      # Evaluate all variants and a subset of conditions (Ctcf output labels)
+      model.predict_variant_effect(DATA, LABELS, CONDITIONS,
+                                   'vcfoutput_subset',
+                                   contition_filter='Cfcf')
+
+    """
+    if batch_size is None:
+        batch_size = 128
+
+    def _get_input_layer_shape(layer):
+        if isinstance(layer.input_shape, list):
+            return layer.input_shape[0]
+        return layer.input_shape
+
+    if len(model.inputs) > 1:
+        raise ValueError('Only one input layer supported for predict_variant_effect.')
+    binsize = _get_input_layer_shape(model.layers[0])[1] + \
+         bioseq.garray.order - 1
+
+    if not bioseq.garray._full_genome_stored:
+        raise ValueError('Incompatible Bioseq: '
+                         'Bioseq must be loaded with store_whole_genome=True.')
+    # the network might output arbitrarily many
+    # output.
+    # With the filter option it is possible to
+    # restrict the analysis to certain features.
+    if condition_filter is None:
+        conditions = [(idx, cond) for idx, cond in enumerate(conditions)]
+    else:
+        conditions = [(idx, cond) for idx, cond in enumerate(conditions) \
+                      if hasattr(re.search(condition_filter, cond), 'start')]
+
+
+    icond = [el[0] for el in conditions]
+
+    local_model = model
+
+    if len(conditions) != model.output_shape[-1]:
+        raise ValueError("The number of conditions does not match with the "
+                         "number of network output units. [{}!={}]".format(
+                             len(conditions),
+                             model.output_shape[-1]))
+
+    # get number of variants
+    variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
+                                     annotation=annotation,
+                                     ignore_reference_match=ignore_reference_match)
+
+    nvariants = variantsstream.get_variant_count()
+
+    h5file = h5py.File(os.path.join(output_folder, 'scores.hdf5'), 'w')
+
+    h5file.create_dataset('labels', (len(conditions),),
+                          dtype=h5py.special_dtype(vlen=str),
+                          data=np.array([c[-1] for c in conditions],
+                                        dtype=h5py.special_dtype(vlen=str)))
+
+    refscore = h5file.create_dataset('refscore', (nvariants, len(conditions)),
+                                     dtype='float16')
+    altscore = h5file.create_dataset('altscore', (nvariants, len(conditions)),
+                                     dtype='float16')
+    diffscore = h5file.create_dataset('diffscore', (nvariants, len(conditions)),
+                                      dtype='float16')
+    logodds = h5file.create_dataset('logoddsscore', (nvariants, len(conditions)),
+                                    dtype='float16')
+
+    bar = Bar('Parsing {}: '.format(variants), max=int(np.ceil(nvariants/float(batch_size))))
+
+    chromlist = []
+    poslist = []
+    vnamelist = []
+    reflist = []
+    altlist = []
+    ibatch = 0
+
+    # read variants file
+    for names, chroms, poss, ra, aa, reference, alternative in variantsstream.flow():
+        bar.next()
+
+        if reference.shape[0] <= 0:
+            # reached the end of the file
+            break
+
+        ref_score = local_model.predict_on_batch(reference)
+        alt_score = local_model.predict_on_batch(alternative)
+
+        chromlist += chroms
+        poslist += poss
+        vnamelist += names
+        reflist += ra
+        altlist += aa
+
+        refscore[ibatch:(ibatch + ref_score.shape[0])] = ref_score[:, icond].astype('float16')
+        altscore[ibatch:(ibatch + ref_score.shape[0])] = alt_score[:, icond].astype('float16')
+        diffscore[ibatch:(ibatch + ref_score.shape[0])] = \
+            alt_score[:, icond].astype('float16') - ref_score[:, icond].astype('float16')
+        logodds[ibatch:(ibatch + ref_score.shape[0])] = \
+            np.log(alt_score[:, icond].astype('float16')/
+                   ref_score[:, icond].astype('float16') + 1e-7)
+        ibatch += ref_score.shape[0]
+
+    #form large string
+    BedTool('\n'.join(['{} {} {} {}_{}>{}'.format(chrom, start, start+1, name, ref, alt)
+                       for chrom, start, name, ref, alt in zip(chromlist,
+                                                               poslist,
+                                                               vnamelist, reflist, altlist)]),
+            from_string=True).saveas(os.path.join(output_folder, 'snps.bed.gz'))
+
+    bar.finish()
+    h5file.close()
+
+    return (os.path.join(output_folder, 'scores.hdf5'),
+            os.path.join(output_folder, 'snps.bed.gz'))
+
