@@ -23,6 +23,7 @@ from pybedtools import BedTool
 
 from janggu.data import split_train_test
 from janggu.data.coverage import Cover
+from janggu.data.dna import Bioseq
 from janggu.data.data import JangguSequence
 from janggu.data.data import _data_props
 from janggu.data.dna import VariantStreamer
@@ -822,45 +823,12 @@ class Janggu(object):
                                condition_filter=None,
                                batch_size=None,
                                annotation=None,
-                               ignore_reference_match=False):
+                               ignore_reference_match=False,
+                               order=1):
         """Evaluates the performance.
 
-        Parameters
-        ----------
-        bioseq : :code:`Bioseq`
-            Input sequence containing the reference genome.
-        variants :  str
-            File name of a VCF file containg the variants under study.
-        conditions : list(str)
-            Condition labels for each output prediction.
-        output_folder : str
-            The method produces an hdf5 and a bed file as output.
-            The bed-file contains the variant positions while the
-            hdf5 file contains the reference and alternative variant scores
-            for each output feature.
-        condition_filter : str or None
-            Regular expression filter on which conditions should be evaluated.
-            If None, all output conditions will be returned.
-        batch_size : int, None.
-            Batch size. If None, a batch_size of 128 is used.
-        annotation : BedTool object or None
-            BedTool holding feature annotation e.g. gene annotation.
-            The annotation may be used to perform strand-specific variant effect
-            predictions. Each variant is intersected with the annotation
-            in order to derive the correct strandedness. If variants
-            do not overlap with an annotation features or for missing annotation,
-            the forward strand is used.
-        ignore_reference_match : boolean
-            Whether to ignore mismatches between the reference sequence and
-            the reference base in the VCF file. If False, the variant will
-            be skipped over and only matching positions are processed.
-            Otherwise all variants will be processed. Default: False.
-
-
-        Returns
-        -------
-        tuple:
-            Tuple containing the output filenames: an hdf5 and a bed file.
+        see help(predict_variant_effect) for a description of
+        the parameters
 
         Examples
         --------
@@ -1221,15 +1189,23 @@ def predict_variant_effect(model,  # pylint: disable=too-many-locals
                            condition_filter=None,
                            batch_size=None,
                            annotation=None,
-                           ignore_reference_match=False):
+                           ignore_reference_match=False,
+                           order=1):
     """Evaluates the performance.
 
     Parameters
     ----------
     model : :code:`keras.Model`
         A keras model
-    bioseq : :code:`Bioseq`
-        Input sequence containing the reference genome.
+    bioseq : :code:`Bioseq` or str
+        Bioseq container containing a reference genome or the reference genome file
+        in fasta format.
+        If a Bioseq object is used, it has to be loaded with store_whole_genome=True.
+        This may be faster for large amounts of variants.
+        Consider using cache=True as well, such that the genome only needs to be loaded
+        once, and reloaded from the cache if needed.
+        Alternatively, a string pointing to the reference genome sequence in FASTA
+        format can be supplied from which the sequence context is extracted.
     variants :  str
         File name of a VCF file containg the variants under study.
     conditions : list(str)
@@ -1256,6 +1232,10 @@ def predict_variant_effect(model,  # pylint: disable=too-many-locals
         the reference base in the VCF file. If False, the variant will
         be skipped over and only matching positions are processed.
         Otherwise all variants will be processed. Default: False.
+    order : int
+        Order of the DNA sequence representation. Only relevant if the option
+        bioseq is pointing to a reference genome file. If bioseq is already a
+        Bioseq object, this options will be ignored. Default: 1.
 
     Returns
     -------
@@ -1268,11 +1248,11 @@ def predict_variant_effect(model,  # pylint: disable=too-many-locals
     .. code-block:: python
 
       # Evaluate all variants and all conditions (outputs)
-      model.predict_variant_effect(DATA, VARIANTS, CONDITIONS,
+      predict_variant_effect(kerasmodel, DATA, VARIANTS, CONDITIONS,
                                    'vcfoutput')
 
       # Evaluate all variants and a subset of conditions (Ctcf output labels)
-      model.predict_variant_effect(DATA, LABELS, CONDITIONS,
+      predict_variant_effect(kerasmodel, DATA, LABELS, CONDITIONS,
                                    'vcfoutput_subset',
                                    contition_filter='Cfcf')
 
@@ -1285,14 +1265,13 @@ def predict_variant_effect(model,  # pylint: disable=too-many-locals
             return layer.input_shape[0]
         return layer.input_shape
 
+    if isinstance(bioseq, Bioseq):
+        order = bioseq.garray.order
+
     if len(model.inputs) > 1:
         raise ValueError('Only one input layer supported for predict_variant_effect.')
-    binsize = _get_input_layer_shape(model.layers[0])[1] + \
-         bioseq.garray.order - 1
+    binsize = _get_input_layer_shape(model.layers[0])[1] + order - 1
 
-    if not bioseq.garray._full_genome_stored:
-        raise ValueError('Incompatible Bioseq: '
-                         'Bioseq must be loaded with store_whole_genome=True.')
     # the network might output arbitrarily many
     # output.
     # With the filter option it is possible to
@@ -1317,7 +1296,8 @@ def predict_variant_effect(model,  # pylint: disable=too-many-locals
     # get number of variants
     variantsstream = VariantStreamer(bioseq, variants, binsize, batch_size,
                                      annotation=annotation,
-                                     ignore_reference_match=ignore_reference_match)
+                                     ignore_reference_match=ignore_reference_match,
+                                     order=order)
 
     nvariants = variantsstream.get_variant_count()
 

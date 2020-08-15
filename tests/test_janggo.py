@@ -23,6 +23,7 @@ from janggu import model_from_json
 from janggu import model_from_yaml
 from janggu import outputconv
 from janggu import outputdense
+from janggu import predict_variant_effect
 from janggu.data import Array
 from janggu.data import Bioseq
 from janggu.data import Cover
@@ -345,6 +346,52 @@ def test_janggu_variant_prediction(tmpdir):
 
         model.predict_variant_effect(dna, vcffile, conditions=['m'+str(i) for i in range(4)],
                                      output_folder=os.path.join(os.environ['JANGGU_OUTPUT']))
+        assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'scores.hdf5'))
+        assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'snps.bed.gz'))
+
+        f = h5py.File(os.path.join(os.environ['JANGGU_OUTPUT'], 'scores.hdf5'), 'r')
+
+        gindexer = GenomicIndexer.create_from_file(os.path.join(os.environ['JANGGU_OUTPUT'],
+                                                                'snps.bed.gz'), None, None)
+
+        cov = Cover.create_from_array('snps', f['diffscore'],
+                                      gindexer,
+                                      store_whole_genome=True)
+
+        print(cov['chr2', 55, 65].shape)
+        print(cov['chr2', 55, 65])
+
+        assert np.abs(cov['chr2', 59, 60]).sum() > 0.0
+        assert np.abs(cov['chr2', 54, 55]).sum() == 0.0
+        f.close()
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_prediction_from_refgenome(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    for order in [1, 2, 3]:
+        refgenome = os.path.join(data_path, 'sample_genome.fa')
+        vcffile = os.path.join(data_path, 'sample.vcf')
+
+        def _cnn_model(inputs, inp, oup, params):
+            inputs = Input((50 - params['order'] + 1, 1, pow(4, params['order'])))
+            layer = Flatten()(inputs)
+            layer = Dense(params['hiddenunits'])(layer)
+            output = Dense(4, activation='sigmoid')(layer)
+            return inputs, output
+
+        model = Janggu.create(_cnn_model, modelparams={'hiddenunits':2, 'order':order},
+                              name='dna_ctcf_HepG2-cnn')
+
+        predict_variant_effect(model.kerasmodel,
+                               refgenome,
+                               vcffile,
+                               conditions=['m'+str(i) for i in range(4)],
+                               output_folder=os.path.join(os.environ['JANGGU_OUTPUT']),
+                               order=order)
         assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'scores.hdf5'))
         assert os.path.exists(os.path.join(os.environ['JANGGU_OUTPUT'], 'snps.bed.gz'))
 

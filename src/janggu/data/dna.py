@@ -588,12 +588,20 @@ class VariantStreamer:
     a VCF file.
     It parses the VCF file entries and returns the sequence context
     for the reference and the alternative allele, respectively.
+    Currently, only single nucleotide variations is handled.
+    Other structural variants, e.g. indels, are skipped.
 
     Parameters
     -----------
-    bioseq : :class:`Bioseq`
-        Bioseq container containing a reference genome.
-        Make sure that the reference genome was loaded with store_whole_genome=True.
+    bioseq : :class:`Bioseq` or str
+        Bioseq container containing a reference genome or the reference genome file
+        in fasta format.
+        If a Bioseq object is used, it has to be loaded with store_whole_genome=True.
+        This may be faster for large amounts of variants.
+        Consider using cache=True as well, such that the genome only needs to be loaded
+        once, and reloaded from the cache if needed.
+        Alternatively, a string pointing to the reference genome sequence in FASTA
+        format can be supplied from which the sequence context is extracted.
     variants : str
         VCF file name. Contains the variants
     binsize : int
@@ -612,10 +620,14 @@ class VariantStreamer:
         the reference base in the VCF file. If False, the variant will
         be skipped over and only matching positions are processed.
         Otherwise all variants will be processed. Default: False.
+    order : int
+        Order of the DNA sequence representation. Only relevant if the option
+        bioseq is pointing to a reference genome file. If bioseq is already a
+        Bioseq object, this options will be ignored. Default: 1.
     """
     def __init__(self, bioseq, variants, binsize, batch_size, annotation=None,
-                 ignore_reference_match=False):
-        self.bioseq = bioseq
+                 ignore_reference_match=False, order=1):
+
         self.variants = variants
         self.binsize = binsize
         self.batch_size = batch_size
@@ -625,6 +637,7 @@ class VariantStreamer:
             annotation = BedTool(annotation)
         self.annotation = annotation
         self.logger = logging.getLogger('variantstreamer')
+        self.bioseq = self.get_bioseq(bioseq, order)
 
     def is_compatible(self, rec):
         """ Check compatibility of variant.
@@ -635,7 +648,7 @@ class VariantStreamer:
         deletions and insertions.
         """
 
-        start, _ = self.get_interval(rec)
+        _, start, _ = self.get_interval(rec)
         if start < 0:
             # if the start is beyond the chromosome start, don't consider it
             return False
@@ -656,10 +669,30 @@ class VariantStreamer:
                 ncounts += 1
         return ncounts
 
+    def get_bioseq(self, bioseq, order):
+        if isinstance(bioseq, Bioseq):
+            if not bioseq.garray._full_genome_stored:
+                raise ValueError('Incompatible Bioseq: '
+                                 'Bioseq must be loaded with store_whole_genome=True.'
+                                 ' Otherwise, supply bioseq as reference genome in fasta format.')
+            return bioseq
+        else:
+            # if we end up here,
+            # bioseq point to the reference genome in fasta format
+            vcf = VariantFile(self.variants).fetch()
+            roi = BedTool([Interval(*self.get_interval(rec)) for rec in vcf \
+                           if self.is_compatible(rec)])
+            bioseq_obj = Bioseq.create_from_refgenome('dna',
+                                              refgenome=bioseq,
+                                              roi=roi,
+                                              binsize=self.binsize,
+                                              order=order)
+            return bioseq_obj
+
     def get_interval(self, rec):
         start = rec.pos - self.binsize//2 + (1 if self.binsize%2 == 0 else 0) - 1
         end = rec.pos + self.binsize//2
-        return start, end
+        return rec.chrom, start, end
 
     def flow(self):
         """Data flow generator."""
@@ -705,10 +738,10 @@ class VariantStreamer:
                     if not self.is_compatible(rec):
                         continue
 
-                    start, end = self.get_interval(rec)
+                    chrom, start, end = self.get_interval(rec)
 
                     names.append(rec.id if rec.id is not None else '')
-                    chroms.append(rec.chrom)
+                    chroms.append(chrom)
                     poss.append(rec.pos - 1)
                     rallele.append(rec.ref.upper())
                     aallele.append(rec.alts[0].upper())

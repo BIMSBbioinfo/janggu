@@ -789,6 +789,99 @@ def test_janggu_variant_streamer_order_1(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_1_w_refgenome(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    #dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+    #                                   storage='ndarray',
+    #                                   binsize=50,
+    #                                   store_whole_genome=True,
+    #                                   order=order)
+
+    # even binsize
+    vcf = VariantStreamer(refgenome, vcffile,
+                          binsize=10, batch_size=1,
+                          order=order)
+    it_vcf = iter(vcf.flow())
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([0,1,0,0]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,0,0,1]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([0,0,0,1]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # A to G
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([1,0,0,0]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,0,1,0]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # G to A
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,4,0,:], np.array([0,0,1,0]))
+    np.testing.assert_equal(alternative[0,4,0,:], np.array([1,0,0,0]))
+
+    # odd binsize
+    vcf = VariantStreamer(refgenome, vcffile, binsize=3, batch_size=1)
+    it_vcf = iter(vcf.flow())
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+    np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # C to T
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,1,0,:], np.array([0,1,0,0]))
+    np.testing.assert_equal(alternative[0,1,0,:], np.array([0,0,0,1]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,1,0,:], np.array([0,0,0,1]))
+    np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
 def test_janggu_variant_streamer_order_12_ignore_ref_match(tmpdir):
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
     """Test Janggu creation by shape and name. """
@@ -804,7 +897,7 @@ def test_janggu_variant_streamer_order_12_ignore_ref_match(tmpdir):
                                            binsize=50,
                                            store_whole_genome=True,
                                            order=order)
-    
+
         # even binsize
         vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
                               ignore_reference_match=True)
@@ -819,12 +912,59 @@ def test_janggu_variant_streamer_order_12_ignore_ref_match(tmpdir):
         #np.testing.assert_equal(reference, alternative)
         np.testing.assert_equal(np.abs(reference-alternative).sum(), 2*order)
         #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
-    
+
         # odd binsize
         vcf = VariantStreamer(dna, vcffile, binsize=3, batch_size=1,
                               ignore_reference_match=True)
         it_vcf = iter(vcf.flow())
-    
+
+        names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+        # C to T
+        print(names, chroms, poss, ra, aa)
+        print(reference)
+        print(alternative)
+        assert names[0] == 'refmismatch'
+        np.testing.assert_equal(np.abs(reference-alternative).sum(), 2*order)
+        #np.testing.assert_equal(alternative[0,1,0,:], np.array([0,1,0,0]))
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_12_ignore_ref_match_w_refgenome(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    for order in [1, 2]:
+
+        #dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+        #                                   storage='ndarray',
+        #                                   binsize=50,
+        #                                   store_whole_genome=True,
+        #                                   order=order)
+
+        # even binsize
+        vcf = VariantStreamer(refgenome, vcffile, binsize=10, batch_size=1,
+                              ignore_reference_match=True, order=order)
+        it_vcf = iter(vcf.flow())
+        names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+        # C to T
+        print(names, chroms, poss, ra, aa)
+        print(reference)
+        print(alternative)
+
+        assert names[0] == 'refmismatch'
+        #np.testing.assert_equal(reference, alternative)
+        np.testing.assert_equal(np.abs(reference-alternative).sum(), 2*order)
+        #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+        # odd binsize
+        vcf = VariantStreamer(refgenome, vcffile, binsize=3, batch_size=1,
+                              ignore_reference_match=True, order=order)
+        it_vcf = iter(vcf.flow())
+
         names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
         # C to T
         print(names, chroms, poss, ra, aa)
@@ -884,6 +1024,73 @@ def test_janggu_variant_streamer_order_1_revcomp(tmpdir):
     # even binsize
     vcf = VariantStreamer(dna, vcffile, binsize=10, batch_size=1,
                           annotation=annot)
+    it_vcf = iter(vcf.flow())
+    next(it_vcf)
+    # C to T
+
+
+    next(it_vcf)
+    # C to T
+
+    names, chroms, poss, ra, aa, reference2, alternative2 = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference, reference2[:,::-1, :, ::-1])
+    np.testing.assert_equal(alternative, alternative2[:,::-1, :, ::-1])
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_1_revcomp_w_refgenome(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    #dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+    #                                   storage='ndarray',
+    #                                   binsize=50,
+    #                                   store_whole_genome=True,
+    #                                   order=order)
+
+    annot = BedTool([Interval('chr2', 110, 130, '-')])
+
+    # even binsize
+    vcf = VariantStreamer(refgenome, vcffile, binsize=10, batch_size=1, order=order)
+    it_vcf = iter(vcf.flow())
+    next(it_vcf)
+    # C to T
+    #print(names, chroms, poss, ra, aa)
+    #print(reference)
+    #print(alternative)
+    #assert names[0] == 'refmismatch'
+    #np.testing.assert_equal(reference, alternative)
+    #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    next(it_vcf)
+    # C to T
+    #print(names, chroms, poss, ra, aa)
+    #print(reference)
+    #print(alternative)
+    #np.testing.assert_equal(reference[0,4,0,:], np.array([0,1,0,0]))
+    #np.testing.assert_equal(alternative[0,4,0,:], np.array([0,0,0,1]))
+
+    names, chroms, poss, ra, aa, reference, alternative = next(it_vcf)
+    # T to C
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+#    np.testing.assert_equal(reference[0,4,0,:], np.array([0,0,0,1]))
+#    np.testing.assert_equal(alternative[0,4,0,:], np.array([0,1,0,0]))
+
+    # even binsize
+    vcf = VariantStreamer(refgenome, vcffile, binsize=10, batch_size=1,
+                          annotation=annot, order=order)
     it_vcf = iter(vcf.flow())
     next(it_vcf)
     # C to T
@@ -971,6 +1178,110 @@ def test_janggu_variant_streamer_order_2(tmpdir):
     np.testing.assert_equal(alternative[0,4,0,2], 1)
 
     vcf = VariantStreamer(dna, vcffile, binsize=5, batch_size=1)
+    it_vcf = iter(vcf.flow())
+
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,1,0,1], 1)
+    np.testing.assert_equal(reference[0,2,0,7], 1)
+    np.testing.assert_equal(alternative[0,1,0,3], 1)
+    np.testing.assert_equal(alternative[0,2,0,15], 1)
+
+
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    # CTC -> CCC
+    np.testing.assert_equal(reference[0,1,0,7], 1)
+    np.testing.assert_equal(reference[0,2,0,13], 1)
+    np.testing.assert_equal(alternative[0,1,0,5], 1)
+    np.testing.assert_equal(alternative[0,2,0,5], 1)
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_variant_streamer_order_2_w_refgenome(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Test Janggu creation by shape and name. """
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 2
+
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    vcffile = os.path.join(data_path, 'sample.vcf')
+
+    #dna = Bioseq.create_from_refgenome('dna', refgenome=refgenome,
+    #                                   storage='ndarray',
+    #                                   binsize=50,
+    #                                   store_whole_genome=True,
+    #                                   order=order)
+
+    vcf = VariantStreamer(refgenome, vcffile, binsize=10, batch_size=1,
+                          order=order)
+    it_vcf = iter(vcf.flow())
+
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    assert names[0] == 'refmismatch'
+    np.testing.assert_equal(reference, alternative)
+
+    names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
+    # ACT -> ATT
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    np.testing.assert_equal(reference[0,3,0,1], 1)
+    np.testing.assert_equal(reference[0,4,0,7], 1)
+    np.testing.assert_equal(alternative[0,3,0,3], 1)
+    np.testing.assert_equal(alternative[0,4,0,15], 1)
+
+
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    # CTC -> CCC
+    np.testing.assert_equal(reference[0,3,0,7], 1)
+    np.testing.assert_equal(reference[0,4,0,13], 1)
+    np.testing.assert_equal(alternative[0,3,0,5], 1)
+    np.testing.assert_equal(alternative[0,4,0,5], 1)
+
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    # GAC -> GGC
+    np.testing.assert_equal(reference[0,3,0,8], 1)
+    np.testing.assert_equal(reference[0,4,0,1], 1)
+    np.testing.assert_equal(alternative[0,3,0,10], 1)
+    np.testing.assert_equal(alternative[0,4,0,9], 1)
+
+    names, chroms, poss, ra, aa,  reference, alternative = next(it_vcf)
+    print(names, chroms, poss, ra, aa)
+    print(reference)
+    print(alternative)
+    # CGG -> CAG
+    np.testing.assert_equal(reference[0,3,0,6], 1)
+    np.testing.assert_equal(reference[0,4,0,10], 1)
+    np.testing.assert_equal(alternative[0,3,0,4], 1)
+    np.testing.assert_equal(alternative[0,4,0,2], 1)
+
+    vcf = VariantStreamer(refgenome, vcffile, binsize=5, batch_size=1,
+                          order=order)
     it_vcf = iter(vcf.flow())
 
     names, chroms, poss,  ra, aa, reference, alternative = next(it_vcf)
