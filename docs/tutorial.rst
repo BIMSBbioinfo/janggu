@@ -49,6 +49,8 @@ sklearn:
 +----------------------------------------------------+
 | `variant effect prediction`_                       |
 +----------------------------------------------------+
+| `variant effect prediction - part II`_             |
++----------------------------------------------------+
 | `plotting genome coverage`_                        |
 +----------------------------------------------------+
 
@@ -61,6 +63,7 @@ sklearn:
 .. _`reusing datasets with view`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
 .. _`randomizing HDF5 data`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
 .. _`variant effect prediction`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb
+.. _`variant effect prediction - part II`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction-part2.ipynb
 .. _`plotting genome coverage`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/plot_coverage.ipynb
 .. _`hyperparameter optimization`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/hyperparameter_optimization_w_janggu.ipynb
 
