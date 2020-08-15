@@ -118,6 +118,13 @@ To install janggu with tensorflow version 1 and 2 use
    pip install janggu[tf2] # or janggu[tf2_gpu] 
 
 
+Depending on the pip version (e.g. 20.2.2),
+some package dependencies may fail to be resolved
+accurately such that incompatible package versions are installed.
+If this is the case, you could try using
+`pip install ... --use-feature=2020-resolver`
+or install the required package version manually.
+
 Alternatively, you can install tensorflow and keras via
 the conda environment using
 
