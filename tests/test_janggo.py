@@ -305,17 +305,59 @@ def test_janggu_influence_genomic(tmpdir):
 
     model.compile(optimizer='adadelta', loss='binary_crossentropy')
 
-    # check with some nice offset
+    # check with some simple offset
     iv = dna.gindexer[0]
     chrom, start, end = iv.chrom, iv.start, iv.end
     influence = input_attribution(model, dna, chrom=chrom, start=start, end=end)
 
     # check with an odd offset
 
-#    chrom, start, end =
     influence2 = input_attribution(model, dna, chrom=chrom, start=start-1, end=end+1)
     np.testing.assert_equal(influence[0][:], influence2[0][:][:,1:-1])
 
+    # the same, but now using the index directly
+    influence = input_attribution(model, dna, idx=0)
+
+    # check with an odd offset
+
+    influence2 = input_attribution(model, dna, chrom=chrom, start=start-1, end=end+1)
+    np.testing.assert_equal(influence[0][:], influence2[0][:][:,1:-1])
+
+
+@pytest.mark.filterwarnings("ignore:The truth value")
+def test_janggu_influence_fasta(tmpdir):
+
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+
+    order = 1
+    filename = os.path.join(data_path, 'sample.fa')
+
+    data = Bioseq.create_from_seq('dna', fastafile=filename,
+                                 order=order, cache=False)
+
+    dna = data
+
+    @inputlayer
+    def _cnn_model(inputs, inp, oup, params):
+        layer = inputs['dna']
+        layer = Flatten()(layer)
+        output = Dense(params[0])(layer)
+        output = Dense(1, activation='sigmoid')(output)
+        return inputs, output
+
+    model = Janggu.create(_cnn_model, modelparams=(2,),
+                          inputs=data,
+                          name='dna_ctcf_HepG2-cnn')
+
+    #model.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    # check with some nice offset
+    iv = dna.gindexer[0]
+    chrom, start, end = iv.chrom, iv.start, iv.end
+    influence = input_attribution(model, dna, chrom=chrom, start=start, end=end)
+
+    influence2 = input_attribution(model, dna, idx=0)
+    np.testing.assert_equal(influence[0][:], influence2[0][:])
 
 
 @pytest.mark.filterwarnings("ignore:The truth value")

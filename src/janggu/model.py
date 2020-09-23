@@ -1027,7 +1027,8 @@ def create_model(template, modelparams=None, inputs=None,
 
 
 def input_attribution(model, inputs,  # pylint: disable=too-many-locals
-                      chrom=None, start=None, end=None):
+                      chrom=None, start=None, end=None,
+                      idx=None):
 
     """Evaluates the integrated gradients method on the input coverage tracks.
 
@@ -1052,6 +1053,9 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
         Region start.
     end : int or None
         Region end.
+    idx : int or None
+        The index of the i^th sequence to use for the attribution.
+        If idx is set chrom, start and end are ignored.
 
     Examples
     --------
@@ -1063,11 +1067,17 @@ def input_attribution(model, inputs,  # pylint: disable=too-many-locals
       # use
       input_attribution(model, DATA, chrom='chr1', start=start, end=end)
 
+      # To query the input feature importance using a specific index
+      input_attribution(model, DATA, idx=0)
     """
+
+    inputs = _to_list(inputs)
+    if idx is not None:
+        iv = inputs[0].gindexer[idx]
+        chrom, start, end = iv.chrom, iv.start, iv.end
 
     output_chrom, output_start, output_end = chrom, start, end
 
-    inputs = _to_list(inputs)
 
     # store original gindexer
     gindexers_save = [ip.gindexer for ip in inputs]
