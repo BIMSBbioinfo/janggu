@@ -65,7 +65,7 @@ setup(
     install_requires=[
         'numpy',
         'pandas',
-        'Biopython',
+        'Biopython==1.77',
         'h5py',
         'pybedtools',
         'pydot',
