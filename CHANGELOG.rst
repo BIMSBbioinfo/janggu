@@ -1,6 +1,14 @@
 
 Changelog
 =========
+0.10.0 (2020-10-01)
+-------------------
+
+- added predict_variant_effect as stand-alone function.
+- adapted predict_variant_effect to accept a genome in fasta format in addition to the previously required Bioseq object.
+- added idx argument input_attribution to allow the selection of the i^th sequence of a Bioseq object.
+
+
 0.9.9 (2020-08-04)
 -------------------
 
