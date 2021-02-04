@@ -1011,21 +1011,3 @@ loci.
 An illustration of the variant effect prediction in the notebook (see
 `variant effect prediction`_).
 
-Browse through the results
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-Finally, after you have fitted and evaluated your results
-you can browse through the results in an web browser of your choice.
-
-To this end, first start the web application server
-
-::
-
-   janggu -path <results-root>
-
-Then you can inspect the outputs in a browser of your choice
-(default: localhost:8050)
-
-.. image:: janggu_example.png
-   :width: 70%
-   :alt: Prediction from DNA to peaks
-   :align: center

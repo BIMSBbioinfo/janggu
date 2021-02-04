@@ -19,6 +19,7 @@ import argparse
 import base64
 import glob
 import os
+import warnings
 
 import pandas as pd
 from scipy.stats import zscore
@@ -442,7 +443,7 @@ for js in JSES:
 
 
 def main():
-    """cli entry"""
     print('Welcome to janggu (GPL-v3). Copyright (C) 2017-2018 '
           + 'Wolfgang Kopp.')
+    warnings.DeprecationWarning("The janggu web server app will be removed in the future release.")
     APP.run_server(port=ARGS.port)

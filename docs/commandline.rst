@@ -2,18 +2,6 @@
 Command line tools
 ==================
 
-:code:`janggu`
----------------------
-
-The janggu app can be used to browse
-through the results of one or more models using 
-webbrowser of your choice.
-
-Example usage::
-
-   janggu -path <results-root> -port <PORT>
-
-
 :code:`janggu-trim`
 -------------------
 
