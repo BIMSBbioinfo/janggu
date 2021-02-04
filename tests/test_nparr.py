@@ -3,6 +3,7 @@ from copy import copy
 import numpy as np
 import pytest
 
+import tensorflow as tf
 from janggu.data import Array
 from janggu.data import NanToNumConverter
 from janggu.data import RandomOrientation
@@ -11,6 +12,7 @@ from janggu.data import RandomSignalScale
 from janggu.data import ReduceDim
 from janggu.data import SqueezeDim
 
+from janggu.data.tf_dataset_utils import nan_to_zero
 
 def test_nparr(tmpdir):
     X = Array("X", np.random.random((1000, 100)))
@@ -86,6 +88,15 @@ def test_nantonumconverter():
     assert x_tr[0].shape == new_x[0].shape
     assert x_tr.conditions == ["A", "B"]
 
+def test_nantonumconverter_tf_dataset():
+    arr = np.zeros((3,1,1,2))
+    arr[0,0,0,0] = np.nan
+    assert np.isnan(arr[0].mean())
+
+    data = tf.data.Dataset.from_tensor_slices(arr).map(nan_to_zero)
+    for datum in data:
+        assert not np.isnan(datum.numpy().mean())
+
 def test_randomorientation():
     x_orig = np.zeros((3,1,1,2))
 
@@ -134,7 +145,7 @@ def test_randomshift():
     new_x = copy(x_tr)
     assert x_tr[0].shape == new_x[0].shape
     assert x_tr.conditions == None
-    
+
     x_tr = RandomShift(Array('test', x_orig), 1, True)
     assert x_tr[0].shape == (1, 4, 1, 4)
     np.testing.assert_equal(len(x_tr), 1)
@@ -143,4 +154,4 @@ def test_randomshift():
     new_x = copy(x_tr)
     assert x_tr[0].shape == new_x[0].shape
     assert x_tr.conditions == None
-    
+

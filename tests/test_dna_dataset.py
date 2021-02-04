@@ -19,6 +19,8 @@ from janggu.layers import Reverse
 from janggu.utils import complement_permmatrix
 from janggu.utils import sequences_from_fasta
 
+from janggu.data.tf_dataset_utils import random_shift
+
 matplotlib.use('AGG')
 
 binsize = 200
@@ -1312,3 +1314,29 @@ def test_janggu_variant_streamer_order_2_w_refgenome(tmpdir):
     np.testing.assert_equal(reference[0,2,0,13], 1)
     np.testing.assert_equal(alternative[0,1,0,5], 1)
     np.testing.assert_equal(alternative[0,2,0,5], 1)
+
+
+def test_tf_dataset():
+    order = 2
+    data_path = pkg_resources.resource_filename('janggu', 'resources/')
+    bed_merged = os.path.join(data_path, 'sample.gtf')
+    refgenome = os.path.join(data_path, 'sample_genome.fa')
+    seqs = sequences_from_fasta(refgenome)
+
+    data = Bioseq.create_from_refgenome('train', refgenome=seqs,
+                                     roi=bed_merged,
+                                     storage='ndarray',
+                                     store_whole_genome=True,
+                                     cache=False,
+                                     order=order)
+
+    tf_data = data.to_tf_dataset(as_sparse=False)
+
+    for i, item in enumerate(tf_data):
+        np.testing.assert_equal(data[i][0], item)
+
+    tf_map = tf_data.map(lambda x: random_shift(x, 1))
+
+    for i, item in enumerate(tf_data):
+        np.testing.assert_equal(data[i][0], item)
+

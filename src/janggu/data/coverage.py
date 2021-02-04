@@ -13,6 +13,7 @@ import pandas as pd
 from progress.bar import Bar
 from pybedtools import BedTool
 from pybedtools import Interval
+import tensorflow as tf
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
@@ -1539,3 +1540,29 @@ class Cover(Dataset):
                                values=cov[:, idx].tolist())
 
             bw_file.close()
+
+    def to_tf_dataset(self, as_sparse=True):
+        """ Construct a tensorflow.data.Dataset from Bioseq
+
+        returns tensorflow.data.Dataset
+        """
+        idxs = list(range(len(self)))
+        data = self.__getitem__(idxs).astype(self.garray.typecode)
+        if data.shape[0] == 1:
+           data = data[0]
+
+        if as_sparse:
+
+            dids = np.where(data!=0)
+            dseq = np.concatenate([x.reshape(-1,1) for x in dids], axis=1)
+            values = data[dids]
+
+            seqtensor=tf.sparse.SparseTensor(dseq, values,
+                                             dense_shape=data.shape)
+
+            ds = tf.data.Dataset.from_tensor_slices(seqtensor)
+        else:
+            ds = tf.data.Dataset.from_tensor_slices(data)
+        return ds
+
+

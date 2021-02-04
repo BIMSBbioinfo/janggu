@@ -11,6 +11,7 @@ from progress.bar import Bar
 from pybedtools import BedTool
 from pybedtools import Interval
 from pysam import VariantFile
+import tensorflow as tf
 
 from janggu.data.data import Dataset
 from janggu.data.genomic_indexer import GenomicIndexer
@@ -579,6 +580,39 @@ class Bioseq(Dataset):
     def ndim(self):  # pragma: no cover
         """ndim"""
         return len(self.shape)
+
+    def to_tf_dataset(self, as_sparse=True):
+        """ Construct a tensorflow.data.Dataset from Bioseq
+
+        returns tensorflow.data.Dataset
+        """
+        idxs = list(range(len(self)))
+
+        # nucleotide indices
+        data = self.iseq4idx(idxs)
+
+        # batch and position indices
+        batch = np.repeat(np.arange(data.shape[0]),data.shape[1]).reshape(data.shape)
+        pos = np.repeat(np.arange(data.shape[1]), data.shape[0]).reshape((data.shape[1],data.shape[0])).T
+        dummy = np.zeros_like(batch)
+        dseq = np.concatenate([batch.flatten().reshape(-1,1),
+                               pos.flatten().reshape(-1,1),
+                               dummy.flatten().reshape(-1,1),
+                               data.flatten().reshape(-1,1)], axis=1)
+
+        values =  np.ones(dseq.shape[0], dtype=self.garray.typecode)
+        values[dseq[:,2]<0]=0
+
+
+        seqtensor=tf.sparse.SparseTensor(dseq, values,
+                                         dense_shape=[data.shape[0],
+                                                      data.shape[1],
+                                                      1,
+                                                      data.max()+1])
+        if not as_sparse:
+            seqtensor = tf.sparse.to_dense(seqtensor)
+        ds = tf.data.Dataset.from_tensor_slices(seqtensor)
+        return ds
 
 
 class VariantStreamer:

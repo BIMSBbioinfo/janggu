@@ -171,7 +171,7 @@ def sequence_padding(seqs, length):
     return seqs_
 
 
-def as_onehot(iseq, order, alphabetsize):
+def as_onehot(iseq, order, alphabetsize, keep_leading_dim=True):
     """Converts a index sequence into one-hot representation.
 
     This method is used to transform a biological sequence
@@ -189,6 +189,9 @@ def as_onehot(iseq, order, alphabetsize):
         motif modelling.
     alphabetsize : int
         Alphabetsize.
+    keep_leading_dim : bool
+        Whether to keep the leading batch dimension even if the number of batches = 1.
+        Default=True.
 
     Returns
     -------
@@ -203,6 +206,8 @@ def as_onehot(iseq, order, alphabetsize):
                        pow(alphabetsize, order)), dtype='int8')
     for nuc in np.arange(pow(alphabetsize, order)):
         onehot[:, :, 0, nuc][iseq == nuc] = 1
+    if not keep_leading_dim and onehot.shape[0]==1:
+        onehot = onehot[0]
 
     return onehot
 

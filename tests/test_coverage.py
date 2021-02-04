@@ -19,6 +19,8 @@ from janggu.data import LineTrack
 from janggu.data import SeqTrack
 from janggu.data import HeatTrack
 
+from janggu.data.tf_dataset_utils import random_orientation
+
 
 def test_channel_last_first():
     data_path = pkg_resources.resource_filename('janggu', 'resources/')
@@ -2603,3 +2605,27 @@ def test_fulltilebed2():
     assert cover1.shape == cover2.shape
     np.testing.assert_equal(cover1[:], cover2[:])
 
+def test_tf_dataset():
+
+    roi = pkg_resources.resource_filename('janggu', 'resources/sample.bed')
+
+    bw_file = pkg_resources.resource_filename('janggu', 'resources/sample.bw')
+
+    data = Cover.create_from_bigwig('coverage2',
+                                     bigwigfiles=bw_file,
+                                     roi=roi,
+                                     binsize=200,
+                                     stepsize=200,
+                                     resolution=50, cache=False)
+
+
+    tf_data = data.to_tf_dataset(as_sparse=False)
+
+    for i, item in enumerate(tf_data):
+        np.testing.assert_equal(data[i][0], item)
+
+    tf_data = data.to_tf_dataset(as_sparse=False).map(random_orientation)
+
+    for i, item in enumerate(tf_data):
+        np.testing.assert_equal(data[i][0].shape, item.shape)
+        np.testing.assert_allclose(data[i][0].sum(), item.numpy().sum())
