@@ -23,53 +23,6 @@ from janggu.utils import ExportTsv
 from janggu.utils import _to_list
 
 
-def _dimension_match(kerasmodel, data, layertype):
-    """Check if layer dimensions match.
-    The function checks whether the kerasmodel as compatible with
-    the supplied inputs.
-
-    Parameters
-    ----------
-    kerasmodel : :class:`keras.Model`
-        Object of type keras.Model.
-    data : Dataset or list(Dataset)
-        Dataset to check compatiblity for.
-    layertype : str
-        layers is either 'input_layers' or 'output_layers'.
-
-    Returns
-    -------
-    boolean :
-        Returns True if the keras model is compatible with the data
-        and otherwise False.
-    """
-    if data is None and layertype == 'output_layers':
-        return True
-
-    tmpdata = _to_list(data)
-
-    if len(kerasmodel.get_config()[layertype]) != len(tmpdata):
-        return False
-    # Check if output dims match between model spec and data
-    for datum in tmpdata:
-
-        if datum.name not in [el[0] for el in
-                              kerasmodel.get_config()[layertype]]:
-            # If the layer name is not present we end up here
-            return False
-        layer = kerasmodel.get_layer(datum.name)
-        oshape = layer.output_shape
-        if isinstance(oshape, list):
-            # this case is required for keras 2.4.3 and tf 2
-            # which returns a list of tuples
-            oshape = oshape[0]
-        if not oshape[1:] == datum.shape[1:]:
-            # if the layer name is present but the dimensions
-            # are incorrect, we end up here.
-            return False
-    return True
-
-
 def _reshape(data, percondition):
     """Reshape the dataset to make it compatible with the
     evaluation method.
@@ -83,17 +36,14 @@ def _reshape(data, percondition):
         over the condition.
     """
 
-    if isinstance(data, dict):
-        if percondition:
-            # currently this only works for channel_last
-            data = {k: data[k][:].reshape(
-                (int(numpy.prod(data[k].shape[:-1])),
-                 data[k].shape[-1])) for k in data}
-        else:
-            data = {k: data[k][:].reshape(
-                (numpy.prod(data[k].shape[:]), 1)) for k in data}
+    if percondition:
+        # currently this only works for channel_last
+        data = [d[:].reshape(
+            (int(numpy.prod(d.shape[:-1])),
+             d.shape[-1])) for d in data]
     else:
-        raise ValueError('Data must be a dict not {}'.format(type(data)))
+        data = [d[:].reshape(
+            (numpy.prod(d.shape[:]), 1)) for d in data]
 
     return data
 
@@ -145,7 +95,6 @@ class Scorer(object):
     """
 
     def __init__(self, name, score_fct=None,
-                 conditions=None,
                  exporter=ExportJson(),
                  immediate_export=True,
                  percondition=True,
@@ -160,7 +109,6 @@ class Scorer(object):
         self._exporter = exporter
 
         self.immediate_export = immediate_export
-        self.conditions = conditions
         if subdir is None:
             subdir = 'evaluation'
         self.subdir = subdir
@@ -223,7 +171,12 @@ class Scorer(object):
             datatags = []
 
         if outputs is not None:
+            if not isinstance(outputs, list):
+                outputs = [outputs]
             _out = _reshape(outputs, self.percondition)
+
+        if not isinstance(predicted, list):
+            predicted = [predicted]
         _pre = _reshape(predicted, self.percondition)
         self.logger.info(' '.join(('scoring:', self.score_name)))
         score_fct = self.score_fct
@@ -235,26 +188,22 @@ class Scorer(object):
                 return value
             score_fct = _dummy
 
-        for layername in model.get_config()['output_layers']:
+        for i, layername in enumerate(model.get_config()['output_layers']):
 
-            for idx in range(_pre[layername[0]].shape[-1]):
+            for idx in range(_pre[i].shape[-1]):
 
                 if outputs is None:
-                    score = score_fct(_pre[layername[0]][:, idx])
+                    score = score_fct(_pre[i][:, idx])
                 else:
-                    score = score_fct(_out[layername[0]][:, idx],
-                                      _pre[layername[0]][:, idx])
+                    score = score_fct(_out[i][:, idx],
+                                      _pre[i][:, idx])
 
                 if not self.percondition:
                     condition = 'across'
-                elif self.conditions is not None and \
-                   len(self.conditions) == _pre[layername[0]].shape[-1]:
-                    # conditions were supplied manually
-                    condition = self.conditions[idx]
-                elif outputs is not None and hasattr(outputs[layername[0]],
+                elif outputs is not None and hasattr(outputs[i],
                                                      "conditions"):
                     # conditions are extracted from the outputs dataset
-                    condition = outputs[layername[0]].conditions[idx]
+                    condition = outputs[i].conditions[idx]
                 else:
                     # not conditions present, just number them.
                     condition = str(idx)

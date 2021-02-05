@@ -910,12 +910,53 @@ def test_janggu_train_predict_option1(tmpdir):
                         name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+    bwm.summary()
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
     bwm.fit(inputs, outputs, epochs=2, batch_size=32)
+    assert os.path.exists(storage)
 
+    pred = bwm.predict(inputs)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
+    np.testing.assert_equal(pred.shape, outputs.shape)
+
+    # test if the condition name is correctly used in the output table
+    bwm.evaluate(inputs, outputs, callbacks=['auc'])
+
+    outputauc = os.path.join(tmpdir.strpath, 'evaluation', 'nptest', 'auc.tsv')
+    assert os.path.exists(outputauc)
+    assert pd.read_csv(outputauc).columns[0] == 'random'
+
+
+@pytest.mark.filterwarnings("ignore:inspect")
+def test_janggu_train_predict_option11(tmpdir):
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+    """Train, predict and evaluate on dummy data.
+
+    create: by_shape
+    Input args: Dataset
+    """
+
+    inputs = Array("X", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
+
+    def test_model(inputs, inp, oup, params):
+        linputs = Input((10,), name='x')
+        loutput = Dense(1, activation='sigmoid', name='y')(linputs)
+        return linputs, loutput
+
+    bwm = Janggu.create(test_model, name='nptest')
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+    bwm.summary()
+
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    assert not os.path.exists(storage)
+
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32)
     assert os.path.exists(storage)
 
     pred = bwm.predict(inputs)
@@ -944,26 +985,29 @@ def test_janggu_train_predict_option2(tmpdir):
                     conditions=['random'])
 
     def _model():
-        inputs = Input((10,), name='x')
-        output = Dense(1, activation='sigmoid', name='y')(inputs)
-        model = Janggu(inputs=inputs, outputs=output, name='test')
+        linputs = Input((10,), name='x')
+        loutput = Dense(1, activation='sigmoid', name='y')(linputs)
+        #model = Model(linputs, loutput)
+        #model = Janggu(inputs=model.inputs, outputs=model.outputs, name='test')
+        model = Janggu(inputs=linputs, outputs=loutput, name='test')
         model.compile(optimizer='adadelta', loss='binary_crossentropy',
                       metrics=['accuracy'])
         return model
 
     bwm = _model()
+    bwm.summary()
 
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
-    bwm.fit([inputs], [outputs], epochs=2, batch_size=32)
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32)
 
     assert os.path.exists(storage)
 
-    pred = bwm.predict([inputs])
+    pred = bwm.predict(inputs)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate([inputs], [outputs])
+    bwm.evaluate(inputs, outputs)
 
 
 @pytest.mark.filterwarnings("ignore:inspect")
@@ -994,19 +1038,19 @@ def test_janggu_train_predict_option3(tmpdir):
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
-    bwm.fit([inputs], [outputs], epochs=2, batch_size=32)
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32)
 
-    bwm.fit([inputs], [outputs], epochs=2, batch_size=32)
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32)
     assert os.path.exists(storage)
 
-    pred = bwm.predict([inputs])
+    pred = bwm.predict(inputs)
 
-    bwm.predict([inputs], batch_size=32)
+    bwm.predict(inputs, batch_size=32)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate([inputs], [outputs])
+    bwm.evaluate(inputs, outputs)
 
-    bwm.evaluate([inputs], [outputs], batch_size=32)
+    bwm.evaluate(inputs, outputs, batch_size=32)
 
 
 @pytest.mark.filterwarnings("ignore:inspect")
@@ -1081,16 +1125,16 @@ def test_janggu_train_predict_option5(tmpdir):
     storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
     assert not os.path.exists(storage)
 
-    bwm.fit([inputs], [outputs], epochs=2, batch_size=32,
+    bwm.fit(inputs, outputs, epochs=2, batch_size=32,
             use_multiprocessing=False)
 
     assert os.path.exists(storage)
 
-    pred = bwm.predict([inputs],
+    pred = bwm.predict(inputs,
                        use_multiprocessing=False)
     np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
     np.testing.assert_equal(pred.shape, outputs.shape)
-    bwm.evaluate([inputs], [outputs],
+    bwm.evaluate(inputs, outputs,
                  use_multiprocessing=False)
 
 
@@ -1200,10 +1244,17 @@ def test_sequence_config():
     assert len(jseq) == 10
     for x, y, _ in jseq:
         assert x[0].shape == (10, 10)
-        assert y[0].shape == (10, 1)
+        assert y.shape == (10, 1)
         break
 
     jseq = JangguSequence(inputs, outputs, batch_size=10, as_dict=False)
+    assert len(jseq) == 10
+    for x, y, _ in jseq:
+        assert x[0].shape == (10, 10)
+        assert y.shape == (10, 1)
+        break
+
+    jseq = JangguSequence(inputs, [outputs, outputs], batch_size=10, as_dict=False)
     assert len(jseq) == 10
     for x, y, _ in jseq:
         assert x[0].shape == (10, 10)
@@ -1229,9 +1280,9 @@ def test_janggu_train_predict_sequence(tmpdir):
     """
     os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
 
-    inputs = {'x': Array("x", np.random.random((100, 10)))}
-    outputs = {'y': Array('y', np.random.randint(2, size=(100, 1)),
-                    conditions=['random'])}
+    inputs = Array("x", np.random.random((100, 10)))
+    outputs = Array('y', np.random.randint(2, size=(100, 1)),
+                    conditions=['random'])
 
     jseq = JangguSequence(inputs, outputs, batch_size=10)
 
@@ -1241,8 +1292,8 @@ def test_janggu_train_predict_sequence(tmpdir):
         return inputs, inputs[0]
 
     bwm = Janggu.create(_model,
-                        inputs=jseq.inputs['x'],
-                        outputs=jseq.outputs['y'],
+                        inputs=jseq.inputs,
+                        outputs=jseq.outputs,
                         name='nptest')
 
     bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
@@ -1261,6 +1312,52 @@ def test_janggu_train_predict_sequence(tmpdir):
     assert os.path.exists(storage)
 
     pred = bwm.predict(jseq, use_multiprocessing=False)
-    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs['x']))
-    np.testing.assert_equal(pred.shape, outputs['y'].shape)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
+    np.testing.assert_equal(pred.shape, outputs.shape)
+    bwm.evaluate(jseq, use_multiprocessing=False)
+
+@pytest.mark.filterwarnings("ignore:inspect")
+def test_janggu_train_predict_numpy(tmpdir):
+    """Train, predict and evaluate on dummy data.
+
+    create: YES
+    Input args: Dataset
+    validation_set: YES
+    batch_size: None
+    """
+    os.environ['JANGGU_OUTPUT'] = tmpdir.strpath
+
+    inputs = np.random.random((100, 10))
+    outputs = np.random.randint(2, size=(100, 1))
+
+    jseq = JangguSequence(inputs, outputs, batch_size=10)
+
+    @inputlayer
+    @outputdense('sigmoid')
+    def _model(inputs, inp, oup, params):
+        return inputs, inputs[0]
+
+    bwm = Janggu.create(_model,
+                        inputs=jseq.inputs,
+                        outputs=jseq.outputs,
+                        name='nptest')
+
+    bwm.compile(optimizer='adadelta', loss='binary_crossentropy')
+
+    storage = bwm._storage_path(bwm.name, outputdir=tmpdir.strpath)
+    print('storage', storage)
+    print('env', os.environ['JANGGU_OUTPUT'])
+    print('name', bwm.name)
+    print('outputdir', bwm.outputdir)
+    assert not os.path.exists(storage)
+
+    bwm.fit(jseq, epochs=2,
+            validation_data=jseq,
+            use_multiprocessing=False)
+
+    assert os.path.exists(storage)
+
+    pred = bwm.predict(jseq, use_multiprocessing=False)
+    np.testing.assert_equal(len(pred[:, np.newaxis]), len(inputs))
+    np.testing.assert_equal(pred.shape, outputs.shape)
     bwm.evaluate(jseq, use_multiprocessing=False)

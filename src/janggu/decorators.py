@@ -7,6 +7,7 @@ There goal is to avoid having to define those layers.
 Only the network body needs to be defined.
 """
 from functools import wraps
+from collections import OrderedDict
 
 from keras.layers import Conv2D
 from keras.layers import Dense
@@ -23,10 +24,8 @@ def outputdense(activation):
         @wraps(func)
         def _add(inputs, inshapes, outshapes, params):
             inputs, outputs = func(inputs, inshapes, outshapes, params)
-            if isinstance(activation, str):
-                act = {name: activation for name in outshapes}
-            elif callable(activation):
-                act = {name: activation for name in outshapes}
+            if isinstance(activation, str) or callable(activation):
+                act = OrderedDict((name, activation) for name in outshapes)
             else:
                 act = activation
             outputs = [Dense(outshapes[name]['shape'][-1],
@@ -47,10 +46,8 @@ def outputconv(activation):
         @wraps(func)
         def _add(inputs, inshapes, outshapes, params):
             inputs, outputs = func(inputs, inshapes, outshapes, params)
-            if isinstance(activation, str):
-                act = {name: activation for name in outshapes}
-            elif callable(activation):
-                act = {name: activation for name in outshapes}
+            if isinstance(activation, str) or callable(activation):
+                act = OrderedDict((name, activation) for name in outshapes)
             else:
                 act = activation
 

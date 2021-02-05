@@ -19,69 +19,13 @@ from janggu import outputdense
 from janggu.data import Array
 from janggu.data import GenomicIndexer
 from janggu.evaluation import Scorer
-from janggu.evaluation import _dimension_match
+#from janggu.evaluation import _dimension_match
 from janggu.utils import ExportBed
 from janggu.utils import ExportBigwig
 from janggu.utils import ExportClustermap
 from janggu.utils import ExportScorePlot
 from janggu.utils import ExportTsne
 from janggu.utils import ExportTsv
-
-
-def test_input_dims():
-    data = Array('testa', numpy.zeros((10, 10, 1)))
-    xin = Input((10, 1), name='testy')
-    out = Dense(1)(xin)
-    m = Model(xin, out)
-
-    # False due to mismatch of names
-    assert not _dimension_match(m, data, 'input_layers')
-
-    xin = Input((20, 10, 1), name='testa')
-    out = Dense(1)(xin)
-    m = Model(xin, out)
-
-    # False due to mismatch of dims
-    assert not _dimension_match(m, data, 'input_layers')
-    # more input datasets supplied than inputs to models
-    assert not _dimension_match(m, [data, data], 'input_layers')
-
-    xin = Input((10, 1), name='testa')
-    out = Dense(1)(xin)
-    m = Model(xin, out)
-
-    # False due to mismatch of dims
-    assert _dimension_match(m, data, 'input_layers')
-
-
-def test_output_dims():
-    data = Array('testa', numpy.zeros((10, 10, 1)))
-    label = Array('testy', numpy.zeros((10, 1)))
-    xin = Input(data.shape, name='asdf')
-    out = Flatten()(xin)
-    out = Dense(1)(out)
-    m = Model(xin, out)
-
-    # False due to mismatch of names
-    assert not _dimension_match(m, label, 'output_layers')
-
-    xin = Input(data.shape, name='testa')
-    out = Flatten()(xin)
-    out = Dense(2, name='testy')(out)
-    m = Model(xin, out)
-
-    # False due to mismatch of dims
-    assert not _dimension_match(m, label, 'output_layers')
-
-    xin = Input(data.shape, name='testa')
-    out = Flatten()(xin)
-    out = Dense(1, name='testy')(out)
-    m = Model(xin, out)
-
-    # False due to mismatch of dims
-    assert _dimension_match(m, label, 'output_layers')
-
-    assert _dimension_match(m, None, 'output_layers')
 
 
 def get_janggu(inputs, outputs):
@@ -174,6 +118,7 @@ def test_output_json_score(tmpdir):
                            "score.json"), 'r') as f:
         content = json.load(f)
         # now nptest was evaluated
+        print(content)
         assert 'random' in content
 
 
@@ -189,6 +134,9 @@ def test_output_tsv_score(tmpdir):
 
     bwm.evaluate(inputs, outputs, callbacks=[dummy_eval])
 
+    print(pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
+                                        "score.tsv"),
+                           sep='\t', header=[0]))
     assert pandas.read_csv(os.path.join(tmpdir.strpath, "evaluation", bwm.name,
                                         "score.tsv"),
                            sep='\t', header=[0]).iloc[0, 0] == 0.15
@@ -333,7 +281,7 @@ def test_output_bed_loss_resolution_equal_stepsize(tmpdir):
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'loss.{}.bed')
-
+    print(os.listdir(os.path.join(tmpdir.strpath, 'evaluation', bwm.name)))
     for cond in ['c1', 'c2', 'c3', 'c4']:
         assert os.path.exists(file_.format(cond))
 
@@ -406,18 +354,18 @@ def test_output_bed_predict_resolution_equal_stepsize(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=ExportBed(gindexer=gi, resolution=200),
-                        conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=ExportBed(gindexer=gi, resolution=200))
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.{}.bed')
 
-    for cond in ['c1', 'c2', 'c3', 'c4']:
+    print(os.listdir(os.path.join(tmpdir.strpath, 'evaluation', bwm.name)))
+    for cond in ['0', '1', '2', '3']:
         assert os.path.exists(file_.format(cond))
 
-    bed = BedTool(file_.format('c1'))
+    bed = BedTool(file_.format('0'))
 
     nreg = 0
     for reg in bed:
@@ -445,18 +393,17 @@ def test_output_bed_predict_denseout(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=ExportBed(gindexer=gi, resolution=200),
-                        conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=ExportBed(gindexer=gi, resolution=200))
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.{}.bed')
 
-    for cond in ['c1', 'c2', 'c3', 'c4']:
+    for cond in ['0', '1', '2', '3']:
         assert os.path.exists(file_.format(cond))
 
-    bed = BedTool(file_.format('c1'))
+    bed = BedTool(file_.format('0'))
 
     nreg = 0
     for reg in bed:
@@ -484,18 +431,17 @@ def test_output_bed_predict_resolution_unequal_stepsize(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=ExportBed(gindexer=gi, resolution=50),
-                        conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=ExportBed(gindexer=gi, resolution=50))
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.{}.bed')
 
-    for cond in ['c1', 'c2', 'c3', 'c4']:
+    for cond in ['0', '1', '2', '3']:
         assert os.path.exists(file_.format(cond))
 
-    bed = BedTool(file_.format('c1'))
+    bed = BedTool(file_.format('0'))
 
     nreg = 0
     for reg in bed:
@@ -523,18 +469,17 @@ def test_output_bigwig_predict_denseout(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.1] * len(p),
-                        exporter=ExportBigwig(gindexer=gi),
-                        conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=ExportBigwig(gindexer=gi))
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.{}.bigwig')
 
-    for cond in ['c1', 'c2', 'c3', 'c4']:
+    for cond in ['0', '1', '2', '3']:
         assert os.path.exists(file_.format(cond))
 
-    bw = pyBigWig.open(file_.format('c1'))
+    bw = pyBigWig.open(file_.format('0'))
 
     co = bw.values('chr1', 600, 2000)
 
@@ -559,18 +504,17 @@ def test_output_bigwig_predict_convout(tmpdir):
                                          stepsize=200)
 
     dummy_eval = Scorer('pred', lambda p: [0.2] * len(p),
-                        exporter=ExportBigwig(gindexer=gi),
-                        conditions=['c1', 'c2', 'c3', 'c4'])
+                        exporter=ExportBigwig(gindexer=gi))
 
     bwm.predict(inputs, callbacks=[dummy_eval])
 
     file_ = os.path.join(tmpdir.strpath, 'evaluation', bwm.name,
                          'pred.{}.bigwig')
 
-    for cond in ['c1', 'c2', 'c3', 'c4']:
+    for cond in ['0', '1', '2', '3']:
         assert os.path.exists(file_.format(cond))
 
-    bw = pyBigWig.open(file_.format('c1'))
+    bw = pyBigWig.open(file_.format('0'))
 
     co = bw.values('chr1', 600, 2000)
 

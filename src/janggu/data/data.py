@@ -116,7 +116,7 @@ class JangguSequence(Sequence):
     """
     def __init__(self, inputs, outputs=None, sample_weights=None,
                  batch_size=32,
-                 shuffle=False, as_dict=True):
+                 shuffle=False, as_dict=False):
 
         def _todict(x):
             if not isinstance(x, dict) and x is not None:
@@ -185,6 +185,8 @@ class JangguSequence(Sequence):
             for oup in self.outputs:
                 outputs.append(oup[
                     self.indices[idx*self.batch_size:(idx+1)*self.batch_size]])
+            if len(outputs) == 1:
+                outputs = outputs[0]
         else:
             outputs = None
 

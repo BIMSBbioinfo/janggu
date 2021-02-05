@@ -5,6 +5,7 @@ import hashlib
 import logging
 import os
 import re
+import warnings
 import time
 
 import h5py
@@ -22,6 +23,8 @@ from progress.bar import Bar
 from pybedtools import BedTool
 
 from janggu.data import split_train_test
+from janggu.data import view
+from janggu.data.nparr import Array
 from janggu.data.coverage import Cover
 from janggu.data.dna import Bioseq
 from janggu.data.data import JangguSequence
@@ -40,52 +43,6 @@ JANGGU_LAYERS = {'Reverse': Reverse,
                  'Complement': Complement,
                  'LocalAveragePooling2D': LocalAveragePooling2D,
                  'DnaConv2D': DnaConv2D}
-
-
-def _convert_data(kerasmodel, data, layer):
-    """Converts different data formats to
-    {name:values} dict.
-
-    keras support different data formats, e.g. np.array,
-    list(np.array) or dict(key: np.array).
-    This function normalizes all dataset to the dictionary
-    style usage internally. This simplifies the compatibility
-    checks at various places.
-
-    Parameters
-    ----------
-    kerasmodel : keras.Model
-        A keras Model object.
-    data : Dataset, np.array, list or dict
-        Dataset.
-    layer : str
-        Indication as to whether data is used as input or output.
-        :code:`layer='output_layers'` or 'input_layers'.
-    """
-    # If we deal with Dataset, we convert it to a Dictionary
-    # which is directly interpretable by keras
-    if hasattr(data, "name") and hasattr(data, "shape"):
-        # if it is a janggu.data.Dataset we get here
-        c_data = {data.name: data}
-    elif not hasattr(data, "name") and hasattr(data, "shape"):
-        # if data is a numpy array we get here
-        c_data = {kerasmodel.get_config()[layer][0][0]: data}
-    elif isinstance(data, list):
-        if hasattr(data[0], "name"):
-            # if data is a list(Dataset) we get here
-            c_data = {datum.name: datum for datum in data}
-        else:
-            # if data is a list(np.array) we get here
-            c_data = {name[0]: datum for name, datum in
-                      zip(kerasmodel.get_config()[layer],
-                          data)}
-    elif isinstance(data, dict):
-        # if data is a dict, it can just be passed through
-        c_data = data
-    else:
-        raise ValueError('Unknown data type: {}'.format(type(data)))
-
-    return c_data
 
 
 class Janggu(object):
@@ -133,8 +90,10 @@ class Janggu(object):
     _name = None
 
     def __init__(self, inputs, outputs, name=None):
-
-        self.kerasmodel = Model(inputs, outputs, name='janggu')
+        if tf.__version__[0] == '1':
+            warnings.warn('Support for tensorflow==1.* is deprecated. Please use tensorflow>=2.0',
+                      category=DeprecationWarning)
+        self.kerasmodel = Model(inputs, outputs)
 
         if not name:
 
@@ -427,13 +386,16 @@ class Janggu(object):
             Verbosity level. See https://keras.io.
         callbacks : List(keras.callbacks.Callback)
             Callbacks to be applied during training. See https://keras.io/callbacks
-        validation_data : tuple, Sequence or None
-            Validation data can be a tuple (input_dataset, output_dataset),
-            or (input_dataset, output_dataset, sample_weights) or
-            a keras.utils.Sequence instance or a list of validation chromsomoes.
-            The latter choice only works with when using Cover and Bioseq dataset.
+        validation_data : tuple, Sequence, str or None
+            Validation data can be a tuple `(input_dataset, output_dataset)`,
+            or `(input_dataset, output_dataset, sample_weights)` or
+            a `keras.utils.Sequence instance` or a list of strings representing
+            validation chromsomoe names or a string pointing to a bed-file with validation regions.
+            The latter two choice only works with when using Cover and Bioseq dataset.
             This allows you to train on a dedicated set of chromosomes
             and to validate the performance on respective heldout chromosomes.
+            In both cases, consider using store_whole_genome=True or explicitly load
+            the genome initially using the union of training and validation data.
             If None, validation is not applied.
         shuffle : boolean
             shuffle batches. Default: True.
@@ -462,9 +424,8 @@ class Janggu(object):
 
         """
 
-        if not isinstance(inputs, Sequence):
-            inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
-            outputs = _convert_data(self.kerasmodel, outputs, 'output_layers')
+        if not batch_size:
+            batch_size = 32
 
         hyper_params = {
             'epochs': epochs,
@@ -479,12 +440,16 @@ class Janggu(object):
 
         self.logger.info('Fit: %s', self.name)
         if isinstance(inputs, Sequence):
-            self.logger.info('using custom Sequence')
+            jseq = inputs
         else:
-            self.logger.info("Input:")
-            self.__dim_logging(inputs)
-            self.logger.info("Output:")
-            self.__dim_logging(outputs)
+            jseq = JangguSequence(inputs, outputs, sample_weight, batch_size=batch_size)
+
+        self.logger.info('Using custom Sequence.')
+        self.logger.info("Input:")
+        self.__dim_logging(jseq.inputs)
+        self.logger.info("Output:")
+        self.__dim_logging(jseq.outputs)
+
         self.timer = time.time()
         history = None
         self.logger.info("Hyper-parameters:")
@@ -511,24 +476,25 @@ class Janggu(object):
                                                 self.name,
                                                 'training.log')))
 
-        if not batch_size:
-            batch_size = 32
-
-        if isinstance(inputs, Sequence):
-            # input could be a sequence
-            jseq = inputs
-        else:
-            jseq = JangguSequence(inputs, outputs, sample_weight, batch_size, shuffle=shuffle)
-
         if isinstance(validation_data, tuple):
-            valinputs = _convert_data(self.kerasmodel, validation_data[0],
-                                      'input_layers')
-            valoutputs = _convert_data(self.kerasmodel, validation_data[1],
-                                       'output_layers')
+            valinputs = validation_data[0]
+            valoutputs = validation_data[1]
             sweights = validation_data[2] if len(validation_data) == 3 else None
-            valjseq = JangguSequence(valinputs, valoutputs, sweights, batch_size, shuffle=False)
-        elif isinstance(validation_data, Sequence):
-            valjseq = validation_data
+            validation_data = JangguSequence(valinputs, valoutputs, sweights,
+                                     batch_size=batch_size, shuffle=False)
+
+        elif isinstance(validation_data, str):
+            valinp = [view(datum, validation_data) for datum in jseq.inputs]
+            if jseq.outputs is not None:
+                valoup = [view(datum, validation_data) for datum in jseq.outputs]
+            else:
+                valoup = None
+            validation_data = JangguSequence(valinp,
+                                             valoup,
+                                             sample_weights=None,
+                                             batch_size=jseq.batch_size,
+                                             shuffle=False)
+
         elif isinstance(validation_data, list) and isinstance(validation_data[0], str):
             # if the validation data is a list of chromosomes that should
             # be used as validation dataset we end up here.
@@ -536,8 +502,7 @@ class Janggu(object):
             # This is only possible, however, if all input and output datasets
             # are Cover or Bioseq dataset.
             if not all(hasattr(datum, 'gindexer') \
-                for datum in [jseq.inputs[k] for k in jseq.inputs] +
-                       [jseq.outputs[k] for k in jseq.outputs]):
+                for datum in jseq.inputs + jseq.outputs):
                 raise ValueError("Not all dataset are Cover or Bioseq dataset"
                                  " which is required for this options.")
 
@@ -556,26 +521,24 @@ class Janggu(object):
             self.__dim_logging(valinp)
             self.logger.info("Validation-Output:")
             self.__dim_logging(valoup)
-            jseq = JangguSequence(_convert_data(self.kerasmodel, traininp,
-                                                'input_layers'),
-                                  _convert_data(self.kerasmodel, trainoup,
-                                                'output_layers'),
-                                  sample_weights=None, batch_size=jseq.batch_size, shuffle=jseq.shuffle)
-            valjseq = JangguSequence(_convert_data(self.kerasmodel, valinp,
-                                                   'input_layers'),
-                                     _convert_data(self.kerasmodel, valoup,
-                                                   'output_layers'),
-                                     sample_weights=None, batch_size=jseq.batch_size, shuffle=False)
+            jseq = JangguSequence(traininp,
+                                  trainoup,
+                                  sample_weights=None,
+                                  batch_size=jseq.batch_size,
+                                  shuffle=jseq.shuffle)
+            validation_data = JangguSequence(valinp,
+                                     valoup,
+                                     sample_weights=None,
+                                     batch_size=jseq.batch_size,
+                                     shuffle=False)
 
-        else:
-            valjseq = None
 
 
         try:
             history = self.kerasmodel.fit_generator(
                 jseq,
                 epochs=epochs,
-                validation_data=valjseq,
+                validation_data=validation_data,
                 class_weight=class_weight,
                 initial_epoch=initial_epoch,
                 shuffle=shuffle,
@@ -584,6 +547,32 @@ class Janggu(object):
                 workers=workers,
                 verbose=verbose,
                 callbacks=callbacks)
+            #if tf.__version__[0] == '1':
+            #    history = self.kerasmodel.fit_generator(
+            #        jseq,
+            #        epochs=epochs,
+            #        validation_data=validation_data,
+            #        class_weight=class_weight,
+            #        initial_epoch=initial_epoch,
+            #        shuffle=shuffle,
+            #        use_multiprocessing=use_multiprocessing,
+            #        max_queue_size=50,
+            #        workers=workers,
+            #        verbose=verbose,
+            #        callbacks=callbacks)
+            #else:
+            #    history = self.kerasmodel.fit(
+            #        jseq,
+            #        epochs=epochs,
+            #        validation_data=validation_data,
+            #        class_weight=class_weight,
+            #        initial_epoch=initial_epoch,
+            #        shuffle=shuffle,
+            #        use_multiprocessing=use_multiprocessing,
+            #        max_queue_size=50,
+            #        workers=workers,
+            #        verbose=verbose,
+            #        callbacks=callbacks)
         except Exception:  # pragma: no cover
             # ignore the linter warning, the exception
             # is reraised anyways.
@@ -652,9 +641,6 @@ class Janggu(object):
 
         """
 
-        if not isinstance(inputs, Sequence):
-            inputs = _convert_data(self.kerasmodel, inputs, 'input_layers')
-
         self.logger.info('Predict: %s', self.name)
         if isinstance(inputs, Sequence):
             self.logger.info('using custom Sequence')
@@ -681,17 +667,25 @@ class Janggu(object):
             jseq = JangguSequence(inputs, None, None, batch_size=batch_size)
 
         try:
-            preds = model.kerasmodel.predict_generator(
-                jseq,
-                steps=steps,
-                use_multiprocessing=use_multiprocessing,
-                workers=workers,
-                verbose=verbose)
+            if tf.__version__[0] == '1':
+                preds = model.kerasmodel.predict_generator(
+                    jseq,
+                    steps=steps,
+                    use_multiprocessing=use_multiprocessing,
+                    workers=workers,
+                    verbose=verbose)
+            else:
+                preds = model.kerasmodel.predict(
+                    jseq,
+                    steps=steps,
+                    use_multiprocessing=use_multiprocessing,
+                    workers=workers,
+                    verbose=verbose)
         except Exception:  # pragma: no cover
             self.logger.exception('predict_generator failed:')
             raise
 
-        prd = _convert_data(model.kerasmodel, preds, 'output_layers')
+        prd = preds
         if layername is not None:
             # no need to set an extra datatag.
             # if layername is present, it will be added to the tags
@@ -759,38 +753,36 @@ class Janggu(object):
 
         """
 
-        self.logger.info('Evaluate: %s', self.name)
-        if isinstance(inputs, Sequence):
-            inputs_ = _convert_data(self.kerasmodel, inputs.inputs, 'input_layers')
-            outputs_ = _convert_data(self.kerasmodel, inputs.outputs, 'output_layers')
-            self.logger.info('Using custom Sequence.')
-            self.logger.info("Input:")
-            self.__dim_logging(inputs_)
-            self.logger.info("Output:")
-            self.__dim_logging(outputs_)
-        else:
-            inputs_ = _convert_data(self.kerasmodel, inputs, 'input_layers')
-            outputs_ = _convert_data(self.kerasmodel, outputs, 'output_layers')
-            self.logger.info("Input:")
-            self.__dim_logging(inputs_)
-            self.logger.info("Output:")
-            self.__dim_logging(outputs_)
-        self.timer = time.time()
-
         if not batch_size:
             batch_size = 32
 
+        self.logger.info('Evaluate: %s', self.name)
         if isinstance(inputs, Sequence):
             jseq = inputs
         else:
-            jseq = JangguSequence(inputs_, outputs_, sample_weight, batch_size=batch_size)
+            jseq = JangguSequence(inputs, outputs, sample_weight, batch_size=batch_size)
+
+        self.logger.info('Using custom Sequence.')
+        self.logger.info("Input:")
+        self.__dim_logging(jseq.inputs)
+        self.logger.info("Output:")
+        self.__dim_logging(jseq.outputs)
+
+        self.timer = time.time()
 
         try:
-            values = self.kerasmodel.evaluate_generator(
-                jseq,
-                steps=steps,
-                use_multiprocessing=use_multiprocessing,
-                workers=workers)
+            if tf.__version__[0] == '1':
+                values = self.kerasmodel.evaluate_generator(
+                    jseq,
+                    steps=steps,
+                    use_multiprocessing=use_multiprocessing,
+                    workers=workers)
+            else:
+                values = self.kerasmodel.evaluate(
+                    jseq,
+                    steps=steps,
+                    use_multiprocessing=use_multiprocessing,
+                    workers=workers)
         except Exception:  # pragma: no cover
             self.logger.exception('evaluate_generator failed:')
             raise
@@ -805,14 +797,17 @@ class Janggu(object):
         self.logger.info("Evaluation finished in %1.3f s",
                          time.time() - self.timer)
 
-        preds = self.kerasmodel.predict_generator(jseq, steps=steps,
-                                                  use_multiprocessing=use_multiprocessing,
-                                                  workers=workers)
-        preds = _convert_data(self.kerasmodel, preds, 'output_layers')
-
+        if tf.__version__[0] == '1':
+            preds = self.kerasmodel.predict_generator(jseq, steps=steps,
+                                                      use_multiprocessing=use_multiprocessing,
+                                                      workers=workers)
+        else:
+            preds = self.kerasmodel.predict(jseq, steps=steps,
+                                            use_multiprocessing=use_multiprocessing,
+                                            workers=workers)
         for callback in callbacks or []:
             callback = get_scorer(callback)
-            callback.score(self, preds, outputs=outputs_, datatags=datatags)
+            callback.score(self, preds, outputs=outputs, datatags=datatags)
         return values
 
     def predict_variant_effect(self,  # pylint: disable=too-many-locals
@@ -845,6 +840,8 @@ class Janggu(object):
                                        contition_filter='Cfcf')
 
         """
+        warnings.warn('Janggu.predict_variant_effect is deprecated. Please use predict_variant_effect(model, bioseq, ...)',
+                      category=DeprecationWarning)
         return predict_variant_effect(self.kerasmodel,
                                       bioseq,
                                       variants,
@@ -1014,6 +1011,16 @@ def create_model(template, modelparams=None, inputs=None,
                             outputp=LABELS)
 
     """
+
+    if inputs is not None:
+        if not isinstance(inputs, list):
+            inputs = [inputs]
+        inputs = [x if hasattr(x, 'name') else Array(f'input_{i}', x) for i, x in enumerate(inputs)]
+
+    if outputs is not None:
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+        outputs = [x if hasattr(x, 'name') else Array(f'output_{i}', x) for i, x in enumerate(outputs)]
 
     inputs_ = _data_props(inputs) if inputs else None
     outputs_ = _data_props(outputs) if outputs else None
