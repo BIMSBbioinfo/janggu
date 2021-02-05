@@ -60,7 +60,7 @@ sklearn:
 .. _`pytorch example`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/pytorch_convnet_example.ipynb
 .. _`janggu example I`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/classify_nucleotide_sequences.ipynb
 .. _`janggu example II`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples.ipynb
-.. _`reusing datasets with view`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
+.. _`reusing datasets with view`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_view.ipynb
 .. _`randomizing HDF5 data`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/janggu_convnet_examples_with_hdf5.ipynb
 .. _`variant effect prediction`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction.ipynb
 .. _`variant effect prediction - part II`: https://nbviewer.jupyter.org/github/BIMSBbioinfo/janggu/blob/master/src/examples/variant_effect_prediction-part2.ipynb
