@@ -46,10 +46,10 @@ if os.getenv('SPELLCHECK'):
 source_suffix = '.rst'
 master_doc = 'index'
 project = u'Janggu'
-year = u'2017-2020'
+year = u'2017-2021'
 author = u'Wolfgang Kopp'
 copyright = '{0}, {1}'.format(year, author)
-version = release = '0.10.0'
+version = release = '0.10.1'
 
 pygments_style = 'trac'
 templates_path = ['.']
