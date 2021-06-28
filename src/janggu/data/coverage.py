@@ -162,7 +162,7 @@ class BamLoader:
                 if process_chrom not in set(aln_file.header.references):
                     continue
                 tmp_gsize = gsize.filter_by_region(include=process_chrom)
-                length = aln_file.header.get_reference_length(process_chrom) + tmp_gsize.flank
+                length = aln_file.header.get_reference_length(process_chrom) + tmp_gsize.flank + 1
 
                 array = np.zeros((length, 2), dtype=dtype)
 
