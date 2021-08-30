@@ -23,7 +23,7 @@ from janggu.utils import _check_valid_files
 from janggu.utils import _get_genomic_reader
 from janggu.utils import _to_list
 from janggu.utils import get_genome_size_from_regions
-from janggu.version import dataversion as version
+from janggu.version import version
 
 
 def _condition_from_filename(files, conditions):
