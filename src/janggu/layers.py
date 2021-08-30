@@ -10,7 +10,7 @@ from copy import copy
 import numpy
 import tensorflow as tf  # pylint: disable=import-error
 from keras import backend as K
-from keras.engine.topology import Layer
+from keras.layers import Layer
 from keras.initializers import Constant
 from keras.layers.wrappers import Wrapper
 
