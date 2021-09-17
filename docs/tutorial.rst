@@ -890,7 +890,7 @@ table-like dataset which is used in the subsequent model fitting example.
                  metrics=['acc'])
 
    # 4. fit the model
-   model.fit(DNA, ReduceDim(LABELS, epochs=100)
+   model.fit(DNA,LABELS,epochs=100)
 
 
 An illustration of the network architecture is depicted below.
