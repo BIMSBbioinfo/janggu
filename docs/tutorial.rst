@@ -833,7 +833,7 @@ table-like dataset which is used in the subsequent model fitting example.
 .. code:: python
 
    from keras.layers import Conv2D
-   from keras.layers import AveragePooling2D
+   from keras.layers import GlobalAveragePooling2D
    from janggu import inputlayer
    from janggu import outputconv
    from janggu import DnaConv2D
@@ -932,12 +932,12 @@ In this case the example becomes
    # 3. instantiate and compile the model
    model = Janggu.create(template=double_stranded_model,
                          modelparams=(30, 15, 'relu'),
-                         inputs=DNA, outputs=ReduceDim(LABELS))
+                         inputs=DNA, outputs=LABELS)
    model.compile(optimizer='adadelta', loss='binary_crossentropy',
                  metrics=['acc'])
 
    # 4. fit the model
-   model.fit(DNA, ReduceDim(LABELS), epochs=100)
+   model.fit(DNA, LABELS, epochs=100)
 
 
 Part III) Evaluation and interpretation of the model
