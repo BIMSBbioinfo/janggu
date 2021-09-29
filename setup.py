@@ -34,6 +34,7 @@ setup(
                    re.M | re.S).sub('', _read('README.rst')),
         re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', _read('CHANGELOG.rst'))
     ),
+    long_description_content_type='text/x-rst',
     author='Wolfgang Kopp',
     author_email='wolfgang.kopp@mdc-berlin.de',
     url='https://github.com/BIMSBbioinfo/janggu',
