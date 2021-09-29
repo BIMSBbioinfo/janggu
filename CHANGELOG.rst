@@ -1,6 +1,17 @@
 
 Changelog
 =========
+0.10.2 (2021-09-29)
+-------------------
+
+- Fixed typos in documentation
+
+0.10.1 (2021-06-28)
+-------------------
+
+- adapted pysam dependency
+- fixed bug in coverage loading from BAM files
+
 0.10.0 (2020-10-01)
 -------------------
 
